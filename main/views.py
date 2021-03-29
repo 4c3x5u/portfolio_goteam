@@ -1,7 +1,8 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from .serializers import UserSerializer
-from .models import User, Team
+from .models import Team
 
 
 class UserCreate(CreateAPIView):
@@ -13,12 +14,16 @@ class UserCreate(CreateAPIView):
         if pw == cf:
             serializer = UserSerializer(data=request.data, many=False)
             serializer.is_valid()
+            try:
+                Team.objects.get(id=request.data.get('team'))
+            except ObjectDoesNotExist:
+                team = Team.objects.create()
+                request.data.update({'team': team.id})
             return super().create(request, *args, **kwargs)
-        else:
-            return ValidationError({
-                'password_confirmation': 'Password confirmation must match the'
-                                         'password'
-            })
+        return ValidationError({
+            'password_confirmation': 'Password confirmation must match the'
+                                     'password'
+        })
 
 
 # @api_view(['POST'])
