@@ -8,14 +8,20 @@ from .models import Team
 @api_view(['POST'])
 def register(request):
     pw = request.data.get('password')
+    if not pw:
+        return Response({'password': 'Password cannot be empty.'}, 400)
     cf = request.data.get('password_confirmation')
+    if not cf:
+        return Response({
+            'password_confirmation': 'Password confirmation cannot be empty.'
+        }, 400)
     if pw == cf:
         ic = request.data.get('invite_code')
         if ic:
             try:
                 UUID(ic)
             except ValueError:
-                return Response({'invite_code': 'invalid invite code'}, 400)
+                return Response({'invite_code': 'Invalid invite code.'}, 400)
             try:
                 team = Team.objects.get(invite_code=ic)
                 is_admin = False
@@ -36,5 +42,5 @@ def register(request):
             is_admin and team.delete()
             return Response(serializer.errors, 400)
     return Response({
-        'password_confirmation': "confirmation doesn't match the password"
+        'password_confirmation': "Confirmation does not match the password."
     }, 400)
