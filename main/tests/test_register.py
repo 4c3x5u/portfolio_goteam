@@ -1,5 +1,5 @@
 from rest_framework.test import APITestCase
-from .models import User, Team
+from main.models import User, Team
 
 
 # noinspection DuplicatedCode
