@@ -34,3 +34,15 @@ class RegisterTestCase(APITestCase):
                 self.assertEqual(response.data[attr], expected_value)
         self.assertEqual(response.data['team'], team.id)
         self.assertFalse(response.data['is_admin'])
+
+    def test_unmatched_passwords(self):
+        request_data = {'username': 'foo',
+                        'password': 'bar',
+                        'password_confirmation': 'not_bar'}
+        initial_count = User.objects.count()
+        response = self.client.post('/user/', request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'password_confirmation': "confirmation doesn't match the password"
+        })
+        self.assertEqual(User.objects.count(), initial_count)
