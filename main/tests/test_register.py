@@ -11,7 +11,7 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar',
                         'password_confirmation': 'bar'}
         response = self.client.post('/user/', request_data)
-        response.status_code != 201 and print(response.data)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(User.objects.count(), initial_count + 1)
         for attr, expected_value in request_data.items():
             if attr != 'password_confirmation' and attr != 'invite_code':
@@ -28,7 +28,7 @@ class RegisterTestCase(APITestCase):
                         'password_confirmation': 'bar',
                         'invite_code': ic}
         response = self.client.post('/user/', request_data)
-        response.status_code != 201 and print(response.data)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(User.objects.count(), initial_count + 1)
         self.assertEqual(request_data['username'], response.data['username'])
         self.assertEqual(request_data['password'], response.data['password'])
@@ -73,3 +73,15 @@ class RegisterTestCase(APITestCase):
             'password_confirmation': "confirmation doesn't match the password"
         })
         self.assertEqual(User.objects.count(), initial_count)
+
+    def test_empty_username_field(self):
+        initial_user_count = User.objects.count()
+        initial_team_count = Team.objects.count()
+        request_data = {'password': 'bar',
+                        'password_confirmation': 'bar'}
+        response = self.client.post('/user/', request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['username'][0],
+                         'This field may not be null.')
+        self.assertEqual(User.objects.count(), initial_user_count)
+        self.assertEqual(Team.objects.count(), initial_team_count)
