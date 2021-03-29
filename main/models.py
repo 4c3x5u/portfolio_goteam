@@ -1,8 +1,9 @@
 from django.db.models import *
+import uuid
 
 
 class Team(Model):
-    pass
+    invite_code = UUIDField(default=uuid.uuid4)
 
 
 class User(Model):
