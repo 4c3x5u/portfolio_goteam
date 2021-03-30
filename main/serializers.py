@@ -15,7 +15,11 @@ class UserSerializer(serializers.Serializer):
         max_length=255,
         error_messages={'required': 'Password cannot be empty.'}
     )
-    password_confirmation = serializers.CharField(min_length=8, max_length=255)
+    password_confirmation = serializers.CharField(
+        min_length=8,
+        max_length=255,
+        error_messages={'required': 'Password confirmation cannot be empty.'}
+    )
     invite_code = serializers.CharField(required=False)
     is_admin = serializers.BooleanField()
 
