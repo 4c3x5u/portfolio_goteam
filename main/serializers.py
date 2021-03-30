@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.response import Response
 from main.models import Team, User
 from uuid import UUID
 
@@ -28,7 +27,8 @@ class UserSerializer(serializers.Serializer):
         fields = ('username', 'password', 'password_confirmation', 'team',
                   'is_admin', 'invite_code', 'is_admin')
 
-    def validate_invite_code(self, value):
+    @staticmethod
+    def validate_invite_code(value):
         if value:
             try:
                 return UUID(value)
@@ -57,8 +57,10 @@ class UserSerializer(serializers.Serializer):
                 validated_data['is_admin'] = True
             validated_data.pop('password_confirmation')
             return User.objects.create(**validated_data)
-        else:
-            raise serializers.ValidationError({
-                'password_confirmation': 'Confirmation does not match the '
-                                         'password.'
-            })
+        raise serializers.ValidationError({
+            'password_confirmation': 'Confirmation does not match the '
+                                     'password.'
+        })
+
+    def update(self, instance, validated_data):
+        pass
