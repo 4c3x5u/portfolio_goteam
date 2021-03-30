@@ -66,8 +66,12 @@ class RegisterTestCase(APITestCase):
                         'password_confirmation': 'barbarbar',
                         'invite_code': invite_code}
         response = self.client.post(self.url, request_data)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data, {'invite_code': "Team not found."})
+        self.assertEqual(response.status_code, 400)
+        print(f'§§§{response.data}')
+        self.assertEqual(response.data, {
+            'invite_code': ErrorDetail(string='Team not found.',
+                                       code='invalid')
+        })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 

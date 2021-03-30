@@ -38,7 +38,12 @@ class UserSerializer(serializers.Serializer):
         if password == password_confirmation:
             invite_code = validated_data.get('invite_code')
             if invite_code:
-                team = Team.objects.get(invite_code=invite_code)
+                try:
+                    team = Team.objects.get(invite_code=invite_code)
+                except Team.DoesNotExist:
+                    raise serializers.ValidationError({
+                        'invite_code': 'Team not found.'
+                    })
                 validated_data['team'] = team
                 validated_data['is_admin'] = False
                 validated_data.pop('invite_code')
