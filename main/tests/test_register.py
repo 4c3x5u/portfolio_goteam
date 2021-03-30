@@ -137,9 +137,12 @@ class RegisterTestCase(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password_confirmation': ErrorDetail(
-                string='Password confirmation cannot be empty.'
-            )
+            'password_confirmation': [
+                ErrorDetail(
+                    string='Password confirmation cannot be empty.',
+                    code='required'
+                )
+            ]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
