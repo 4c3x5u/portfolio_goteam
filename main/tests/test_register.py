@@ -9,18 +9,18 @@ class RegisterTestCase(APITestCase):
     url = '/register/'
 
     def test_success(self):
-        initial_count = User.objects.count()
-        request_data = {'username': 'foooo',
+        initial_user_count = User.objects.count()
+        initial_team_count = Team.objects.count()
+        request_data = {'username': 'fooooooooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(User.objects.count(), initial_count + 1)
-        for attr, expected_value in request_data.items():
-            if attr != 'password_confirmation' and attr != 'invite_code':
-                self.assertEqual(response.data[attr], expected_value)
-        self.assertTrue(Team.objects.get(id=response.data['team']))
+        self.assertEqual(response.data['username'], request_data['username'])
+        self.assertEqual(response.data['password'], request_data['password'])
         self.assertTrue(response.data['is_admin'])
+        self.assertEqual(User.objects.count(), initial_user_count + 1)
+        self.assertEqual(Team.objects.count(), initial_team_count + 1)
 
     def test_success_with_invite_code(self):
         initial_count = User.objects.count()

@@ -8,10 +8,9 @@ class Register(CreateAPIView):
     serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
-        serializer = UserSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             try:
-                serializer.save()
                 return super().create(request, *args, **kwargs)
             except Team.DoesNotExist:
                 return Response({'invite_code': "Team not found."}, 404)
