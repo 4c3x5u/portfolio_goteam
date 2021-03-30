@@ -5,7 +5,7 @@ from uuid import uuid4
 
 
 # noinspection DuplicatedCode
-class RegisterTestCase(APITestCase):
+class RegisterTests(APITestCase):
     url = '/register/'
 
     def test_success(self):
@@ -67,7 +67,6 @@ class RegisterTestCase(APITestCase):
                         'invite_code': invite_code}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
-        print(f'§§§{response.data}')
         self.assertEqual(response.data, {
             'invite_code': ErrorDetail(string='Team not found.',
                                        code='invalid')

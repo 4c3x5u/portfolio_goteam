@@ -1,10 +1,10 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
-from main.serializers import UserSerializer
+from main.serializers.RegisterSerializer import RegisterSerializer
 
 
-class Register(CreateAPIView):
-    serializer_class = UserSerializer
+class RegisterView(CreateAPIView):
+    serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -12,5 +12,3 @@ class Register(CreateAPIView):
             return super().create(request, *args, **kwargs)
         else:
             return Response(serializer.errors, 400)
-
-
