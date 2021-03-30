@@ -3,7 +3,7 @@ from main.models import Team, User
 from uuid import UUID
 
 
-class UserSerializer(serializers.Serializer):
+class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(
         min_length=5,
         max_length=35,
@@ -25,7 +25,7 @@ class UserSerializer(serializers.Serializer):
     class Meta:
         model = User
         fields = ('username', 'password', 'password_confirmation', 'team',
-                  'is_admin', 'invite_code', 'is_admin')
+                  'invite_code', 'is_admin')
 
     @staticmethod
     def validate_invite_code(value):
