@@ -35,7 +35,6 @@ class RegisterTestCase(APITestCase):
         self.assertEqual(User.objects.count(), initial_count + 1)
         self.assertEqual(request_data['username'], response.data['username'])
         self.assertEqual(request_data['password'], response.data['password'])
-        self.assertEqual(response.data['team'], team.id)
         self.assertFalse(response.data['is_admin'])
 
     def test_invalid_invite_code(self):

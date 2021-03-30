@@ -8,7 +8,7 @@ class UserSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=5, max_length=35)
     password = serializers.CharField(min_length=8, max_length=255)
     password_confirmation = serializers.CharField(min_length=8, max_length=255)
-    invite_code = serializers.CharField(required=False, default='')
+    invite_code = serializers.CharField(required=False)
     is_admin = serializers.BooleanField()
 
     class Meta:
@@ -16,17 +16,13 @@ class UserSerializer(serializers.Serializer):
         fields = ('username', 'password', 'password_confirmation', 'team',
                   'is_admin', 'invite_code', 'is_admin')
 
-    def update(self, instance, validated_data):
-        validated_data.pop('password_confirmation')
-        validated_data.pop('invite_code')
-        return User.objects.update(**validated_data)
-
     def validate_invite_code(self, value):
         if value:
             try:
-                _ = UUID(value)
+                return UUID(value)
             except (ValueError, TypeError):
                 raise serializers.ValidationError('Invalid invite code.')
+        return value
 
     def create(self, validated_data):
         password = validated_data.get('password')
@@ -42,11 +38,10 @@ class UserSerializer(serializers.Serializer):
                 team = Team.objects.create()
                 validated_data['team'] = team
                 validated_data['is_admin'] = True
-            validated_data.pop('invite_code')
             validated_data.pop('password_confirmation')
             return User.objects.create(**validated_data)
         else:
             raise serializers.ValidationError({
-                'password_confirmation': 'Confirmation does not match the'
+                'password_confirmation': 'Confirmation does not match the '
                                          'password.'
             })
