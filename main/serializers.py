@@ -5,7 +5,11 @@ from uuid import UUID
 
 
 class UserSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=5, max_length=35)
+    username = serializers.CharField(
+        min_length=5,
+        max_length=35,
+        error_messages={'required': 'Username cannot be empty.'}
+    )
     password = serializers.CharField(min_length=8, max_length=255)
     password_confirmation = serializers.CharField(min_length=8, max_length=255)
     invite_code = serializers.CharField(required=False)
