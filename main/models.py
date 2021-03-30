@@ -11,6 +11,8 @@ class User(Model):
     password = CharField(max_length=255)
     is_admin = BooleanField(default=False)
     team = ForeignKey(Team, on_delete=CASCADE)
+    password_confirmation = None
+    invite_code = None
 
 
 class Board(Model):
