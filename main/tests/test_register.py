@@ -61,9 +61,9 @@ class RegisterTestCase(APITestCase):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
         invite_code = uuid4()
-        request_data = {'username': 'foo',
-                        'password': 'bar',
-                        'password_confirmation': 'bar',
+        request_data = {'username': 'foooo',
+                        'password': 'barbarbar',
+                        'password_confirmation': 'barbarbar',
                         'invite_code': invite_code}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 404)
