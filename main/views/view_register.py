@@ -1,7 +1,6 @@
 from rest_framework.generics import CreateAPIView
 from rest_framework.response import Response
 from main.serializers import UserSerializer
-from main.models import Team
 
 
 class Register(CreateAPIView):
