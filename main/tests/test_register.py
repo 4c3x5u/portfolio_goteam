@@ -59,7 +59,7 @@ class RegisterTestCase(APITestCase):
                         'invite_code': invite_code}
         response = self.client.post('/user/', request_data)
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data, {'invite_code': "team not found"})
+        self.assertEqual(response.data, {'invite_code': "Team not found."})
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 
@@ -95,7 +95,6 @@ class RegisterTestCase(APITestCase):
                         'password_confirmation': 'bar'}
         response = self.client.post('/user/', request_data)
         self.assertEqual(response.status_code, 400)
-        print(response.data)
         self.assertEqual(response.data, {
             'password': 'Password cannot be empty.'
         })
@@ -109,7 +108,6 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar'}
         response = self.client.post('/user/', request_data)
         self.assertEqual(response.status_code, 400)
-        print(response.data)
         self.assertEqual(response.data, {
             'password_confirmation': 'Password confirmation cannot be empty.'
         })
