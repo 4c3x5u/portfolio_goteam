@@ -76,14 +76,17 @@ class RegisterTestCase(APITestCase):
         response = self.client.post(self.url, {
             'username': 'foooo',
             'password_confirmation': 'barbarbar',
-            'password': 'barbarbar'
+            'password': 'not_barbarbar'
         })
         self.assertEqual(response.status_code, 400)
         print(response.data)
         self.assertEqual(response.data, {
-            'password_confirmation': "Confirmation does not match the "
-                                     "password."
+            'password_confirmation': ErrorDetail(
+                string='Confirmation does not match the password.',
+                code='invalid'
+            )
         })
+
         self.assertEqual(User.objects.count(), initial_count)
 
     def test_empty_username_field(self):
