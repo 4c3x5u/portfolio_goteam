@@ -1,3 +1,4 @@
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.test import APITestCase
 from main.models import User, Team
 from uuid import uuid4
@@ -9,9 +10,9 @@ class RegisterTestCase(APITestCase):
 
     def test_success(self):
         initial_count = User.objects.count()
-        request_data = {'username': 'foo',
-                        'password': 'bar',
-                        'password_confirmation': 'bar'}
+        request_data = {'username': 'foooo',
+                        'password': 'barbarbar',
+                        'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(User.objects.count(), initial_count + 1)
@@ -25,9 +26,9 @@ class RegisterTestCase(APITestCase):
         initial_count = User.objects.count()
         team = Team.objects.create()
         ic = team.invite_code
-        request_data = {'username': 'foo',
-                        'password': 'bar',
-                        'password_confirmation': 'bar',
+        request_data = {'username': 'foooo',
+                        'password': 'barbarbar',
+                        'password_confirmation': 'barbarbar',
                         'invite_code': ic}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
@@ -40,14 +41,20 @@ class RegisterTestCase(APITestCase):
     def test_invalid_invite_code(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
-        request_data = {'username': 'foo',
-                        'password': 'bar',
-                        'password_confirmation': 'bar',
+        request_data = {'username': 'foooo',
+                        'password': 'barbarbar',
+                        'password_confirmation': 'barbarbar',
                         'invite_code': 'invalid uuid'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data,
-                         {'invite_code': 'Invalid invite code.'})
+        self.assertEqual(
+            response.data,
+            {
+                'invite_code': [
+                    ErrorDetail(string='Invalid invite code.', code='invalid')
+                ]
+            }
+        )
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 
@@ -66,12 +73,14 @@ class RegisterTestCase(APITestCase):
         self.assertEqual(Team.objects.count(), initial_team_count)
 
     def test_unmatched_passwords(self):
-        request_data = {'username': 'foo',
-                        'password': 'bar',
-                        'password_confirmation': 'not_bar'}
         initial_count = User.objects.count()
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.url, {
+            'username': 'foooo',
+            'password_confirmation': 'barbarbar',
+            'password': 'barbarbar'
+        })
         self.assertEqual(response.status_code, 400)
+        print(response.data)
         self.assertEqual(response.data, {
             'password_confirmation': "Confirmation does not match the "
                                      "password."
