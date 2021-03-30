@@ -5,12 +5,14 @@ from uuid import uuid4
 
 # noinspection DuplicatedCode
 class RegisterTestCase(APITestCase):
+    url = '/register/'
+
     def test_success(self):
         initial_count = User.objects.count()
         request_data = {'username': 'foo',
                         'password': 'bar',
                         'password_confirmation': 'bar'}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(User.objects.count(), initial_count + 1)
         for attr, expected_value in request_data.items():
@@ -27,7 +29,7 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar',
                         'password_confirmation': 'bar',
                         'invite_code': ic}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(User.objects.count(), initial_count + 1)
         self.assertEqual(request_data['username'], response.data['username'])
@@ -42,7 +44,7 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar',
                         'password_confirmation': 'bar',
                         'invite_code': 'invalid uuid'}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data,
                          {'invite_code': 'Invalid invite code.'})
@@ -57,7 +59,7 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar',
                         'password_confirmation': 'bar',
                         'invite_code': invite_code}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {'invite_code': "Team not found."})
         self.assertEqual(User.objects.count(), initial_user_count)
@@ -68,7 +70,7 @@ class RegisterTestCase(APITestCase):
                         'password': 'bar',
                         'password_confirmation': 'not_bar'}
         initial_count = User.objects.count()
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': "Confirmation does not match the "
@@ -81,7 +83,7 @@ class RegisterTestCase(APITestCase):
         initial_team_count = Team.objects.count()
         request_data = {'password': 'bar',
                         'password_confirmation': 'bar'}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['username'][0],
                          'This field may not be null.')
@@ -93,7 +95,7 @@ class RegisterTestCase(APITestCase):
         initial_team_count = Team.objects.count()
         request_data = {'username': 'foo',
                         'password_confirmation': 'bar'}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password': 'Password cannot be empty.'
@@ -106,7 +108,7 @@ class RegisterTestCase(APITestCase):
         initial_team_count = Team.objects.count()
         request_data = {'username': 'foo',
                         'password': 'bar'}
-        response = self.client.post('/user/', request_data)
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': 'Password confirmation cannot be empty.'
