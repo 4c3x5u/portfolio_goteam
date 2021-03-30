@@ -18,7 +18,7 @@ from django.urls import path
 from main.views.view_register import register
 
 urlpatterns = [
-    path('user/', register),
+    path('register/', register),
 
     path('admin/', admin.site.urls)
 ]
