@@ -8,6 +8,7 @@ def login(request):
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         return Response({
-            serializer.validated_data['username']: 'Login successful.'
+            'msg': 'Login successful.',
+            'username': serializer.validated_data['username'],
         }, 200)
     return Response(serializer.errors, 400)
