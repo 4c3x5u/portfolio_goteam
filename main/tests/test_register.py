@@ -16,9 +16,10 @@ class RegisterTests(APITestCase):
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['username'], request_data['username'])
-        self.assertEqual(response.data['password'], request_data['password'])
-        self.assertTrue(response.data['is_admin'])
+        self.assertEqual(response.data, {
+            'msg': 'Login successful.',
+            'username': request_data['username']
+        })
         self.assertEqual(User.objects.count(), initial_user_count + 1)
         self.assertEqual(Team.objects.count(), initial_team_count + 1)
 
@@ -32,10 +33,11 @@ class RegisterTests(APITestCase):
                         'invite_code': ic}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, {
+            'msg': 'Login successful.',
+            'username': request_data['username']
+        })
         self.assertEqual(User.objects.count(), initial_count + 1)
-        self.assertEqual(request_data['username'], response.data['username'])
-        self.assertEqual(request_data['password'], response.data['password'])
-        self.assertFalse(response.data['is_admin'])
 
     def test_invalid_invite_code(self):
         initial_user_count = User.objects.count()
