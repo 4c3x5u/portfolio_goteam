@@ -14,9 +14,10 @@ class BoardSerializer(serializers.Serializer):
                 'username': "Invalid username."
             })
         if not user.is_admin:
-            raise serializers.ValidationError({
-                'user_not_admin': 'Only the team admin can create a board.'
-            })
+            raise serializers.ValidationError(
+                'Only the team admin can create a board.',
+                'not_authorized'
+            )
         try:
             team = Team.objects.get(id=user.team.id)
         except Team.DoesNotExist:
