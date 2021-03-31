@@ -7,18 +7,14 @@ class CreateBoardTests(APITestCase):
     def setUp(self):
         self.url = '/board/'
         self.team = Team.objects.create()
-        self.admin = User.objects.create(username='admin',
-                                         password='loremipsum',
-                                         is_admin=True,
-                                         team=self.team)
-        self.member = User.objects.create(username='member',
-                                          password='loremipsum',
-                                          is_admin=False,
-                                          team=self.team)
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': self.admin.username})
+        User.objects.create(username='foooo',
+                            password='barbarbar',
+                            is_admin=True,
+                            team=self.team)
+        response = self.client.post(self.url, {'username': 'foooo'})
         board = Board.objects.get(team=self.team)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
@@ -42,7 +38,11 @@ class CreateBoardTests(APITestCase):
 
     def test_user_not_admin(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': 'member'})
+        User.objects.create(username='foooo',
+                            password='barbarbar',
+                            is_admin=False,
+                            team=self.team)
+        response = self.client.post(self.url, {'username': 'foooo'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'non_field_errors': [
@@ -51,7 +51,3 @@ class CreateBoardTests(APITestCase):
             ]
         })
         self.assertEqual(Board.objects.count(), initial_count)
-
-
-
-

@@ -18,13 +18,7 @@ class BoardSerializer(serializers.Serializer):
                 'Only the team admin can create a board.',
                 'not_authorized'
             )
-        try:
-            team = Team.objects.get(id=user.team.id)
-        except Team.DoesNotExist:
-            raise serializers.ValidationError({
-                'team_id': 'Invalid team ID.'
-            })
-        self.board_team = team
+        self.board_team = Team.objects.get(id=user.team.id)
         return super().validate(data)
 
     def create(self, validated_data):
