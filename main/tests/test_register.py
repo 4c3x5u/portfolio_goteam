@@ -8,14 +8,14 @@ from uuid import uuid4
 class RegisterTests(APITestCase):
     def setUp(self):
         self.url = '/register/'
+        self.initial_user_count = User.objects.count()
+        self.initial_team_count = Team.objects.count()
+        self.initial_board_count = Board.objects.count()
         team = Team.objects.create()
         Board.objects.create(team=team)
         self.valid_invite_code = team.invite_code
 
     def test_success(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
-        initial_board_count = Board.objects.count()
         request_data = {'username': 'fooooooooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
@@ -25,9 +25,9 @@ class RegisterTests(APITestCase):
             'msg': 'Registration successful.',
             'username': request_data['username'],
         })
-        self.assertEqual(User.objects.count(), initial_user_count + 1)
-        self.assertEqual(Team.objects.count(), initial_team_count + 1)
-        self.assertEqual(Board.objects.count(), initial_board_count + 1)
+        self.assertEqual(User.objects.count(), self.initial_user_count + 1)
+        self.assertEqual(Team.objects.count(), self.initial_team_count + 1)
+        self.assertEqual(Board.objects.count(), self.initial_board_count + 1)
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
         team = Team.objects.get(user=user)
@@ -36,7 +36,6 @@ class RegisterTests(APITestCase):
         self.assertTrue(board)
 
     def test_success_with_invite_code(self):
-        initial_count = User.objects.count()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
@@ -47,7 +46,7 @@ class RegisterTests(APITestCase):
             'msg': 'Registration successful.',
             'username': request_data['username'],
         })
-        self.assertEqual(User.objects.count(), initial_count + 1)
+        self.assertEqual(User.objects.count(), self.initial_user_count + 1)
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
         team = Team.objects.get(user=user)
@@ -56,8 +55,6 @@ class RegisterTests(APITestCase):
         self.assertTrue(board)
 
     def test_invalid_invite_code(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
@@ -72,12 +69,10 @@ class RegisterTests(APITestCase):
                 ]
             }
         )
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(Team.objects.count(), initial_team_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
+        self.assertEqual(Team.objects.count(), self.initial_team_count)
 
     def test_team_not_found(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
         invalid_invite_code = uuid4()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
@@ -90,11 +85,10 @@ class RegisterTests(APITestCase):
                 ErrorDetail(string='Team not found.', code='invalid')
             ]
         })
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(Team.objects.count(), initial_team_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
+        self.assertEqual(Team.objects.count(), self.initial_team_count)
 
     def test_unmatched_passwords(self):
-        initial_count = User.objects.count()
         response = self.client.post(self.url, {
             'username': 'foooo',
             'password_confirmation': 'barbarbar',
@@ -109,11 +103,9 @@ class RegisterTests(APITestCase):
             ]
         })
 
-        self.assertEqual(User.objects.count(), initial_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
 
     def test_username_blank(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
         request_data = {'username': '',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
@@ -127,12 +119,10 @@ class RegisterTests(APITestCase):
                 )
             ]
         })
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(Team.objects.count(), initial_team_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
+        self.assertEqual(Team.objects.count(), self.initial_team_count)
 
     def test_password_blank(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
                         'password': '',
                         'password_confirmation': 'barbarbar'}
@@ -146,12 +136,10 @@ class RegisterTests(APITestCase):
                 )
             ]
         })
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(Team.objects.count(), initial_team_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
+        self.assertEqual(Team.objects.count(), self.initial_team_count)
 
     def test_password_confirmation_blank(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': ''}
@@ -165,5 +153,5 @@ class RegisterTests(APITestCase):
                 )
             ]
         })
-        self.assertEqual(User.objects.count(), initial_user_count)
-        self.assertEqual(Team.objects.count(), initial_team_count)
+        self.assertEqual(User.objects.count(), self.initial_user_count)
+        self.assertEqual(Team.objects.count(), self.initial_team_count)
