@@ -7,14 +7,18 @@ class CreateBoardTests(APITestCase):
     def setUp(self):
         self.url = '/board/'
         self.team = Team.objects.create()
-        self.user = User.objects.create(username='foooo',
-                                        password='barbarbar',
-                                        is_admin=True,
-                                        team=self.team)
+        self.admin = User.objects.create(username='admin',
+                                         password='loremipsum',
+                                         is_admin=True,
+                                         team=self.team)
+        self.member = User.objects.create(username='member',
+                                          password='loremipsum',
+                                          is_admin=False,
+                                          team=self.team)
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': self.user.username})
+        response = self.client.post(self.url, {'username': self.admin.username})
         board = Board.objects.get(team=self.team)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
@@ -35,3 +39,19 @@ class CreateBoardTests(APITestCase):
             ]
         })
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_user_not_admin(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url, {'username': 'member'})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'non_field_errors': [
+                ErrorDetail(string='Only the team admin can create a board.',
+                            code='not_authorized')
+            ]
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
+
+
+
+
