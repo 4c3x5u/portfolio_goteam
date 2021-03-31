@@ -16,10 +16,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from main.api_views.auth import register, login
+from main.api_views.board import board
 
 urlpatterns = [
     path('register/', register, name='register'),
     path('login/', login, name='login'),
+    path('board/', board, name='board'),
 
     path('admin/', admin.site.urls)
 ]
