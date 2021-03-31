@@ -24,7 +24,7 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
-            'msg': 'Login successful.',
+            'msg': 'Registration successful.',
             'username': request_data['username'],
         })
         self.assertEqual(User.objects.count(), initial_user_count + 1)
@@ -46,7 +46,7 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
-            'msg': 'Login successful.',
+            'msg': 'Registration successful.',
             'username': request_data['username'],
         })
         self.assertEqual(User.objects.count(), initial_count + 1)
