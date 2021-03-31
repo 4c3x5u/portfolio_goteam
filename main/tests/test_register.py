@@ -20,6 +20,7 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
+        print(f'§{response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
             'msg': 'Registration successful.',
@@ -64,25 +65,21 @@ class RegisterTests(APITestCase):
                         'invite_code': 'invalid uuid'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data,
-            {
-                'invite_code': [
-                    ErrorDetail(string='Invalid invite code.', code='invalid')
-                ]
-            }
-        )
+        self.assertEqual(response.data, {
+            'invite_code': [
+                ErrorDetail(string='Invalid invite code.', code='invalid')
+            ]
+        })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 
     def test_team_not_found(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
-        invalid_invite_code = uuid4()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
-                        'invite_code': invalid_invite_code}
+                        'invite_code': uuid4()}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -101,12 +98,11 @@ class RegisterTests(APITestCase):
             'password': 'not_barbarbar'
         })
         self.assertEqual(response.status_code, 400)
-        print(response.data)
         self.assertEqual(response.data, {
-            'password_confirmation': [
-                ErrorDetail(string='Confirmation does not match the password.',
-                            code='invalid')
-            ]
+            'password_confirmation': ErrorDetail(
+                string='Confirmation does not match the password.',
+                code='invalid'
+            )
         })
 
         self.assertEqual(User.objects.count(), initial_count)
@@ -158,12 +154,10 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password_confirmation': [
-                ErrorDetail(
-                    string='Password confirmation cannot be empty.',
-                    code='blank'
-                )
-            ]
+            'password_confirmation': ErrorDetail(
+                string='Password confirmation cannot be empty.',
+                code='blank'
+            )
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
