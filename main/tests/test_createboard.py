@@ -5,7 +5,7 @@ from ..models import Board, Team, User
 
 class CreateBoardTests(APITestCase):
     def setUp(self):
-        self.url = '/board/'
+        self.url = '/boards/'
         self.team = Team.objects.create()
 
     def test_success(self):
