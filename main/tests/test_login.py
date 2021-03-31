@@ -16,7 +16,10 @@ class LoginTests(APITestCase):
         request_data = {'username': 'foooo', 'password': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {'foooo': 'Login successful.'})
+        self.assertEqual(response.data, {
+            'msg': 'Login successful.',
+            'username': 'foooo'
+        })
         user = User.objects.get(username='foooo')
         self.assertTrue(user)
         self.assertEqual(user.password, request_data['password'])

@@ -11,7 +11,6 @@ def register(request):
         return Response({
             'msg': 'Login successful.',
             'username': user.username,
-            'team_id': user.team.id
         }, 201)
     else:
         return Response(serializer.errors, 400)
