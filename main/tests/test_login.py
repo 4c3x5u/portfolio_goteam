@@ -5,9 +5,8 @@ from main.models import User, Team
 
 # noinspection DuplicatedCode
 class LoginTests(APITestCase):
-    url = '/login/'
-
     def setUp(self):
+        self.url = '/login/'
         User.objects.create(username='foooo',
                             password='barbarbar',
                             team=Team.objects.create())

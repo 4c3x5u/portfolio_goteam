@@ -6,10 +6,8 @@ from uuid import uuid4
 
 # noinspection DuplicatedCode
 class RegisterTests(APITestCase):
-    url = '/register/'
-    valid_invite_code = None
-
     def setUp(self):
+        self.url = '/register/'
         team = Team.objects.create()
         Board.objects.create(team=team)
         self.valid_invite_code = team.invite_code
