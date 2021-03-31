@@ -10,7 +10,8 @@ def register(request):
         user = serializer.save()
         return Response({
             'msg': 'Login successful.',
-            'username': user.username
+            'username': user.username,
+            'team_id': user.team.id
         }, 201)
     else:
         return Response(serializer.errors, 400)
