@@ -2,9 +2,12 @@ from rest_framework import serializers
 from ..models import User, Team, Board
 
 
-class BoardSerializer(serializers.Serializer):
+class CreateBoardSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=5, max_length=35)
     board_team = None
+
+    def update(self, instance, validated_data):
+        raise Exception('Update not allowed on this endpoint.')
 
     def validate(self, data):
         try:
@@ -23,7 +26,4 @@ class BoardSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Board.objects.create(team=self.board_team)
-
-    def update(self, instance, validated_data):
-        pass
 
