@@ -36,31 +36,34 @@ class RegisterSerializer(serializers.Serializer):
                 raise serializers.ValidationError('Invalid invite code.')
         return value
 
+    def validate(self, data):
+        if data.get('password') != data.get('password_confirmation'):
+            raise serializers.ValidationError({
+                'password_confirmation': 'Confirmation does not match the '
+                                         'password.'
+            })
+        invite_code = data.get('invite_code')
+        if invite_code:
+            try:
+                team = Team.objects.get(invite_code=invite_code)
+            except Team.DoesNotExist:
+                raise serializers.ValidationError({
+                    'invite_code': 'Team not found.'
+                })
+            data['team'] = team
+            data['is_admin'] = False
+        else:
+            team = Team.objects.create()
+            data['team'] = team
+            data['is_admin'] = True
+        return super().validate(data)
+
     def create(self, validated_data):
-        password = validated_data.get('password')
-        password_confirmation = validated_data.get('password_confirmation')
-        if password == password_confirmation:
-            invite_code = validated_data.get('invite_code')
-            if invite_code:
-                try:
-                    team = Team.objects.get(invite_code=invite_code)
-                except Team.DoesNotExist:
-                    raise serializers.ValidationError({
-                        'invite_code': 'Team not found.'
-                    })
-                validated_data['team'] = team
-                validated_data['is_admin'] = False
-                validated_data.pop('invite_code')
-            else:
-                team = Team.objects.create()
-                validated_data['team'] = team
-                validated_data['is_admin'] = True
+        if validated_data.get('invite_code'):
+            validated_data.pop('invite_code')
+        if validated_data.get('password_confirmation'):
             validated_data.pop('password_confirmation')
-            return User.objects.create(**validated_data)
-        raise serializers.ValidationError({
-            'password_confirmation': 'Confirmation does not match the '
-                                     'password.'
-        })
+        return User.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        pass
+        return super().update(instance, validated_data)
