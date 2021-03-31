@@ -4,6 +4,7 @@ from ..models import User, Team, Board
 
 class BoardSerializer(serializers.Serializer):
     username = serializers.CharField(min_length=5, max_length=35)
+    board_team = None
 
     def validate(self, data):
         try:
@@ -22,14 +23,11 @@ class BoardSerializer(serializers.Serializer):
             raise serializers.ValidationError({
                 'team_id': 'Invalid team ID.'
             })
-        response = super().validate(data)
-        data['team'] = team
-        return response
+        self.board_team = team
+        return super().validate(data)
 
     def create(self, validated_data):
-        team = validated_data.get('team')
-        validated_data.pop('team')
-        return Board.objects.create(team=team)
+        return Board.objects.create(team=self.board_team)
 
     def update(self, instance, validated_data):
         pass
