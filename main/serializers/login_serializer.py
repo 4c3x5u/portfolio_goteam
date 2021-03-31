@@ -15,8 +15,9 @@ class LoginSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
-        user = User.objects.get(username=data.get('username'))
-        if not user:
+        try:
+            user = User.objects.get(username=data.get('username'))
+        except User.DoesNotExist:
             raise serializers.ValidationError({
                 'username': 'Invalid username.'
             })
