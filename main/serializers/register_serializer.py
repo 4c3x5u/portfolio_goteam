@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from main.models import Team, User
-from uuid import UUID
-
+from main.models import Team, User, Board
 
 class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(
@@ -43,6 +41,7 @@ class RegisterSerializer(serializers.Serializer):
             data['is_admin'] = False
         else:
             team = Team.objects.create()
+            Board.objects.create(team=team)
             data['team'] = team
             data['is_admin'] = True
         return super().validate(data)

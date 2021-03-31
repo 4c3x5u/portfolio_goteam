@@ -1,6 +1,6 @@
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.test import APITestCase
-from main.models import User, Team
+from main.models import User, Team, Board
 from uuid import uuid4
 
 
@@ -18,10 +18,15 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
             'msg': 'Login successful.',
-            'username': request_data['username']
+            'username': request_data['username'],
+            'team_id': response.data['team_id']
         })
         self.assertEqual(User.objects.count(), initial_user_count + 1)
         self.assertEqual(Team.objects.count(), initial_team_count + 1)
+        self.assertEqual(
+            Board.objects.filter(team=response.data['team_id']).count(),
+            1
+        )
 
     def test_success_with_invite_code(self):
         initial_count = User.objects.count()
@@ -35,7 +40,8 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
             'msg': 'Login successful.',
-            'username': request_data['username']
+            'username': request_data['username'],
+            'team_id': team.id
         })
         self.assertEqual(User.objects.count(), initial_count + 1)
 
