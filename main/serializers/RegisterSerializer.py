@@ -22,11 +22,6 @@ class RegisterSerializer(serializers.Serializer):
     invite_code = serializers.CharField(required=False)
     is_admin = serializers.BooleanField()
 
-    class Meta:
-        model = User
-        fields = ('username', 'password', 'password_confirmation', 'team',
-                  'invite_code', 'is_admin')
-
     @staticmethod
     def validate_invite_code(value):
         if value:
