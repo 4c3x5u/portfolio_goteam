@@ -15,6 +15,7 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
+        print(response.data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data['username'], request_data['username'])
         self.assertEqual(response.data['password'], request_data['password'])
@@ -68,8 +69,9 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'invite_code': ErrorDetail(string='Team not found.',
-                                       code='invalid')
+            'invite_code': [
+                ErrorDetail(string='Team not found.', code='invalid')
+            ]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
@@ -84,10 +86,10 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         print(response.data)
         self.assertEqual(response.data, {
-            'password_confirmation': ErrorDetail(
-                string='Confirmation does not match the password.',
-                code='invalid'
-            )
+            'password_confirmation': [
+                ErrorDetail(string='Confirmation does not match the password.',
+                            code='invalid')
+            ]
         })
 
         self.assertEqual(User.objects.count(), initial_count)
