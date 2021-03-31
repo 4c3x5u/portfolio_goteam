@@ -1,6 +1,16 @@
-from rest_framework.generics import CreateAPIView
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from main.serializers.RegisterSerializer import RegisterSerializer
 
 
-class RegisterAPIView(CreateAPIView):
-    serializer_class = RegisterSerializer
+@api_view(['POST'])
+def register(request):
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        return Response({
+            'msg': 'Login successful.',
+            'username': user.username
+        }, 201)
+    else:
+        return Response(serializer.errors, 400)

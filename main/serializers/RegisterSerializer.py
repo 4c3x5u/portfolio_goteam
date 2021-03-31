@@ -19,17 +19,11 @@ class RegisterSerializer(serializers.Serializer):
         max_length=255,
         error_messages={'required': 'Password confirmation cannot be empty.'}
     )
-    invite_code = serializers.CharField(required=False)
+    invite_code = serializers.UUIDField(
+        required=False,
+        error_messages={'invalid': 'Invalid invite code.'}
+    )
     is_admin = serializers.BooleanField()
-
-    @staticmethod
-    def validate_invite_code(value):
-        if value:
-            try:
-                return UUID(value)
-            except (ValueError, TypeError):
-                raise serializers.ValidationError('Invalid invite code.')
-        return value
 
     def validate(self, data):
         if data.get('password') != data.get('password_confirmation'):
