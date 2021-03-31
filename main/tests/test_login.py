@@ -4,7 +4,7 @@ from main.models import User, Team
 
 
 # noinspection DuplicatedCode
-class LoginTestCase(APITestCase):
+class LoginTests(APITestCase):
     url = '/login/'
 
     def setUp(self):
@@ -43,3 +43,13 @@ class LoginTestCase(APITestCase):
             ]
         })
 
+    def test_username_invalid(self):
+        request_data = {'username': 'not_foooo', 'password': 'barbarbar'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': [
+                ErrorDetail(string='Invalid username.',
+                            code='invalid')
+            ]
+        })
