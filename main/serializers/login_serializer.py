@@ -4,7 +4,11 @@ from ..models import User
 
 
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=5, max_length=35)
+    username = serializers.CharField(
+        min_length=5,
+        max_length=35,
+        error_messages={'blank': 'Username cannot be empty.'}
+    )
     password = serializers.CharField(min_length=8, max_length=255)
 
     def validate(self, data):
@@ -19,7 +23,7 @@ class LoginSerializer(serializers.Serializer):
         user = User.objects.get(username=data.get('username'))
         if not user:
             raise serializers.ValidationError({
-                'password': 'Invalid username.'
+                'username': 'Invalid username.'
             }, 404)
         if user.password != data.get('password'):
             raise serializers.ValidationError({

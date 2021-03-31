@@ -10,4 +10,4 @@ def login(request):
         return Response({
             serializer.validated_data['username']: 'Login successful.'
         }, 200)
-    return Response(serializer.errors)
+    return Response(serializer.errors, 400)
