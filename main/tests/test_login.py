@@ -50,10 +50,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [
-                ErrorDetail(string='Invalid username.',
-                            code='invalid')
-            ]
+            'username': ErrorDetail(string='Invalid username.',
+                                    code='invalid')
         })
 
     def test_password_invalid(self):
@@ -61,8 +59,6 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password': [
-                ErrorDetail(string='Invalid password.',
-                            code='invalid')
-            ]
+            'password': ErrorDetail(string='Invalid password.',
+                                    code='invalid')
         })

@@ -1,12 +1,14 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from main.serializers.registerserializer import RegisterSerializer
-from main.serializers.loginserializer import LoginSerializer
+from rest_framework.exceptions import ErrorDetail
+
+from ..serializers.userserializer import UserSerializer
+from ..models import User
 
 
 @api_view(['POST'])
 def register(request):
-    serializer = RegisterSerializer(data=request.data)
+    serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
         return Response({
@@ -19,10 +21,23 @@ def register(request):
 
 @api_view(['POST'])
 def login(request):
-    serializer = LoginSerializer(data=request.data)
+    serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
+        try:
+            user = User.objects.get(username=request.data.get('username'))
+        except User.DoesNotExist:
+            return Response({
+                'username': ErrorDetail(string='Invalid username.',
+                                        code='invalid')
+            }, 400)
+        if user.password != request.data.get('password'):
+            return Response({
+                'password': ErrorDetail(string='Invalid password.',
+                                        code='invalid')
+            }, 400)
         return Response({
             'msg': 'Login successful.',
-            'username': serializer.validated_data['username'],
+            'username': user.username
         }, 200)
-    return Response(serializer.errors, 400)
+    else:
+        return Response(serializer.errors, 400)
