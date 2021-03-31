@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from main.serializers.LoginSerializer import LoginSerializer
+from main.serializers.login_serializer import LoginSerializer
 
 
 @api_view(['POST'])

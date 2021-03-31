@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from main.serializers.RegisterSerializer import RegisterSerializer
+from main.serializers.register_serializer import RegisterSerializer
 
 
 @api_view(['POST'])
