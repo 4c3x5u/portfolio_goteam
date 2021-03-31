@@ -95,10 +95,11 @@ class RegisterTests(APITestCase):
 
         self.assertEqual(User.objects.count(), initial_count)
 
-    def test_empty_username_field(self):
+    def test_username_blank(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
-        request_data = {'password': 'barbarbar',
+        request_data = {'username': '',
+                        'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
@@ -106,17 +107,18 @@ class RegisterTests(APITestCase):
             'username': [
                 ErrorDetail(
                     string='Username cannot be empty.',
-                    code='required'
+                    code='blank'
                 )
             ]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 
-    def test_empty_password_field(self):
+    def test_password_blank(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
+                        'password': '',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
@@ -124,25 +126,26 @@ class RegisterTests(APITestCase):
             'password': [
                 ErrorDetail(
                     string='Password cannot be empty.',
-                    code='required',
+                    code='blank',
                 )
             ]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 
-    def test_empty_password_confirmation_field(self):
+    def test_password_confirmation_blank(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
-                        'password': 'barbarbar'}
+                        'password': 'barbarbar',
+                        'password_confirmation': ''}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': [
                 ErrorDetail(
                     string='Password confirmation cannot be empty.',
-                    code='required'
+                    code='blank'
                 )
             ]
         })

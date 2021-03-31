@@ -7,17 +7,17 @@ class RegisterSerializer(serializers.Serializer):
     username = serializers.CharField(
         min_length=5,
         max_length=35,
-        error_messages={'required': 'Username cannot be empty.'}
+        error_messages={'blank': 'Username cannot be empty.'}
     )
     password = serializers.CharField(
         min_length=8,
         max_length=255,
-        error_messages={'required': 'Password cannot be empty.'}
+        error_messages={'blank': 'Password cannot be empty.'}
     )
     password_confirmation = serializers.CharField(
         min_length=8,
         max_length=255,
-        error_messages={'required': 'Password confirmation cannot be empty.'}
+        error_messages={'blank': 'Password confirmation cannot be empty.'}
     )
     invite_code = serializers.UUIDField(
         required=False,
