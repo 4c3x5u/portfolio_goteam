@@ -53,3 +53,14 @@ class LoginTests(APITestCase):
                             code='invalid')
             ]
         })
+
+    def test_password_invalid(self):
+        request_data = {'username': 'foooo', 'password': 'not_barbarbar'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'password': [
+                ErrorDetail(string='Invalid password.',
+                            code='invalid')
+            ]
+        })
