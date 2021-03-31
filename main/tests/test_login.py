@@ -1,21 +1,22 @@
 from rest_framework.test import APITestCase
+from main.models import User, Team
 
 
 # noinspection DuplicatedCode
 class LoginTestCase(APITestCase):
-    register_url = '/register/'
-    login_url = '/login/'
+    url = '/login/'
+
+    def setUp(self):
+        user = User.objects.create(username='foooo',
+                                   password='barbarbar',
+                                   team=Team.objects.create())
+        self.assertTrue(user)
 
     def test_success(self):
-        # Create user before trying to login
-        self.client.post(self.register_url, {
-            'username': 'foooo',
-            'password': 'barbarbar',
-            'password_confirmation': 'barbarbar'
-        })
-
-        request_data = {'username': 'foooo',
-                        'password': 'barbarbar'}
-        response = self.client.post(self.login_url, request_data)
+        request_data = {'username': 'foooo', 'password': 'barbarbar'}
+        response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
-
+        self.assertEqual(response.data, {'foooo': 'Login successful.'})
+        user = User.objects.get(username='foooo')
+        self.assertTrue(user)
+        self.assertEqual(user.password, request_data['password'])
