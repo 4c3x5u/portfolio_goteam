@@ -29,3 +29,6 @@ class LoginSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return Response({validated_data['username']: 'Login successful.'}, 200)
+
+    def update(self, instance, validated_data):
+        pass
