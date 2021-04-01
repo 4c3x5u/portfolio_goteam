@@ -29,7 +29,6 @@ class CreateTaskTests(APITestCase):
         self.assert_success(response.data, response.status_code, request)
         self.assertEqual(Task.objects.count(), initial_count + 1)
 
-
     def test_success_with_subtasks(self):
         initial_count = Task.objects.count()
         request = {'title': 'Some Task',
