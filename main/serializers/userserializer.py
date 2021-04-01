@@ -34,9 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
         invite_code = data.get('invite_code')
         if invite_code:
             try:
-                data['team'] = Team.objects.get(
-                    invite_code=data.get('invite_code')
-                )
+                data['team'] = Team.objects.get(invite_code=invite_code)
             except Team.DoesNotExist:
                 raise serializers.ValidationError({
                     'invite_code': 'Team not found.'
@@ -56,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'password_confirmation': 'Confirmation does not match the '
                                          'password.'
-            })
+            }, 'no_match')
         validated_data.pop('password_confirmation')
         if validated_data.get('is_admin') and not validated_data.get('team'):
             team = Team.objects.create()
