@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, User
+from ..models import Board, Team
 
 
 class ListBoardsTests(APITestCase):

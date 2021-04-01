@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 
-from ..serializers.userserializer import UserSerializer
+from ..serializers.ser_user import UserSerializer
 from ..models import User
 
 
