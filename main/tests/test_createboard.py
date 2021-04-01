@@ -22,7 +22,6 @@ class CreateBoardTests(APITestCase):
         self.assertEqual(response.data.get('team_id'), team.id)
         self.assertEqual(Board.objects.count(), initial_count + 1)
         columns = Column.objects.filter(board=board_id)
-        print(f'§columns:{columns}')
         self.assertEqual(len(columns), 4)
 
     def test_username_blank(self):
