@@ -21,6 +21,18 @@ class CreateBoardTests(APITestCase):
         self.assertTrue(response.data.get('board_id'))
         self.assertEqual(Board.objects.count(), initial_count + 1)
 
+    def test_username_blank(self):
+        initial_count = Board.objects.count()
+        team = Team.objects.create()
+        response = self.client.post(self.url, {'username': '',
+                                               'team_id': team.id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': ErrorDetail(string='Username cannot be empty.',
+                                    code='blank')
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
+
     def test_username_invalid(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
@@ -45,7 +57,7 @@ class CreateBoardTests(APITestCase):
         })
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'is_admin': ErrorDetail(
+            'username': ErrorDetail(
                 string='Only the team admin can create a board.',
                 code='not_authorized'
             )
