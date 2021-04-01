@@ -35,25 +35,24 @@ def boards(request):
             error = ErrorDetail(string='Team not found.', code='not_found')
             return Response({'team_id': error}, 404)
         serializer = BoardSerializer(data={'team': team_id})
-        if serializer.is_valid():
-            board = serializer.save()
-            return Response(
-                {'board_id': board.id, 'team_id': board.team.id},
-                201
-            )
-        return Response(serializer.errors, 400)
+        if not serializer.is_valid():
+            return Response(serializer.errors, 400)
+        board = serializer.save()
+        return Response(
+            {'board_id': board.id, 'team_id': board.team.id},
+            201
+        )
 
     if request.method == 'GET':
         team_id = request.query_params.get('team_id')
         if not team_id:
-            error = ErrorDetail(string='Team ID cannot be empty.',
-                                code='null')
+            error = ErrorDetail(string='Team ID cannot be empty.', code='null')
             return Response({'team_id': error}, 400)
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
             error = ErrorDetail(string='No boards found.', code='not_found')
             return Response({'team_id': error}, 404)
-        return Response(
-            {'boards': BoardSerializer(team_boards, many=True).data},
-            200
-        )
+        serializer = BoardSerializer(team_boards, many=True)
+        return Response({'boards': serializer.data}, 200)
+
+
