@@ -20,7 +20,6 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
-        print(f'§{response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {
             'msg': 'Registration successful.',
