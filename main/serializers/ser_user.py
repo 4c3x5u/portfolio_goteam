@@ -21,14 +21,14 @@ class UserSerializer(serializers.ModelSerializer):
     team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all(),
                                               required=False)
     is_admin = serializers.BooleanField(default=True)
-    invite_code = serializers.UUIDField(required=False, error_messages={
-        'invalid': 'Invalid invite code.'
-    })
+    invite_code = serializers.UUIDField(
+        required=False,
+        error_messages={'invalid': 'Invalid invite code.'}
+    )
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'password_confirmation', 'is_admin',
-                  'team', 'invite_code')
+        fields = '__all__'
 
     def validate(self, data):
         invite_code = data.get('invite_code')

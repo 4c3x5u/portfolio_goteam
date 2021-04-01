@@ -5,4 +5,4 @@ from ..models import Subtask
 class SubtaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subtask
-        fields = ('title', 'order', 'task')
+        fields = '__all__'

@@ -42,6 +42,19 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(subtasks.count(), len(request.get('subtasks')))
         self.assertEqual(Task.objects.count(), initial_count + 1)
 
+    def test_title_blank(self):
+        initial_count = Task.objects.count()
+        request = {'title': '',
+                   'description': 'Lorem ipsum dolor sit amet',
+                   'column': self.column.id}
+        response = self.client.post(self.url, request)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'title': ErrorDetail(string='Title cannot be empty.',
+                                 code='blank')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
     def test_column_blank(self):
         initial_count = Task.objects.count()
         request = {'title': 'Some Task',
