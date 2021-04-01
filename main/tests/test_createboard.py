@@ -17,9 +17,8 @@ class CreateBoardTests(APITestCase):
         response = self.client.post(self.url, {'username': user.username,
                                                'team_id': team.id})
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(response.data.get('msg'))
         self.assertEqual(response.data.get('team_id'), team.id)
-        self.assertEqual(response.data.get('msg'), 'Board created successfuly')
+        self.assertTrue(response.data.get('board_id'))
         self.assertEqual(Board.objects.count(), initial_count + 1)
 
     def test_username_invalid(self):
