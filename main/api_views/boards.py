@@ -23,8 +23,8 @@ def boards(request):
 
     if request.method == 'GET':
         team_id = request.query_params.get('team_id')
-        boards = Board.objects.filter(team=team_id)
-        if not boards:
+        team_boards = Board.objects.filter(team=team_id)
+        if not team_boards:
             return Response({
                 'team_id': ErrorDetail(
                     string='No boards found for this team ID.',
@@ -32,11 +32,9 @@ def boards(request):
                 )
             })
         serializer = BoardSerializer(
-            data=list(map(lambda b: b.__dict__, boards)),
+            team_boards,
             many=True
         )
-        if serializer.is_valid():
-            return Response({
-                'boards': serializer.validated_data
-            }, 200)
-        return Response(serializer.errors, 400)
+        return Response({
+            'boards': serializer.data
+        }, 200)
