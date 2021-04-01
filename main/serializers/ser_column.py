@@ -5,4 +5,4 @@ from ..models import Column
 class ColumnSerializer(ModelSerializer):
     class Meta:
         model = Column
-        fields = ('board', 'order')
+        fields = '__all__'
