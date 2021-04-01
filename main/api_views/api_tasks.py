@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import ErrorDetail
 from ..models import Column
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
@@ -7,11 +8,17 @@ from ..serializers.ser_subtask import SubtaskSerializer
 
 @api_view(['POST'])
 def tasks(request):
-    column_tasks = Column.objects.filter(id=request.data.get('column'))
+    column_id = request.data.get('column')
+    if not column_id:
+        return Response({
+            'column': ErrorDetail(string='Column cannot be empty.',
+                                  code='blank')
+        }, 400)
+    column_tasks = Column.objects.filter(id=column_id)
     task_serializer = TaskSerializer(
         data={'title': request.data.get('title'),
               'description': request.data.get('description'),
-              'order': len(column_tasks) + 1,
+              'order': column_tasks.count() + 1,
               'column': request.data.get('column')}
     )
     if not task_serializer.is_valid():
