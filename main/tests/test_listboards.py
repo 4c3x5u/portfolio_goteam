@@ -29,11 +29,20 @@ class ListBoardsTests(APITestCase):
                                    code='null')
         })
 
+    def test_invalid_team_id(self):
+        response = self.client.get(self.base_url + '123')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Team not found.',
+                                   code='not_found')
+        })
+
     def test_boards_not_found(self):
         team = Team.objects.create()
         response = self.client.get(self.base_url + str(team.id))
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
-            'team_id': ErrorDetail(string='No boards found.',
+            'team_id': ErrorDetail(string='No boards found for this team.',
                                    code='not_found')
         })
+
