@@ -2,12 +2,14 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
+from ..serializers.ser_column import ColumnSerializer
 from ..models import Board, Team, User
 
 
 @api_view(['POST', 'GET'])
 def boards(request):
     if request.method == 'POST':
+        # validation
         username = request.data.get('username')
         if not username:
             error = ErrorDetail(string="Username cannot be empty.",
@@ -34,10 +36,22 @@ def boards(request):
         except Team.DoesNotExist:
             error = ErrorDetail(string='Team not found.', code='not_found')
             return Response({'team_id': error}, 404)
-        serializer = BoardSerializer(data={'team': team_id})
-        if not serializer.is_valid():
-            return Response(serializer.errors, 400)
-        board = serializer.save()
+
+        # board creation
+        board_serializer = BoardSerializer(data={'team': team_id})
+        if not board_serializer.is_valid():
+            return Response(board_serializer.errors, 400)
+        board = board_serializer.save()
+
+        # columns creation
+        for order in range(0, 4):
+            column_serializer = ColumnSerializer(data={'board': board.id,
+                                                       'order': order})
+            if not column_serializer.is_valid():
+                return Response(column_serializer.errors, 400)
+            column_serializer.save()
+
+        # success response
         return Response(
             {'board_id': board.id, 'team_id': board.team.id},
             201
