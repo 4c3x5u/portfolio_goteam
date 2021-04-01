@@ -52,6 +52,7 @@ def boards(request):
             column_serializer.save()
 
         # success response
+        # TODO: return a msg and the board_id only
         return Response(
             {'board_id': board.id, 'team_id': board.team.id},
             201
