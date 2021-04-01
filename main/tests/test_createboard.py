@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, User
+from ..models import Board, Team, User, Column
 
 
 class CreateBoardTests(APITestCase):
@@ -17,9 +17,13 @@ class CreateBoardTests(APITestCase):
         response = self.client.post(self.url, {'username': user.username,
                                                'team_id': team.id})
         self.assertEqual(response.status_code, 201)
+        board_id = response.data.get('board_id')
+        self.assertTrue(board_id)
         self.assertEqual(response.data.get('team_id'), team.id)
-        self.assertTrue(response.data.get('board_id'))
         self.assertEqual(Board.objects.count(), initial_count + 1)
+        columns = Column.objects.filter(board=board_id)
+        print(f'§columns:{columns}')
+        self.assertEqual(len(columns), 4)
 
     def test_username_blank(self):
         initial_count = Board.objects.count()
