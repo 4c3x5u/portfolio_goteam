@@ -28,3 +28,12 @@ class ListBoardsTests(APITestCase):
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
                                    code='null')
         })
+
+    def test_boards_not_found(self):
+        team = Team.objects.create()
+        response = self.client.get(f'{self.base_url}?team_id={team.id}')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='No boards found.',
+                                   code='not_found')
+        })
