@@ -26,8 +26,8 @@ class Column(Model):
 class Task(Model):
     title = CharField(max_length=50)
     description = TextField(null=True)
-    # TODO: Make sure you'll need this field in the database when using drag
-    #       and drop controls in React
+    # TODO: Make sure to delete this field if you find that you don't need it
+    #       for React drag and drop controls
     order = IntegerField()
     column = ForeignKey(Column, on_delete=CASCADE)
 
