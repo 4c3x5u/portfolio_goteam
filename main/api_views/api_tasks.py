@@ -21,16 +21,18 @@ def tasks(request):
         return Response(task_serializer.errors, 400)
     task = task_serializer.save()
 
-    for order, title in enumerate(request.data.get('subtasks'), start=0):
-        subtask_serializer = SubtaskSerializer(
-            data={'title': title.get('title'),
-                  'order': order,
-                  'task': task.id}
-        )
-        if not subtask_serializer.is_valid():
-            task.delete()
-            return Response(subtask_serializer.errors, 400)
-        subtask_serializer.save()
+    subtasks = request.data.get('subtasks')
+    if subtasks:
+        for i, title in enumerate(subtasks):
+            subtask_serializer = SubtaskSerializer(
+                data={'title': title.get('title'),
+                      'order': i,
+                      'task': task.id}
+            )
+            if not subtask_serializer.is_valid():
+                task.delete()
+                return Response(subtask_serializer.errors, 400)
+            subtask_serializer.save()
 
     return Response({
         'msg': 'Task creation successful.',
