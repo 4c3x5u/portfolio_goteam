@@ -44,14 +44,32 @@ class CreateTaskTests(APITestCase):
 
     def test_title_blank(self):
         initial_count = Task.objects.count()
-        request = {'title': '',
-                   'description': 'Lorem ipsum dolor sit amet',
-                   'column': self.column.id}
-        response = self.client.post(self.url, request)
+        response = self.client.post(self.url, {
+            'title': '',
+            'description': 'Lorem ipsum dolor sit amet',
+            'column': self.column.id
+        })
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'title': [ErrorDetail(string='Title cannot be empty.',
                                   code='blank')]
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
+    def test_title_max_length(self):
+        initial_count = Task.objects.count()
+        response = self.client.post(self.url, {
+            'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo',
+            'description': 'Lorem ipsum dolor sit amet',
+            'column': self.column.id
+        })
+        self.assertEqual(response.status_code, 400)
+        print(f'§ resdata: {response.data.get("title")}')
+        self.assertEqual(response.data, {
+            'title': [
+                ErrorDetail(string='Title cannot be longer than 50 characters.',
+                            code='max_length'),
+            ]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -67,4 +85,3 @@ class CreateTaskTests(APITestCase):
                                   code='blank')
         })
         self.assertEqual(Task.objects.count(), initial_count)
-
