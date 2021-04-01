@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
 
 
@@ -20,13 +21,17 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(task.column.id, request.get('column'))
 
     def test_success(self):
+        initial_count = Task.objects.count()
         request = {'title': 'Some Task',
                    'description': 'Lorem ipsum dolor sit amet',
                    'column': self.column.id}
         response = self.client.post(self.url, request)
         self.assert_success(response.data, response.status_code, request)
+        self.assertEqual(Task.objects.count(), initial_count + 1)
+
 
     def test_success_with_subtasks(self):
+        initial_count = Task.objects.count()
         request = {'title': 'Some Task',
                    'description': 'Lorem ipsum dolor sit amet',
                    'column': self.column.id,
@@ -36,3 +41,18 @@ class CreateTaskTests(APITestCase):
         self.assert_success(response.data, response.status_code, request)
         subtasks = Subtask.objects.filter(task=response.data.get('task_id'))
         self.assertEqual(subtasks.count(), len(request.get('subtasks')))
+        self.assertEqual(Task.objects.count(), initial_count + 1)
+
+    def test_column_blank(self):
+        initial_count = Task.objects.count()
+        request = {'title': 'Some Task',
+                   'description': 'Lorem ipsum dolor sit amet',
+                   'column': ''}
+        response = self.client.post(self.url, request)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'column': ErrorDetail(string='Column cannot be empty.',
+                                  code='blank')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
