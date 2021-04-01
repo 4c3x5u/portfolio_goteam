@@ -3,10 +3,11 @@ from ..models import Task
 
 
 class TaskSerializer(serializers.ModelSerializer):
-    title = serializers.CharField( max_length=50, error_messages={
+    title = serializers.CharField(max_length=50, error_messages={
         'blank': 'Title cannot be empty.',
         'max_length': 'Title cannot be longer than 50 characters.'
     })
+    description = serializers.CharField(allow_blank=True)
 
     class Meta:
         model = Task
