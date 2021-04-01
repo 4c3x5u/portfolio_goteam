@@ -50,8 +50,8 @@ class CreateTaskTests(APITestCase):
         response = self.client.post(self.url, request)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'title': ErrorDetail(string='Title cannot be empty.',
-                                 code='blank')
+            'title': [ErrorDetail(string='Title cannot be empty.',
+                                  code='blank')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
