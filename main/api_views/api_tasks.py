@@ -1,11 +1,8 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.exceptions import ErrorDetail
-from rest_framework.parsers import JSONParser
-from ..models import Column, Task, Subtask
+from ..models import Column
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-import json
 
 
 @api_view(['POST'])
