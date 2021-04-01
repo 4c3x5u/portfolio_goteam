@@ -48,11 +48,16 @@ def boards(request):
         if not team_id:
             error = ErrorDetail(string='Team ID cannot be empty.', code='null')
             return Response({'team_id': error}, 400)
+        try:
+            Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            error = ErrorDetail(string='Team not found.', code='not_found')
+            return Response({'team_id': error}, 404)
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
-            error = ErrorDetail(string='No boards found.', code='not_found')
+            # TODO: Create a board if not found and don't return error
+            error = ErrorDetail(string='No boards found for this team.',
+                                code='not_found')
             return Response({'team_id': error}, 404)
         serializer = BoardSerializer(team_boards, many=True)
         return Response({'boards': serializer.data}, 200)
-
-
