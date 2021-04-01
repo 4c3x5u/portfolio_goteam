@@ -15,8 +15,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from main.api_views.authviews import register, login
-from main.api_views.boardviews import boards
+from main.api_views.api_auth import register, login
+from main.api_views.api_boards import boards
 
 urlpatterns = [
     path('register/', register, name='register'),

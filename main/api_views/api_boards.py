@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..serializers.boardserializer import BoardSerializer
+from ..serializers.ser_board import BoardSerializer
 from ..models import Board, Team, User
 
 
