@@ -61,6 +61,13 @@ def tasks(request):
                                           code='blank')
             }, 400)
 
+        if 'column' in list(data.keys()) and not data.get('column'):
+            return Response({
+                'data.column': ErrorDetail(string='Task column cannot be '
+                                                  'empty.',
+                                           code='blank')
+            }, 400)
+
         serializer = TaskSerializer(Task.objects.get(id=task_id),
                                     data=data,
                                     partial=True)
