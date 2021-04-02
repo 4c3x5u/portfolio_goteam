@@ -1,27 +1,31 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from main.models import User, Team
+import bcrypt
 
 
 class LoginTests(APITestCase):
     def setUp(self):
         self.url = '/login/'
-        self.user = User.objects.create(username='foooo',
-                                        password='barbarbar',
-                                        team=Team.objects.create())
+        self.pw_raw = 'barbarbar'
+        self.user = User.objects.create(
+            username='foooo',
+            password=bcrypt.hashpw(self.pw_raw.encode(), bcrypt.gensalt()),
+            team=Team.objects.create()
+        )
 
     def test_success(self):
         request_data = {'username': self.user.username,
-                        'password': self.user.password}
+                        'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'msg': 'Login successful.',
                                          'username': self.user.username})
-        self.assertEqual(request_data['password'], self.user.password)
 
     def test_username_blank(self):
-        request_data = {'username': '', 'password': self.user.password}
+        request_data = {'username': '', 'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
+        print(f'§{response.data}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': [ErrorDetail(string='Username cannot be empty.',
@@ -30,7 +34,7 @@ class LoginTests(APITestCase):
 
     def test_username_max_length(self):
         request_data = {'username': 'fooooooooooooooooooooooooooooooooooo',
-                        'password': self.user.password}
+                        'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -50,7 +54,7 @@ class LoginTests(APITestCase):
             rbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar
             barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
         '''
-        request_data = {'username': self.user.password, 'password': password}
+        request_data = {'username': self.user.username, 'password': password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -73,7 +77,7 @@ class LoginTests(APITestCase):
 
     def test_username_invalid(self):
         request_data = {'username': 'invalidusername',
-                        'password': self.user.password}
+                        'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
