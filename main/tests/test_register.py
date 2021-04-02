@@ -4,7 +4,6 @@ from main.models import User, Team, Board
 from uuid import uuid4
 
 
-# noinspection DuplicatedCode
 class RegisterTests(APITestCase):
     def setUp(self):
         self.url = '/register/'
@@ -67,6 +66,24 @@ class RegisterTests(APITestCase):
             )]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
+
+    def test_password_max_length(self):
+        password = '''
+            barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarb
+            arbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
+            rbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar
+            barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
+        '''
+        request_data = {'username': 'foooo',
+                        'password': password}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'password': [ErrorDetail(
+                string='Password cannot be longer than 255 characters.',
+                code='max_length'
+            )]
+        })
 
     def test_invalid_invite_code(self):
         initial_user_count = User.objects.count()

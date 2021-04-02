@@ -41,6 +41,23 @@ class LoginTests(APITestCase):
             )]
         })
 
+    def test_password_max_length(self):
+        password = '''
+            barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarb
+            arbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
+            rbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar
+            barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
+        '''
+        request_data = {'username': 'foooo',
+                        'password': password}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'password': [ErrorDetail(
+                string='Password cannot be longer than 255 characters.',
+                code='max_length'
+            )]
+        })
 
     def test_password_blank(self):
         request_data = {'username': 'foooo', 'password': ''}
