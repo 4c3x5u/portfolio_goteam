@@ -51,6 +51,22 @@ class RegisterTests(APITestCase):
             Team.objects.get(invite_code=request_data['invite_code'])
         )
         self.assertEqual(User.objects.count(), initial_user_count + 1)
+        self.assertEqual(Team.objects.count(), initial_team_count)
+
+    def test_username_max_length(self):
+        initial_user_count = User.objects.count()
+        request_data = {'username': 'fooooooooooooooooooooooooooooooooooo',
+                        'password': 'barbarbar',
+                        'password_confirmation': 'barbarbar'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': ErrorDetail(
+                string='Username cannot be longer than 35 characters.',
+                code='max_length'
+            )
+        })
+        self.assertEqual(User.objects.count(), initial_user_count)
 
     def test_invalid_invite_code(self):
         initial_user_count = User.objects.count()
