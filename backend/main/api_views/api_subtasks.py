@@ -26,12 +26,18 @@ def subtasks(request):
                                       code='blank')
         }, 400)
 
-    if 'done' in list(data.keys()) and (
-        data.get('done') == '' or data.get('done') is None
-    ):
+    done = data.get('done')
+    if 'done' in list(data.keys()) and (done == '' or done is None):
         return Response({
             'data.done': ErrorDetail(string='Done cannot be empty.',
                                      code='blank')
+        }, 400)
+
+    order = data.get('order')
+    if 'order' in list(data.keys()) and (order == '' or order is None):
+        return Response({
+            'data.order': ErrorDetail(string='Order cannot be empty.',
+                                      code='blank')
         }, 400)
 
     serializer = SubtaskSerializer(Subtask.objects.get(id=subtask_id),
