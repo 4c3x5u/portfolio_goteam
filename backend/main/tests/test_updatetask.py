@@ -49,3 +49,14 @@ class UpdateTaskTests(APITestCase):
         self.help_test_success(request)
         self.assertEqual(Task.objects.get(id=self.task.id).order,
                          request.get('data').get('order'))
+
+    def test_order_blank(self):
+        request = {'id': self.task.id, 'data': {'order': ''}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.order': ErrorDetail(string='Task order cannot be empty.',
+                                      code='blank')
+        })
+        self.assertEqual(Task.objects.get(id=self.task.id).order,
+                         self.task.order)
