@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
 
 
@@ -26,3 +27,16 @@ class UpdateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.get(id=self.task.id).title,
                          request.get('data').get('title'))
+
+    def test_title_blank(self):
+        request = {'id': self.task.id, 'data': {'title': ''}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.title': ErrorDetail(string='Task title cannot be empty.',
+                                      code='blank')
+        })
+        self.assertEqual(Task.objects.get(id=self.task.id).title,
+                         self.task.title)
+
+
