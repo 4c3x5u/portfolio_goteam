@@ -48,6 +48,12 @@ def tasks(request):
         task_id = request.data.get('id')
         data = request.data.get('data')
 
+        if 'title' in list(data.keys()) and not data.get('title'):
+            return Response({
+                'data.title': ErrorDetail(string='Task title cannot be empty.',
+                                          code='blank')
+            }, 400)
+
         serializer = TaskSerializer(Task.objects.get(id=task_id),
                                     data=data,
                                     partial=True)
