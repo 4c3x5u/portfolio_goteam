@@ -56,18 +56,22 @@ class UserSerializer(serializers.ModelSerializer):
                 'password_confirmation': 'Password confirmation cannot be '
                                          'empty.'
             }, 'blank')
+
         if password_confirmation != validated_data.get('password'):
             raise serializers.ValidationError({
                 'password_confirmation': 'Confirmation does not match the '
                                          'password.'
             }, 'no_match')
-        validated_data.pop('password_confirmation')
+
         if validated_data.get('is_admin') and not validated_data.get('team'):
             team = Team.objects.create()
             Board.objects.create(team=team)
             validated_data['team'] = team
+
         validated_data['password'] = bcrypt.hashpw(
             bytes(validated_data['password'], 'utf-8'),
             bcrypt.gensalt()
         )
+
+        validated_data.pop('password_confirmation')
         return User.objects.create(**validated_data)

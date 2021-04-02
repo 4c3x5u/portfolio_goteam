@@ -14,6 +14,7 @@ def tasks(request):
             'column': ErrorDetail(string='Column cannot be empty.',
                                   code='blank')
         }, 400)
+
     task_serializer = TaskSerializer(
         data={'title': request.data.get('title'),
               'description': request.data.get('description'),
