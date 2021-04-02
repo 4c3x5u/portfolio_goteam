@@ -34,6 +34,6 @@ class SubtaskTests(APITestCase):
 
     def test_update_done_success(self):
         request = {'id': self.subtask.id, 'data': {'done': True}}
-        subtask = Subtask.objects.get(id=self.subtask.id)
+        subtask = self.help_test_success(request)
         self.assertEqual(subtask.done, request.get('data').get('done'))
 

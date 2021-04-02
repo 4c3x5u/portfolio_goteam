@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from ..models import Subtask
 from ..serializers.ser_subtask import SubtaskSerializer
 
+
 @api_view(['PATCH'])
 def subtasks(request):
     current_subtask = Subtask.objects.get(id=request.data.get('id'))
