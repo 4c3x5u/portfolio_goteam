@@ -72,3 +72,14 @@ class UpdateTaskTests(APITestCase):
         self.help_test_success(request)
         self.assertEqual(Task.objects.get(id=self.task.id).column.id,
                          request.get('data').get('column'))
+
+    def test_column_blank(self):
+        request = {'id': self.task.id, 'data': {'column': ''}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.column': ErrorDetail(string='Task column cannot be empty.',
+                                       code='blank')
+        })
+        self.assertEqual(Task.objects.get(id=self.task.id).column,
+                         self.task.column)
