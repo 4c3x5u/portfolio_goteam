@@ -83,6 +83,29 @@ class CreateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
+    def test_subtask_title_max_length(self):
+        initial_count = Task.objects.count()
+        response = self.client.post(self.url, {
+            'title': 'Some Task',
+            'description': 'Lorem ipsum dolor sit amet',
+            'column': self.column.id,
+            'subtasks': [{
+                'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo'
+            }]
+
+        }, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'subtask.title': [
+                ErrorDetail(
+                    string='Subtask titles cannot be longer than 50 '
+                           'characters.',
+                    code='max_length'
+                )
+            ]
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
     def test_column_blank(self):
         initial_count = Task.objects.count()
         request = {'title': 'Some Task',
