@@ -6,22 +6,21 @@ from main.models import User, Team
 class LoginTests(APITestCase):
     def setUp(self):
         self.url = '/login/'
-        User.objects.create(username='foooo',
-                            password='barbarbar',
-                            team=Team.objects.create())
+        self.user = User.objects.create(username='foooo',
+                                        password='barbarbar',
+                                        team=Team.objects.create())
 
     def test_success(self):
-        request_data = {'username': 'foooo', 'password': 'barbarbar'}
+        request_data = {'username': self.user.username,
+                        'password': self.user.password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'msg': 'Login successful.',
-                                         'username': 'foooo'})
-        user = User.objects.get(username='foooo')
-        self.assertTrue(user)
-        self.assertEqual(user.password, request_data['password'])
+                                         'username': self.user.username})
+        self.assertEqual(request_data['password'], self.user.password)
 
     def test_username_blank(self):
-        request_data = {'username': '', 'password': 'barbarbar'}
+        request_data = {'username': '', 'password': self.user.password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -31,14 +30,16 @@ class LoginTests(APITestCase):
 
     def test_username_max_length(self):
         request_data = {'username': 'fooooooooooooooooooooooooooooooooooo',
-                        'password': 'barbarbar'}
+                        'password': self.user.password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [ErrorDetail(
-                string='Username cannot be longer than 35 characters.',
-                code='max_length'
-            )]
+            'username': [
+                ErrorDetail(
+                    string='Username cannot be longer than 35 characters.',
+                    code='max_length'
+                )
+            ]
         })
 
     # noinspection DuplicatedCode
@@ -49,19 +50,20 @@ class LoginTests(APITestCase):
             rbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar
             barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
         '''
-        request_data = {'username': 'foooo',
-                        'password': password}
+        request_data = {'username': self.user.password, 'password': password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password': [ErrorDetail(
-                string='Password cannot be longer than 255 characters.',
-                code='max_length'
-            )]
+            'password': [
+                ErrorDetail(
+                    string='Password cannot be longer than 255 characters.',
+                    code='max_length'
+                )
+            ]
         })
 
     def test_password_blank(self):
-        request_data = {'username': 'foooo', 'password': ''}
+        request_data = {'username': self.user.username, 'password': ''}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -70,19 +72,19 @@ class LoginTests(APITestCase):
         })
 
     def test_username_invalid(self):
-        request_data = {'username': 'not_foooo', 'password': 'barbarbar'}
+        request_data = {'username': 'invalidusername',
+                        'password': self.user.password}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Invalid username.',
-                                    code='invalid')
+            'username': ErrorDetail(string='Invalid username.', code='invalid')
         })
 
     def test_password_invalid(self):
-        request_data = {'username': 'foooo', 'password': 'not_barbarbar'}
+        request_data = {'username': self.user.username,
+                        'password': 'invalidpassword'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password': ErrorDetail(string='Invalid password.',
-                                    code='invalid')
+            'password': ErrorDetail(string='Invalid password.', code='invalid')
         })
