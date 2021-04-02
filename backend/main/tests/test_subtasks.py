@@ -48,3 +48,15 @@ class SubtaskTests(APITestCase):
         })
         self.assertEqual(Subtask.objects.get(id=self.subtask.id).title,
                          self.subtask.title)
+
+    def test_data_blank(self):
+        request = {'id': self.subtask.id, 'data': ''}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'id': ErrorDetail(string='Data cannot be empty.', code='blank')
+        })
+        subtask = Subtask.objects.get(id=self.subtask.id)
+        self.assertEqual(subtask.title, self.subtask.title)
+        self.assertEqual(subtask.done, self.subtask.done)
+
