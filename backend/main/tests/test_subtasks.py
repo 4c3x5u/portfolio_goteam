@@ -61,3 +61,14 @@ class SubtaskTests(APITestCase):
             'data': ErrorDetail(string='Data cannot be empty.', code='blank')
         })
         self.help_test_failure()
+
+    def test_title_blank(self):
+        request = {'id': self.subtask.id, 'data': {'title': ''}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.title': ErrorDetail(string='Title cannot be empty.',
+                                      code='blank')
+        })
+        self.help_test_failure()
+
