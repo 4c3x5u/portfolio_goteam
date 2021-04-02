@@ -1,7 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, User, Column
-import bcrypt
 
 
 class CreateBoardTests(APITestCase):
@@ -10,13 +9,15 @@ class CreateBoardTests(APITestCase):
         self.team = Team.objects.create()
         self.admin = User.objects.create(
             username='teamadmin',
-            password=bcrypt.hashpw(b'adminpassword', bcrypt.gensalt()),
+            password=b'$2b$12$lrkDnrwXSBU.YJvdzbpAWOd9GhwHJGVYafRXTHct2gm3akPJ'
+                     b'gB5Zq',
             is_admin=True,
             team=self.team
         )
         self.member = User.objects.create(
             username='teammember',
-            password=bcrypt.hashpw(b'memberpassword', bcrypt.gensalt()),
+            password=b'$2b$12$RonFQ1/18JiCN8yFeBaxKOsVbxLdcehlZ4e0r9gtZbARqEVU'
+                     b'HHEoK',
             is_admin=False,
             team=self.team
         )

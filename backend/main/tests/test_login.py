@@ -1,7 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from main.models import User, Team
-import bcrypt
 
 
 class LoginTests(APITestCase):
@@ -10,7 +9,8 @@ class LoginTests(APITestCase):
         self.pw_raw = 'barbarbar'
         self.user = User.objects.create(
             username='foooo',
-            password=bcrypt.hashpw(self.pw_raw.encode(), bcrypt.gensalt()),
+            password=b'$2b$12$ZC.GGCmSPi8syzmJBQ6LoeUSeD2wkdSBZkPh18nZU81Lv6u7'
+                     b'CuZMe',
             team=Team.objects.create()
         )
 
