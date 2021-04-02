@@ -14,16 +14,16 @@ class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         min_length=8,
         max_length=255,
-        error_messages={'blank': 'Password cannot be empty.'}
+        error_messages={
+            'blank': 'Password cannot be empty.',
+            'max_length': 'Password cannot be longer than 255 characters.'
+        }
     )
-    password_confirmation = serializers.CharField(
-        min_length=8,
-        max_length=255,
-        required=False
-    )
-    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all(),
-                                              required=False)
-    is_admin = serializers.BooleanField(default=True)
+    # Doesn't need min/max-length since we only care whether it matches the
+    # password or not. If it does, min/max-length is validated since the
+    # password will already be validated.
+    password_confirmation = serializers.CharField(required=False)
+    team = serializers.IntegerField(required=False)
     invite_code = serializers.UUIDField(
         required=False,
         error_messages={'invalid': 'Invalid invite code.'}
@@ -44,6 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
                 })
             data['is_admin'] = False
             data.pop('invite_code')
+        else:
+            data['is_admin'] = True
         return super().validate(data)
 
     def create(self, validated_data):
