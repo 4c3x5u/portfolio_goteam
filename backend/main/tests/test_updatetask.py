@@ -39,4 +39,14 @@ class UpdateTaskTests(APITestCase):
         self.assertEqual(Task.objects.get(id=self.task.id).title,
                          self.task.title)
 
+    def test_order_success(self):
+        request = {'id': self.task.id, 'data': {'order': 10}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {
+            'msg': 'Task update successful.',
+            'id': self.task.id
+        })
+        self.assertEqual(Task.objects.get(id=self.task.id).order,
+                         request.get('data').get('order'))
 
