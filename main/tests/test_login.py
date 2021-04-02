@@ -29,6 +29,19 @@ class LoginTests(APITestCase):
                                      code='blank')]
         })
 
+    def test_username_max_length(self):
+        request_data = {'username': 'fooooooooooooooooooooooooooooooooooo',
+                        'password': 'barbarbar'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': [ErrorDetail(
+                string='Username cannot be longer than 35 characters.',
+                code='max_length'
+            )]
+        })
+
+
     def test_password_blank(self):
         request_data = {'username': 'foooo', 'password': ''}
         response = self.client.post(self.url, request_data)
