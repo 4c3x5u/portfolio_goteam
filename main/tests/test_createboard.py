@@ -74,3 +74,15 @@ class CreateBoardTests(APITestCase):
                                    code='blank')
         })
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_team_not_found(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url, {'username': self.admin.username,
+                                               'team_id': '123'})
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Team not found.', code='not_found')
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
+
+
