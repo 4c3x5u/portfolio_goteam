@@ -14,11 +14,10 @@ def tasks(request):
             'column': ErrorDetail(string='Column cannot be empty.',
                                   code='blank')
         }, 400)
-    column_tasks = Column.objects.filter(id=column_id)
     task_serializer = TaskSerializer(
         data={'title': request.data.get('title'),
               'description': request.data.get('description'),
-              'order': column_tasks.count() + 1,
+              'order': Column.objects.filter(id=column_id).count() + 1,
               'column': request.data.get('column')}
     )
     if not task_serializer.is_valid():
@@ -27,15 +26,15 @@ def tasks(request):
 
     subtasks = request.data.get('subtasks')
     if subtasks:
-        for i, title in enumerate(subtasks):
+        for i, subtask in enumerate(subtasks):
             subtask_serializer = SubtaskSerializer(
-                data={'title': title.get('title'),
+                data={'title': subtask.get('title'),
                       'order': i,
                       'task': task.id}
             )
             if not subtask_serializer.is_valid():
                 task.delete()
-                return Response(subtask_serializer.errors, 400)
+                return Response({'subtask': subtask_serializer.errors}, 400)
             subtask_serializer.save()
 
     return Response({
