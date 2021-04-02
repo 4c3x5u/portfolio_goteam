@@ -32,8 +32,8 @@ class Task(Model):
     column = ForeignKey(Column, on_delete=CASCADE)
 
 
-# TODO: Add a 'done' bool field
 class Subtask(Model):
     title = CharField(max_length=50)
     order = IntegerField()
     task = ForeignKey(Task, on_delete=CASCADE)
+    done = BooleanField(default=False)
