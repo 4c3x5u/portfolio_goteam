@@ -13,6 +13,7 @@ class ListBoardsTests(APITestCase):
         self.team_id = str(self.team.id)
 
     def test_success(self):
+        initial_count = Board.objects.count()
         response = self.client.get(self.base_url + self.team_id)
         self.assertEqual(response.status_code, 200)
         boards = response.data.get('boards')
@@ -20,6 +21,7 @@ class ListBoardsTests(APITestCase):
         self.assertTrue(boards.count, 3)
         for board in boards:
             self.assertEqual(board.get('team'), self.team.id)
+        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_boards_not_found(self):
         initial_count = Board.objects.count()
@@ -30,16 +32,20 @@ class ListBoardsTests(APITestCase):
         self.assertEqual(Board.objects.count(), initial_count + 1)
 
     def test_team_id_empty(self):
+        initial_count = Board.objects.count()
         response = self.client.get(self.base_url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
                                    code='null')
         })
+        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_invalid_team_id(self):
+        initial_count = Board.objects.count()
         response = self.client.get(self.base_url + '123')
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.', code='not_found')
         })
+        self.assertEqual(Board.objects.count(), initial_count)
