@@ -1,20 +1,25 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, User, Column
+import bcrypt
 
 
 class CreateBoardTests(APITestCase):
     def setUp(self):
         self.url = '/boards/'
         self.team = Team.objects.create()
-        self.admin = User.objects.create(username='teamadmin',
-                                         password='adminpassword',
-                                         is_admin=True,
-                                         team=self.team)
-        self.member = User.objects.create(username='teammember',
-                                          password='memberpassword',
-                                          is_admin=False,
-                                          team=self.team)
+        self.admin = User.objects.create(
+            username='teamadmin',
+            password=bcrypt.hashpw(b'adminpassword', bcrypt.gensalt()),
+            is_admin=True,
+            team=self.team
+        )
+        self.member = User.objects.create(
+            username='teammember',
+            password=bcrypt.hashpw(b'memberpassword', bcrypt.gensalt()),
+            is_admin=False,
+            team=self.team
+        )
 
     def test_success(self):
         initial_count = Board.objects.count()
