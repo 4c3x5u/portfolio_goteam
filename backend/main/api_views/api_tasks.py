@@ -54,6 +54,13 @@ def tasks(request):
                                           code='blank')
             }, 400)
 
+        order = data.get('order')
+        if 'order' in list(data.keys()) and (order == '' or order is None):
+            return Response({
+                'data.order': ErrorDetail(string='Task order cannot be empty.',
+                                          code='blank')
+            }, 400)
+
         serializer = TaskSerializer(Task.objects.get(id=task_id),
                                     data=data,
                                     partial=True)
