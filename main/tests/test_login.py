@@ -3,7 +3,6 @@ from rest_framework.exceptions import ErrorDetail
 from main.models import User, Team
 
 
-# noinspection DuplicatedCode
 class LoginTests(APITestCase):
     def setUp(self):
         self.url = '/login/'
@@ -15,10 +14,8 @@ class LoginTests(APITestCase):
         request_data = {'username': 'foooo', 'password': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {
-            'msg': 'Login successful.',
-            'username': 'foooo'
-        })
+        self.assertEqual(response.data, {'msg': 'Login successful.',
+                                         'username': 'foooo'})
         user = User.objects.get(username='foooo')
         self.assertTrue(user)
         self.assertEqual(user.password, request_data['password'])
@@ -28,10 +25,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [
-                ErrorDetail(string='Username cannot be empty.',
-                            code='blank')
-            ]
+            'username': [ErrorDetail(string='Username cannot be empty.',
+                                     code='blank')]
         })
 
     def test_password_blank(self):
@@ -39,10 +34,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password': [
-                ErrorDetail(string='Password cannot be empty.',
-                            code='blank')
-            ]
+            'password': [ErrorDetail(string='Password cannot be empty.',
+                                     code='blank')]
         })
 
     def test_username_invalid(self):

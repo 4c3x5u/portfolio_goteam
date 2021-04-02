@@ -21,39 +21,36 @@ class RegisterTests(APITestCase):
                         'password_confirmation': 'barbarbar'}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data, {
-            'msg': 'Registration successful.',
-            'username': request_data['username'],
-        })
-        self.assertEqual(User.objects.count(), initial_user_count + 1)
-        self.assertEqual(Team.objects.count(), initial_team_count + 1)
-        self.assertEqual(Board.objects.count(), initial_board_count + 1)
+        self.assertEqual(response.data, {'msg': 'Registration successful.',
+                                         'username': request_data['username']})
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
         team = Team.objects.get(user=user)
         self.assertTrue(team)
         board = Board.objects.get(team=team)
         self.assertTrue(board)
+        self.assertEqual(User.objects.count(), initial_user_count + 1)
+        self.assertEqual(Team.objects.count(), initial_team_count + 1)
+        self.assertEqual(Board.objects.count(), initial_board_count + 1)
 
     def test_success_with_invite_code(self):
-        initial_count = User.objects.count()
+        initial_user_count = User.objects.count()
+        initial_team_count = Team.objects.count()
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
                         'invite_code': self.valid_invite_code}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data, {
-            'msg': 'Registration successful.',
-            'username': request_data['username'],
-        })
-        self.assertEqual(User.objects.count(), initial_count + 1)
+        self.assertEqual(response.data, {'msg': 'Registration successful.',
+                                         'username': request_data['username']})
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
-        team = Team.objects.get(user=user)
-        self.assertTrue(team)
-        board = Board.objects.get(team=team)
-        self.assertTrue(board)
+        self.assertEqual(
+            Team.objects.get(user=user),
+            Team.objects.get(invite_code=request_data['invite_code'])
+        )
+        self.assertEqual(User.objects.count(), initial_user_count + 1)
 
     def test_invalid_invite_code(self):
         initial_user_count = User.objects.count()
@@ -65,9 +62,8 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'invite_code': [
-                ErrorDetail(string='Invalid invite code.', code='invalid')
-            ]
+            'invite_code': [ErrorDetail(string='Invalid invite code.',
+                                        code='invalid')]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
@@ -82,9 +78,8 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'invite_code': [
-                ErrorDetail(string='Team not found.', code='invalid')
-            ]
+            'invite_code': [ErrorDetail(string='Team not found.',
+                                        code='invalid')]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
@@ -115,12 +110,8 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [
-                ErrorDetail(
-                    string='Username cannot be empty.',
-                    code='blank'
-                )
-            ]
+            'username': [ErrorDetail(string='Username cannot be empty.',
+                                     code='blank')]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
@@ -134,12 +125,8 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'password': [
-                ErrorDetail(
-                    string='Password cannot be empty.',
-                    code='blank',
-                )
-            ]
+            'password': [ErrorDetail(string='Password cannot be empty.',
+                                     code='blank')]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
