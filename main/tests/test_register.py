@@ -9,7 +9,7 @@ class RegisterTests(APITestCase):
         self.url = '/register/'
         team = Team.objects.create()
         Board.objects.create(team=team)
-        self.valid_invite_code = team.invite_code
+        self.invite_code = team.invite_code
 
     def help_test_success(self, initial_user_count, request_data):
         response = self.client.post(self.url, request_data)
@@ -43,7 +43,7 @@ class RegisterTests(APITestCase):
             'username': 'foooo',
             'password': 'barbarbar',
             'password_confirmation': 'barbarbar',
-            'invite_code': self.valid_invite_code
+            'invite_code': self.invite_code
         })
         self.assertEqual(Team.objects.count(), initial_team_count)
 
