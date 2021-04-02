@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task, Column, Board, Team
 
 
-class SubtaskTests(APITestCase):
+class UpdateSubtaskTests(APITestCase):
     def setUp(self):
         self.url = '/subtasks/'
         self.subtask = Subtask.objects.create(
@@ -33,15 +33,20 @@ class SubtaskTests(APITestCase):
         self.assertEqual(subtask.title, self.subtask.title)
         self.assertEqual(subtask.done, self.subtask.done)
 
-    def test_update_title_success(self):
+    def test_title_success(self):
         request = {'id': self.subtask.id, 'data': {'title': 'New Task Title'}}
         subtask = self.help_test_success(request)
         self.assertEqual(subtask.title, request.get('data').get('title'))
 
-    def test_update_done_success(self):
+    def test_done_success(self):
         request = {'id': self.subtask.id, 'data': {'done': True}}
         subtask = self.help_test_success(request)
         self.assertEqual(subtask.done, request.get('data').get('done'))
+
+    def test_order_success(self):
+        request = {'id': self.subtask.id, 'data': {'order': 10}}
+        subtask = self.help_test_success(request)
+        self.assertEqual(subtask.order, request.get('data').get('order'))
 
     def test_id_blank(self):
         request = {'id': '', 'data': {'title': 'New task title.'}}
