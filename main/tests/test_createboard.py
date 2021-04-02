@@ -26,12 +26,12 @@ class CreateBoardTests(APITestCase):
         response = self.client.post(self.url, {'username': self.admin.username,
                                                'team_id': self.team.id})
         self.assertEqual(response.status_code, 201)
-        board_id = response.data.get('board_id')
-        self.assertTrue(board_id)
-        self.assertEqual(response.data.get('team_id'), self.team.id)
-        self.assertEqual(Board.objects.count(), initial_count + 1)
-        columns = Column.objects.filter(board=board_id)
+        self.assertEqual(response.data.get('msg'),
+                         'Board creation successful.')
+        board = Board.objects.get(id=response.data.get('board_id'))
+        columns = Column.objects.filter(board=board.id)
         self.assertEqual(len(columns), 4)
+        self.assertEqual(Board.objects.count(), initial_count + 1)
 
     def test_username_blank(self):
         initial_count = Board.objects.count()
