@@ -87,3 +87,12 @@ class UpdateSubtaskTests(APITestCase):
         })
         self.help_test_failure()
 
+    def test_order_blank(self):
+        request = {'id': self.subtask.id, 'data': {'order': ''}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.order': ErrorDetail(string='Order cannot be empty.',
+                                      code='blank')
+        })
+        self.help_test_failure()
