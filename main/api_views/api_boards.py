@@ -54,7 +54,7 @@ def boards(request):
         # success response
         # TODO: return a msg and the board_id only
         return Response(
-            {'board_id': board.id, 'team_id': board.team.id},
+            {'msg': 'Board creation successful.', 'board_id': board.id},
             201
         )
 
