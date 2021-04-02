@@ -23,13 +23,13 @@ class UpdateSubtask(APITestCase):
     def test_update_title_success(self):
         request = {
             'id': self.subtask.id,
-            'title': 'New Task Title'
+            'data': {'title': 'New Task Title'}
         }
-        response = self.client.patch(self.url, request)
+        response = self.client.patch(self.url, request, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Subtask update successful.',
             'id': self.subtask.id
         })
         subtask = Subtask.objects.get(id=self.subtask.id)
-        self.assertEqual(subtask.title, request.get('title'))
+        self.assertEqual(subtask.title, request['data']['title'])
