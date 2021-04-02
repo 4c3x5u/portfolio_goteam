@@ -11,13 +11,7 @@ class RegisterTests(APITestCase):
         Board.objects.create(team=team)
         self.valid_invite_code = team.invite_code
 
-    def test_success(self):
-        initial_user_count = User.objects.count()
-        initial_team_count = Team.objects.count()
-        initial_board_count = Board.objects.count()
-        request_data = {'username': 'fooooooooo',
-                        'password': 'barbarbar',
-                        'password_confirmation': 'barbarbar'}
+    def help_test_success(self, initial_user_count, request_data):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data, {'msg': 'Registration successful.',
@@ -29,27 +23,28 @@ class RegisterTests(APITestCase):
         board = Board.objects.get(team=team)
         self.assertTrue(board)
         self.assertEqual(User.objects.count(), initial_user_count + 1)
+
+    def test_success(self):
+        initial_user_count = User.objects.count()
+        initial_team_count = Team.objects.count()
+        initial_board_count = Board.objects.count()
+        self.help_test_success(initial_user_count, {
+            'username': 'fooooooooo',
+            'password': 'barbarbar',
+            'password_confirmation': 'barbarbar'
+        })
         self.assertEqual(Team.objects.count(), initial_team_count + 1)
         self.assertEqual(Board.objects.count(), initial_board_count + 1)
 
     def test_success_with_invite_code(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
-        request_data = {'username': 'foooo',
-                        'password': 'barbarbar',
-                        'password_confirmation': 'barbarbar',
-                        'invite_code': self.valid_invite_code}
-        response = self.client.post(self.url, request_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data, {'msg': 'Registration successful.',
-                                         'username': request_data['username']})
-        user = User.objects.get(username=response.data['username'])
-        self.assertTrue(user)
-        self.assertEqual(
-            Team.objects.get(user=user),
-            Team.objects.get(invite_code=request_data['invite_code'])
-        )
-        self.assertEqual(User.objects.count(), initial_user_count + 1)
+        self.help_test_success(initial_user_count, {
+            'username': 'foooo',
+            'password': 'barbarbar',
+            'password_confirmation': 'barbarbar',
+            'invite_code': self.valid_invite_code
+        })
         self.assertEqual(Team.objects.count(), initial_team_count)
 
     def test_username_max_length(self):
@@ -67,6 +62,7 @@ class RegisterTests(APITestCase):
         })
         self.assertEqual(User.objects.count(), initial_user_count)
 
+    # noinspection DuplicatedCode
     def test_password_max_length(self):
         password = '''
             barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarb
