@@ -83,3 +83,14 @@ class UpdateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
+
+    def test_column_invalid(self):
+        request = {'id': self.task.id, 'data': {'column': '123123'}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'data.column': ErrorDetail(string='Invalid column id.',
+                                       code='invalid')
+        })
+        self.assertEqual(Task.objects.get(id=self.task.id).column,
+                         self.task.column)
