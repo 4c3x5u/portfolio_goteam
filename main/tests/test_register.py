@@ -61,10 +61,10 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(
+            'username': [ErrorDetail(
                 string='Username cannot be longer than 35 characters.',
                 code='max_length'
-            )
+            )]
         })
         self.assertEqual(User.objects.count(), initial_user_count)
 
