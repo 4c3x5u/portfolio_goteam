@@ -41,6 +41,7 @@ class LoginTests(APITestCase):
             )]
         })
 
+    # noinspection DuplicatedCode
     def test_password_max_length(self):
         password = '''
             barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarb
