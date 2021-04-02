@@ -58,6 +58,6 @@ class SubtaskTests(APITestCase):
         response = self.client.patch(self.url, request, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'id': ErrorDetail(string='Data cannot be empty.', code='blank')
+            'data': ErrorDetail(string='Data cannot be empty.', code='blank')
         })
         self.help_test_failure()
