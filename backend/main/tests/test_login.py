@@ -25,7 +25,6 @@ class LoginTests(APITestCase):
     def test_username_blank(self):
         request_data = {'username': '', 'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
-        print(f'§{response.data}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': [ErrorDetail(string='Username cannot be empty.',
