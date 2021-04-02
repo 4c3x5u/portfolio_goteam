@@ -17,14 +17,21 @@ def subtasks(request):
     data = request.data.get('data')
     if not data:
         return Response({
-            'data': ErrorDetail(string='Data cannot be empty.',
-                                code='blank')
+            'data': ErrorDetail(string='Data cannot be empty.', code='blank')
         }, 400)
 
-    if data.get('title') == '':
+    if 'title' in list(data.keys()) and not data.get('title'):
         return Response({
             'data.title': ErrorDetail(string='Title cannot be empty.',
                                       code='blank')
+        }, 400)
+
+    if 'done' in list(data.keys()) and (
+        data.get('done') == '' or data.get('done') is None
+    ):
+        return Response({
+            'data.done': ErrorDetail(string='Done cannot be empty.',
+                                     code='blank')
         }, 400)
 
     serializer = SubtaskSerializer(Subtask.objects.get(id=subtask_id),
