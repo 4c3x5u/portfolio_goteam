@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task, Column, Board, Team
 
 
@@ -37,3 +38,13 @@ class SubtaskTests(APITestCase):
         subtask = self.help_test_success(request)
         self.assertEqual(subtask.done, request.get('data').get('done'))
 
+    def test_id_blank(self):
+        request = {'id': '', 'data': {'title': 'New task title.'}}
+        response = self.client.patch(self.url, request, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'id': ErrorDetail(string='Subtask ID cannot be empty.',
+                              code='blank')
+        })
+        self.assertEqual(Subtask.objects.get(id=self.subtask.id).title,
+                         self.subtask.title)
