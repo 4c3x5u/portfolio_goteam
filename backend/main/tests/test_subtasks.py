@@ -28,6 +28,11 @@ class SubtaskTests(APITestCase):
                                          'id': self.subtask.id})
         return Subtask.objects.get(id=self.subtask.id)
 
+    def help_test_failure(self):
+        subtask = Subtask.objects.get(id=self.subtask.id)
+        self.assertEqual(subtask.title, self.subtask.title)
+        self.assertEqual(subtask.done, self.subtask.done)
+
     def test_update_title_success(self):
         request = {'id': self.subtask.id, 'data': {'title': 'New Task Title'}}
         subtask = self.help_test_success(request)
@@ -46,8 +51,7 @@ class SubtaskTests(APITestCase):
             'id': ErrorDetail(string='Subtask ID cannot be empty.',
                               code='blank')
         })
-        self.assertEqual(Subtask.objects.get(id=self.subtask.id).title,
-                         self.subtask.title)
+        self.help_test_failure()
 
     def test_data_blank(self):
         request = {'id': self.subtask.id, 'data': ''}
@@ -56,7 +60,4 @@ class SubtaskTests(APITestCase):
         self.assertEqual(response.data, {
             'id': ErrorDetail(string='Data cannot be empty.', code='blank')
         })
-        subtask = Subtask.objects.get(id=self.subtask.id)
-        self.assertEqual(subtask.title, self.subtask.title)
-        self.assertEqual(subtask.done, self.subtask.done)
-
+        self.help_test_failure()
