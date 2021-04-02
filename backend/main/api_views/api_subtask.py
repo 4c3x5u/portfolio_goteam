@@ -18,15 +18,24 @@ def subtasks(request):
     if not data:
         return Response({
             'data': ErrorDetail(string='Data cannot be empty.',
-                              code='blank')
+                                code='blank')
+        }, 400)
+
+    if data.get('title') == '':
+        return Response({
+            'data.title': ErrorDetail(string='Title cannot be empty.',
+                                      code='blank')
         }, 400)
 
     serializer = SubtaskSerializer(Subtask.objects.get(id=subtask_id),
                                    data=data,
                                    partial=True)
-    if serializer.is_valid():
-        new_subtask = serializer.save()
-        return Response({
-            'msg': 'Subtask update successful.',
-            'id': new_subtask.id
-        }, 200)
+    if not serializer.is_valid():
+        return Response(serializer.errors, 400)
+
+    subtask = serializer.save()
+    return Response({
+        'msg': 'Subtask update successful.',
+        'id': subtask.id
+    }, 200)
+
