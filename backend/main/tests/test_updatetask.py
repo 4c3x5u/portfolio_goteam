@@ -60,3 +60,15 @@ class UpdateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.get(id=self.task.id).order,
                          self.task.order)
+
+    def test_column_success(self):
+        another_column = Column.objects.create(
+            order=0,
+            board=Board.objects.create(
+                team=Team.objects.create()
+            )
+        )
+        request = {'id': self.task.id, 'data': {'column': another_column.id}}
+        self.help_test_success(request)
+        self.assertEqual(Task.objects.get(id=self.task.id).column.id,
+                         request.get('data').get('column'))
