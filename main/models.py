@@ -8,7 +8,7 @@ class Team(Model):
 
 class User(Model):
     username = CharField(primary_key=True, max_length=35)
-    password = CharField(max_length=255)
+    password = BinaryField()
     is_admin = BooleanField(default=False)
     team = ForeignKey(Team, on_delete=CASCADE)
 

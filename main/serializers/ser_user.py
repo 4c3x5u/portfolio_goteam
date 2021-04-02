@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from main.models import Team, User, Board
+import bcrypt
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -65,4 +66,8 @@ class UserSerializer(serializers.ModelSerializer):
             team = Team.objects.create()
             Board.objects.create(team=team)
             validated_data['team'] = team
+        validated_data['password'] = bcrypt.hashpw(
+            bytes(validated_data['password'], 'utf-8'),
+            bcrypt.gensalt()
+        )
         return User.objects.create(**validated_data)

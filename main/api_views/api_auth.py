@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
+import bcrypt
 
 from ..serializers.ser_user import UserSerializer
 from ..models import User
@@ -30,7 +31,8 @@ def login(request):
                 'username': ErrorDetail(string='Invalid username.',
                                         code='invalid')
             }, 400)
-        if user.password != request.data.get('password'):
+        pw_bytes = request.data.get('password').encode()
+        if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
             return Response({
                 'password': ErrorDetail(string='Invalid password.',
                                         code='invalid')
