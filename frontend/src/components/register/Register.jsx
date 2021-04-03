@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import './register.sass';
+import logo from '../../assets/register_title.svg';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -9,6 +10,10 @@ const Register = () => {
   return (
     <div id="FormWrapper">
       <Form id="RegisterForm" onSubmit={handleSubmit}>
+        <div id="RegisterTitleWrapper">
+          <img id="RegisterTitle" alt="logo" src={logo} />
+        </div>
+
         <Form.Group className="RegisterFormGroup">
           <Form.Label className="RegisterFormLabel">
             USERNAME
