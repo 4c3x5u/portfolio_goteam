@@ -9,25 +9,35 @@ const Register = () => {
   return (
     <div id="FormWrapper">
       <Form id="RegisterForm" onSubmit={handleSubmit}>
-        <Form.Group controlId="username">
-          <Form.Label>Username</Form.Label>
+        <Form.Group className="RegisterFormGroup">
+          <Form.Label className="RegisterFormLabel">
+            USERNAME
+          </Form.Label>
           <Form.Control
+            className="RegisterInput"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
         </Form.Group>
 
-        <Form.Group controlId="username">
-          <Form.Label>Password</Form.Label>
+        <Form.Group className="RegisterFormGroup">
+          <Form.Label className="RegisterFormLabel">
+            PASSWORD
+          </Form.Label>
           <Form.Control
+            className="RegisterInput"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
 
-        <Button value="GO!" type="submit">GO!</Button>
+        <div id="ButtonWrapper">
+          <Button id="SubmitButton" value="GO!" type="submit">
+            GO!
+          </Button>
+        </div>
       </Form>
     </div>
   );
