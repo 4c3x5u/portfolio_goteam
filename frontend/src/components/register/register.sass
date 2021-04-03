@@ -1,4 +1,4 @@
-@use '../../../colors'
+@use '../../variables'
 
 #FormWrapper
   display: flex
@@ -7,7 +7,37 @@
   min-height: 100vh
 
 #RegisterForm
-  background-color: colors.$maize-crayola
-  padding: 2rem
+  background-color: variables.$maize-crayola
+  padding: 3.5rem
   border-radius: 1rem
   box-shadow: 0 0 0.5rem 0.01rem #000000
+
+#ButtonWrapper
+  display: flex
+  justify-content: center
+  width: 100%
+
+#SubmitButton
+  font-family: variables.$default-font
+  font-weight: bold
+  font-size: 12pt
+  padding: 0.2rem 2rem 0.05rem 2rem
+  border-color: variables.$true-blue
+  background-color: variables.$true-blue
+  color: variables.$eggshell
+  box-shadow: 0 0 0.3rem 0.01rem #000000
+
+.RegisterFormGroup
+  text-align: center
+  font-weight: bolder
+  color: variables.$black-coral
+
+.RegisterFormLabel
+  margin-bottom: 0 !important
+  padding-bottom: 0 !important
+
+.RegisterInput
+  font-size: 12pt !important
+  height: 1.9rem !important
+  text-align: center
+  padding: 0.4rem 3rem 0.2rem 3rem !important
