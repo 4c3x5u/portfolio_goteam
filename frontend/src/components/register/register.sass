@@ -1,59 +1,76 @@
 @use '../../variables'
 
-#FormWrapper
+#Register
   display: flex
   justify-content: center
   align-items: center
   min-height: 100vh
+  background-color: variables.$cultured
 
-#RegisterForm
-  background-color: variables.$maize-crayola
-  padding: 3rem 4.5rem 3rem 4.5rem
-  border-radius: 1rem
-  box-shadow: 0 0 0.5rem 0.01rem #000000
+  .Form
+    background-color: variables.$maize-crayola
+    padding: 3rem 4.5rem 3rem 4.5rem
+    border-radius: 1rem
+    box-shadow: 0 0 0.5rem 0.01rem #000000
 
-#RegisterTitleWrapper
-  width: 100%
-  display: flex
-  justify-content: center
-  margin-bottom: 0.5rem
+    .TitleWrapper
+      width: 100%
+      display: flex
+      justify-content: center
+      margin-bottom: 0.5rem
 
-#RegisterTitle
-  min-height: 6rem
-  margin-bottom: 1.7rem
+      .Title
+        min-height: 6rem
+        margin-bottom: 1.7rem
 
-#ButtonWrapper
-  display: flex
-  justify-content: center
-  width: 100%
+    .Group
+      text-align: center
+      font-weight: bolder
+      color: variables.$black-coral
+      margin-bottom: 1.5rem !important
 
-#SubmitButton
-  font-family: variables.$default-font
-  font-weight: bold
-  font-size: 14pt
-  padding: 0.1rem 2.5rem 0 2.5rem
-  border-color: variables.$true-blue
-  background-color: variables.$true-blue
-  color: variables.$eggshell !important
-  box-shadow: 0 0 0.3rem 0.01rem #000000
+      .Label
+        margin-bottom: 0 !important
+        padding-bottom: 0 !important
 
-.RegisterFormGroup
-  text-align: center
-  font-weight: bolder
-  color: variables.$black-coral
-  margin-bottom: 1.5rem !important
+      .Input
+        font-size: 12.5pt !important
+        height: 2.3rem !important
+        width: 21rem !important
+        text-align: center
+        padding: 0.6rem 4rem 0.4rem 4rem !important
+        background-color: variables.$eggshell !important
+        box-shadow: inset 0 0 0.5rem 0.04rem #000000 !important
+        border: none !important
+        border-radius: 0.5rem !important
 
-.RegisterFormLabel
-  margin-bottom: 0 !important
-  padding-bottom: 0 !important
+  .ButtonWrapper
+    display: flex
+    justify-content: center
+    width: 100%
 
-.RegisterInput
-  font-size: 12.5pt !important
-  height: 2.3rem !important
-  width: 21rem !important
-  text-align: center
-  padding: 0.6rem 4rem 0.4rem 4rem !important
-  background-color: variables.$eggshell !important
-  box-shadow: inset 0 0 0.5rem 0.01rem #000000 !important
-  border: none !important
-  border-radius: 0.5rem !important
+    .Button
+      font-family: variables.$default-font
+      font-weight: bold
+      font-size: 14pt
+      padding: 0.1rem 2.5rem 0 2.5rem
+      border-color: variables.$true-blue
+      background-color: variables.$true-blue
+      color: variables.$eggshell !important
+      box-shadow: 0 0 0.3rem 0.01rem #000000
+      margin-bottom: 2.2rem
+
+  .Login
+    width: 100%
+    text-align: center
+    font-family: variables.$default-font
+    font-weight: bold
+    font-size: 1.2rem
+    color: variables.$black-coral
+
+    p
+      margin-bottom: 0
+
+    a
+      color: variables.$true-blue
+      text-decoration: underline !important
