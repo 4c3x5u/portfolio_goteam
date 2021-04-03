@@ -1,10 +1,9 @@
 import React from 'react';
-import Register from './components/Register';
+import Register from './components/register/Register';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => (
   <div className="App">
-    GoTeam! Frontend
     <Register />
   </div>
 );

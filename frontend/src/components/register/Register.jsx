@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import './register.sass';
 
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const handleSubmit = () => 1;
+  const handleSubmit = () => 1; // TODO: implement
   return (
-    <div>
-      <Form onSubmit={handleSubmit}>
+    <div id="FormWrapper">
+      <Form id="RegisterForm" onSubmit={handleSubmit}>
         <Form.Group controlId="username">
           <Form.Label>Username</Form.Label>
           <Form.Control
