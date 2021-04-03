@@ -6,6 +6,7 @@ import logo from '../../assets/register_title.svg';
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const handleSubmit = () => 1; // TODO: implement
   return (
     <div id="FormWrapper">
@@ -29,6 +30,18 @@ const Register = () => {
         <Form.Group className="RegisterFormGroup">
           <Form.Label className="RegisterFormLabel">
             PASSWORD
+          </Form.Label>
+          <Form.Control
+            className="RegisterInput"
+            type="password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+          />
+        </Form.Group>
+
+        <Form.Group className="RegisterFormGroup">
+          <Form.Label className="RegisterFormLabel">
+            PASSWORD CONFIRMATION
           </Form.Label>
           <Form.Control
             className="RegisterInput"
