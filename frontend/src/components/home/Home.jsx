@@ -1,18 +1,17 @@
 import React from 'react';
-import { Container, Row, Col } from 'react-bootstrap';
+import { Container, Row } from 'react-bootstrap';
 import {
   faUsers,
   faChalkboardTeacher,
   faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
+
 import ControlButton from './ControlButton';
+import Column from './Column';
+import columnName from './columnName';
 
 import './home.sass';
 import logo from '../../assets/homeheader.svg';
-import inbox from '../../assets/inbox.svg';
-import ready from '../../assets/ready.svg';
-import go from '../../assets/go.svg';
-import done from '../../assets/done.svg';
 
 const Home = () => (
   <div id="Home">
@@ -44,41 +43,10 @@ const Home = () => (
     </div>
 
     <Row className="ColumnsRow">
-      <Col className="Col" xs={3}>
-        <div className="Column InboxColumn">
-          <div className="Header">
-            <img src={inbox} alt="inbox column header" />
-          </div>
-          <div className="Body" />
-        </div>
-      </Col>
-
-      <Col className="Col" xs={3}>
-        <div className="Column ReadyColumn">
-          <div className="Header">
-            <img src={ready} alt="ready column header" />
-          </div>
-          <div className="Body" />
-        </div>
-      </Col>
-
-      <Col className="Col" xs={3}>
-        <div className="Column GoColumn">
-          <div className="Header">
-            <img src={go} alt="go column header" />
-          </div>
-          <div className="Body" />
-        </div>
-      </Col>
-
-      <Col className="Col" xs={3}>
-        <div className="Column DoneColumn">
-          <div className="Header">
-            <img src={done} alt="done column header" />
-          </div>
-          <div className="Body" />
-        </div>
-      </Col>
+      <Column name={columnName.INBOX} />
+      <Column name={columnName.READY} />
+      <Column name={columnName.GO} />
+      <Column name={columnName.DONE} />
     </Row>
   </div>
 );
