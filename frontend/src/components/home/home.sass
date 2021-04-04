@@ -41,6 +41,7 @@
 
   .ColumnsRow
     margin: 0
+    padding: 0 1rem
 
     .Column
       .Header
@@ -50,18 +51,28 @@
         color: variables.$eggshell
         font-size: 2rem
         box-shadow: -.2rem .2rem .3rem 0.001rem grey
+        margin-bottom: 0.5rem
 
         img
           height: 4rem
 
+      .Body
+        box-shadow: -.2rem .2rem .3rem 0.001rem grey
+        width: 100%
+        height: 77vh
+
     .InboxColumn
+      .Header, .Body
         background-color: variables.$black-coral !important
 
     .ReadyColumn
-      background-color: variables.$maize-crayola !important
+      .Header, .Body
+        background-color: variables.$maize-crayola !important
 
     .GoColumn
-      background-color: variables.$true-blue !important
+      .Header, .Body
+        background-color: variables.$true-blue !important
 
     .DoneColumn
-      background-color: variables.$bittersweet-shimmer !important
+      .Header, .Body
+        background-color: variables.$bittersweet-shimmer !important
