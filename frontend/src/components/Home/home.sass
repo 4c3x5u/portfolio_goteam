@@ -1,7 +1,7 @@
-@use '../../variables'
+@use '../../var'
 
 #Home
-  background-color: variables.$cultured
+  background-color: var.$cultured
   min-height: 100vh
   width: 100vw
   min-width: 50rem
@@ -9,7 +9,7 @@
   .Logo
     display: flex
     justify-content: center
-    background-color: variables.$maize-crayola
+    background-color: var.$maize-crayola
     width: 100vw
     min-width: 50rem
     height: 4.9rem
@@ -21,7 +21,7 @@
       min-height: 5.2rem
 
   .ControlBar
-    background-color: variables.$true-blue
+    background-color: var.$true-blue
     margin-bottom: 1rem
     box-shadow: 0 .3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
     width: 100vw
@@ -36,10 +36,10 @@
       justify-content: center
 
       .Button
-        font-family: variables.$default-font
+        font-family: var.$default-font
         font-weight: bold
         font-size: 1.3rem
-        color: variables.$maize-crayola
+        color: var.$maize-crayola
         border: none
         background-color: transparent
         padding-bottom: 0.1rem
@@ -53,9 +53,21 @@
         top: 100%
         width: 100%
         position: absolute
-        background-color: variables.$true-blue
+        background-color: var.$true-blue
         z-index: 1
+        box-shadow: 0 .3rem .2rem .2rem rgba(67, 67, 67, 50%)
+        padding: .5rem 0
 
+        button
+          width: 100%
+          background-color: transparent
+          border: none
+          text-align: center
+          color: var.$maize-crayola
+          font-family: var.$default-font
+          font-weight: bold
+          &:hover
+            background-color: var.$true-blue
 
   .ColumnsRow
     margin: 0
@@ -68,9 +80,9 @@
 
       .Header
         text-align: center
-        font-family: variables.$default-font
+        font-family: var.$default-font
         font-weight: bold
-        color: variables.$cultured
+        color: var.$cultured
         font-size: 2rem
         box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
         margin-bottom: 0.5rem
@@ -86,22 +98,22 @@
 
     .InboxColumn
       .Header, .Body
-        background-color: variables.$cadet-grey !important
+        background-color: var.$cadet-grey !important
 
     .ReadyColumn
       .Header, .Body
-        background-color: variables.$maize-crayola !important
+        background-color: var.$maize-crayola !important
 
     .GoColumn
       .Header, .Body
-        background-color: variables.$true-blue !important
+        background-color: var.$true-blue !important
 
     .DoneColumn
       .Header, .Body
-        background-color: variables.$bittersweet-shimmer !important
+        background-color: var.$bittersweet-shimmer !important
 
   .Footer
-    background-color: variables.$true-blue
+    background-color: var.$true-blue
     box-shadow: 0 -.3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
     position: fixed
     bottom: 0
@@ -120,10 +132,10 @@
         min-width: 10rem
 
         a
-          font-family: variables.$default-font
+          font-family: var.$default-font
           font-weight: bold
           font-size: 1.3rem
-          color: variables.$maize-crayola
+          color: var.$maize-crayola
           border: none
           background-color: transparent
           text-decoration: none !important
