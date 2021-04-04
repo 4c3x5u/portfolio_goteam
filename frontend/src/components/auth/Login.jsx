@@ -18,7 +18,7 @@ const Login = () => {
         <FormGroup label="password" value={password} setValue={setPassword} />
 
         <div className="ButtonWrapper">
-          <Button className="Button" value="GO!" type="submit">
+          <Button className="Button" type="submit" aria-label="submit">
             GO!
           </Button>
         </div>
