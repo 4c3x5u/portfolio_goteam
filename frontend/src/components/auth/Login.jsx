@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import FormGroup from './subcomponents/FormGroup';
-import './register.sass';
-import logo from '../../assets/login_title.svg';
+import FormGroup from './FormGroup';
+import logo from '../../assets/loginheader.svg';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -11,8 +10,8 @@ const Login = () => {
   return (
     <div id="Login">
       <Form className="Form" onSubmit={handleSubmit}>
-        <div className="TitleWrapper">
-          <img className="Title" alt="logo" src={logo} />
+        <div className="HeaderWrapper">
+          <img className="Header" alt="logo" src={logo} />
         </div>
 
         <FormGroup label="username" value={username} setValue={setUsername} />
