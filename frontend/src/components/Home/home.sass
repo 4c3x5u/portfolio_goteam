@@ -3,14 +3,16 @@
 #Home
   background-color: variables.$cultured
   min-height: 100vh
-  min-width: 100vh
+  padding-bottom: 10rem
+  width: 100vw
+  min-width: 50rem
 
   .Logo
     display: flex
     justify-content: center
     background-color: variables.$maize-crayola
     width: 100vw
-    min-width: 20rem
+    min-width: 50rem
     height: 4.9rem
     top: 0
 
@@ -22,7 +24,9 @@
   .ControlBar
     background-color: variables.$true-blue
     margin-bottom: 1rem
-    box-shadow: 0 .3rem .4rem 0.001rem #bcbcbc
+    box-shadow: 0 .3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
+    width: 100vw
+    min-width: 50rem
 
     .Controls
       min-width: 40rem !important
@@ -46,29 +50,37 @@
   .ColumnsRow
     margin: 0
     padding: 0 1rem
+    width: 100vw
     min-width: 50rem
+    min-height: 75.7vh
+    display: flex
+    align-items: center
 
     .Column
+      height: 77vh
+      display: block
+
       .Header
         text-align: center
         font-family: variables.$default-font
         font-weight: bold
-        color: variables.$eggshell
+        color: variables.$cultured
         font-size: 2rem
-        box-shadow: -.2rem .2rem .3rem 0.001rem grey
+        box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
         margin-bottom: 0.5rem
+        padding-top: 0.4rem
 
         img
           height: 4rem
 
       .Body
-        box-shadow: -.2rem .2rem .3rem 0.001rem grey
+        height: 100%
+        box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
         width: 100%
-        min-height: 75.7vh
 
     .InboxColumn
       .Header, .Body
-        background-color: variables.$black-coral !important
+        background-color: variables.$cadet-grey !important
 
     .ReadyColumn
       .Header, .Body
@@ -84,12 +96,12 @@
 
   .Footer
     background-color: variables.$true-blue
-    box-shadow: 0 .3rem .4rem 0.001rem #bcbcbc
-    position: absolute
+    box-shadow: 0 -.3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
+    position: fixed
     bottom: 0
     width: 100%
     padding-top: 0.3rem
-    min-width: 100vh
+    min-width: 100vw
 
     .Row
       display: flex
