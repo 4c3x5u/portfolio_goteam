@@ -17,21 +17,19 @@
   .ControlBar
     background-color: variables.$true-blue
 
-    ul
-      display: flex
-      justify-content: space-between
+    .ControlCol
+      display: inline-flex
+      justify-content: center
 
-      li
-        display: inline
+      .Button
+        font-family: variables.$default-font
+        font-weight: bold
+        font-size: 1.3rem
+        color: variables.$maize-crayola
+        border: none
+        background-color: transparent
+        padding-bottom: 0.1rem
 
         svg
           margin-right: 0.4rem
 
-        .Button
-          font-family: variables.$default-font
-          font-weight: bold
-          font-size: 1.3rem
-          color: variables.$maize-crayola
-          border: none
-          background-color: transparent
-          padding-bottom: 0.1rem
