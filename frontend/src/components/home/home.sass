@@ -84,15 +84,16 @@
     bottom: 0
     width: 100%
     padding-top: 0.3rem
+    min-width: 100vh
 
     .Row
-      width: 100%
       display: flex
       justify-content: center
 
       .Col
-        display: flex
+        display: inline-flex
         justify-content: center
+        min-width: 10rem
 
         a
           font-family: variables.$default-font
@@ -104,5 +105,4 @@
           text-decoration: none !important
 
           svg
-            display: inline-block
             margin-right: 0.4rem
