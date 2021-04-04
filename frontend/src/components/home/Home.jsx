@@ -10,10 +10,14 @@ import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
 import ControlButton from './ControlButton';
 import Column from './Column';
-import columnName from './columnName';
+
+import inboxHeader from '../../assets/inboxHeader.svg';
+import readyHeader from '../../assets/readyHeader.svg';
+import goHeader from '../../assets/goHeader.svg';
+import doneHeader from '../../assets/doneHeader.svg';
 
 import './home.sass';
-import logo from '../../assets/homeheader.svg';
+import logo from '../../assets/homeHeader.svg';
 
 const Home = () => (
   <div id="Home">
@@ -45,25 +49,25 @@ const Home = () => (
     </div>
 
     <Row className="ColumnsRow">
-      <Column name={columnName.INBOX} />
-      <Column name={columnName.READY} />
-      <Column name={columnName.GO} />
-      <Column name={columnName.DONE} />
+      <Column name="inbox" header={inboxHeader} />
+      <Column name="ready" header={readyHeader} />
+      <Column name="go" header={goHeader} />
+      <Column name="done" header={doneHeader} />
     </Row>
 
     <div className="Footer">
       <Container>
         <Row className="Row">
-          <Col className="Col" xs={4}>
+          <Col className="Col" xs={6}>
             <a href="https:FIX THIS">
               <FontAwesomeIcon icon={faGithub} />
-              <span>PROJECT</span>
+              PROJECT
             </a>
           </Col>
-          <Col className="Col" xs={4}>
+          <Col className="Col" xs={6}>
             <a href="https:FIX THIS">
               <FontAwesomeIcon icon={faLinkedin} />
-              <span>AUTHOR</span>
+              AUTHOR
             </a>
           </Col>
         </Row>
