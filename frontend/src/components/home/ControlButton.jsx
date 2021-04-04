@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button } from 'react-bootstrap';
+import { Col, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const ControlButton = ({ name, action, icon }) => (
-  <li>
+  <Col xs={4} className="ControlCol">
     <Button
       className="Button"
       onClick={action}
@@ -13,7 +13,7 @@ const ControlButton = ({ name, action, icon }) => (
       <FontAwesomeIcon icon={icon} />
       {name.toUpperCase()}
     </Button>
-  </li>
+  </Col>
 );
 
 ControlButton.propTypes = {
