@@ -1,10 +1,12 @@
 import React from 'react';
-import { Container, Row } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUsers,
   faChalkboardTeacher,
   faQuestionCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
 import ControlButton from './ControlButton';
 import Column from './Column';
@@ -48,6 +50,25 @@ const Home = () => (
       <Column name={columnName.GO} />
       <Column name={columnName.DONE} />
     </Row>
+
+    <div className="Footer">
+      <Container>
+        <Row className="Row">
+          <Col className="Col" xs={4}>
+            <a href="https:FIX THIS">
+              <FontAwesomeIcon icon={faGithub} />
+              <span>PROJECT</span>
+            </a>
+          </Col>
+          <Col className="Col" xs={4}>
+            <a href="https:FIX THIS">
+              <FontAwesomeIcon icon={faLinkedin} />
+              <span>AUTHOR</span>
+            </a>
+          </Col>
+        </Row>
+      </Container>
+    </div>
   </div>
 );
 
