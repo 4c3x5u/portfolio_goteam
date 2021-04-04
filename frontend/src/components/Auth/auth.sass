@@ -1,14 +1,14 @@
-@use '../../variables'
+@use '../../var'
 
 #Register, #Login
   display: flex
   justify-content: center
   align-items: center
   min-height: 100vh
-  background-color: variables.$cultured
+  background-color: var.$cultured
 
   .Form
-    background-color: variables.$maize-crayola
+    background-color: var.$maize-crayola
     padding: 3rem 4.5rem 3rem 4.5rem
     border-radius: 1rem
     box-shadow: 0 0 0.5rem 0.01rem #000000
@@ -26,7 +26,7 @@
     .Group
       text-align: center
       font-weight: bolder
-      color: variables.$black-coral
+      color: var.$black-coral
       margin-bottom: 1.5rem !important
 
       .Label
@@ -39,7 +39,7 @@
         width: 21rem !important
         text-align: center
         padding: 0.6rem 4rem 0.4rem 4rem !important
-        background-color: variables.$eggshell !important
+        background-color: var.$eggshell !important
         box-shadow: inset 0 0 0.5rem 0.04rem #000000 !important
         border: none !important
         border-radius: 0.5rem !important
@@ -50,27 +50,27 @@
     width: 100%
 
     .Button
-      font-family: variables.$default-font
+      font-family: var.$default-font
       font-weight: bold
       font-size: 14pt
       padding: 0.1rem 2.5rem 0 2.5rem
-      border-color: variables.$true-blue
-      background-color: variables.$true-blue
-      color: variables.$eggshell !important
+      border-color: var.$true-blue
+      background-color: var.$true-blue
+      color: var.$eggshell !important
       box-shadow: 0 0 0.3rem 0.01rem #000000
       margin-bottom: 2.2rem
 
   .Login, .Register
     width: 100%
     text-align: center
-    font-family: variables.$default-font
+    font-family: var.$default-font
     font-weight: bold
     font-size: 1.2rem
-    color: variables.$black-coral
+    color: var.$black-coral
 
     p
       margin-bottom: 0
 
     a
-      color: variables.$true-blue
+      color: var.$true-blue
       text-decoration: underline !important

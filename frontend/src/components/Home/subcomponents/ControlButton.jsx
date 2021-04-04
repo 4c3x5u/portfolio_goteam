@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Col, Button } from 'react-bootstrap';
+import { Row, Col, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,15 +17,21 @@ const ControlButton = ({
       {name.toUpperCase()}
     </Button>
     {isToggled && (
-      <div className="TeamControls">
-        <ul>
-          <li>Some Member</li>
-          <li>Some Other Member</li>
-          <Button>
-            <FontAwesomeIcon icon={faPlusCircle} />
-          </Button>
-        </ul>
-      </div>
+      <Row className="TeamControls">
+        <Col className="Col" xs={12}>
+          <button type="button">
+            Some Member
+          </button>
+        </Col>
+        <Col className="Col" xs={12}>
+          <button type="button">
+            Some Other Member
+          </button>
+        </Col>
+        <button type="button">
+          <FontAwesomeIcon icon={faPlusCircle} />
+        </button>
+      </Row>
     )}
 
   </Col>
