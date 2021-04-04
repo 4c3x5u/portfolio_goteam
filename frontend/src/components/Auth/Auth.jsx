@@ -1,7 +1,7 @@
 import React from 'react';
 import { Switch, Route } from 'react-router-dom';
-import Register from './Register';
-import Login from './Login';
+import Register from './subcomponents/Register';
+import Login from './subcomponents/Login';
 import './auth.sass';
 
 const Auth = () => (

@@ -4,8 +4,8 @@ import {
   Switch,
   Route,
 } from 'react-router-dom';
-import Auth from './components/auth/Auth';
-import Home from './components/home/Home';
+import Auth from './components/Auth/Auth';
+import Home from './components/Home/Home';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
 

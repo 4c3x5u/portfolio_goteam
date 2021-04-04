@@ -9,7 +9,8 @@
     display: flex
     justify-content: center
     background-color: variables.$maize-crayola
-    width: 100%
+    width: 100vw
+    min-width: 20rem
     height: 4.9rem
     top: 0
 
@@ -22,6 +23,9 @@
     background-color: variables.$true-blue
     margin-bottom: 1rem
     box-shadow: 0 .3rem .4rem 0.001rem #bcbcbc
+
+    .Controls
+      min-width: 40rem !important
 
     .ControlCol
       display: inline-flex
@@ -42,6 +46,7 @@
   .ColumnsRow
     margin: 0
     padding: 0 1rem
+    min-width: 50rem
 
     .Column
       .Header
@@ -59,7 +64,7 @@
       .Body
         box-shadow: -.2rem .2rem .3rem 0.001rem grey
         width: 100%
-        height: 75.7vh
+        min-height: 75.7vh
 
     .InboxColumn
       .Header, .Body
@@ -89,6 +94,7 @@
     .Row
       display: flex
       justify-content: center
+      min-width: 30rem
 
       .Col
         display: inline-flex
