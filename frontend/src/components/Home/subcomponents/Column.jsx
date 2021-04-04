@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Col } from 'react-bootstrap';
 
-const Column = ({ name, header }) => (
+const Column = ({ name }) => (
   <Col className="Col" xs={3}>
     <div
       className={
@@ -10,7 +10,7 @@ const Column = ({ name, header }) => (
       }
     >
       <div className="Header">
-        <img src={header} alt={`${name} column header`} />
+        {name.toUpperCase()}
       </div>
       <div className="Body" />
     </div>
@@ -19,7 +19,6 @@ const Column = ({ name, header }) => (
 
 Column.propTypes = {
   name: PropTypes.string.isRequired,
-  header: PropTypes.string.isRequired,
 };
 
 export default Column;
