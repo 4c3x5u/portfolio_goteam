@@ -3,7 +3,6 @@
 #Home
   background-color: variables.$cultured
   min-height: 100vh
-  padding-bottom: 10rem
   width: 100vw
   min-width: 50rem
 
@@ -31,8 +30,9 @@
     .Controls
       min-width: 40rem !important
 
-    .ControlCol
+    .ControlButtonWrapper
       display: inline-flex
+      position: relative
       justify-content: center
 
       .Button
@@ -47,14 +47,18 @@
         svg
           margin-right: 0.4rem
 
+      .TeamControls
+        top: 100%
+        width: 100%
+        position: absolute
+        background-color: variables.$true-blue
+        z-index: 1
+
+
   .ColumnsRow
     margin: 0
     padding: 0 1rem
-    width: 100vw
     min-width: 50rem
-    min-height: 75.7vh
-    display: flex
-    align-items: center
 
     .Column
       height: 77vh
