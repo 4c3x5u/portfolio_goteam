@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import FormGroup from './subcomponents/FormGroup';
 import './register.sass';
 import logo from '../../assets/register_title.svg';
 
@@ -15,41 +16,13 @@ const Register = () => {
           <img className="Title" alt="logo" src={logo} />
         </div>
 
-        <Form.Group className="Group">
-          <Form.Label className="Label">
-            USERNAME
-          </Form.Label>
-          <Form.Control
-            className="Input"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </Form.Group>
-
-        <Form.Group className="Group">
-          <Form.Label className="Label">
-            PASSWORD
-          </Form.Label>
-          <Form.Control
-            className="Input"
-            type="password"
-            value={passwordConfirmation}
-            onChange={(e) => setPasswordConfirmation(e.target.value)}
-          />
-        </Form.Group>
-
-        <Form.Group className="Group">
-          <Form.Label className="Label">
-            PASSWORD CONFIRMATION
-          </Form.Label>
-          <Form.Control
-            className="Input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Form.Group>
+        <FormGroup label="username" value={username} setValue={setUsername} />
+        <FormGroup label="password" value={password} setValue={setPassword} />
+        <FormGroup
+          label="password confirmation"
+          value={passwordConfirmation}
+          setValue={setPasswordConfirmation}
+        />
 
         <div className="ButtonWrapper">
           <Button className="Button" value="GO!" type="submit">
