@@ -1,7 +1,11 @@
 @use '../../variables'
 
 #Home
-  .Header
+  background-color: variables.$cultured
+  min-height: 100vh
+  min-width: 100vh
+
+  .Logo
     display: flex
     justify-content: center
     background-color: variables.$maize-crayola
@@ -16,6 +20,8 @@
 
   .ControlBar
     background-color: variables.$true-blue
+    margin-bottom: 1rem
+    box-shadow: 0 .3rem .4rem 0.001rem #bcbcbc
 
     .ControlCol
       display: inline-flex
@@ -33,3 +39,29 @@
         svg
           margin-right: 0.4rem
 
+  .ColumnsRow
+    margin: 0
+
+    .Column
+      .Header
+        text-align: center
+        font-family: variables.$default-font
+        font-weight: bold
+        color: variables.$eggshell
+        font-size: 2rem
+        box-shadow: -.2rem .2rem .3rem 0.001rem grey
+
+        img
+          height: 4rem
+
+    .InboxColumn
+        background-color: variables.$black-coral !important
+
+    .ReadyColumn
+      background-color: variables.$maize-crayola !important
+
+    .GoColumn
+      background-color: variables.$true-blue !important
+
+    .DoneColumn
+      background-color: variables.$bittersweet-shimmer !important
