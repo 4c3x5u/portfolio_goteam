@@ -1,0 +1,32 @@
+@use '../../../var'
+
+#AppFooter
+  background-color: var.$true-blue
+  box-shadow: 0 -.3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
+  position: fixed
+  bottom: 0
+  width: 100%
+  padding-top: 0.3rem
+  min-width: 100vw
+
+  .Row
+    display: flex
+    justify-content: center
+    min-width: 30rem
+
+    .Col
+      display: inline-flex
+      justify-content: center
+      min-width: 10rem
+
+      a
+        font-family: var.$default-font
+        font-weight: bold
+        font-size: 1.3rem
+        color: var.$maize-crayola
+        border: none
+        background-color: transparent
+        text-decoration: none !important
+
+        svg
+          margin-right: 0.4rem

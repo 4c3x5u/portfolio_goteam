@@ -1,0 +1,45 @@
+@use '../../../var'
+
+#ColumnsRow
+  margin: 0
+  padding: 0 1rem
+  min-width: 50rem
+
+  .Column
+    height: 77vh
+    display: block
+
+    .Header
+      text-align: center
+      font-family: var.$default-font
+      font-weight: bold
+      color: var.$cultured
+      font-size: 2rem
+      box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
+      margin-bottom: 0.5rem
+      padding-top: 0.4rem
+
+      img
+        height: 4rem
+
+    .Body
+      height: 100%
+      box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
+      width: 100%
+
+  .InboxColumn
+    .Header, .Body
+      background-color: var.$cadet-grey !important
+
+  .ReadyColumn
+    .Header, .Body
+      background-color: var.$maize-crayola !important
+
+  .GoColumn
+    .Header, .Body
+      background-color: var.$true-blue !important
+
+  .DoneColumn
+    .Header, .Body
+      background-color: var.$bittersweet-shimmer !important
+
