@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Container, Row } from 'react-bootstrap';
 import {
-  faChalkboardTeacher, faQuestionCircle, faUsers,
+  faChalkboardTeacher, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
 import Controls from './Controls';
+import HelpModal from './HelpModal';
 
 import './appheader.sass';
 import logo from '../../../assets/homeHeader.svg';
@@ -45,11 +46,7 @@ const AppHeader = () => {
               icon={faChalkboardTeacher}
             />
 
-            <Controls
-              name="help"
-              action={() => console.log('boards button clicked')}
-              icon={faQuestionCircle}
-            />
+            <HelpModal />
           </Row>
         </Container>
       </div>
