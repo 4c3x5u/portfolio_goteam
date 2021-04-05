@@ -7,8 +7,8 @@ import {
 import ControlMenu from './ControlMenu/ControlMenu';
 import HelpModal from './HelpModal/HelpModal';
 
-import './header.sass';
 import logo from '../../../assets/homeHeader.svg';
+import './header.sass';
 
 const Header = () => {
   const [teamControlsOn, setTeamControlsOn] = useState(false);
