@@ -4,15 +4,17 @@ import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-import './controlbutton.sass';
+import { capFirstLetterOf } from '../../../misc/util';
 
-const ControlButton = ({
-  name, isToggled, setIsToggled, icon,
+import './controls.sass';
+
+const Controls = ({
+  name, isToggled, toggle, icon,
 }) => (
-  <Col xs={4} className="ControlButtonWrapper">
+  <Col xs={4} className="Controls">
     <button
       className="Button"
-      onClick={setIsToggled}
+      onClick={toggle}
       aria-label={`${name} button`}
       type="button"
     >
@@ -20,12 +22,12 @@ const ControlButton = ({
       {name.toUpperCase()}
     </button>
     {isToggled && (
-      <div className="TeamControls">
+      <div className={`Dropdown ${capFirstLetterOf(name)}Dropdown`}>
         <button type="button">
-          Some Member
+          Control Item #1
         </button>
         <button type="button">
-          Some Other Member
+          Control Item #2
         </button>
         <button type="button">
           <FontAwesomeIcon icon={faPlusCircle} />
@@ -36,11 +38,11 @@ const ControlButton = ({
   </Col>
 );
 
-ControlButton.propTypes = {
+Controls.propTypes = {
   name: PropTypes.string.isRequired,
   isToggled: PropTypes.bool.isRequired,
-  setIsToggled: PropTypes.func.isRequired,
+  toggle: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 
-export default ControlButton;
+export default Controls;

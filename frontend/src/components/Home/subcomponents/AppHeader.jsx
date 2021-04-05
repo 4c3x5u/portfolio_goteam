@@ -4,36 +4,48 @@ import {
   faChalkboardTeacher, faQuestionCircle, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
-import ControlButton from './ControlButton';
+import Controls from './Controls';
 
 import './appheader.sass';
 import logo from '../../../assets/homeHeader.svg';
 
 const AppHeader = () => {
-  const [teamCtrlIsToggled, setTeamCtrlIsToggled] = useState(false);
+  const [teamControlsOn, setTeamControlsOn] = useState(false);
+  const [boardControlsOn, setBoardControlsOn] = useState(false);
+
+  const toggleTeamControls = () => {
+    if (!teamControlsOn) { setBoardControlsOn(teamControlsOn); }
+    setTeamControlsOn(!teamControlsOn);
+  };
+
+  const toggleBoardControls = () => {
+    if (!boardControlsOn) { setTeamControlsOn(boardControlsOn); }
+    setBoardControlsOn(!boardControlsOn);
+  };
 
   return (
     <div id="AppHeader">
       <div className="Logo">
         <img alt="logo" src={logo} />
       </div>
-      <div className="ControlBar">
+      <div className="ControlsWrapper">
         <Container>
-          <Row className="Controls">
-            <ControlButton
+          <Row className="ControlsRow">
+            <Controls
               name="team"
-              setIsToggled={() => setTeamCtrlIsToggled(!teamCtrlIsToggled)}
-              isToggled={teamCtrlIsToggled}
+              toggle={toggleTeamControls}
+              isToggled={teamControlsOn}
               icon={faUsers}
             />
 
-            <ControlButton
+            <Controls
               name="boards"
-              action={() => console.log('boards button clicked')}
+              toggle={toggleBoardControls}
+              isToggled={boardControlsOn}
               icon={faChalkboardTeacher}
             />
 
-            <ControlButton
+            <Controls
               name="help"
               action={() => console.log('boards button clicked')}
               icon={faQuestionCircle}
