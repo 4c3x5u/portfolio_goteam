@@ -14,8 +14,10 @@ const Column = ({ name }) => (
   <Col className="Col" xs={3}>
     <div className={`Column ${capFirstLetterOf(name)}Column`}>
       <div className="Header">{name.toUpperCase()}</div>
+
       <div className="Body">
         <Task />
+
         {name === columnNames.INBOX && (
           <button className="CreateButton" type="button">
             <FontAwesomeIcon className="Icon" icon={faPlusCircle} />
