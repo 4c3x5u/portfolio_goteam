@@ -1,6 +1,6 @@
 import React from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSquare, faCheckSquare } from '@fortawesome/free-regular-svg-icons';
+
+import Subtask from './Subtask/Subtask';
 
 import './task.sass';
 
@@ -14,27 +14,8 @@ const Task = () => (
     </p>
 
     <ul className="Subtasks">
-      <li className="Subtask">
-        <button
-          className="CheckButton"
-          onClick={() => console.log('check/uncheck')}
-          type="button"
-        >
-          <FontAwesomeIcon className="CheckBox" icon={faSquare} />
-          Undone Subtask
-        </button>
-      </li>
-
-      <li className="Subtask">
-        <button
-          className="CheckButton"
-          onClick={() => console.log('check/uncheck')}
-          type="button"
-        >
-          <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
-          Done task
-        </button>
-      </li>
+      <Subtask title="Subtask #1" />
+      <Subtask title="Subtask #2" />
     </ul>
   </div>
 );
