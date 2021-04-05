@@ -9,12 +9,12 @@ import { capFirstLetterOf } from '../../../../misc/util';
 import './controlmenu.sass';
 
 const ControlMenu = ({
-  name, isToggled, toggle, icon,
+  name, isActive, activate, icon,
 }) => (
   <Col xs={4} className="ControlMenu">
     <button
       className="Button"
-      onClick={toggle}
+      onClick={activate}
       aria-label={`${name} button`}
       type="button"
     >
@@ -22,7 +22,7 @@ const ControlMenu = ({
       {name.toUpperCase()}
     </button>
 
-    {isToggled && (
+    {isActive && (
       <div className={`Dropdown ${capFirstLetterOf(name)}Dropdown`}>
         <button type="button">
           Control Item #1
@@ -40,8 +40,8 @@ const ControlMenu = ({
 
 ControlMenu.propTypes = {
   name: PropTypes.string.isRequired,
-  isToggled: PropTypes.bool.isRequired,
-  toggle: PropTypes.func.isRequired,
+  isActive: PropTypes.bool.isRequired,
+  activate: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 

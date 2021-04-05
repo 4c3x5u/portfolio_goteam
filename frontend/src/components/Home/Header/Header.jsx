@@ -11,17 +11,20 @@ import logo from '../../../assets/homeHeader.svg';
 import './header.sass';
 
 const Header = () => {
-  const [teamControlsOn, setTeamControlsOn] = useState(false);
-  const [boardControlsOn, setBoardControlsOn] = useState(false);
-
-  const toggleTeamControls = () => {
-    if (!teamControlsOn) { setBoardControlsOn(teamControlsOn); }
-    setTeamControlsOn(!teamControlsOn);
+  const windowEnum = {
+    NONE: 0, TEAM: 1, BOARDS: 2, MODAL: 3,
   };
 
-  const toggleBoardControls = () => {
-    if (!boardControlsOn) { setTeamControlsOn(boardControlsOn); }
-    setBoardControlsOn(!boardControlsOn);
+  const [activeWindow, setActiveWindow] = useState(windowEnum.NONE);
+
+  const handleActivate = (window) => () => {
+    switch (window) {
+      case activeWindow: setActiveWindow(windowEnum.NONE); break;
+      case windowEnum.TEAM: setActiveWindow(windowEnum.TEAM); break;
+      case windowEnum.BOARDS: setActiveWindow(windowEnum.BOARDS); break;
+      case windowEnum.MODAL: setActiveWindow(windowEnum.MODAL); break;
+      default: setActiveWindow(windowEnum.NONE); break;
+    }
   };
 
   return (
@@ -34,19 +37,22 @@ const Header = () => {
           <Row className="ControlsRow">
             <ControlMenu
               name="team"
-              toggle={toggleTeamControls}
-              isToggled={teamControlsOn}
+              isActive={activeWindow === windowEnum.TEAM}
+              activate={handleActivate(windowEnum.TEAM)}
               icon={faUsers}
             />
 
             <ControlMenu
               name="boards"
-              toggle={toggleBoardControls}
-              isToggled={boardControlsOn}
+              isActive={activeWindow === windowEnum.BOARDS}
+              activate={handleActivate(windowEnum.BOARDS)}
               icon={faChalkboardTeacher}
             />
 
-            <HelpModal />
+            <HelpModal
+              isActive={activeWindow === windowEnum.MODAL}
+              activate={handleActivate(windowEnum.MODAL)}
+            />
           </Row>
         </Container>
       </div>
