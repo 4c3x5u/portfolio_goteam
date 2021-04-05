@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Col, Row } from 'react-bootstrap';
 
-import { capitalizeFirstLetter } from '../../../util';
+import { capitalizeFirstLetter } from '../../../misc/util';
 
 import './columnsrow.sass';
 
