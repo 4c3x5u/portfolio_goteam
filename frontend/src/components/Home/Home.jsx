@@ -1,16 +1,16 @@
 import React from 'react';
 
-import AppHeader from './subcomponents/AppHeader';
-import ColumnsRow from './subcomponents/ColumnsRow';
-import AppFooter from './subcomponents/AppFooter';
+import Header from './Header/Header';
+import Body from './Body/Body';
+import Footer from './Footer/Footer';
 
 import './home.sass';
 
 const Home = () => (
   <div id="Home">
-    <AppHeader />
-    <ColumnsRow />
-    <AppFooter />
+    <Header />
+    <Body />
+    <Footer />
   </div>
 );
 
