@@ -9,7 +9,7 @@ import { capFirstLetterOf } from '../../../../misc/util';
 import './controlmenu.sass';
 
 const ControlMenu = ({
-  name, isActive, activate, icon,
+  name, isActive, activate, create, icon,
 }) => (
   <Col xs={4} className="ControlMenu">
     <button
@@ -30,7 +30,7 @@ const ControlMenu = ({
         <button type="button">
           Control Item #2
         </button>
-        <button type="button">
+        <button type="button" onClick={create}>
           <FontAwesomeIcon icon={faPlusCircle} />
         </button>
       </div>
@@ -42,6 +42,7 @@ ControlMenu.propTypes = {
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
   activate: PropTypes.func.isRequired,
+  create: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 
