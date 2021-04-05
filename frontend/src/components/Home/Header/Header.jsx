@@ -4,13 +4,13 @@ import {
   faChalkboardTeacher, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
-import Controls from './Controls';
-import HelpModal from './HelpModal';
+import ControlMenu from './ControlMenu/ControlMenu';
+import HelpModal from './HelpModal/HelpModal';
 
-import './appheader.sass';
+import './header.sass';
 import logo from '../../../assets/homeHeader.svg';
 
-const AppHeader = () => {
+const Header = () => {
   const [teamControlsOn, setTeamControlsOn] = useState(false);
   const [boardControlsOn, setBoardControlsOn] = useState(false);
 
@@ -25,21 +25,21 @@ const AppHeader = () => {
   };
 
   return (
-    <div id="AppHeader">
+    <div id="Header">
       <div className="Logo">
         <img alt="logo" src={logo} />
       </div>
       <div className="ControlsWrapper">
         <Container>
           <Row className="ControlsRow">
-            <Controls
+            <ControlMenu
               name="team"
               toggle={toggleTeamControls}
               isToggled={teamControlsOn}
               icon={faUsers}
             />
 
-            <Controls
+            <ControlMenu
               name="boards"
               toggle={toggleBoardControls}
               isToggled={boardControlsOn}
@@ -54,4 +54,4 @@ const AppHeader = () => {
   );
 };
 
-export default AppHeader;
+export default Header;

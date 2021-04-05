@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import FormGroup from './FormGroup';
+import FormGroup from '../_shared/FormGroup';
 import logo from '../../../assets/loginHeader.svg';
 
 const Login = () => {

@@ -3,10 +3,10 @@ import { Col, Container, Row } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
-import './appfooter.sass';
+import './footer.sass';
 
-const AppFooter = () => (
-  <div id="AppFooter">
+const Footer = () => (
+  <div id="Footer">
     <Container>
       <Row className="Row">
         <Col className="Col" xs={6}>
@@ -26,4 +26,4 @@ const AppFooter = () => (
   </div>
 );
 
-export default AppFooter;
+export default Footer;

@@ -4,14 +4,14 @@ import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-import { capFirstLetterOf } from '../../../misc/util';
+import { capFirstLetterOf } from '../../../../misc/util';
 
-import './controls.sass';
+import './controlmenu.sass';
 
-const Controls = ({
+const ControlMenu = ({
   name, isToggled, toggle, icon,
 }) => (
-  <Col xs={4} className="Controls">
+  <Col xs={4} className="ControlMenu">
     <button
       className="Button"
       onClick={toggle}
@@ -21,6 +21,7 @@ const Controls = ({
       <FontAwesomeIcon icon={icon} />
       {name.toUpperCase()}
     </button>
+
     {isToggled && (
       <div className={`Dropdown ${capFirstLetterOf(name)}Dropdown`}>
         <button type="button">
@@ -34,15 +35,14 @@ const Controls = ({
         </button>
       </div>
     )}
-
   </Col>
 );
 
-Controls.propTypes = {
+ControlMenu.propTypes = {
   name: PropTypes.string.isRequired,
   isToggled: PropTypes.bool.isRequired,
   toggle: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 
-export default Controls;
+export default ControlMenu;

@@ -4,7 +4,7 @@ import { Col, Row } from 'react-bootstrap';
 
 import { capFirstLetterOf } from '../../../misc/util';
 
-import './columnsrow.sass';
+import './body.sass';
 
 const Column = ({ name }) => (
   <Col className="Col" xs={3}>
@@ -14,10 +14,11 @@ const Column = ({ name }) => (
     </div>
   </Col>
 );
+
 Column.propTypes = { name: PropTypes.string.isRequired };
 
-const ColumnsRow = () => (
-  <Row id="ColumnsRow">
+const Body = () => (
+  <Row id="Body">
     <Column name="inbox" />
     <Column name="ready" />
     <Column name="go" />
@@ -25,4 +26,4 @@ const ColumnsRow = () => (
   </Row>
 );
 
-export default ColumnsRow;
+export default Body;
