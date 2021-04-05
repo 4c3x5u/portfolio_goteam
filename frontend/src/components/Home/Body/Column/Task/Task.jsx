@@ -16,6 +16,7 @@ const Task = () => (
     <ul className="Subtasks">
       <Subtask title="Subtask #1" />
       <Subtask title="Subtask #2" />
+      <Subtask title="Subtask #2" />
     </ul>
   </div>
 );
