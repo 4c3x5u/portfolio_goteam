@@ -1,0 +1,47 @@
+@use '../../../var'
+
+.ControlButtonWrapper
+  display: inline-flex
+  position: relative
+  justify-content: center
+
+  button
+    width: 100%
+    font-family: var.$default-font
+    font-weight: bold
+    font-size: 1.3rem
+    color: var.$maize-crayola
+    border: none
+    background-color: transparent
+    padding-bottom: 0.1rem
+    padding-top: 0.4rem
+    box-shadow: none !important
+    &:hover
+      color: var.$cultured
+      background-color: #365e99
+
+    svg
+      margin-right: 0.4rem
+
+  .TeamControls
+    top: 100%
+    width: 92%
+    position: absolute
+    background-color: var.$true-blue
+    z-index: 1
+    box-shadow: 0 .3rem .2rem .2rem rgba(67, 67, 67, 50%)
+    padding: .5rem 0
+
+    button
+      width: 100%
+      background-color: var.$true-blue
+      border: none
+      text-align: center
+      color: var.$maize-crayola
+      font-family: var.$default-font
+      font-weight: bold
+      font-size: 1.1rem
+
+      &:hover
+        color: var.$cultured
+        background-color: #365e99

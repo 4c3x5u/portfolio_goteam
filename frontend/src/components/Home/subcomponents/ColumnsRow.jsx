@@ -1,10 +1,23 @@
 import React from 'react';
-import { Row } from 'react-bootstrap';
+import PropTypes from 'prop-types';
+import { Col, Row } from 'react-bootstrap';
 
-import Column from './Column';
+import { capitalizeFirstLetter } from '../../../util';
+
+import './columnsrow.sass';
+
+const Column = ({ name }) => (
+  <Col className="Col" xs={3}>
+    <div className={`Column ${capitalizeFirstLetter(name)}Column`}>
+      <div className="Header">{name.toUpperCase()}</div>
+      <div className="Body" />
+    </div>
+  </Col>
+);
+Column.propTypes = { name: PropTypes.string.isRequired };
 
 const ColumnsRow = () => (
-  <Row className="ColumnsRow">
+  <Row id="ColumnsRow">
     <Column name="inbox" />
     <Column name="ready" />
     <Column name="go" />

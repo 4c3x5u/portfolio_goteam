@@ -3,14 +3,17 @@ import { Container, Row } from 'react-bootstrap';
 import {
   faChalkboardTeacher, faQuestionCircle, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
+
 import ControlButton from './ControlButton';
+
+import './appheader.sass';
 import logo from '../../../assets/homeHeader.svg';
 
-const Header = () => {
+const AppHeader = () => {
   const [teamCtrlIsToggled, setTeamCtrlIsToggled] = useState(false);
 
   return (
-    <div className="Header">
+    <div id="AppHeader">
       <div className="Logo">
         <img alt="logo" src={logo} />
       </div>
@@ -42,4 +45,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default AppHeader;
