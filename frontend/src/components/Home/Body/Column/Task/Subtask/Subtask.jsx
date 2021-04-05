@@ -8,11 +8,9 @@ import './subtask.sass';
 const Subtask = ({ title }) => {
   const [checked, setChecked] = useState(false);
 
-  const icon = checked ? (
-    <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
-  ) : (
-    <FontAwesomeIcon className="CheckBox" icon={faSquare} />
-  );
+  const icon = checked
+    ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
+    : <FontAwesomeIcon className="CheckBox" icon={faSquare} />;
 
   return (
     <li className="Subtask">
