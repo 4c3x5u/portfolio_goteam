@@ -4,16 +4,16 @@ import { Form, Button } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup';
 
-import logo from '../../../assets/createboard.svg';
-import './createboard.sass';
+import logo from '../../../assets/invite.svg';
+import './invitemember.sass';
 
-const CreateBoard = ({ toggleOff }) => {
-  const [title, setTitle] = useState('');
+const InviteMember = ({ toggleOff }) => {
+  const [inviteLink] = useState('TODO: IMPLEMENT');
 
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
   return (
-    <button className="CreateBoard" onClick={toggleOff} type="button">
+    <button className="InviteMember" onClick={toggleOff} type="button">
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -23,7 +23,11 @@ const CreateBoard = ({ toggleOff }) => {
           <img className="Header" alt="logo" src={logo} />
         </div>
 
-        <FormGroup label="title" value={title} setValue={setTitle} />
+        <FormGroup
+          label="INVITE LINK"
+          value={inviteLink}
+          setValue={() => console.log('NOT ALLOWED')}
+        />
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
@@ -35,8 +39,8 @@ const CreateBoard = ({ toggleOff }) => {
   );
 };
 
-CreateBoard.propTypes = {
+InviteMember.propTypes = {
   toggleOff: PropTypes.func.isRequired,
 };
 
-export default CreateBoard;
+export default InviteMember;
