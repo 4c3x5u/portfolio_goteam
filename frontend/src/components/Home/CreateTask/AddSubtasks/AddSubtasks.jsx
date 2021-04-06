@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 import './addsubtasks.sass';
 
@@ -13,14 +13,28 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => (
       SUBTASKS
     </Form.Label>
 
-    {subtasks.list.map((st) => (
-      <Form.Control
-        key={st}
-        className="Input"
-        type="text"
-        value={st}
-        onChange={() => console.log('NOT ALLOWED')}
-      />
+    {subtasks.list.map((subtask, index) => (
+      <div className="ControlWrapper">
+        <Form.Control
+          key={subtask}
+          className="Input"
+          type="text"
+          value={subtask}
+          onChange={() => console.log('NOT ALLOWED')}
+        />
+
+        <Button
+          className="Remove"
+          onClick={() => {
+            const subtaskList = subtasks.list;
+            subtasks.list.splice(index - 1, 1);
+            setSubtasks({ value: '', list: subtaskList });
+          }}
+          type="button"
+        >
+          <FontAwesomeIcon className="Icon" icon={faTimes} />
+        </Button>
+      </div>
     ))}
 
     <div className="ControlWrapper">
