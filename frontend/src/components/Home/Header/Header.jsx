@@ -5,8 +5,8 @@ import {
   faChalkboardTeacher, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
-import ControlMenu from './ControlMenu/ControlMenu';
-import HelpModal from './HelpModal/HelpModal';
+import ControlsToggler from './ControlsToggler/ControlsToggler';
+import HelpToggler from './HelpToggler/HelpToggler';
 import { windowEnum } from '../windowEnum';
 
 import logo from '../../../assets/home.svg';
@@ -20,7 +20,7 @@ const Header = ({ activeWindow, handleActivate }) => (
     <div className="ControlsWrapper">
       <Container>
         <Row className="ControlsRow">
-          <ControlMenu
+          <ControlsToggler
             name="team"
             isActive={activeWindow === windowEnum.TEAM}
             activate={handleActivate(windowEnum.TEAM)}
@@ -28,7 +28,7 @@ const Header = ({ activeWindow, handleActivate }) => (
             icon={faUsers}
           />
 
-          <ControlMenu
+          <ControlsToggler
             name="boards"
             isActive={activeWindow === windowEnum.BOARDS}
             activate={handleActivate(windowEnum.BOARDS)}
@@ -36,10 +36,7 @@ const Header = ({ activeWindow, handleActivate }) => (
             icon={faChalkboardTeacher}
           />
 
-          <HelpModal
-            isActive={activeWindow === windowEnum.MODAL}
-            activate={handleActivate(windowEnum.MODAL)}
-          />
+          <HelpToggler toggle={handleActivate(windowEnum.MODAL)} />
         </Row>
       </Container>
     </div>

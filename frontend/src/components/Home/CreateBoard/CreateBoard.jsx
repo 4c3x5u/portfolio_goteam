@@ -3,22 +3,17 @@ import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup';
-import { windowEnum } from '../windowEnum';
-import logo from '../../../assets/createboard.svg';
 
+import logo from '../../../assets/createboard.svg';
 import './createboard.sass';
 
-const CreateBoard = ({ deactivate }) => {
+const CreateBoard = ({ toggleOff }) => {
   const [title, setTitle] = useState('');
 
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
   return (
-    <button
-      className="CreateBoard"
-      onClick={deactivate(windowEnum.CREATE_BOARD)}
-      type="button"
-    >
+    <button className="CreateBoard" onClick={toggleOff} type="button">
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -41,7 +36,7 @@ const CreateBoard = ({ deactivate }) => {
 };
 
 CreateBoard.propTypes = {
-  deactivate: PropTypes.func.isRequired,
+  toggleOff: PropTypes.func.isRequired,
 };
 
 export default CreateBoard;
