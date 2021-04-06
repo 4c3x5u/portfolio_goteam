@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
+import AddSubtasks from './AddSubtasks/AddSubtasks';
 import { inputType } from '../../../misc/enums';
 
 import logo from '../../../assets/createtask.svg';
@@ -11,6 +12,7 @@ import './createtask.sass';
 const CreateTask = ({ toggleOff }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [subtasks, setSubtasks] = useState({ value: '', list: [] });
 
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
@@ -38,6 +40,8 @@ const CreateTask = ({ toggleOff }) => {
           value={description}
           setValue={setDescription}
         />
+
+        <AddSubtasks subtasks={subtasks} setSubtasks={setSubtasks} />
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
