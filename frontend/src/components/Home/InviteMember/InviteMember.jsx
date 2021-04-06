@@ -7,7 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
-import FormGroup from '../../_shared/FormGroup';
+import FormGroup from '../../_shared/FormGroup/FormGroup';
 
 import logo from '../../../assets/invite.svg';
 import './invitemember.sass';
@@ -29,6 +29,7 @@ const InviteMember = ({ toggleOff }) => {
         </div>
 
         <FormGroup
+          type="text"
           label="INVITE LINK"
           value={inviteLink}
           setValue={() => console.log('NOT ALLOWED')}

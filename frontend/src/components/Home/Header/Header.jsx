@@ -7,7 +7,7 @@ import {
 
 import ControlsToggler from './ControlsToggler/ControlsToggler';
 import HelpToggler from './HelpToggler/HelpToggler';
-import { windowEnum } from '../windowEnum';
+import { window } from '../../../misc/enums';
 
 import logo from '../../../assets/home.svg';
 import './header.sass';
@@ -22,21 +22,21 @@ const Header = ({ activeWindow, handleActivate }) => (
         <Row className="ControlsRow">
           <ControlsToggler
             name="team"
-            isActive={activeWindow === windowEnum.TEAM}
-            activate={handleActivate(windowEnum.TEAM)}
-            create={handleActivate(windowEnum.INVITE_MEMBER)}
+            isActive={activeWindow === window.TEAM}
+            activate={handleActivate(window.TEAM)}
+            create={handleActivate(window.INVITE_MEMBER)}
             icon={faUsers}
           />
 
           <ControlsToggler
             name="boards"
-            isActive={activeWindow === windowEnum.BOARDS}
-            activate={handleActivate(windowEnum.BOARDS)}
-            create={handleActivate(windowEnum.CREATE_BOARD)}
+            isActive={activeWindow === window.BOARDS}
+            activate={handleActivate(window.BOARDS)}
+            create={handleActivate(window.CREATE_BOARD)}
             icon={faChalkboardTeacher}
           />
 
-          <HelpToggler toggle={handleActivate(windowEnum.MODAL)} />
+          <HelpToggler toggle={handleActivate(window.MODAL)} />
         </Row>
       </Container>
     </div>

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import FormGroup from '../../_shared/FormGroup';
+
+import FormGroup from '../../_shared/FormGroup/FormGroup';
+import { inputType } from '../../../misc/enums';
+
 import logo from '../../../assets/login.svg';
 import './login.sass';
 
@@ -15,8 +18,19 @@ const Login = () => {
           <img className="Header" alt="logo" src={logo} />
         </div>
 
-        <FormGroup label="username" value={username} setValue={setUsername} />
-        <FormGroup label="password" value={password} setValue={setPassword} />
+        <FormGroup
+          type={inputType.TEXT}
+          label="username"
+          value={username}
+          setValue={setUsername}
+        />
+
+        <FormGroup
+          type={inputType.TEXT}
+          label="password"
+          value={password}
+          setValue={setPassword}
+        />
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
