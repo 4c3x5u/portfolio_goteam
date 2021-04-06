@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="159" height="54" viewBox="0 0 159 54">
+  <defs>
+    <filter id="Team" x="49" y="0" width="98" height="44" filterUnits="userSpaceOnUse">
+      <feOffset dx="-0.5" dy="0.5" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feFlood flood-opacity="0.4"/>
+      <feComposite operator="in" in2="blur"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="Go" x="0" y="0" width="58" height="44" filterUnits="userSpaceOnUse">
+      <feOffset dx="-0.5" dy="0.5" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="1.5" result="blur-2"/>
+      <feFlood flood-opacity="0.4"/>
+      <feComposite operator="in" in2="blur-2"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <filter id="_" x="138" y="0" width="21" height="44" filterUnits="userSpaceOnUse">
+      <feOffset dx="-0.5" dy="0.5" input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="1.5" result="blur-3"/>
+      <feFlood flood-opacity="0.4"/>
+      <feComposite operator="in" in2="blur-3"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_6" data-name="Group 6" transform="translate(-601 -299)">
+    <g id="Group_1" data-name="Group 1" transform="translate(-2)">
+      <g transform="matrix(1, 0, 0, 1, 603, 299)" filter="url(#Team)">
+        <text id="Team-2" data-name="Team" transform="translate(54 31)" fill="#ba5756" font-size="35" font-family="Helvetica-Bold, Helvetica" font-weight="700"><tspan x="0" y="0">Team</tspan></text>
+      </g>
+      <g transform="matrix(1, 0, 0, 1, 603, 299)" filter="url(#Go)">
+        <text id="Go-2" data-name="Go" transform="translate(5 31)" fill="#3e6cb4" font-size="35" font-family="Helvetica-Bold, Helvetica" font-weight="700"><tspan x="0" y="0">Go</tspan></text>
+      </g>
+      <g transform="matrix(1, 0, 0, 1, 603, 299)" filter="url(#_)">
+        <text id="_2" data-name="!" transform="translate(143 31)" fill="#3e6cb4" font-size="35" font-family="Helvetica-Bold, Helvetica" font-weight="700"><tspan x="0" y="0">!</tspan></text>
+      </g>
+    </g>
+    <line id="Line_1" data-name="Line 1" x2="150" transform="translate(606.5 338)" fill="none" stroke="#3e6cb4" stroke-width="2"/>
+    <text id="INVITE_MEMBER" data-name="INVITE MEMBER" transform="translate(641.5 351)" fill="#3e6cb4" font-size="10" font-family="Helvetica-Bold, Helvetica" font-weight="700"><tspan x="0" y="0">INVITE MEMBER</tspan></text>
+  </g>
+</svg>

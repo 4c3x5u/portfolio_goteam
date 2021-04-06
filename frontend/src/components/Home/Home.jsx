@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import Header from './Header/Header';
-import Body from './Body/Body';
+import ColumnsRow from './ColumnsRow/ColumnsRow';
+import CreateBoard from './CreateBoard/CreateBoard';
 import Footer from './Footer/Footer';
 import { windowEnum } from './windowEnum';
 
@@ -22,7 +23,11 @@ const Home = () => {
         activeWindow={activeWindow}
         handleActivate={handleActivate}
       />
-      <Body />
+      <ColumnsRow />
+
+      {activeWindow === windowEnum.CREATE_BOARD
+        && <CreateBoard deactivate={handleActivate} />}
+
       <Footer />
     </div>
   );
