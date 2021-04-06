@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button } from 'react-bootstrap';
+import { Button, Form } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import { inputType } from '../../../misc/enums';
 
-import logo from '../../../assets/createboard.svg';
-import './createboard.sass';
+import logo from '../../../assets/createtask.svg';
+import './createtask.sass';
 
-const CreateBoard = ({ toggleOff }) => {
+const CreateTask = ({ toggleOff }) => {
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
 
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
   return (
-    <button className="CreateBoard" onClick={toggleOff} type="button">
+    <button className="CreateTask" onClick={toggleOff} type="button">
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -31,6 +32,13 @@ const CreateBoard = ({ toggleOff }) => {
           setValue={setTitle}
         />
 
+        <FormGroup
+          type={inputType.TEXTAREA}
+          label="description"
+          value={description}
+          setValue={setDescription}
+        />
+
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
             GO!
@@ -41,8 +49,6 @@ const CreateBoard = ({ toggleOff }) => {
   );
 };
 
-CreateBoard.propTypes = {
-  toggleOff: PropTypes.func.isRequired,
-};
+CreateTask.propTypes = { toggleOff: PropTypes.func.isRequired };
 
-export default CreateBoard;
+export default CreateTask;
