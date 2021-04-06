@@ -1,6 +1,9 @@
+/* eslint-disable jsx-a11y/mouse-events-have-key-events */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button } from 'react-bootstrap';
+import {
+  Form, Button, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
@@ -31,9 +34,22 @@ const InviteMember = ({ toggleOff }) => {
           setValue={() => console.log('NOT ALLOWED')}
         />
 
-        <button className="Help" type="button">
-          <FontAwesomeIcon className="Icon" icon={faQuestion} />
-        </button>
+        <OverlayTrigger
+          placement="bottom"
+          overlay={(
+            <Tooltip id="InviteHelp">
+              To invite members to your team, copy and send them this invite
+              code.
+              <br />
+              <br />
+              Once they register through it, they will be added to your team.
+            </Tooltip>
+          )}
+        >
+          <Button className="Help" type="button">
+            <FontAwesomeIcon className="Icon" icon={faQuestion} />
+          </Button>
+        </OverlayTrigger>
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
