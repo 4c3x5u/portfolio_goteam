@@ -1,3 +1,7 @@
+/* eslint-disable
+jsx-a11y/no-static-element-interactions,
+jsx-a11y/click-events-have-key-events */
+
 import React, { useState } from 'react';
 
 import Header from './Header/Header';
@@ -21,7 +25,13 @@ const Home = () => {
   );
 
   return (
-    <div id="Home">
+    <div
+      id="Home"
+      onKeyDown={(e) => {
+        console.log('LOOOOOOOOOOOOOOOOOOOOOOOOOO');
+        return e.key === 'Escape' && setActiveWindow(window.NONE);
+      }}
+    >
       <Header activeWindow={activeWindow} handleActivate={handleActivate} />
 
       <ColumnsRow toggleCreateTask={handleActivate(window.CREATE_TASK)} />
