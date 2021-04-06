@@ -1,3 +1,7 @@
+/* eslint-disable
+jsx-a11y/no-static-element-interactions,
+jsx-a11y/click-events-have-key-events */
+
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
@@ -14,7 +18,7 @@ const CreateBoard = ({ toggleOff }) => {
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
   return (
-    <button className="CreateBoard" onClick={toggleOff} type="button">
+    <div className="CreateBoard" onClick={toggleOff}>
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -37,7 +41,7 @@ const CreateBoard = ({ toggleOff }) => {
           </Button>
         </div>
       </Form>
-    </button>
+    </div>
   );
 };
 

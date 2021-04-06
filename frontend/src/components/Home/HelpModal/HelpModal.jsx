@@ -1,11 +1,14 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events */
+/* eslint-disable
+jsx-a11y/no-static-element-interactions,
+jsx-a11y/click-events-have-key-events */
+
 import React from 'react';
 import PropTypes from 'prop-types';
 
 import './helpmodal.sass';
 
 const HelpModal = ({ toggleOff }) => (
-  <button className="HelpModal" onClick={toggleOff} type="button">
+  <div className="HelpModal" onClick={toggleOff}>
     <div className="Body" onClick={(e) => e.stopPropagation()}>
 
       <h1>Summary</h1>
@@ -79,7 +82,7 @@ const HelpModal = ({ toggleOff }) => (
         </li>
       </ol>
     </div>
-  </button>
+  </div>
 );
 
 HelpModal.propTypes = { toggleOff: PropTypes.func.isRequired };
