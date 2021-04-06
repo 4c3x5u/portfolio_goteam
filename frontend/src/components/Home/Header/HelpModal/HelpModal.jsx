@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions,jsx-a11y/click-events-have-key-events */
 import React from 'react';
 import PropTypes from 'prop-types';
 
@@ -21,7 +22,7 @@ const HelpModal = ({ isActive, activate }) => (
 
     {isActive && (
       <button className="BodyWrapper" onClick={activate} type="button">
-        <div className="Body">
+        <div className="Body" onClick={(e) => e.stopPropagation()}>
 
           <h1>Summary</h1>
           <p>
@@ -31,8 +32,7 @@ const HelpModal = ({ isActive, activate }) => (
             Also, right click on any item to view additional controls for it.
             Finally, you can toggle this modal off
             <br />
-            by clicking anywhere on the page, or keep on reading for a
-            detailed overview of all the features.
+            by clicking anywhere outside its body.
           </p>
 
           <h1>Team Controls</h1>

@@ -4,10 +4,10 @@ import { Row } from 'react-bootstrap';
 import Column from './Column/Column';
 import { columnNames } from './Column/columnNames';
 
-import './body.sass';
+import './columnsrow.sass';
 
-const Body = () => (
-  <Row id="Body">
+const ColumnsRow = () => (
+  <Row id="ColumnsRow">
     <Column name={columnNames.INBOX} />
     <Column name={columnNames.READY} />
     <Column name={columnNames.GO} />
@@ -15,4 +15,4 @@ const Body = () => (
   </Row>
 );
 
-export default Body;
+export default ColumnsRow;

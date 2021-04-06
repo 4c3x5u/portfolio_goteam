@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import FormGroup from '../_shared/FormGroup';
-import logo from '../../../assets/loginHeader.svg';
+import FormGroup from '../../_shared/FormGroup';
+import logo from '../../../assets/login.svg';
+import './login.sass';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -23,7 +24,7 @@ const Login = () => {
           </Button>
         </div>
 
-        <div className="Register">
+        <div className="Redirect">
           <p>Don&apos;t have an account yet?</p>
           <p>
             <a href="/register">Register now.</a>

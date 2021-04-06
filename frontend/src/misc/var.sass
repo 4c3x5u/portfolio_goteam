@@ -27,3 +27,56 @@ $default-font: Helvetica, sans-serif
   svg
     margin-right: 0.4rem
 
+#FormWrapper
+  display: flex
+  justify-content: center
+  align-items: center
+  min-height: 100vh
+  background-color: $cultured
+
+  .Form
+    background-color: $maize-crayola
+    padding: 3rem 4.5rem 3rem 4.5rem
+    border-radius: 1rem
+    box-shadow: 0 0 0.5rem 0.01rem #000000
+
+    .HeaderWrapper
+      width: 100%
+      display: flex
+      justify-content: center
+      margin-bottom: 0.5rem
+
+      .Header
+        min-height: 6rem
+        margin-bottom: 1.7rem
+
+  .ButtonWrapper
+    display: flex
+    justify-content: center
+    width: 100%
+
+    .Button
+      font-family: $default-font
+      font-weight: bold
+      font-size: 14pt
+      padding: 0.1rem 2.5rem 0 2.5rem
+      border-color: $true-blue
+      background-color: $true-blue
+      color: $eggshell !important
+      box-shadow: 0 0 0.3rem 0.01rem #000000
+      margin-bottom: 2.2rem
+
+  .Redirect
+    width: 100%
+    text-align: center
+    font-family: $default-font
+    font-weight: bold
+    font-size: 1.2rem
+    color: $black-coral
+
+    p
+      margin-bottom: 0
+
+      a
+        color: $true-blue
+        text-decoration: underline !important

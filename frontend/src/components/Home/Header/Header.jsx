@@ -9,7 +9,7 @@ import ControlMenu from './ControlMenu/ControlMenu';
 import HelpModal from './HelpModal/HelpModal';
 import { windowEnum } from '../windowEnum';
 
-import logo from '../../../assets/homeHeader.svg';
+import logo from '../../../assets/home.svg';
 import './header.sass';
 
 const Header = ({ activeWindow, handleActivate }) => (
