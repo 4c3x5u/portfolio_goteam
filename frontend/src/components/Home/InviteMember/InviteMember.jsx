@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import FormGroup from '../../_shared/FormGroup';
 
@@ -28,6 +30,10 @@ const InviteMember = ({ toggleOff }) => {
           value={inviteLink}
           setValue={() => console.log('NOT ALLOWED')}
         />
+
+        <button className="Help" type="button">
+          <FontAwesomeIcon className="Icon" icon={faQuestion} />
+        </button>
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
