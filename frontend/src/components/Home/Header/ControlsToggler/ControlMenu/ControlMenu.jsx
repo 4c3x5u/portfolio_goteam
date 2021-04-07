@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle, faCaretRight, faCaretLeft } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPlusCircle, faCaretRight, faCaretLeft,
+} from '@fortawesome/free-solid-svg-icons';
 
 import './controlmenu.sass';
 
@@ -17,10 +19,22 @@ const ControlMenu = ({ create }) => {
     ])
   ), []);
 
+  const toggleItemActive = (item, index) => (
+    setItems(items.map((currentItem, i) => (
+      i === index
+        ? { ...currentItem, isActive: !currentItem.isActive }
+        : currentItem
+    )))
+  );
+
   return (
     <div className="ControlMenu">
-      {items.map((item) => (
-        <button key={item.name} type="button">
+      {items.map((item, index) => (
+        <button
+          key={item.name}
+          type="button"
+          onClick={() => toggleItemActive(item, index)}
+        >
           {item.isActive
             && <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />}
 

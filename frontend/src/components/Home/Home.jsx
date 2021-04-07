@@ -5,7 +5,7 @@ jsx-a11y/click-events-have-key-events */
 import React, { useState } from 'react';
 
 import Header from './Header/Header';
-import ColumnsRow from './ColumnsRow/ColumnsRow';
+import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
 import CreateTask from './CreateTask/CreateTask';
 import InviteMember from './InviteMember/InviteMember';
@@ -34,7 +34,7 @@ const Home = () => {
     >
       <Header activeWindow={activeWindow} handleActivate={handleActivate} />
 
-      <ColumnsRow toggleCreateTask={handleActivate(window.CREATE_TASK)} />
+      <Board toggleCreateTask={handleActivate(window.CREATE_TASK)} />
 
       {activeWindow === window.CREATE_BOARD
         && <CreateBoard toggleOff={handleActivate(window.NONE)} />}

@@ -5,12 +5,12 @@ import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 import './subtask.sass';
 
-const Subtask = ({ title }) => {
+const Subtask = ({ id, title, done }) => {
+  // TODO: Use subtask's 'DONE' field rather than a state here
   const [checked, setChecked] = useState(false);
 
-  const icon = checked
-    ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
-    : <FontAwesomeIcon className="CheckBox" icon={faSquare} />;
+  // TODO Use subtask ID to handle set done/undone
+  console.log(`Subtask ID: ${id}`);
 
   return (
     <li className="Subtask">
@@ -19,7 +19,12 @@ const Subtask = ({ title }) => {
         onClick={() => setChecked(!checked)}
         type="button"
       >
-        {icon}
+        {
+          done
+            ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
+            : <FontAwesomeIcon className="CheckBox" icon={faSquare} />
+        }
+
         {title}
       </button>
     </li>
@@ -27,7 +32,9 @@ const Subtask = ({ title }) => {
 };
 
 Subtask.propTypes = {
+  id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
+  done: PropTypes.bool.isRequired,
 };
 
 export default Subtask;
