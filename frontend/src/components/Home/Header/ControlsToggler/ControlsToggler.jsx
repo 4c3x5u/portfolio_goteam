@@ -2,7 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+
+import ControlMenu from './ControlMenu/ControlMenu';
 
 import './controlstoggler.sass';
 
@@ -20,19 +21,8 @@ const ControlsToggler = ({
       {name.toUpperCase()}
     </button>
 
-    {isActive && (
-      <div className="Controls">
-        <button type="button">
-          Control Item #1
-        </button>
-        <button type="button">
-          Control Item #2
-        </button>
-        <button type="button" onClick={create}>
-          <FontAwesomeIcon icon={faPlusCircle} />
-        </button>
-      </div>
-    )}
+    {isActive
+      && <ControlMenu create={create} />}
   </Col>
 );
 
