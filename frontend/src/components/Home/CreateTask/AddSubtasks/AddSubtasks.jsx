@@ -26,9 +26,10 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => (
         <Button
           className="Remove"
           onClick={() => {
-            const subtaskList = subtasks.list;
-            subtasks.list.splice(index - 1, 1);
-            setSubtasks({ value: '', list: subtaskList });
+            setSubtasks({
+              value: '',
+              list: subtasks.list.filter((_, i) => i !== index),
+            });
           }}
           type="button"
         >
