@@ -31,6 +31,7 @@ const ControlMenu = ({ create }) => {
     <div className="ControlMenu">
       {items.map((item, index) => (
         <button
+          className="ControlButton"
           key={item.name}
           type="button"
           onClick={() => toggleItemActive(item, index)}
@@ -44,7 +45,7 @@ const ControlMenu = ({ create }) => {
             && <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />}
         </button>
       ))}
-      <button type="button" onClick={create}>
+      <button className="CreateButton" type="button" onClick={create}>
         <FontAwesomeIcon icon={faPlusCircle} />
       </button>
     </div>
