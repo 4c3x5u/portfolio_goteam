@@ -27,10 +27,10 @@ const Home = () => {
   return (
     <div
       id="Home"
-      onKeyDown={(e) => {
-        console.log('LOOOOOOOOOOOOOOOOOOOOOOOOOO');
-        return e.key === 'Escape' && setActiveWindow(window.NONE);
-      }}
+      onKeyDown={(e) => (
+        e.key === 'Escape'
+          && setActiveWindow(window.NONE)
+      )}
     >
       <Header activeWindow={activeWindow} handleActivate={handleActivate} />
 

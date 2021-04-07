@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Row } from 'react-bootstrap';
 
@@ -8,17 +8,18 @@ import { columnOrder } from './Column/columnOrder';
 import './board.sass';
 
 const Board = ({ toggleCreateTask }) => {
-  const [columns, setColumns] = useState([]);
+  const [columns] = useState([
+    { id: 0, order: columnOrder.INBOX },
+    { id: 1, order: columnOrder.READY },
+    { id: 2, order: columnOrder.GO },
+    { id: 3, order: columnOrder.DONE },
+  ]);
 
-  // TODO: API call to the database here
-  useEffect(() => (
-    setColumns([
-      { id: 0, order: columnOrder.INBOX },
-      { id: 1, order: columnOrder.READY },
-      { id: 2, order: columnOrder.GO },
-      { id: 0, order: columnOrder.DONE },
-    ])
-  ), []);
+  // TODO: API call to the database here inside a useEffect
+  // useEffect(() => (
+  //   setColumns([
+  //   ])
+  // ), []);
 
   const getColumnId = (order) => (
     columns.find((column) => column.order === order).id
