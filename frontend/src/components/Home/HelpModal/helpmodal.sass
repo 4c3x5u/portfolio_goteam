@@ -2,34 +2,37 @@
 
 .HelpModal
   display: flex
-  background-color: rgba(0, 0, 0, 50%)
-  align-items: center
   justify-content: center
+  align-items: center
+  min-height: 100vh
+  background-color: rgba(0, 0, 0, 50%)
   position: fixed
   top: 0
   left: 0
   width: 100vw
   height: 100vh
-  border: none
-  text-align: left
+  text-align: center
   z-index: 1
+  color: vars.$black-coral
 
   .Body
     position: absolute
-    background-color: vars.$cultured
-    border: 0.3rem solid vars.$cadet-grey
-    padding: 0.7rem 0.7rem 0 0.7rem
+    background-color: vars.$maize-crayola
+    padding: 3rem 4.5rem 3rem 4.5rem
+    box-shadow: 0 0 0.5rem 0.01rem #000000
+    border-radius: 1rem
     z-index: 2
     cursor: default
 
+    .HeaderWrapper
+      width: 100%
+      display: flex
+      justify-content: center
+      margin-bottom: 0.5rem
 
-    .CloseButton
-      background-color: transparent !important
-      border: none !important
-
-    h1, p, li
-      color: vars.$black-coral
-      font-family: vars.$default-font
+      .Header
+        min-height: 6rem
+        margin-bottom: 1.7rem
 
     li
       margin-left: 0

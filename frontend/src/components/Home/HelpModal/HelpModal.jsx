@@ -6,10 +6,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import './helpmodal.sass';
+import logo from '../../../assets/help.svg';
 
 const HelpModal = ({ toggleOff }) => (
   <div className="HelpModal" onClick={toggleOff}>
     <div className="Body" onClick={(e) => e.stopPropagation()}>
+      <div className="HeaderWrapper">
+        <img className="Header" alt="logo" src={logo} />
+      </div>
 
       <h1>Summary</h1>
       <p>
