@@ -5,24 +5,20 @@ jsx-a11y/no-static-element-interactions */
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Button, Form, Row, Col,
+  Button, Col, Form, Row,
 } from 'react-bootstrap';
 
-import FormGroup from '../../../../../_shared/FormGroup/FormGroup';
-import EditSubtasks from '../EditTask/EditSubtasks/EditSubtasks';
-import { inputType } from '../../../../../../misc/inputType';
+import FormGroup from '../../_shared/FormGroup/FormGroup';
+import { inputType } from '../../../misc/inputType';
 
-import logo from './deletetask.svg';
-import './deletetask.sass';
+import './deletemember.sass';
+import logo from '../DeleteTask/deletetask.svg';
 
-const DeleteTask = ({
-  id, title, description, subtasks, toggleOff,
-}) => {
-  // TODO: Use the task ID to delete it here
-  const handleSubmit = () => (console.log(`Delete Task ${id}`));
+const DeleteMember = ({ id, username, toggleOff }) => {
+  const handleSubmit = () => console.log(`Remove member ${id}`);
 
   return (
-    <div className="DeleteTask" onClick={toggleOff}>
+    <div className="RemoveMember" onClick={toggleOff}>
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -34,19 +30,10 @@ const DeleteTask = ({
 
         <FormGroup
           type={inputType.TEXT}
-          label="title"
-          value={title}
+          label="username"
+          value={username}
           disabled
         />
-
-        <FormGroup
-          type={inputType.TEXTAREA}
-          label="description"
-          value={description}
-          disabled
-        />
-
-        <EditSubtasks subtasks={{ list: subtasks }} />
 
         <Row className="ButtonWrapper">
           <Col className="ButtonCol">
@@ -58,6 +45,7 @@ const DeleteTask = ({
               CANCEL
             </Button>
           </Col>
+
           <Col className="ButtonCol">
             <Button
               className="Button DeleteButton"
@@ -73,21 +61,10 @@ const DeleteTask = ({
   );
 };
 
-DeleteTask.propTypes = {
+DeleteMember.propTypes = {
   id: PropTypes.number.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string,
-  subtasks: PropTypes.arrayOf({
-    id: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired,
-    order: PropTypes.number.isRequired,
-    done: PropTypes.bool.isRequired,
-  }).isRequired,
+  username: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 
-DeleteTask.defaultProps = {
-  description: null,
-};
-
-export default DeleteTask;
+export default DeleteMember;

@@ -19,7 +19,18 @@ import './invite.sass';
 const Invite = ({ toggleOff }) => {
   const [inviteLink] = useState('TODO: IMPLEMENT');
 
-  const handleSubmit = () => console.log('TODO: IMPLEMENT');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const el = document.createElement('textarea');
+    el.value = inviteLink;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+
+    toggleOff();
+  };
 
   return (
     <div className="Invite" onClick={toggleOff}>
@@ -36,18 +47,19 @@ const Invite = ({ toggleOff }) => {
           type="text"
           label="INVITE LINK"
           value={inviteLink}
-          setValue={() => console.log('NOT ALLOWED')}
+          disabled
         />
 
         <OverlayTrigger
           placement="bottom"
           overlay={(
             <Tooltip id="HelpTooltip">
-              To invite members to your team, copy and send them this invite
-              code.
+              This invite link will automatically be copied to your clipboard
+              when you click &quot;GO!&quot;.
               <br />
               <br />
-              Once they register through it, they will be added to your team.
+              Send it to your colleagues. Once they register through it, they
+              will automatically be added to your team.
             </Tooltip>
           )}
         >
@@ -57,7 +69,11 @@ const Invite = ({ toggleOff }) => {
         </OverlayTrigger>
 
         <div className="ButtonWrapper">
-          <Button className="Button" type="submit" aria-label="submit">
+          <Button
+            className="Button"
+            type="submit"
+            aria-label="submit"
+          >
             GO!
           </Button>
         </div>

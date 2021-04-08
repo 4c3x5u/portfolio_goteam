@@ -23,16 +23,18 @@ const Header = ({ activeWindow, handleActivate }) => (
           <ControlsToggler
             name="team"
             isActive={activeWindow === window.TEAM}
-            activate={handleActivate(window.TEAM)}
-            create={handleActivate(window.INVITE)}
+            handleActivate={handleActivate(window.TEAM)}
+            handleCreate={handleActivate(window.INVITE_MEMBER)}
+            handleDelete={handleActivate(window.DELETE_MEMBER)}
             icon={faUsers}
           />
 
           <ControlsToggler
             name="boards"
             isActive={activeWindow === window.BOARDS}
-            activate={handleActivate(window.BOARDS)}
-            create={handleActivate(window.CREATE_BOARD)}
+            handleActivate={handleActivate(window.BOARDS)}
+            handleCreate={handleActivate(window.CREATE_BOARD)}
+            handleDelete={handleActivate(window.DELETE_BOARD)}
             icon={faChalkboardTeacher}
           />
 

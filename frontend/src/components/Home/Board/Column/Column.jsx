@@ -9,8 +9,9 @@ import { columnOrder } from './columnOrder';
 import { capFirstLetterOf } from '../../../../misc/utils';
 
 import './column.sass';
+import window from '../../../../misc/window';
 
-const Column = ({ id, name, toggleCreateTask }) => {
+const Column = ({ id, name, handleActivate }) => {
   const [tasks, setTasks] = useState([]);
 
   // TODO: API call based on column id here
@@ -40,6 +41,7 @@ const Column = ({ id, name, toggleCreateTask }) => {
                   id={task.id}
                   title={task.title}
                   description={task.description}
+                  handleActivate={handleActivate}
                 />
               ))
           }
@@ -47,7 +49,7 @@ const Column = ({ id, name, toggleCreateTask }) => {
           {name === columnOrder.INBOX && (
             <button
               className="CreateButton"
-              onClick={toggleCreateTask}
+              onClick={handleActivate(window.CREATE_TASK)}
               type="button"
             >
               <FontAwesomeIcon className="Icon" icon={faPlusCircle} />
@@ -62,11 +64,11 @@ const Column = ({ id, name, toggleCreateTask }) => {
 Column.propTypes = {
   id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
-  toggleCreateTask: PropTypes.func,
+  handleActivate: PropTypes.func,
 };
 
 Column.defaultProps = {
-  toggleCreateTask: () => console.log('Cannot create task here.'),
+  handleActivate: () => console.log('Cannot create task here.'),
 };
 
 export default Column;
