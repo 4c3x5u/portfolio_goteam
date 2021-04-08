@@ -1,0 +1,31 @@
+@use '../../../../../../../misc/vars'
+@use '../../../../../../_shared/FormGroup/formgroup'
+
+.EditSubtasks
+  @extend .FormGroup
+
+  .ControlWrapper
+    width: 100%
+    position: relative
+    margin-bottom: 1rem
+
+    .Add
+      background-color: vars.$true-blue !important
+      border: none
+      border-radius: 100%
+      height: 2rem
+      width: 2rem
+      padding: 0.3rem 0 0 0
+      position: absolute
+      top: 0.2rem
+      left: 102%
+      box-shadow: 0 0 0.3rem 0.01rem #000000
+
+      .Icon
+        color: vars.$eggshell
+        font-size: 1.1rem
+        margin: 0
+
+    .Remove
+      @extend .Add
+      background-color: vars.$bittersweet-shimmer !important
