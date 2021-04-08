@@ -1,18 +1,34 @@
 /* eslint-disable
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
+import {
+  Menu,
+  Item,
+  // Separator,
+  // Submenu,
+  useContextMenu,
+} from 'react-contexify';
+
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { ContextMenu, MenuItem, ContextMenuTrigger } from 'react-contextmenu';
 
 import Subtask from './Subtask/Subtask';
 import EditTask from './EditTask/EditTask';
 
 import './task.sass';
+import 'react-contexify/dist/ReactContexify.css';
 
 const Task = ({ id, title, description }) => {
-  const [editIsOn, setEditIsOn] = useState(false);
   const [subtasks, setSubtasks] = useState([]);
+  const [showEdit, setShowEdit] = useState(false);
+
+  const MENU_ID = `edit-task-${id}`;
+
+  const { show } = useContextMenu({ id: MENU_ID });
+
+  // const handleItemClick = ({ event, props, triggerEvent, data }) => (
+  //   console.log('Menu item clicked')
+  // );
 
   // TODO: API call based on task ID
   console.log(`Task ID: ${id}`);
@@ -34,7 +50,7 @@ const Task = ({ id, title, description }) => {
   }, []);
 
   return (
-    <div className="Task" onClick={setEditIsOn}>
+    <div className="Task" onContextMenu={show}>
       <div className="TaskBody">
         <h1 className="Title">
           {title}
@@ -57,14 +73,20 @@ const Task = ({ id, title, description }) => {
         )}
       </div>
 
+      <Menu id={MENU_ID}>
+        <Item onClick={() => setShowEdit(true)}>
+          Edit Task
+        </Item>
+      </Menu>
+
       {
-        editIsOn && (
+        showEdit && (
           <EditTask
             id={id}
             title={title}
             description={description}
             subtasks={subtasks}
-            toggleOff={() => setEditIsOn(false)}
+            toggleOff={() => setShowEdit(false)}
           />
         )
       }

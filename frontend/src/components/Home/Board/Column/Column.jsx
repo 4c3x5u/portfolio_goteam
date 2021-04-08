@@ -16,7 +16,7 @@ const Column = ({ id, name, toggleCreateTask }) => {
   // TODO: API call based on column id here
   console.log(`Column ID: ${id}`);
   useEffect(() => (
-    setTasks([
+    name === 'inbox' && setTasks([
       {
         id: 0,
         title: 'Some task',
