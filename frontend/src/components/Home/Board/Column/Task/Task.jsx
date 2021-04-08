@@ -1,34 +1,27 @@
 /* eslint-disable
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
-import {
-  Menu,
-  Item,
-  // Separator,
-  // Submenu,
-  useContextMenu,
-} from 'react-contexify';
 
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Menu, Item, useContextMenu } from 'react-contexify';
 
 import Subtask from './Subtask/Subtask';
 import EditTask from './EditTask/EditTask';
+import DeleteTask from './DeleteTask/DeleteTask';
 
 import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
 
 const Task = ({ id, title, description }) => {
+  const window = { NONE: 0, EDIT: 1, DELETE: 2 };
+
   const [subtasks, setSubtasks] = useState([]);
-  const [showEdit, setShowEdit] = useState(false);
+  const [activeWindow, setActiveWindow] = useState(window.NONE);
 
   const MENU_ID = `edit-task-${id}`;
 
   const { show } = useContextMenu({ id: MENU_ID });
-
-  // const handleItemClick = ({ event, props, triggerEvent, data }) => (
-  //   console.log('Menu item clicked')
-  // );
 
   // TODO: API call based on task ID
   console.log(`Task ID: ${id}`);
@@ -74,26 +67,33 @@ const Task = ({ id, title, description }) => {
       </div>
 
       <Menu className="ContextMenu" id={MENU_ID}>
-        <Item className="MenuItem" onClick={() => setShowEdit(true)}>
+        <Item className="MenuItem" onClick={() => setActiveWindow(window.EDIT)}>
           Edit Task
         </Item>
-        <Item className="MenuItem" onClick={() => setShowEdit(true)}>
+        <Item className="MenuItem" onClick={() => setActiveWindow(window.DELETE)}>
           Delete Task
         </Item>
       </Menu>
 
-      {/* TODO: Move to home page? */}
-      {
-        showEdit && (
-          <EditTask
-            id={id}
-            title={title}
-            description={description}
-            subtasks={subtasks}
-            toggleOff={() => setShowEdit(false)}
-          />
-        )
-      }
+      {activeWindow === window.EDIT && (
+        <EditTask
+          id={id}
+          title={title}
+          description={description}
+          subtasks={subtasks}
+          toggleOff={() => setActiveWindow(window.NONE)}
+        />
+      )}
+
+      {activeWindow === window.DELETE && (
+        <DeleteTask
+          id={id}
+          title={title}
+          description={description}
+          subtasks={subtasks}
+          toggleOff={() => setActiveWindow(window.NONE)}
+        />
+      )}
     </div>
   );
 };

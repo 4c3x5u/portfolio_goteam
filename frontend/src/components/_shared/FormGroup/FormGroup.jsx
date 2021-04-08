@@ -7,7 +7,7 @@ import { inputType } from '../../../misc/inputType';
 import './formgroup.sass';
 
 const FormGroup = ({
-  type, label, value, setValue,
+  type, label, value, setValue, disabled,
 }) => (
   <Form.Group className="FormGroup">
     <Form.Label className="Label">
@@ -20,6 +20,7 @@ const FormGroup = ({
         type={type}
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        disabled={disabled}
       />
     )}
 
@@ -30,6 +31,7 @@ const FormGroup = ({
         rows={2}
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        disabled={disabled}
       />
     )}
 
@@ -40,7 +42,13 @@ FormGroup.propTypes = {
   type: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
-  setValue: PropTypes.func.isRequired,
+  setValue: PropTypes.func,
+  disabled: PropTypes.bool,
+};
+
+FormGroup.defaultProps = {
+  setValue: () => console.log('SET VALUE NOT ALLOWED'),
+  disabled: false,
 };
 
 export default FormGroup;

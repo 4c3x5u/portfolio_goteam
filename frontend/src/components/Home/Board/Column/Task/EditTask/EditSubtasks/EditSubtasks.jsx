@@ -20,51 +20,55 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => (
           className="Input"
           type="text"
           value={subtask.title}
-          onChange={() => console.log('NOT ALLOWED')}
+          disabled
         />
 
-        <Button
-          className="Remove"
-          onClick={() => {
-            setSubtasks({
-              value: '',
-              list: subtasks.list.filter((st) => st.id !== subtask.id),
-            });
-          }}
-          type="button"
-        >
-          <FontAwesomeIcon className="Icon" icon={faTimes} />
-        </Button>
+        {setSubtasks && (
+          <Button
+            className="Remove"
+            onClick={() => {
+              setSubtasks({
+                value: '',
+                list: subtasks.list.filter((st) => st.id !== subtask.id),
+              });
+            }}
+            type="button"
+          >
+            <FontAwesomeIcon className="Icon" icon={faTimes} />
+          </Button>
+        )}
       </div>
     ))}
 
-    <div className="ControlWrapper">
-      <Form.Control
-        className="Input"
-        type="text"
-        value={subtasks.value}
-        onChange={(e) => setSubtasks({
-          ...subtasks,
-          value: e.target.value,
-        })}
-      />
+    {setSubtasks && (
+      <div className="ControlWrapper">
+        <Form.Control
+          className="Input"
+          type="text"
+          value={subtasks.value}
+          onChange={(e) => setSubtasks({
+            ...subtasks,
+            value: e.target.value,
+          })}
+        />
 
-      <Button
-        className="Add"
-        onClick={() => setSubtasks({
-          value: '',
-          list: [...subtasks.list, {
-            id: null,
-            title: subtasks.value,
-            order: subtasks.list.length,
-            done: false,
-          }],
-        })}
-        type="button"
-      >
-        <FontAwesomeIcon className="Icon" icon={faPlus} />
-      </Button>
-    </div>
+        <Button
+          className="Add"
+          onClick={() => setSubtasks({
+            value: '',
+            list: [...subtasks.list, {
+              id: null,
+              title: subtasks.value,
+              order: subtasks.list.length,
+              done: false,
+            }],
+          })}
+          type="button"
+        >
+          <FontAwesomeIcon className="Icon" icon={faPlus} />
+        </Button>
+      </div>
+    )}
   </Form.Group>
 );
 
@@ -75,7 +79,9 @@ EditSubtasks.propTypes = {
       PropTypes.string.isRequired,
     ).isRequired,
   }).isRequired,
-  setSubtasks: PropTypes.func.isRequired,
+  setSubtasks: PropTypes.func,
 };
+
+EditSubtasks.defaultProps = { setSubtasks: null };
 
 export default EditSubtasks;
