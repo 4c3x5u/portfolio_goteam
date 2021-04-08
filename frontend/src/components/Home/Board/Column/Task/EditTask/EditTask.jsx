@@ -8,9 +8,9 @@ import { Button, Form } from 'react-bootstrap';
 
 import FormGroup from '../../../../../_shared/FormGroup/FormGroup';
 import EditSubtasks from './EditSubtasks/EditSubtasks';
-import { inputType } from '../../../../../../misc/enums';
+import { inputType } from '../../../../../../misc/inputType';
 
-import logo from '../../../../../../assets/createtask.svg';
+import logo from './edittask.svg';
 import './edittask.sass';
 
 const EditTask = ({

@@ -5,11 +5,11 @@ jsx-a11y/click-events-have-key-events */
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import './helpmodal.sass';
-import logo from '../../../assets/help.svg';
+import './help.sass';
+import logo from './help.svg';
 
-const HelpModal = ({ toggleOff }) => (
-  <div className="HelpModal" onClick={toggleOff}>
+const Help = ({ toggleOff }) => (
+  <div className="Help" onClick={toggleOff}>
     <div className="Body" onClick={(e) => e.stopPropagation()}>
       <div className="HeaderWrapper">
         <img className="Header" alt="logo" src={logo} />
@@ -89,6 +89,6 @@ const HelpModal = ({ toggleOff }) => (
   </div>
 );
 
-HelpModal.propTypes = { toggleOff: PropTypes.func.isRequired };
+Help.propTypes = { toggleOff: PropTypes.func.isRequired };
 
-export default HelpModal;
+export default Help;

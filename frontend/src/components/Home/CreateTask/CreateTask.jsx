@@ -8,9 +8,9 @@ import { Button, Form } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import AddSubtasks from './AddSubtasks/AddSubtasks';
-import { inputType } from '../../../misc/enums';
+import { inputType } from '../../../misc/inputType';
 
-import logo from '../../../assets/createtask.svg';
+import logo from './createtask.svg';
 import './createtask.sass';
 
 const CreateTask = ({ toggleOff }) => {

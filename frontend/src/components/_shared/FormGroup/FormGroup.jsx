@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'react-bootstrap';
 
-import { inputType } from '../../../misc/enums';
+import { inputType } from '../../../misc/inputType';
 
 import './formgroup.sass';
 
