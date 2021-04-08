@@ -8,29 +8,31 @@ import ControlMenu from './ControlMenu/ControlMenu';
 import './controlstoggler.sass';
 
 const ControlsToggler = ({
-  name, isActive, activate, create, icon,
+  name, isActive, handleActivate, handleCreate, handleDelete, icon,
 }) => (
   <Col xs={4} className="ControlsToggler">
     <button
       className="Button"
-      onClick={activate}
+      onClick={handleActivate}
       aria-label={`${name} button`}
       type="button"
     >
       <FontAwesomeIcon icon={icon} />
+
       {name.toUpperCase()}
     </button>
 
     {isActive
-      && <ControlMenu create={create} />}
+      && <ControlMenu handleCreate={handleCreate} handleDelete={handleDelete} />}
   </Col>
 );
 
 ControlsToggler.propTypes = {
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
-  activate: PropTypes.func.isRequired,
-  create: PropTypes.func.isRequired,
+  handleActivate: PropTypes.func.isRequired,
+  handleCreate: PropTypes.func.isRequired,
+  handleDelete: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 

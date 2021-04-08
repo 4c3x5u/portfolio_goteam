@@ -7,7 +7,7 @@ import { columnOrder } from './Column/columnOrder';
 
 import './board.sass';
 
-const Board = ({ toggleCreateTask }) => {
+const Board = ({ handleActivate }) => {
   const [columns] = useState([
     { id: 0, order: columnOrder.INBOX },
     { id: 1, order: columnOrder.READY },
@@ -30,7 +30,7 @@ const Board = ({ toggleCreateTask }) => {
       <Column
         id={getColumnId(columnOrder.INBOX)}
         name={columnOrder.INBOX}
-        toggleCreateTask={toggleCreateTask}
+        handleActivate={handleActivate}
       />
 
       <Column id={getColumnId(columnOrder.READY)} name={columnOrder.READY} />
@@ -42,6 +42,6 @@ const Board = ({ toggleCreateTask }) => {
   );
 };
 
-Board.propTypes = { toggleCreateTask: PropTypes.func.isRequired };
+Board.propTypes = { handleActivate: PropTypes.func.isRequired };
 
 export default Board;

@@ -7,17 +7,15 @@ import PropTypes from 'prop-types';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 
 import Subtask from './Subtask/Subtask';
-import EditTask from './EditTask/EditTask';
-import DeleteTask from './DeleteTask/DeleteTask';
+import window from '../../../../../misc/window';
 
 import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
 
-const Task = ({ id, title, description }) => {
-  const window = { NONE: 0, EDIT: 1, DELETE: 2 };
-
+const Task = ({
+  id, title, description, handleActivate,
+}) => {
   const [subtasks, setSubtasks] = useState([]);
-  const [activeWindow, setActiveWindow] = useState(window.NONE);
 
   const MENU_ID = `edit-task-${id}`;
 
@@ -67,33 +65,32 @@ const Task = ({ id, title, description }) => {
       </div>
 
       <Menu className="ContextMenu" id={MENU_ID}>
-        <Item className="MenuItem" onClick={() => setActiveWindow(window.EDIT)}>
+        <Item
+          className="MenuItem"
+          onClick={() => handleActivate(window.EDIT_TASK)({
+            id,
+            title,
+            description,
+            subtasks,
+            toggleOff: handleActivate(window.NONE),
+          })}
+        >
           Edit Task
         </Item>
-        <Item className="MenuItem" onClick={() => setActiveWindow(window.DELETE)}>
+
+        <Item
+          className="MenuItem"
+          onClick={() => handleActivate(window.DELETE_TASK)({
+            id,
+            title,
+            description,
+            subtasks,
+            toggleOff: handleActivate(window.NONE),
+          })}
+        >
           Delete Task
         </Item>
       </Menu>
-
-      {activeWindow === window.EDIT && (
-        <EditTask
-          id={id}
-          title={title}
-          description={description}
-          subtasks={subtasks}
-          toggleOff={() => setActiveWindow(window.NONE)}
-        />
-      )}
-
-      {activeWindow === window.DELETE && (
-        <DeleteTask
-          id={id}
-          title={title}
-          description={description}
-          subtasks={subtasks}
-          toggleOff={() => setActiveWindow(window.NONE)}
-        />
-      )}
     </div>
   );
 };
@@ -102,6 +99,7 @@ Task.propTypes = {
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
+  handleActivate: PropTypes.func.isRequired,
 };
 
 export default Task;

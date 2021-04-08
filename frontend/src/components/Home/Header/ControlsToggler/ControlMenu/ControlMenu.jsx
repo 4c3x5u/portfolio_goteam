@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faPlusCircle, faCaretRight, faCaretLeft,
-} from '@fortawesome/free-solid-svg-icons';
+import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+
+import MenuItem from './MenuItem/MenuItem';
 
 import './controlmenu.sass';
 
-const ControlMenu = ({ create }) => {
+const ControlMenu = ({ handleCreate, handleDelete }) => {
   const [items, setItems] = useState([]);
 
   useEffect(() => (
-    // TODO: Make an API call here to get items
+    // TODO: API call here to get items
     setItems([
-      { name: 'An Item', isActive: false },
-      { name: 'An Active Item', isActive: true },
+      { id: 0, name: 'An Item', isActive: false },
+      { id: 1, name: 'An Active Item', isActive: true },
     ])
   ), []);
 
   const toggleItemActive = (item, index) => (
+    // TODO: API call here to set items active
     setItems(items.map((currentItem, i) => (
       i === index
         ? { ...currentItem, isActive: !currentItem.isActive }
@@ -30,22 +30,15 @@ const ControlMenu = ({ create }) => {
   return (
     <div className="ControlMenu">
       {items.map((item, index) => (
-        <button
-          className="ControlButton"
-          key={item.name}
-          type="button"
-          onClick={() => toggleItemActive(item, index)}
-        >
-          {item.isActive
-            && <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />}
-
-          {item.name}
-
-          {item.isActive
-            && <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />}
-        </button>
+        <MenuItem
+          id={item.id}
+          name={item.name}
+          isActive={item.isActive}
+          toggleActive={() => toggleItemActive(item, index)}
+          handleDelete={handleDelete}
+        />
       ))}
-      <button className="CreateButton" type="button" onClick={create}>
+      <button className="CreateButton" type="button" onClick={handleCreate}>
         <FontAwesomeIcon icon={faPlusCircle} />
       </button>
     </div>
@@ -53,7 +46,8 @@ const ControlMenu = ({ create }) => {
 };
 
 ControlMenu.propTypes = {
-  create: PropTypes.func.isRequired,
+  handleCreate: PropTypes.func.isRequired,
+  handleDelete: PropTypes.func.isRequired,
 };
 
 export default ControlMenu;
