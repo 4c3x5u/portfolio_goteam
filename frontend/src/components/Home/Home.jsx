@@ -8,10 +8,10 @@ import Header from './Header/Header';
 import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
 import CreateTask from './CreateTask/CreateTask';
-import InviteMember from './InviteMember/InviteMember';
-import HelpModal from './HelpModal/HelpModal';
+import InviteMember from './Invite/Invite';
+import HelpModal from './Help/Help';
 import Footer from './Footer/Footer';
-import { window } from '../../misc/enums';
+import window from '../../misc/window';
 
 import './home.sass';
 
@@ -39,7 +39,7 @@ const Home = () => {
       {activeWindow === window.CREATE_TASK
         && <CreateTask toggleOff={handleActivate(window.NONE)} />}
 
-      {activeWindow === window.INVITE_MEMBER
+      {activeWindow === window.INVITE
         && <InviteMember toggleOff={handleActivate(window.NONE)} />}
 
       {activeWindow === window.MODAL

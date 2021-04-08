@@ -13,16 +13,16 @@ import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 
-import logo from '../../../assets/invite.svg';
-import './invitemember.sass';
+import logo from './invite.svg';
+import './invite.sass';
 
-const InviteMember = ({ toggleOff }) => {
+const Invite = ({ toggleOff }) => {
   const [inviteLink] = useState('TODO: IMPLEMENT');
 
   const handleSubmit = () => console.log('TODO: IMPLEMENT');
 
   return (
-    <div className="InviteMember" onClick={toggleOff}>
+    <div className="Invite" onClick={toggleOff}>
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -42,7 +42,7 @@ const InviteMember = ({ toggleOff }) => {
         <OverlayTrigger
           placement="bottom"
           overlay={(
-            <Tooltip id="InviteHelp">
+            <Tooltip id="HelpTooltip">
               To invite members to your team, copy and send them this invite
               code.
               <br />
@@ -51,7 +51,7 @@ const InviteMember = ({ toggleOff }) => {
             </Tooltip>
           )}
         >
-          <Button className="Help" type="button">
+          <Button className="InviteHelp" type="button">
             <FontAwesomeIcon className="Icon" icon={faQuestion} />
           </Button>
         </OverlayTrigger>
@@ -66,8 +66,8 @@ const InviteMember = ({ toggleOff }) => {
   );
 };
 
-InviteMember.propTypes = {
+Invite.propTypes = {
   toggleOff: PropTypes.func.isRequired,
 };
 
-export default InviteMember;
+export default Invite;

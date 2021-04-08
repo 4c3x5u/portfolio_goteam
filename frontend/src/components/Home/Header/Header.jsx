@@ -7,9 +7,9 @@ import {
 
 import ControlsToggler from './ControlsToggler/ControlsToggler';
 import HelpToggler from './HelpToggler/HelpToggler';
-import { window } from '../../../misc/enums';
+import window from '../../../misc/window';
 
-import logo from '../../../assets/home.svg';
+import logo from '../home.svg';
 import './header.sass';
 
 const Header = ({ activeWindow, handleActivate }) => (
@@ -24,7 +24,7 @@ const Header = ({ activeWindow, handleActivate }) => (
             name="team"
             isActive={activeWindow === window.TEAM}
             activate={handleActivate(window.TEAM)}
-            create={handleActivate(window.INVITE_MEMBER)}
+            create={handleActivate(window.INVITE)}
             icon={faUsers}
           />
 

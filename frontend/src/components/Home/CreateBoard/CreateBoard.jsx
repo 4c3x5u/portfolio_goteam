@@ -7,9 +7,9 @@ import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import { inputType } from '../../../misc/enums';
+import { inputType } from '../../../misc/inputType';
 
-import logo from '../../../assets/createboard.svg';
+import logo from './createboard.svg';
 import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
