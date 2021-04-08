@@ -26,21 +26,25 @@
       list-style: none
       margin-bottom: 0
 
-  .react-contextmenu
-    padding: 0
+  .react-contexify
     background-color: vars.$true-blue
-    box-shadow: 0 0 .3rem .1rem rgba(67, 67, 67, 50%)
+    box-shadow: 0 0 .3rem .2rem rgba(67, 67, 67, 50%)
+    padding: 0
+    border-radius: 0
 
-    button
-      border: none
+    .react-contexify__item
       width: 100%
-      height: 100%
-      padding: .5rem 2rem
-      margin: 0
-      background-color: transparent
-      color: vars.$maize-crayola
-      font-weight: bold
+      color: vars.$maize-crayola !important
 
-      &:hover
-        color: vars.$cultured
-        background-color: #365e99
+      .react-contexify__item__content
+        width: 100%
+        display: flex
+        justify-content: center
+        color: vars.$maize-crayola
+        font-weight: bold
+
+        &:hover
+          color: vars.$cultured !important
+          background-color: #365e99 !important
+
+

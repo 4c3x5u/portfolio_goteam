@@ -73,12 +73,16 @@ const Task = ({ id, title, description }) => {
         )}
       </div>
 
-      <Menu id={MENU_ID}>
-        <Item onClick={() => setShowEdit(true)}>
+      <Menu className="ContextMenu" id={MENU_ID}>
+        <Item className="MenuItem" onClick={() => setShowEdit(true)}>
           Edit Task
+        </Item>
+        <Item className="MenuItem" onClick={() => setShowEdit(true)}>
+          Delete Task
         </Item>
       </Menu>
 
+      {/* TODO: Move to home page? */}
       {
         showEdit && (
           <EditTask
