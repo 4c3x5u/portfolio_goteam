@@ -18,6 +18,7 @@ import './home.sass';
 import EditTask from './EditTask/EditTask';
 import DeleteTask from './DeleteTask/DeleteTask';
 import DeleteMember from './DeleteMember/DeleteMember';
+import DeleteBoard from './DeleteBoard/DeleteBoard';
 
 const Home = () => {
   const [activeWindow, setActiveWindow] = useState(window.NONE);
@@ -35,6 +36,15 @@ const Home = () => {
     switch (activeWindow) {
       case window.CREATE_BOARD:
         return <CreateBoard toggleOff={handleActivate(window.NONE)} />;
+
+      case window.DELETE_BOARD:
+        return (
+          <DeleteBoard
+            id={windowState.id}
+            name={windowState.name}
+            toggleOff={handleActivate(window.NONE)}
+          />
+        );
 
       case window.CREATE_TASK:
         return <CreateTask toggleOff={handleActivate(window.NONE)} />;
