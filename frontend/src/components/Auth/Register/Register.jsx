@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import axios from 'axios';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import { inputType } from '../../../misc/inputType';
@@ -11,7 +12,21 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const handleSubmit = () => 1; // TODO: implement
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
+      username,
+      password,
+      password_confirmation: passwordConfirmation,
+    }).then(() => (
+      console.log('Register Successful')
+    )).catch((err) => (
+      console.log(`ERROR=${err.message}`)
+    ));
+  };
+
   return (
     <div id="Register">
       <Form className="Form" onSubmit={handleSubmit}>
@@ -27,14 +42,14 @@ const Register = () => {
         />
 
         <FormGroup
-          type={inputType.TEXT}
+          type={inputType.PASSWORD}
           label="password"
           value={password}
           setValue={setPassword}
         />
 
         <FormGroup
-          type={inputType.TEXT}
+          type={inputType.PASSWORD}
           label="password confirmation"
           value={passwordConfirmation}
           setValue={setPasswordConfirmation}
