@@ -14,7 +14,7 @@ const MenuItem = ({
   const { show } = useContextMenu({ id: MENU_ID });
 
   return (
-    <div>
+    <div className="MenuItem">
       <button
         className="ControlButton"
         key={id}
@@ -33,10 +33,10 @@ const MenuItem = ({
 
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
-          className="MenuItem"
+          className="ContextMenuItem"
           onClick={() => handleDelete({ id, name })}
         >
-          Delete Item
+          <span>DELETE</span>
         </Item>
       </Menu>
 

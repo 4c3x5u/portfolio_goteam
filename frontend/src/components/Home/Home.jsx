@@ -35,16 +35,10 @@ const Home = () => {
     switch (activeWindow) {
       case window.CREATE_BOARD:
         return <CreateBoard toggleOff={handleActivate(window.NONE)} />;
-      case window.DELETE_MEMBER:
-        return (
-          <DeleteMember
-            id={windowState.id}
-            username={windowState.username}
-            toggleOff={handleActivate(window.NONE)}
-          />
-        );
+
       case window.CREATE_TASK:
         return <CreateTask toggleOff={handleActivate(window.NONE)} />;
+
       case window.EDIT_TASK:
         return (
           <EditTask
@@ -55,6 +49,7 @@ const Home = () => {
             toggleOff={handleActivate(window.NONE)}
           />
         );
+
       case window.DELETE_TASK:
         return (
           <DeleteTask
@@ -65,10 +60,22 @@ const Home = () => {
             toggleOff={() => setActiveWindow(window.NONE)}
           />
         );
+
       case window.INVITE_MEMBER:
         return <InviteMember toggleOff={handleActivate(window.NONE)} />;
+
+      case window.DELETE_MEMBER:
+        return (
+          <DeleteMember
+            id={windowState.id}
+            username={windowState.name}
+            toggleOff={handleActivate(window.NONE)}
+          />
+        );
+
       case window.MODAL:
         return <HelpModal toggleOff={handleActivate(window.NONE)} />;
+
       default:
         return <></>;
     }

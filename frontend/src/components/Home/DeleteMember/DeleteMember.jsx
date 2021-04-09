@@ -12,7 +12,7 @@ import FormGroup from '../../_shared/FormGroup/FormGroup';
 import { inputType } from '../../../misc/inputType';
 
 import './deletemember.sass';
-import logo from '../DeleteTask/deletetask.svg';
+import logo from './deletemember.svg';
 
 const DeleteMember = ({ id, username, toggleOff }) => {
   const handleSubmit = () => console.log(`Remove member ${id}`);

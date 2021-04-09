@@ -66,7 +66,7 @@ const Task = ({
 
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
-          className="MenuItem"
+          className="ContextMenuItem"
           onClick={() => handleActivate(window.EDIT_TASK)({
             id,
             title,
@@ -75,11 +75,11 @@ const Task = ({
             toggleOff: handleActivate(window.NONE),
           })}
         >
-          Edit Task
+          EDIT
         </Item>
 
         <Item
-          className="MenuItem"
+          className="ContextMenuItem"
           onClick={() => handleActivate(window.DELETE_TASK)({
             id,
             title,
@@ -88,7 +88,7 @@ const Task = ({
             toggleOff: handleActivate(window.NONE),
           })}
         >
-          Delete Task
+          DELETE
         </Item>
       </Menu>
     </div>
