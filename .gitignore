@@ -7,7 +7,7 @@ __pycache__
 /coverage
 /build
 .DS_Store
-.env.local
+frontend/.env.development
 .env.development.local
 .env.test.local
 .env.production.local

@@ -14,21 +14,19 @@ const FormGroup = ({
       {label.toUpperCase()}
     </Form.Label>
 
-    {type === inputType.TEXT && (
-      <Form.Control
-        className="Input"
-        type={type}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        disabled={disabled}
-      />
-    )}
-
-    {type === inputType.TEXTAREA && (
+    {type === inputType.TEXTAREA ? (
       <Form.Control
         className="Input"
         as={type}
         rows={2}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        disabled={disabled}
+      />
+    ) : (
+      <Form.Control
+        className="Input"
+        type={type}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         disabled={disabled}
