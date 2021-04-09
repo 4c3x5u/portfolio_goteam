@@ -11,15 +11,15 @@ import {
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import { inputType } from '../../../misc/inputType';
 
-import './deletemember.sass';
-import logo from './deletemember.svg';
+import logo from './deleteboard.svg';
+import './deleteboard.sass';
 
-const DeleteMember = ({ id, username, toggleOff }) => {
-  // TODO: Delete member using the ID here
-  const handleSubmit = () => console.log(`Remove member ${id}`);
+const DeleteBoard = ({ id, name, toggleOff }) => {
+  // TODO: Delete board using the ID here
+  const handleSubmit = () => console.log(`deleteBoard(${id})`);
 
   return (
-    <div className="DeleteMember" onClick={toggleOff}>
+    <div className="DeleteBoard" onClick={toggleOff}>
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -31,8 +31,8 @@ const DeleteMember = ({ id, username, toggleOff }) => {
 
         <FormGroup
           type={inputType.TEXT}
-          label="username"
-          value={username}
+          label="name"
+          value={name}
           disabled
         />
 
@@ -63,10 +63,10 @@ const DeleteMember = ({ id, username, toggleOff }) => {
   );
 };
 
-DeleteMember.propTypes = {
+DeleteBoard.propTypes = {
   id: PropTypes.number.isRequired,
-  username: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 
-export default DeleteMember;
+export default DeleteBoard;

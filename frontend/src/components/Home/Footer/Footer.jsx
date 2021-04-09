@@ -10,14 +10,24 @@ const Footer = () => (
     <Container>
       <Row className="Row">
         <Col className="Col" xs={6}>
-          <a href="https:FIX THIS">
+          <a
+            href="https://github.com/4c3x5u/portfolio_goteam"
+            target="_blank"
+            rel="noreferrer"
+          >
             <FontAwesomeIcon icon={faGithub} />
+
             PROJECT
           </a>
         </Col>
         <Col className="Col" xs={6}>
-          <a href="https:FIX THIS">
+          <a
+            href="https://www.linkedin.com/in/4c3x5u/"
+            target="_blank"
+            rel="noreferrer"
+          >
             <FontAwesomeIcon icon={faLinkedin} />
+
             AUTHOR
           </a>
         </Col>
