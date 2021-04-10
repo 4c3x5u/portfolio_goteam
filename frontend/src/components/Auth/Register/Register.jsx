@@ -36,10 +36,14 @@ const Register = () => {
         username,
         password,
         password_confirmation: passwordConfirmation,
-      }).then((res) => (
-        // TODO: set token and such
-        console.log(res)
-      ));
+      }).then((res) => {
+        localStorage.setItem('username', res.data.username);
+        localStorage.setItem('auth-token', res.data.token);
+        console.log(`username: ${localStorage.getItem('username')}`);
+        console.log(`auth-token: ${localStorage.getItem('auth-token')}`);
+      }).catch((err) => {
+        console.log(`ERROR OBJECT: ${JSON.stringify(err)}`);
+      });
     }
   };
 

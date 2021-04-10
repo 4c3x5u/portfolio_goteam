@@ -49,5 +49,5 @@ def login(request):
         'token': bcrypt.hashpw(
             bytes(f'{user.username}{user.password}', 'utf-8'),
             bcrypt.gensalt()
-        ).decode('utf-8')
+        ).decode('utf-8'),
     }, 200)
