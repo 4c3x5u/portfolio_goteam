@@ -18,6 +18,7 @@ class RegisterTests(APITestCase):
                          'Registration successful.')
         self.assertEqual(response.data.get('username'),
                          request_data['username'])
+        self.assertTrue(response.data.get('token'))
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
         team = Team.objects.get(user=user)
