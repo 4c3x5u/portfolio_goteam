@@ -4,8 +4,8 @@ import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import validateToken from '../../../misc/validateToken';
-import validateRegister from './validateRegister';
+import verifyToken from '../../../misc/verifyToken';
+import validateRegisterForm from './validateRegisterForm';
 import inputType from '../../../misc/inputType';
 
 import logo from './register.svg';
@@ -23,7 +23,7 @@ const Register = () => {
   });
 
   useEffect(() => {
-    validateToken()
+    verifyToken()
       .then(() => {
         setAuthenticated(true);
         window.location.reload();
@@ -36,7 +36,7 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const validationErrors = validateRegister(
+    const validationErrors = validateRegisterForm(
       username,
       password,
       passwordConfirmation,
