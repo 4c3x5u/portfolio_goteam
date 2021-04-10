@@ -16,7 +16,11 @@ def register(request):
 
     return Response({
         'msg': 'Registration successful.',
-        'username': user.username
+        'username': user.username,
+        'token': bcrypt.hashpw(
+            bytes(f'{user.username}{user.password}', 'utf-8'),
+            bcrypt.gensalt()
+        ).decode('utf-8')
     }, 201)
 
 
@@ -41,5 +45,9 @@ def login(request):
 
     return Response({
         'msg': 'Login successful.',
-        'username': user.username
+        'username': user.username,
+        'token': bcrypt.hashpw(
+            bytes(f'{user.username}{user.password}', 'utf-8'),
+            bcrypt.gensalt()
+        ).decode('utf-8')
     }, 200)
