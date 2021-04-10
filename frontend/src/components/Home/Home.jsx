@@ -3,7 +3,8 @@ no-nested-ternary,
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Redirect } from 'react-router-dom';
 
 import Header from './Header/Header';
 import Board from './Board/Board';
@@ -12,17 +13,27 @@ import CreateTask from './CreateTask/CreateTask';
 import InviteMember from './Invite/Invite';
 import HelpModal from './Help/Help';
 import Footer from './Footer/Footer';
-import window from '../../misc/window';
-
-import './home.sass';
 import EditTask from './EditTask/EditTask';
 import DeleteTask from './DeleteTask/DeleteTask';
 import DeleteMember from './DeleteMember/DeleteMember';
 import DeleteBoard from './DeleteBoard/DeleteBoard';
+import window from '../../misc/window';
+import verifyToken from '../../misc/verifyToken';
+
+import './home.sass';
 
 const Home = () => {
+  const [authenticated, setAuthenticated] = useState(true);
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
+
+  useEffect(() => {
+    verifyToken()
+      .then(() => setAuthenticated(true))
+      .catch(() => setAuthenticated(false));
+  }, []);
+
+  if (!authenticated) { return <Redirect to="/login" />; }
 
   const handleActivate = (newWindow) => (state) => {
     if (state) { setWindowState(state); }

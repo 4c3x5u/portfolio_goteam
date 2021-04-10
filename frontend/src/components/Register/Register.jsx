@@ -3,10 +3,10 @@ import { Redirect } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
-import FormGroup from '../../_shared/FormGroup/FormGroup';
-import verifyToken from '../../../misc/verifyToken';
+import FormGroup from '../_shared/FormGroup/FormGroup';
+import verifyToken from '../../misc/verifyToken';
 import validateRegisterForm from './validateRegisterForm';
-import inputType from '../../../misc/inputType';
+import inputType from '../../misc/inputType';
 
 import logo from './register.svg';
 import './register.sass';
@@ -24,25 +24,20 @@ const Register = () => {
 
   useEffect(() => {
     verifyToken()
-      .then(() => {
-        setAuthenticated(true);
-        window.location.reload();
-      })
-      .catch(() => {
-        setAuthenticated(false);
-      });
+      .then(() => setAuthenticated(true))
+      .catch(() => setAuthenticated(false));
   }, []);
+
+  if (authenticated) { return <Redirect to="/" />; }
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const validationErrors = validateRegisterForm(
+    setErrors(validateRegisterForm(
       username,
       password,
       passwordConfirmation,
-    );
-
-    setErrors(validationErrors);
+    ));
 
     if (!errors.username && !errors.password && !errors.passwordConfirmation) {
       axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
@@ -52,15 +47,13 @@ const Register = () => {
       }).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
-        window.location.reload();
+        setAuthenticated(true);
       }).catch((err) => {
         // TODO: Add toastr for server-side errors
         console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
       });
     }
   };
-
-  if (authenticated) { return <Redirect to="/" />; }
 
   return (
     <div id="Register">
