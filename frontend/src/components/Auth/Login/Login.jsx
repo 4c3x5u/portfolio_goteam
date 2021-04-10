@@ -1,16 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Redirect } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
+import verifyToken from '../../../misc/verifyToken';
 import inputType from '../../../misc/inputType';
 
 import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
+  const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const handleSubmit = () => 1; // TODO: implement
+
+  useEffect(() => {
+    verifyToken()
+      .then(() => {
+        setAuthenticated(true);
+        window.location.reload();
+      })
+      .catch(() => {
+        setAuthenticated(false);
+      });
+  }, []);
+
+  // TODO: implement
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    window.location.reload();
+  };
+
+  if (authenticated) { return <Redirect to="/" />; }
+
   return (
     <div id="Login">
       <Form className="Form" onSubmit={handleSubmit}>
