@@ -10,7 +10,7 @@ import {
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from '../EditTask/EditSubtasks/EditSubtasks';
-import { inputType } from '../../../misc/inputType';
+import inputType from '../../../misc/inputType';
 
 import logo from './deletetask.svg';
 import './deletetask.sass';

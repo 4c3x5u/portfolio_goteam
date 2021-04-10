@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import { inputType } from '../../../misc/inputType';
+import inputType from '../../../misc/inputType';
 
 import logo from './createboard.svg';
 import './createboard.sass';

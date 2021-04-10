@@ -3,7 +3,8 @@ import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import { inputType } from '../../../misc/inputType';
+import inputType from '../../../misc/inputType';
+import validateRegister from './validateRegister';
 
 import logo from './register.svg';
 import './register.sass';
@@ -13,18 +14,33 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
+  const [errors, setErrors] = useState({
+    username: '',
+    password: '',
+    passwordConfirmation: '',
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
+    const validationErrors = validateRegister(
       username,
       password,
-      password_confirmation: passwordConfirmation,
-    }).then(() => (
-      console.log('Register Successful')
-    )).catch((err) => (
-      console.log(`ERROR=${err.message}`)
-    ));
+      passwordConfirmation,
+    );
+
+    setErrors(validationErrors);
+
+    if (!errors.username && !errors.password && !errors.passwordConfirmation) {
+      axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
+        username,
+        password,
+        password_confirmation: passwordConfirmation,
+      }).then((res) => (
+        // TODO: set token and such
+        console.log(res)
+      ));
+    }
   };
 
   return (
@@ -39,6 +55,7 @@ const Register = () => {
           label="username"
           value={username}
           setValue={setUsername}
+          error={errors.username}
         />
 
         <FormGroup
@@ -46,6 +63,7 @@ const Register = () => {
           label="password"
           value={password}
           setValue={setPassword}
+          error={errors.password}
         />
 
         <FormGroup
@@ -53,6 +71,7 @@ const Register = () => {
           label="password confirmation"
           value={passwordConfirmation}
           setValue={setPasswordConfirmation}
+          error={errors.passwordConfirmation}
         />
 
         <div className="ButtonWrapper">
