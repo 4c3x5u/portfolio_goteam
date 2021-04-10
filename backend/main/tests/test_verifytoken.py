@@ -23,3 +23,31 @@ class VerifyTokenTests(APITestCase):
             'msg': 'Token verification success.',
             'token': self.validToken
         })
+
+    def test_token_invalid(self):
+        request_data = {'username': self.user.username,
+                        'token': 'as/dlkfjAS:DFkjaSdlnflasdjnvkasdjfasd,fasbd'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {'msg': 'Token verification failure.'})
+
+    def test_token_empty(self):
+        request_data = {'username': self.user.username,
+                        'token': ''}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {'msg': 'Token verification failure.'})
+
+    def test_username_invalid(self):
+        request_data = {'username': 'nonexistent',
+                        'token': 'as/dlkfjAS:DFkjaSdlnflasdjnvkasdjfasd,fasbd'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {'msg': 'Token verification failure.'})
+
+    def test_username_empty(self):
+        request_data = {'username': '',
+                        'token': 'as/dlkfjAS:DFkjaSdlnflasdjnvkasdjfasd,fasbd'}
+        response = self.client.post(self.url, request_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {'msg': 'Token verification failure.'})
