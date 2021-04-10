@@ -88,10 +88,7 @@ const Board = ({ handleActivate }) => {
             id={column.id}
             name={column.order}
             tasks={column.tasks}
-            handleActivate={
-              column.order === columnOrder.INBOX
-                && handleActivate
-            }
+            handleActivate={handleActivate}
           />
         ))}
       </DragDropContext>
