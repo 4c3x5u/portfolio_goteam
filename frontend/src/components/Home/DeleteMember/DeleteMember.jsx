@@ -9,7 +9,7 @@ import {
 } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import { inputType } from '../../../misc/inputType';
+import inputType from '../../../misc/inputType';
 
 import './deletemember.sass';
 import logo from './deletemember.svg';

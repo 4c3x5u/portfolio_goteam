@@ -1,7 +1,7 @@
-export const inputType = {
+const inputType = {
   TEXT: 'text',
   TEXTAREA: 'textarea',
   PASSWORD: 'password',
 };
 
-export default { inputType };
+export default inputType;

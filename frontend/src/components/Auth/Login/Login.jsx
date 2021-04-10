@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
-import { inputType } from '../../../misc/inputType';
+import inputType from '../../../misc/inputType';
 
 import logo from './login.svg';
 import './login.sass';
