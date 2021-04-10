@@ -14,8 +14,10 @@ class RegisterTests(APITestCase):
     def help_test_success(self, initial_user_count, request_data):
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data, {'msg': 'Registration successful.',
-                                         'username': request_data['username']})
+        self.assertEqual(response.data.get('msg'),
+                         'Registration successful.')
+        self.assertEqual(response.data.get('username'),
+                         request_data['username'])
         user = User.objects.get(username=response.data['username'])
         self.assertTrue(user)
         team = Team.objects.get(user=user)
