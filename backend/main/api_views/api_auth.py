@@ -18,7 +18,7 @@ def register(request):
         'msg': 'Registration successful.',
         'username': user.username,
         'token': bcrypt.hashpw(
-            bytes(f'{user.username}{user.password}', 'utf-8'),
+            bytes(user.username, 'utf-8') + user.password,
             bcrypt.gensalt()
         ).decode('utf-8')
     }, 201)
@@ -37,7 +37,7 @@ def login(request):
             'username': ErrorDetail(string='Invalid username.', code='invalid')
         }, 400)
 
-    pw_bytes = request.data.get('password').encode()
+    pw_bytes = bytes(request.data.get('password'), 'utf-8')
     if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
         return Response({
             'password': ErrorDetail(string='Invalid password.', code='invalid')
@@ -47,7 +47,25 @@ def login(request):
         'msg': 'Login successful.',
         'username': user.username,
         'token': bcrypt.hashpw(
-            bytes(f'{user.username}{user.password}', 'utf-8'),
+            bytes(user.username, 'utf-8') + user.password,
             bcrypt.gensalt()
         ).decode('utf-8'),
     }, 200)
+
+
+@api_view(['POST'])
+def verify_token(request):
+    user = User.objects.get(username=request.data.get('username'))
+    valid_token = bytes(user.username, 'utf-8') + user.password
+    request_token_raw = request.data.get('token')
+    request_token = bytes(request_token_raw, 'utf-8')
+    match = bcrypt.checkpw(valid_token, request_token)
+    if not match:
+        return Response({'msg': 'Token verification failure.'}, 400)
+    else:
+        return Response({
+            'msg': 'Token verification success.',
+            'token': request_token_raw
+        }, 200)
+
+

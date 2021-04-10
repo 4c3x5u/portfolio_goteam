@@ -19,8 +19,9 @@ class LoginTests(APITestCase):
                         'password': self.pw_raw}
         response = self.client.post(self.url, request_data)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {'msg': 'Login successful.',
-                                         'username': self.user.username})
+        self.assertEqual(response.data.get('msg'), 'Login successful.')
+        self.assertEqual(response.data.get('username'), self.user.username)
+        self.assertTrue(response.data.get('token'))
 
     def test_username_blank(self):
         request_data = {'username': '', 'password': self.pw_raw}
