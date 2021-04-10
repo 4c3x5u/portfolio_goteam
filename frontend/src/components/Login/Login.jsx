@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
+import axios from 'axios';
 
-import FormGroup from '../../_shared/FormGroup/FormGroup';
-import verifyToken from '../../../misc/verifyToken';
-import inputType from '../../../misc/inputType';
+import FormGroup from '../_shared/FormGroup/FormGroup';
+import verifyToken from '../../misc/verifyToken';
+import validateLoginForm from './validateLoginForm';
+import inputType from '../../misc/inputType';
 
 import logo from './login.svg';
 import './login.sass';
@@ -13,25 +15,36 @@ const Login = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({ username: '', password: '' });
 
   useEffect(() => {
     verifyToken()
-      .then(() => {
-        setAuthenticated(true);
-        window.location.reload();
-      })
-      .catch(() => {
-        setAuthenticated(false);
-      });
+      .then(() => setAuthenticated(true))
+      .catch(() => setAuthenticated(false));
   }, []);
+
+  if (authenticated) { return <Redirect to="/" />; }
 
   // TODO: implement
   const handleSubmit = (e) => {
     e.preventDefault();
-    window.location.reload();
-  };
 
-  if (authenticated) { return <Redirect to="/" />; }
+    setErrors(validateLoginForm(username, password));
+
+    if (!errors.username && !errors.password) {
+      axios.post(`${process.env.REACT_APP_BACKEND_URL}/login/`, {
+        username,
+        password,
+      }).then((res) => {
+        sessionStorage.setItem('username', res.data.username);
+        sessionStorage.setItem('auth-token', res.data.token);
+        setAuthenticated(true);
+      }).catch((err) => {
+        // TODO: Add toastr for server-side errors
+        console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
+      });
+    }
+  };
 
   return (
     <div id="Login">
@@ -48,7 +61,7 @@ const Login = () => {
         />
 
         <FormGroup
-          type={inputType.TEXT}
+          type={inputType.PASSWORD}
           label="password"
           value={password}
           setValue={setPassword}
