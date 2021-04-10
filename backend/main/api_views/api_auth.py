@@ -55,17 +55,19 @@ def login(request):
 
 @api_view(['POST'])
 def verify_token(request):
-    user = User.objects.get(username=request.data.get('username'))
-    valid_token = bytes(user.username, 'utf-8') + user.password
-    request_token_raw = request.data.get('token')
-    request_token = bytes(request_token_raw, 'utf-8')
-    match = bcrypt.checkpw(valid_token, request_token)
-    if not match:
-        return Response({'msg': 'Token verification failure.'}, 400)
+    failure_response = Response({'msg': 'Token verification failure.'}, 400)
+    try:
+        user = User.objects.get(username=request.data.get('username'))
+        valid_token = bytes(user.username, 'utf-8') + user.password
+        request_token_raw = request.data.get('token')
+        request_token = bytes(request_token_raw, 'utf-8')
+        match = bcrypt.checkpw(valid_token, request_token)
+        if not match:
+            return failure_response
+    except:
+        return failure_response
     else:
         return Response({
             'msg': 'Token verification success.',
             'token': request_token_raw
         }, 200)
-
-
