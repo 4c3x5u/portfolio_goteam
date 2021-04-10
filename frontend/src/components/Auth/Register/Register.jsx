@@ -22,7 +22,16 @@ const Register = () => {
     passwordConfirmation: '',
   });
 
-  useEffect(() => validateToken(setAuthenticated), []);
+  useEffect(() => {
+    validateToken()
+      .then(() => {
+        setAuthenticated(true);
+        window.location.reload();
+      })
+      .catch(() => {
+        setAuthenticated(false);
+      });
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,6 +52,7 @@ const Register = () => {
       }).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
+        window.location.reload();
       }).catch((err) => {
         // TODO: Add toastr for server-side errors
         console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
@@ -50,9 +60,7 @@ const Register = () => {
     }
   };
 
-  if (authenticated) {
-    return <Redirect to="/" />;
-  }
+  if (authenticated) { return <Redirect to="/" />; }
 
   return (
     <div id="Register">
