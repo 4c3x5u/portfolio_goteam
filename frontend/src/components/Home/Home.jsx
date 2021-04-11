@@ -4,7 +4,6 @@ jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 
 import Header from './Header/Header';
 import Board from './Board/Board';
@@ -21,12 +20,9 @@ import window from '../../misc/window';
 
 import './home.sass';
 
-const Home = ({ currentUser }) => {
+const Home = () => {
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
-
-  // TODO: utilize
-  console.log(currentUser);
 
   const handleActivate = (newWindow) => (state) => {
     if (newWindow === activeWindow) {
@@ -110,14 +106,6 @@ const Home = ({ currentUser }) => {
       <Footer />
     </div>
   );
-};
-
-Home.propTypes = {
-  currentUser: PropTypes.objectOf({
-    username: PropTypes.string.isRequired,
-    teamId: PropTypes.number.isRequired,
-    isAdmin: PropTypes.bool.isRequired,
-  }).isRequired,
 };
 
 export default Home;
