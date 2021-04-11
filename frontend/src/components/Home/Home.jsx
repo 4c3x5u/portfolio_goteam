@@ -5,6 +5,7 @@ jsx-a11y/click-events-have-key-events */
 
 import React, { useEffect, useState } from 'react';
 import { Redirect } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import Header from './Header/Header';
 import Board from './Board/Board';
@@ -22,7 +23,7 @@ import verifyToken from '../../misc/verifyToken';
 
 import './home.sass';
 
-const Home = () => {
+const Home = ({ currentUser }) => {
   const [authenticated, setAuthenticated] = useState(true);
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
@@ -31,6 +32,9 @@ const Home = () => {
     verifyToken()
       .then(() => setAuthenticated(true))
       .catch(() => setAuthenticated(false));
+
+    // TODO: Utilize the user object
+    console.log(`user: ${currentUser}`);
   }, []);
 
   if (!authenticated) { return <Redirect to="/login" />; }
@@ -116,6 +120,14 @@ const Home = () => {
       <Footer />
     </div>
   );
+};
+
+Home.propTypes = {
+  currentUser: PropTypes.objectOf({
+    username: PropTypes.string.isRequired,
+    teamId: PropTypes.number.isRequired,
+    isAdmin: PropTypes.bool.isRequired,
+  }).isRequired,
 };
 
 export default Home;
