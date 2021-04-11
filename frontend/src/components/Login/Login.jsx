@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
+import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
+import UserContext from '../../UserContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateLoginForm from './validateLoginForm';
 import inputType from '../../misc/inputType';
@@ -10,7 +10,8 @@ import inputType from '../../misc/inputType';
 import logo from './login.svg';
 import './login.sass';
 
-const Login = ({ setCurrentUser }) => {
+const Login = () => {
+  const { setCurrentUser } = useContext(UserContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
@@ -77,7 +78,5 @@ const Login = ({ setCurrentUser }) => {
     </div>
   );
 };
-
-Login.propTypes = { setCurrentUser: PropTypes.func.isRequired };
 
 export default Login;

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
+import UserContext from '../../UserContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateRegisterForm from './validateRegisterForm';
 import inputType from '../../misc/inputType';
@@ -11,7 +11,8 @@ import inputType from '../../misc/inputType';
 import logo from './register.svg';
 import './register.sass';
 
-const Register = ({ setCurrentUser }) => {
+const Register = () => {
+  const { setCurrentUser } = useContext(UserContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -99,7 +100,5 @@ const Register = ({ setCurrentUser }) => {
     </div>
   );
 };
-
-Register.propTypes = { setCurrentUser: PropTypes.func.isRequired };
 
 export default Register;
