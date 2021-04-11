@@ -10,7 +10,7 @@ const Subtask = ({ id, title, done }) => {
   const [checked, setChecked] = useState(false);
 
   // TODO Use subtask ID to handle set done/undone
-  console.log(`Subtask ID: ${id}`);
+  console.log(id);
 
   return (
     <li className="Subtask">

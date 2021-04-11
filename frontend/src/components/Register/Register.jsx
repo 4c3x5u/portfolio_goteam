@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
@@ -11,7 +12,7 @@ import inputType from '../../misc/inputType';
 import logo from './register.svg';
 import './register.sass';
 
-const Register = () => {
+const Register = ({ setCurrentUser }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,7 +25,14 @@ const Register = () => {
 
   useEffect(() => {
     verifyToken()
-      .then(() => setAuthenticated(true))
+      .then((res) => {
+        setCurrentUser({
+          username: res.data.username,
+          teamId: res.data.teamId,
+          isAdmin: res.data.isAdmin,
+        });
+        setAuthenticated(true);
+      })
       .catch(() => setAuthenticated(false));
   }, []);
 
@@ -102,5 +110,7 @@ const Register = () => {
     </div>
   );
 };
+
+Register.propTypes = { setCurrentUser: PropTypes.func.isRequired };
 
 export default Register;

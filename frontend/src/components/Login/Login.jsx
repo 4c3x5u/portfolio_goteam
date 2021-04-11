@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
@@ -11,7 +12,7 @@ import inputType from '../../misc/inputType';
 import logo from './login.svg';
 import './login.sass';
 
-const Login = () => {
+const Login = ({ setCurrentUser }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +20,14 @@ const Login = () => {
 
   useEffect(() => {
     verifyToken()
-      .then(() => setAuthenticated(true))
+      .then((res) => {
+        setAuthenticated(true);
+        setCurrentUser({
+          username: res.data.username,
+          teamId: res.data.teamId,
+          isAdmin: res.data.isAdmin,
+        });
+      })
       .catch(() => setAuthenticated(false));
   }, []);
 
@@ -83,5 +91,7 @@ const Login = () => {
     </div>
   );
 };
+
+Login.propTypes = { setCurrentUser: PropTypes.func.isRequired };
 
 export default Login;
