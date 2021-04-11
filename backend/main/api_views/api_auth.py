@@ -20,7 +20,9 @@ def register(request):
         'token': bcrypt.hashpw(
             bytes(user.username, 'utf-8') + user.password,
             bcrypt.gensalt()
-        ).decode('utf-8')
+        ).decode('utf-8'),
+        'teamId': user.team_id,
+        'isAdmin': user.is_admin
     }, 201)
 
 
@@ -50,6 +52,8 @@ def login(request):
             bytes(user.username, 'utf-8') + user.password,
             bcrypt.gensalt()
         ).decode('utf-8'),
+        'teamId': user.team_id,
+        'isAdmin': user.is_admin,
     }, 200)
 
 
@@ -66,8 +70,10 @@ def verify_token(request):
             return failure_response
     except:
         return failure_response
-    else:
-        return Response({
-            'msg': 'Token verification success.',
-            'token': request_token_raw
-        }, 200)
+
+    return Response({
+        'msg': 'Token verification success.',
+        'username': user.username,
+        'teamId': user.team_id,
+        'isAdmin': user.is_admin,
+    }, 200)

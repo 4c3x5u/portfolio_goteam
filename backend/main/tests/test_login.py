@@ -21,6 +21,8 @@ class LoginTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('msg'), 'Login successful.')
         self.assertEqual(response.data.get('username'), self.user.username)
+        self.assertEqual(response.data.get('teamId'), self.user.team_id)
+        self.assertEqual(response.data.get('isAdmin'), self.user.is_admin)
         self.assertTrue(response.data.get('token'))
 
     def test_username_blank(self):
