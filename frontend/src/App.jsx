@@ -23,7 +23,19 @@ const App = () => {
     isAuthenticated: false,
   });
 
-  useEffect(() => { verifyToken(setCurrentUser); }, []);
+  useEffect(() => {
+    verifyToken().then((res) => setCurrentUser({
+      username: res.data.username,
+      teamId: res.data.teamId,
+      isAdmin: res.data.isAdmin,
+      isAuthenticated: true,
+    })).catch(() => setCurrentUser({
+      username: '',
+      teamId: null,
+      isAdmin: false,
+      isAuthenticated: false,
+    }));
+  }, []);
 
   return (
     <UserContext.Provider value={{ currentUser, setCurrentUser }}>
