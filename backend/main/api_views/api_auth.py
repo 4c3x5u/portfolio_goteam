@@ -68,7 +68,7 @@ def verify_token(request):
         match = bcrypt.checkpw(valid_token, request_token)
         if not match:
             return failure_response
-    except:
+    except (ValueError, User.DoesNotExist):
         return failure_response
 
     return Response({
