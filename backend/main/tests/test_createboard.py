@@ -1,6 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, User, Column
+import bcrypt
 
 
 class CreateBoardTests(APITestCase):
@@ -21,10 +22,15 @@ class CreateBoardTests(APITestCase):
             is_admin=False,
             team=self.team
         )
+        self.admin_token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2R' \
+                           'JJO17thjLOdy'
+        self.member_token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb' \
+                            '9stnDZze19Ude'
 
     def test_success(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {'username': self.admin.username,
+                                               'token': self.admin_token,
                                                'team_id': self.team.id})
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
@@ -37,6 +43,7 @@ class CreateBoardTests(APITestCase):
     def test_username_blank(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {'username': '',
+                                               'token': self.admin_token,
                                                'team_id': self.team.id})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -48,6 +55,7 @@ class CreateBoardTests(APITestCase):
     def test_username_invalid(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {'username': 'invalidio',
+                                               'token': self.admin_token,
                                                'team_id': self.team.id})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -59,6 +67,7 @@ class CreateBoardTests(APITestCase):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {
             'username': self.member.username,
+            'token': self.member_token,
             'team_id': self.team.id
         })
         self.assertEqual(response.status_code, 400)
@@ -73,6 +82,7 @@ class CreateBoardTests(APITestCase):
     def test_team_id_blank(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {'username': self.admin.username,
+                                               'token': self.admin_token,
                                                'team_id': ''})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -84,6 +94,7 @@ class CreateBoardTests(APITestCase):
     def test_team_not_found(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url, {'username': self.admin.username,
+                                               'token': self.admin_token,
                                                'team_id': '123'})
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
@@ -91,4 +102,32 @@ class CreateBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
+    def test_token_empty(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url,
+                                    {'username': self.admin.username,
+                                     'token': '',
+                                     'team_id': self.team.id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'token': ErrorDetail(
+                string='Authentication token cannot be empty.',
+                code='blank',
+            )
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
 
+    def test_token_invalid(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url,
+                                    {'username': self.admin.username,
+                                     'token': 'ASDKFJ!FJ_012rjpiwajfosi12311@',
+                                     'team_id': self.team.id})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'token': ErrorDetail(
+                string='Invalid authentication token.',
+                code='invalid',
+            )
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
