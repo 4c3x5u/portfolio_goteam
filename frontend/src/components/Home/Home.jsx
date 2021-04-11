@@ -1,5 +1,4 @@
 /* eslint-disable
-no-nested-ternary,
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
@@ -98,11 +97,8 @@ const Home = () => {
       onKeyDown={(e) => e.key === 'Escape' && setActiveWindow(window.NONE)}
     >
       <Header activeWindow={activeWindow} handleActivate={handleActivate} />
-
       <Board handleActivate={handleActivate} />
-
       {viewActiveWindow()}
-
       <Footer />
     </div>
   );
