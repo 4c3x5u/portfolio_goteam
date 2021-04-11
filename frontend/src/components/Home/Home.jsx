@@ -3,8 +3,7 @@ no-nested-ternary,
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
-import React, { useEffect, useState } from 'react';
-import { Redirect } from 'react-router-dom';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
 import Header from './Header/Header';
@@ -19,32 +18,23 @@ import DeleteTask from './DeleteTask/DeleteTask';
 import DeleteMember from './DeleteMember/DeleteMember';
 import DeleteBoard from './DeleteBoard/DeleteBoard';
 import window from '../../misc/window';
-import verifyToken from '../../misc/verifyToken';
 
 import './home.sass';
 
 const Home = ({ currentUser }) => {
-  const [authenticated, setAuthenticated] = useState(true);
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
 
-  useEffect(() => {
-    verifyToken()
-      .then(() => setAuthenticated(true))
-      .catch(() => setAuthenticated(false));
-
-    // TODO: Utilize the user object
-    console.log(`user: ${currentUser}`);
-  }, []);
-
-  if (!authenticated) { return <Redirect to="/login" />; }
+  // TODO: utilize
+  console.log(currentUser);
 
   const handleActivate = (newWindow) => (state) => {
-    if (state) { setWindowState(state); }
-
     if (newWindow === activeWindow) {
       setActiveWindow(window.NONE);
-    } else { setActiveWindow(newWindow); }
+    } else {
+      if (state) { setWindowState(state); }
+      setActiveWindow(newWindow);
+    }
   };
 
   const viewActiveWindow = () => {
