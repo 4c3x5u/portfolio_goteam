@@ -9,42 +9,32 @@ import bcrypt
 
 @api_view(['POST', 'GET'])
 def boards(request):
+    forbidden_response = Response({
+        'auth': ErrorDetail(string="Authentication failure.",
+                            code='not_authenticated')
+    }, 403)
+
     # validate username
     username = request.META.get('HTTP_AUTH_USER')
     if not username:
-        return Response({
-            'username': ErrorDetail(string="Username cannot be empty.",
-                                    code='blank')
-        }, 400)
+        return forbidden_response
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
-        return Response({
-            'username': ErrorDetail(string="Invalid username.",
-                                    code='invalid')
-        }, 400)
+        return forbidden_response
 
     # validate authentication token
     token = request.META.get('HTTP_AUTH_TOKEN')
     if not token:
-        return Response({
-            'token': ErrorDetail(
-                string='Authentication token cannot be empty.',
-                code='blank'
-            )
-        }, 400)
-    no_match_response = Response({
-        'token': ErrorDetail(string='Invalid authentication token.',
-                             code='invalid')
-    }, 400)
+        return forbidden_response
     try:
         tokens_match = bcrypt.checkpw(
             bytes(user.username, 'utf-8') + user.password,
             bytes(token, 'utf-8'))
         if not tokens_match:
-            return no_match_response
+            return forbidden_response
     except ValueError:
-        return no_match_response
+        return forbidden_response
 
     if request.method == 'POST':
         # validate is_admin
