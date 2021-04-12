@@ -95,9 +95,10 @@ class CreateBoardTests(APITestCase):
 
     def test_team_not_found(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': self.admin.username,
-                                               'token': self.admin_token,
-                                               'team_id': '123'})
+        response = self.client.post(self.url,
+                                    {'team_id': '123'},
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.', code='not_found')
