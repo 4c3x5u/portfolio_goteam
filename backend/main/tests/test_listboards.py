@@ -1,35 +1,23 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, User
+from ..util import new_member, forbidden_response
 
 
 class ListBoardsTests(APITestCase):
     def setUp(self):
         self.base_url = '/boards/?team_id='
         self.team = Team.objects.create()
+        self.member = new_member(self.team)
         self.boards = [
             Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
         ]
-        self.team_id = str(self.team.id)
-        self.member = User.objects.create(
-            username='teammember',
-            password=b'$2b$12$RonFQ1/18JiCN8yFeBaxKOsVbxLdcehlZ4e0r9gtZbARqEVU'
-                     b'HHEoK',
-            is_admin=False,
-            team=self.team
-        )
-        self.member_token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb' \
-                            '9stnDZze19Ude'
-        self.forbidden_response = {
-            'auth': ErrorDetail(string="Authentication failure.",
-                                code='not_authenticated')
-        }
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + self.team_id,
-                                   HTTP_AUTH_USER=self.member.username,
-                                   HTTP_AUTH_TOKEN=self.member_token)
+        response = self.client.get(f'{self.base_url}{self.team.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 200)
         boards = response.data.get('boards')
         self.assertTrue(boards)
@@ -41,9 +29,9 @@ class ListBoardsTests(APITestCase):
     def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
-        response = self.client.get(self.base_url + str(team.id),
-                                   HTTP_AUTH_USER=self.member.username,
-                                   HTTP_AUTH_TOKEN=self.member_token)
+        response = self.client.get(f'{self.base_url}{team.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Boards not found.',
@@ -75,8 +63,8 @@ class ListBoardsTests(APITestCase):
     def test_team_id_empty(self):
         initial_count = Board.objects.count()
         response = self.client.get(self.base_url,
-                                   HTTP_AUTH_USER=self.member.username,
-                                   HTTP_AUTH_TOKEN=self.member_token)
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
@@ -87,53 +75,46 @@ class ListBoardsTests(APITestCase):
     def test_team_not_found(self):
         initial_count = Board.objects.count()
         response = self.client.get(self.base_url + '123',
-                                   HTTP_AUTH_USER=self.member.username,
-                                   HTTP_AUTH_TOKEN=self.member_token)
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.', code='not_found')
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    # TODO:
-    #  [X]. new board created for admin
-    #  [X]. auth user empty
-    #  [X]. auth user invalid
-    #  [X]. auth token empty
-    #  [X]. auth token invalid
-
     def test_auth_user_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + self.team_id,
+        response = self.client.get(f'{self.base_url}{self.team.id}',
                                    HTTP_AUTH_USER='',
-                                   HTTP_AUTH_TOKEN=self.member_token)
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + self.team_id,
+        response = self.client.get(f'{self.base_url}{self.team.id}',
                                    HTTP_AUTH_USER='invalidusername',
-                                   HTTP_AUTH_TOKEN=self.member_token)
+                                   HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + self.team_id,
-                                   HTTP_AUTH_USER=self.member.username,
+        response = self.client.get(f'{self.base_url}{self.team.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + self.team_id,
-                                   HTTP_AUTH_USER=self.member.username,
+        response = self.client.get(f'{self.base_url}{self.team.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
