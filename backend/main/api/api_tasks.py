@@ -4,7 +4,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Task
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-from .util import authenticate, authorize
+from ..util import authenticate, authorize
 
 
 @api_view(['POST', 'PATCH'])
