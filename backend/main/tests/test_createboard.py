@@ -28,12 +28,10 @@ class CreateBoardTests(APITestCase):
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.post(
-            self.url,
-            {'team_id': self.team.id},
-            HTTP_AUTH_USER=self.admin.username,
-            HTTP_AUTH_TOKEN=self.admin_token
-        )
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
                          'Board creation successful.')
@@ -44,9 +42,10 @@ class CreateBoardTests(APITestCase):
 
     def test_username_blank(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': '',
-                                               'token': self.admin_token,
-                                               'team_id': self.team.id})
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER='',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='Username cannot be empty.',

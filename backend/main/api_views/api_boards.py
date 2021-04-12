@@ -7,63 +7,25 @@ from ..models import Board, Team, User
 import bcrypt
 
 
-def validate_username(username):
-    if not username:
-        return Response({
-            'username': ErrorDetail(string="Username cannot be empty.",
-                                    code='blank')
-        }, 400)
-    try:
-        User.objects.get(username=username)
-    except User.DoesNotExist:
-        return Response({
-            'username': ErrorDetail(string="Invalid username.",
-                                    code='invalid')
-        }, 400)
-
-
-def validate_team_id(id):
-    if not id:
-        return Response({
-            'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                   code='null')
-        }, 400)
-    try:
-        Team.objects.get(id=id)
-    except Team.DoesNotExist:
-        return Response({
-            'team_id': ErrorDetail(string='Team not found.',
-                                   code='not_found')
-        }, 404)
-
-def validate_authentication_token(token, username, password):
-    if not token:
-        return Response({
-            'token': ErrorDetail(
-                string='Authentication token cannot be empty.',
-                code='blank'
-            )
-        }, 400)
-    no_match_response = Response({
-        'token': ErrorDetail(string='Invalid authentication token.',
-                             code='invalid')
-    }, 400)
-    try:
-        tokens_match = bcrypt.checkpw(
-            bytes(username, 'utf-8') + password,
-            bytes(token, 'utf-8'))
-        if not tokens_match:
-            return no_match_response
-    except ValueError:
-        return no_match_response
-
-
 @api_view(['POST', 'GET'])
 def boards(request):
+    # TODO: extract common logic between requests up here
+
     if request.method == 'POST':
         username = request.META.get('HTTP_AUTH_USER')
-        validate_username(username)
-        user = User.objects.get(username=username)
+
+        if not username:
+            return Response({
+                'username': ErrorDetail(string="Username cannot be empty.",
+                                        code='blank')
+            }, 400)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({
+                'username': ErrorDetail(string="Invalid username.",
+                                        code='invalid')
+            }, 400)
 
         # validate is_admin
         if not user.is_admin:
@@ -75,10 +37,39 @@ def boards(request):
             }, 400)
 
         team_id = request.data.get('team_id')
-        validate_team_id(team_id)
+        if not id:
+            return Response({
+                'team_id': ErrorDetail(string='Team ID cannot be empty.',
+                                       code='null')
+            }, 400)
+        try:
+            Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({
+                'team_id': ErrorDetail(string='Team not found.',
+                                       code='not_found')
+            }, 404)
 
         token = request.META.get('HTTP_AUTH_TOKEN')
-        validate_authentication_token(token, user.username, user.password)
+        if not token:
+            return Response({
+                'token': ErrorDetail(
+                    string='Authentication token cannot be empty.',
+                    code='blank'
+                )
+            }, 400)
+        no_match_response = Response({
+            'token': ErrorDetail(string='Invalid authentication token.',
+                                 code='invalid')
+        }, 400)
+        try:
+            tokens_match = bcrypt.checkpw(
+                bytes(user.username, 'utf-8') + user.password,
+                bytes(token, 'utf-8'))
+            if not tokens_match:
+                return no_match_response
+        except ValueError:
+            return no_match_response
 
         # create board
         board_serializer = BoardSerializer(data={'team': team_id})
@@ -104,16 +95,55 @@ def boards(request):
     if request.method == 'GET':
         # validate username
         username = request.data.get('username')
-        validate_username(username)
-        user = User.objects.get(username)
+        if not username:
+            return Response({
+                'username': ErrorDetail(string="Username cannot be empty.",
+                                        code='blank')
+            }, 400)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({
+                'username': ErrorDetail(string="Invalid username.",
+                                        code='invalid')
+            }, 400)
 
         # validate team_id
         team_id = request.query_params.get('team_id')
-        validate_team_id(team_id)
+        if not team_id:
+            return Response({
+                'team_id': ErrorDetail(string='Team ID cannot be empty.',
+                                       code='null')
+            }, 400)
+        try:
+            Team.objects.get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({
+                'team_id': ErrorDetail(string='Team not found.',
+                                       code='not_found')
+            }, 404)
 
         # TODO: validate authentication token
         token = request.query_params.get('token')
-        validate_authentication_token(token, user.username, user.password)
+        if not token:
+            return Response({
+                'token': ErrorDetail(
+                    string='Authentication token cannot be empty.',
+                    code='blank'
+                )
+            }, 400)
+        no_match_response = Response({
+            'token': ErrorDetail(string='Invalid authentication token.',
+                                 code='invalid')
+        }, 400)
+        try:
+            tokens_match = bcrypt.checkpw(
+                bytes(user.username, 'utf-8') + user.password,
+                bytes(token, 'utf-8'))
+            if not tokens_match:
+                return no_match_response
+        except ValueError:
+            return no_match_response
 
         # create a board if none exists for the team
         team_boards = Board.objects.filter(team=team_id)
