@@ -185,7 +185,7 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_token_empty(self):
-        initial_count = Board.objects.count()
+        initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
@@ -198,7 +198,7 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
-        initial_count = Board.objects.count()
+        initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
@@ -211,7 +211,7 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
-        initial_count = Board.objects.count()
+        initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
@@ -224,7 +224,7 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
-        initial_count = Board.objects.count()
+        initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
