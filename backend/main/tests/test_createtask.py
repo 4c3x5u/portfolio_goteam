@@ -73,10 +73,10 @@ class CreateTaskTests(APITestCase):
     def test_success_with_subtasks(self):
         initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
-                   'description': 'Lorem ipsum dolor sit amet',
-                   'column': self.column.id,
-                   'subtasks': [{'title': 'Do something'},
-                                {'title': 'Do some other thing'}]}
+                        'description': 'Lorem ipsum dolor sit amet',
+                        'column': self.column.id,
+                        'subtasks': [{'title': 'Do something'},
+                                     {'title': 'Do some other thing'}]}
         response = self.client.post(self.url,
                                     request_data,
                                     format='json',
@@ -88,6 +88,22 @@ class CreateTaskTests(APITestCase):
         subtasks = Subtask.objects.filter(task=response.data.get('task_id'))
         self.assertEqual(subtasks.count(), len(request_data.get('subtasks')))
         self.assertEqual(Task.objects.count(), initial_count + 1)
+
+    def test_not_admin(self):
+        initial_count = Task.objects.count()
+        request_data = {'title': 'Some Task',
+                        'description': 'Lorem ipsum dolor sit amet',
+                        'column': self.column.id}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    HTTP_AUTH_USER=self.member.username,
+                                    HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
 
     def test_title_blank(self):
         initial_count = Task.objects.count()

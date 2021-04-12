@@ -3,32 +3,43 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import User, Team
 import bcrypt
 
-forbidden_response = Response({
-    'auth': ErrorDetail(string="Authentication failure.",
-                        code='not_authenticated')
-}, 403)
 
+def authenticate(username, token):
+    not_authenticated_response = Response({
+        'auth': ErrorDetail(string="Authentication failure.",
+                            code='not_authenticated')
+    }, 403)
 
-def authenticate(request):
-    username = request.META.get('HTTP_AUTH_USER')
-    if not username:
-        return forbidden_response
     try:
         user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return forbidden_response
+    except (User.DoesNotExist, ValueError):
+        return not_authenticated_response
 
-    token = request.META.get('HTTP_AUTH_TOKEN')
-    if not token:
-        return forbidden_response
     try:
         tokens_match = bcrypt.checkpw(
             bytes(user.username, 'utf-8') + user.password,
             bytes(token, 'utf-8'))
         if not tokens_match:
-            return forbidden_response
+            return not_authenticated_response
     except ValueError:
-        return forbidden_response
+        return not_authenticated_response
+
+
+def authorize(username):
+    not_authorized_response = Response({
+        'auth': ErrorDetail(
+            string='The user is not an admin.',
+            code='not_authorized'
+        )
+    }, 403)
+
+    try:
+        user = User.objects.get(username=username)
+        if not user.is_admin:
+            return not_authorized_response
+    except User.DoesNotExist:
+        return not_authorized_response
+
 
 
 def validate_team_id(team_id):
@@ -44,4 +55,5 @@ def validate_team_id(team_id):
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
         }, 404)
+
 
