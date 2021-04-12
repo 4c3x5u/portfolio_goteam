@@ -15,6 +15,7 @@ def new_admin(team):
     token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2RJJO17thjLOdy'
     return {'username': user.username,
             'password': user.password,
+            'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
             'token': token}
@@ -31,6 +32,7 @@ def new_member(team):
     token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb9stnDZze19Ude'
     return {'username': user.username,
             'password': user.password,
+            'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
             'token': token}
