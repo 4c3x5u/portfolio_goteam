@@ -82,9 +82,10 @@ class CreateBoardTests(APITestCase):
 
     def test_team_id_blank(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': self.admin.username,
-                                               'token': self.admin_token,
-                                               'team_id': ''})
+        response = self.client.post(self.url,
+                                    {'team_id': ''},
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
