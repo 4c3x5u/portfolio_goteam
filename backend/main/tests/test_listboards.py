@@ -43,7 +43,7 @@ class ListBoardsTests(APITestCase):
             self.assertEqual(board.get('team'), self.team.id)
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_boards_not_found(self):
+    def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
         response = self.client.get(self.base_url + str(team.id),
@@ -56,13 +56,25 @@ class ListBoardsTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
+    # if no boards are found for a team admin,
+    # a new one is created and returned
+    def test_boards_not_found_admin(self):
+        initial_count = Board.objects.count()
+        team = Team.objects.create()
+        response = self.client.get(self.base_url + str(team.id),
+                                   HTTP_AUTH_USER=self.admin.username,
+                                   HTTP_AUTH_TOKEN=self.admin_token)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.data.get('boards')), 1)
+        self.assertEqual(Board.objects.count(), initial_count + 1)
+
     def test_team_id_empty(self):
         initial_count = Board.objects.count()
         response = self.client.get(self.base_url)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                   code='null')
+                                   code='blank')
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
