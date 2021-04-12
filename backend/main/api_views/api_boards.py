@@ -122,10 +122,9 @@ def boards(request):
 
                 # return a list containing only the new board
                 return Response({
-                    'boards': [{
-                        'board_id': board.id,
-                        'team_id': board.team.id
-                    }]
+                    'boards': [
+                        {'board_id': board.id, 'team_id': board.team.id}
+                    ]
                 }, 201)
 
             return Response({
