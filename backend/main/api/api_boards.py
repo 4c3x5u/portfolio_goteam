@@ -5,7 +5,6 @@ from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
 from ..models import Board, User
 from .util import validate_username, validate_token, validate_team_id
-import bcrypt
 
 
 @api_view(['POST', 'GET'])
