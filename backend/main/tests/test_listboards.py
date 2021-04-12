@@ -80,16 +80,32 @@ class ListBoardsTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_invalid_team_id(self):
+    def test_team_not_found(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + '123')
-        self.assertEqual(response.status_code, 400)
+        response = self.client.get(self.base_url + '123',
+                                   HTTP_AUTH_USER=self.member.username,
+                                   HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.', code='not_found')
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    # TODO: Test for:
-    #  1. new board created for admin
-    #  2. auth token empty
-    #  3. auth token invalid
+    # TODO:
+    #  [X]. new board created for admin
+    #  [ ]. auth user empty
+    #  [ ]. auth user invalid
+    #  [ ]. auth token empty
+    #  [ ]. auth token invalid
+
+    def test_auth_user_empty(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(self.base_url + self.team_id,
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string="Authentication failure.",
+                                code='not_authenticated')
+        })
+        self.assertEqual(Board.objects.count(), initial_count)
