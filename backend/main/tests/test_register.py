@@ -5,14 +5,15 @@ from uuid import uuid4
 
 
 class RegisterTests(APITestCase):
+    endpoint = '/register/'
+
     def setUp(self):
-        self.url = '/register/'
         team = Team.objects.create()
         Board.objects.create(team=team)
         self.invite_code = team.invite_code
 
     def help_test_success(self, initial_user_count, request_data):
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'), 'Registration successful.')
         self.assertEqual(response.data.get('username'),
@@ -54,7 +55,7 @@ class RegisterTests(APITestCase):
         request_data = {'username': 'fooooooooooooooooooooooooooooooooooo',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': [ErrorDetail(
@@ -74,7 +75,7 @@ class RegisterTests(APITestCase):
         '''
         request_data = {'username': 'foooo',
                         'password': password}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password': [ErrorDetail(
@@ -90,7 +91,7 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
                         'invite_code': 'invalid uuid'}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'invite_code': [ErrorDetail(string='Invalid invite code.',
@@ -106,7 +107,7 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar',
                         'invite_code': uuid4()}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'invite_code': [ErrorDetail(string='Team not found.',
@@ -117,7 +118,7 @@ class RegisterTests(APITestCase):
 
     def test_unmatched_passwords(self):
         initial_count = User.objects.count()
-        response = self.client.post(self.url, {
+        response = self.client.post(self.endpoint, {
             'username': 'foooo',
             'password_confirmation': 'barbarbar',
             'password': 'not_barbarbar'
@@ -138,7 +139,7 @@ class RegisterTests(APITestCase):
         request_data = {'username': '',
                         'password': 'barbarbar',
                         'password_confirmation': 'barbarbar'}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': [ErrorDetail(string='Username cannot be empty.',
@@ -153,7 +154,7 @@ class RegisterTests(APITestCase):
         request_data = {'username': 'foooo',
                         'password': '',
                         'password_confirmation': 'barbarbar'}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password': [ErrorDetail(string='Password cannot be empty.',
@@ -168,7 +169,7 @@ class RegisterTests(APITestCase):
         request_data = {'username': 'foooo',
                         'password': 'barbarbar',
                         'password_confirmation': ''}
-        response = self.client.post(self.url, request_data)
+        response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': ErrorDetail(
