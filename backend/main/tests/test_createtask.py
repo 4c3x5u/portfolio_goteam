@@ -1,36 +1,19 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Team, Board, Column, Task, Subtask, User
+from ..models import Board, Column, Task, Subtask
+from main.util import (
+    team, admin, admin_token, member, member_token, forbidden_response
+)
 
 
 class CreateTaskTests(APITestCase):
+    endpoint = '/tasks/'
+
     def setUp(self):
-        self.url = '/tasks/'
-        team = Team.objects.create()
-        board = Board.objects.create(team=team)
-        self.column = Column.objects.create(board=board, order=0)
-        self.admin = User.objects.create(
-            username='teamadmin',
-            password=b'$2b$12$lrkDnrwXSBU.YJvdzbpAWOd9GhwHJGVYafRXTHct2gm3akPJ'
-                     b'gB5Zq',
-            is_admin=True,
-            team=team
+        self.column = Column.objects.create(
+            board=Board.objects.create(team=team),
+            order=0
         )
-        self.member = User.objects.create(
-            username='teammember',
-            password=b'$2b$12$RonFQ1/18JiCN8yFeBaxKOsVbxLdcehlZ4e0r9gtZbARqEVU'
-                     b'HHEoK',
-            is_admin=False,
-            team=team
-        )
-        self.admin_token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2R' \
-                           'JJO17thjLOdy'
-        self.member_token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb' \
-                            '9stnDZze19Ude'
-        self.forbidden_response = {
-            'auth': ErrorDetail(string="Authentication failure.",
-                                code='not_authenticated')
-        }
 
     def help_test_success(self, response_data, status_code, request_data):
         self.assertEqual(status_code, 201)
@@ -47,10 +30,10 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.help_test_success(response.data,
                                response.status_code,
                                request_data)
@@ -59,12 +42,12 @@ class CreateTaskTests(APITestCase):
     def test_success_without_description(self):
         initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
-                   'description': '',
-                   'column': self.column.id}
-        response = self.client.post(self.url,
+                        'description': '',
+                        'column': self.column.id}
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.help_test_success(response.data,
                                response.status_code,
                                request_data)
@@ -77,11 +60,11 @@ class CreateTaskTests(APITestCase):
                         'column': self.column.id,
                         'subtasks': [{'title': 'Do something'},
                                      {'title': 'Do some other thing'}]}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.help_test_success(response.data,
                                response.status_code,
                                request_data)
@@ -94,10 +77,10 @@ class CreateTaskTests(APITestCase):
         request = {'title': '',
                    'description': 'Lorem ipsum dolor sit amet',
                    'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request,
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'title': [ErrorDetail(string='Title cannot be empty.',
@@ -112,10 +95,10 @@ class CreateTaskTests(APITestCase):
             'description': 'Lorem ipsum dolor sit amet',
             'column': self.column.id
         }
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'title': [
@@ -137,11 +120,11 @@ class CreateTaskTests(APITestCase):
                 'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo'
             }]
         }
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'subtask': {'title': [ErrorDetail(
@@ -157,10 +140,10 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': ''}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_USER=admin.username,
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'column': ErrorDetail(string='Column cannot be empty.',
@@ -173,12 +156,12 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_USER=admin.username,
                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -186,12 +169,12 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_USER=admin.username,
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -199,12 +182,12 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER='',
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -212,12 +195,12 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER='invalidio',
-                                    HTTP_AUTH_TOKEN=self.admin_token)
+                                    HTTP_AUTH_TOKEN=admin_token)
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(response.data, forbidden_response)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -225,10 +208,10 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
-                                    HTTP_AUTH_USER=self.member.username,
-                                    HTTP_AUTH_TOKEN=self.member_token)
+                                    HTTP_AUTH_USER=member.username,
+                                    HTTP_AUTH_TOKEN=member_token)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
             'auth': ErrorDetail(string='The user is not an admin.',
