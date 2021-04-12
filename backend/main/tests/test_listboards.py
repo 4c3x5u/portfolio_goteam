@@ -20,6 +20,10 @@ class ListBoardsTests(APITestCase):
         )
         self.member_token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb' \
                             '9stnDZze19Ude'
+        self.forbidden_response = {
+            'auth': ErrorDetail(string="Authentication failure.",
+                                code='not_authenticated')
+        }
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -93,8 +97,8 @@ class ListBoardsTests(APITestCase):
 
     # TODO:
     #  [X]. new board created for admin
-    #  [ ]. auth user empty
-    #  [ ]. auth user invalid
+    #  [X]. auth user empty
+    #  [X]. auth user invalid
     #  [ ]. auth token empty
     #  [ ]. auth token invalid
 
@@ -104,8 +108,14 @@ class ListBoardsTests(APITestCase):
                                    HTTP_AUTH_USER='',
                                    HTTP_AUTH_TOKEN=self.member_token)
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string="Authentication failure.",
-                                code='not_authenticated')
-        })
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_user_invalid(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(self.base_url + self.team_id,
+                                   HTTP_AUTH_USER='invalidusername',
+                                   HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
