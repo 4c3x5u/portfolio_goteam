@@ -3,38 +3,25 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
-from ..models import Board, Team, User
+from ..models import Board, User
+from .util import validate_username, validate_token, validate_team_id
 import bcrypt
 
 
 @api_view(['POST', 'GET'])
 def boards(request):
-    forbidden_response = Response({
-        'auth': ErrorDetail(string="Authentication failure.",
-                            code='not_authenticated')
-    }, 403)
-
     # validate username
     username = request.META.get('HTTP_AUTH_USER')
-    if not username:
-        return forbidden_response
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return forbidden_response
+    username_response = validate_username(username)
+    if username_response:
+        return username_response
+    user = User.objects.get(username=username)
 
     # validate authentication token
     token = request.META.get('HTTP_AUTH_TOKEN')
-    if not token:
-        return forbidden_response
-    try:
-        tokens_match = bcrypt.checkpw(
-            bytes(user.username, 'utf-8') + user.password,
-            bytes(token, 'utf-8'))
-        if not tokens_match:
-            return forbidden_response
-    except ValueError:
-        return forbidden_response
+    token_response = validate_token(token, user.username, user.password)
+    if token_response:
+        return token_response
 
     if request.method == 'POST':
         # validate is_admin
@@ -48,18 +35,9 @@ def boards(request):
 
         # validate team_id
         team_id = request.data.get('team_id')
-        if not team_id:
-            return Response({
-                'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                       code='blank')
-            }, 400)
-        try:
-            Team.objects.get(id=team_id)
-        except Team.DoesNotExist:
-            return Response({
-                'team_id': ErrorDetail(string='Team not found.',
-                                       code='not_found')
-            }, 404)
+        response = validate_team_id(team_id)
+        if response:
+            return response
 
         # create board
         board_serializer = BoardSerializer(data={'team': team_id})
@@ -85,18 +63,9 @@ def boards(request):
     if request.method == 'GET':
         # validate team_id
         team_id = request.query_params.get('team_id')
-        if not team_id:
-            return Response({
-                'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                       code='blank')
-            }, 400)
-        try:
-            Team.objects.get(id=team_id)
-        except Team.DoesNotExist:
-            return Response({
-                'team_id': ErrorDetail(string='Team not found.',
-                                       code='not_found')
-            }, 404)
+        response = validate_team_id(team_id)
+        if response:
+            return response
 
         # create a board if none exists for the team
         team_boards = Board.objects.filter(team=team_id)
