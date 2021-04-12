@@ -1,7 +1,43 @@
-from rest_framework.response import Response
+from main.models import Team, User
 from rest_framework.exceptions import ErrorDetail
-from ..models import User, Team
+from rest_framework.response import Response
 import bcrypt
+
+
+def new_admin(team):
+    user = User.objects.create(
+        username='teamadmin',
+        password=b'$2b$12$lrkDnrwXSBU.YJvdzbpAWOd9GhwHJGVYafRXTHct2gm3akPJgB5Z'
+                 b'q',
+        is_admin=True,
+        team=team
+    )
+    token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2RJJO17thjLOdy'
+    return {'username': user.username,
+            'password': user.password,
+            'is_admin': user.is_admin,
+            'team': user.team,
+            'token': token}
+
+
+def new_member(team):
+    user = User.objects.create(
+        username='teammember',
+        password=b'$2b$12$RonFQ1/18JiCN8yFeBaxKOsVbxLdcehlZ4e0r9gtZbARqEVUHHEo'
+                 b'K',
+        is_admin=False,
+        team=team
+    )
+    token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb9stnDZze19Ude'
+    return {'username': user.username,
+            'password': user.password,
+            'is_admin': user.is_admin,
+            'team': user.team,
+            'token': token}
+
+
+forbidden_response = {'auth': ErrorDetail(string="Authentication failure.",
+                                          code='not_authenticated')}
 
 
 def authenticate(username, token):
@@ -39,7 +75,6 @@ def authorize(username):
             return not_authorized_response
     except User.DoesNotExist:
         return not_authorized_response
-
 
 
 def validate_team_id(team_id):
