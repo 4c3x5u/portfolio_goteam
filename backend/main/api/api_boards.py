@@ -4,7 +4,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
 from ..models import Board
-from .util import authenticate, authorize, validate_team_id
+from ..util import authenticate, authorize, validate_team_id
 
 
 @api_view(['POST', 'GET'])

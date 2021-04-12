@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask
 from ..serializers.ser_subtask import SubtaskSerializer
-from .util import authenticate, authorize
+from ..util import authenticate, authorize
 
 
 @api_view(['PATCH'])
