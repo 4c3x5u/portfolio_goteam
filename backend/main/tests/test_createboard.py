@@ -108,9 +108,9 @@ class CreateBoardTests(APITestCase):
     def test_token_empty(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url,
-                                    {'username': self.admin.username,
-                                     'token': '',
-                                     'team_id': self.team.id})
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'token': ErrorDetail(
