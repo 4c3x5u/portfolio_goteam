@@ -3,24 +3,17 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
-from ..models import Board, User
-from .util import validate_username, validate_token, validate_team_id
+from ..models import User, Board
+from .util import authenticate, validate_team_id
 
 
 @api_view(['POST', 'GET'])
 def boards(request):
-    # validate username
-    username = request.META.get('HTTP_AUTH_USER')
-    username_response = validate_username(username)
-    if username_response:
-        return username_response
-    user = User.objects.get(username=username)
+    auth_response = authenticate(request)
+    if auth_response:
+        return auth_response
 
-    # validate authentication token
-    token = request.META.get('HTTP_AUTH_TOKEN')
-    token_response = validate_token(token, user.username, user.password)
-    if token_response:
-        return token_response
+    user = User.objects.get(username=request.META.get('HTTP_AUTH_USER'))
 
     if request.method == 'POST':
         # validate is_admin
