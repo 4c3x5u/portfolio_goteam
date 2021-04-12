@@ -67,11 +67,10 @@ class CreateBoardTests(APITestCase):
 
     def test_user_not_admin(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {
-            'username': self.member.username,
-            'token': self.member_token,
-            'team_id': self.team.id
-        })
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER=self.member.username,
+                                    HTTP_AUTH_TOKEN=self.member_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': ErrorDetail(
