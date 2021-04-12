@@ -3,10 +3,22 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask
 from ..serializers.ser_subtask import SubtaskSerializer
+from .util import authenticate, authorize
 
 
 @api_view(['PATCH'])
 def subtasks(request):
+    username = request.META.get('HTTP_AUTH_USER')
+    token = request.META.get('HTTP_AUTH_TOKEN')
+
+    authentication_response = authenticate(username, token)
+    if authentication_response:
+        return authentication_response
+
+    authorization_response = authorize(username)
+    if authorization_response:
+        return authorization_response
+
     subtask_id = request.data.get('id')
     if not subtask_id:
         return Response({
