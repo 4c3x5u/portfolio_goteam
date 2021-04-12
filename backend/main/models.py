@@ -14,6 +14,7 @@ class User(Model):
 
 
 class Board(Model):
+    name = CharField(max_length=35)
     team = ForeignKey(Team, on_delete=CASCADE)
     user = ManyToManyField(User)
 
@@ -26,8 +27,6 @@ class Column(Model):
 class Task(Model):
     title = CharField(max_length=50)
     description = TextField(null=True)
-    # TODO: Make sure to delete this field if you find that you don't need it
-    #       for React drag and drop controls
     order = IntegerField()
     column = ForeignKey(Column, on_delete=CASCADE)
 
