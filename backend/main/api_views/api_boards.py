@@ -97,7 +97,7 @@ def boards(request):
         if not team_id:
             return Response({
                 'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                       code='null')
+                                       code='blank')
             }, 400)
         try:
             Team.objects.get(id=team_id)
