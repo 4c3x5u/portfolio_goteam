@@ -110,19 +110,29 @@ def boards(request):
         # create a board if none exists for the team
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
-            serializer = BoardSerializer(data={'team': team_id})
-            if not serializer.is_valid():
-                return Response({
-                    'team_id': ErrorDetail(string='Invalid team ID.',
-                                           code='invalid')
-                }, 404)
-            board = serializer.save()
+            if user.is_admin:
+                # create a board
+                serializer = BoardSerializer(data={'team': team_id})
+                if not serializer.is_valid():
+                    return Response({
+                        'team_id': ErrorDetail(string='Invalid team ID.',
+                                               code='invalid')
+                    }, 400)
+                board = serializer.save()
 
-            # return the new board
+                # return a list containing only the new board
+                return Response({
+                    'boards': [{
+                        'board_id': board.id,
+                        'team_id': board.team.id
+                    }]
+                }, 201)
+
             return Response({
-                'boards': [{'board_id': board.id, 'team_id': board.team.id}]
-            }, 201)
+                'team_id': ErrorDetail(string='Boards not found.',
+                                       code='not_found')
+            }, 404)
 
         # return pre-existing boards
-        return Response({'boards': BoardSerializer(team_boards, many=True)},
-                        200)
+        serializer = BoardSerializer(team_boards, many=True)
+        return Response({'boards': serializer.data}, 200)
