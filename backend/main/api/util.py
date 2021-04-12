@@ -9,21 +9,21 @@ forbidden_response = Response({
 }, 403)
 
 
-def validate_username(username):
+def authenticate(request):
+    username = request.META.get('HTTP_AUTH_USER')
     if not username:
         return forbidden_response
     try:
-        User.objects.get(username=username)
+        user = User.objects.get(username=username)
     except User.DoesNotExist:
         return forbidden_response
 
-
-def validate_token(token, username, password):
+    token = request.META.get('HTTP_AUTH_TOKEN')
     if not token:
         return forbidden_response
     try:
         tokens_match = bcrypt.checkpw(
-            bytes(username, 'utf-8') + password,
+            bytes(user.username, 'utf-8') + user.password,
             bytes(token, 'utf-8'))
         if not tokens_match:
             return forbidden_response
