@@ -5,7 +5,7 @@ from ..models import Task, Column, Board, Team, User
 # TODO:
 #   [X] Make existing tests pass
 #   [X] Add authentication tests
-#   [ ] Add an authorization test
+#   [X] Add an authorization test
 
 
 class UpdateTaskTests(APITestCase):
@@ -188,3 +188,19 @@ class UpdateTaskTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_not_admin(self):
+        initial_count = Task.objects.count()
+        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    format='json',
+                                    HTTP_AUTH_USER=self.member.username,
+                                    HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
