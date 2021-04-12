@@ -46,6 +46,7 @@ def boards(request):
                 )
             }, 400)
 
+        # validate team_id
         team_id = request.data.get('team_id')
         if not team_id:
             return Response({
