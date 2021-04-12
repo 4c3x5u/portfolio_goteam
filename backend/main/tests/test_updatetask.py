@@ -4,7 +4,7 @@ from ..models import Task, Column, Board, Team, User
 
 # TODO:
 #   [X] Make existing tests pass
-#   [ ] Add authentication tests
+#   [X] Add authentication tests
 #   [ ] Add an authorization test
 
 
@@ -140,3 +140,51 @@ class UpdateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
+
+    def test_auth_token_empty(self):
+        initial_count = Task.objects.count()
+        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    format='json',
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_token_invalid(self):
+        initial_count = Task.objects.count()
+        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    format='json',
+                                    HTTP_AUTH_USER=self.admin.username,
+                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_user_blank(self):
+        initial_count = Task.objects.count()
+        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    format='json',
+                                    HTTP_AUTH_USER='',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_user_invalid(self):
+        initial_count = Task.objects.count()
+        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    format='json',
+                                    HTTP_AUTH_USER='invalidio',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
