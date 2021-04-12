@@ -55,9 +55,10 @@ class CreateBoardTests(APITestCase):
 
     def test_username_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': 'invalidio',
-                                               'token': self.admin_token,
-                                               'team_id': self.team.id})
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER='invalidio',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='Invalid username.', code='invalid')
