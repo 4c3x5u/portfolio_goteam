@@ -1,7 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, User, Column
-import bcrypt
 
 
 class CreateBoardTests(APITestCase):
@@ -29,9 +28,10 @@ class CreateBoardTests(APITestCase):
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url, {'username': self.admin.username,
-                                               'token': self.admin_token,
-                                               'team_id': self.team.id})
+        response = self.client.post(self.url, {'team_id': self.team.id}, **{
+            'HTTP_AUTH_USER': self.admin.username,
+            'HTTP_AUTH_TOKEN': self.admin_token,
+        })
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
                          'Board creation successful.')
