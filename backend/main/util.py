@@ -7,12 +7,12 @@ import bcrypt
 def new_admin(team):
     user = User.objects.create(
         username='teamadmin',
-        password=b'$2b$12$lrkDnrwXSBU.YJvdzbpAWOd9GhwHJGVYafRXTHct2gm3akPJgB5Z'
-                 b'q',
+        password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
+                 b'e',
         is_admin=True,
         team=team
     )
-    token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2RJJO17thjLOdy'
+    token = '$2b$12$yGUdlz0eMW3P6TAX07.CPuCA5u.t10uTEKCE2SQ5Vdm3VbnrHbpoK'
     return {'username': user.username,
             'password': user.password,
             'password_raw': 'barbarbar',
@@ -24,12 +24,12 @@ def new_admin(team):
 def new_member(team):
     user = User.objects.create(
         username='teammember',
-        password=b'$2b$12$RonFQ1/18JiCN8yFeBaxKOsVbxLdcehlZ4e0r9gtZbARqEVUHHEo'
-                 b'K',
+        password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
+                 b'e',
         is_admin=False,
         team=team
     )
-    token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb9stnDZze19Ude'
+    token = '$2b$12$qNhh2i1ZPU1qaIKncI7J6O2kr4XmuCWSwLEMJF653vyvDMIRekzLO'
     return {'username': user.username,
             'password': user.password,
             'password_raw': 'barbarbar',
