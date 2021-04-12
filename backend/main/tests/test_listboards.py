@@ -119,3 +119,12 @@ class ListBoardsTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_token_empty(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(self.base_url + self.team_id,
+                                   HTTP_AUTH_USER=self.member.username,
+                                   HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
