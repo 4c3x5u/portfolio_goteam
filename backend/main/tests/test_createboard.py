@@ -25,6 +25,10 @@ class CreateBoardTests(APITestCase):
                            'JJO17thjLOdy'
         self.member_token = '$2b$12$xnIJLzpgNV12O80XsakMjezCFqwIphdBy5ziJ9Eb' \
                             '9stnDZze19Ude'
+        self.forbidden_response = {
+            'auth': ErrorDetail(string="Authentication failure.",
+                                code='not_authenticated')
+        }
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -39,31 +43,6 @@ class CreateBoardTests(APITestCase):
         columns = Column.objects.filter(board=board.id)
         self.assertEqual(len(columns), 4)
         self.assertEqual(Board.objects.count(), initial_count + 1)
-
-    def test_username_blank(self):
-        initial_count = Board.objects.count()
-        response = self.client.post(self.url,
-                                    {'team_id': self.team.id},
-                                    HTTP_AUTH_USER='',
-                                    HTTP_AUTH_TOKEN=self.admin_token)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Username cannot be empty.',
-                                    code='blank')
-        })
-        self.assertEqual(Board.objects.count(), initial_count)
-
-    def test_username_invalid(self):
-        initial_count = Board.objects.count()
-        response = self.client.post(self.url,
-                                    {'team_id': self.team.id},
-                                    HTTP_AUTH_USER='invalidio',
-                                    HTTP_AUTH_TOKEN=self.admin_token)
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Invalid username.', code='invalid')
-        })
-        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_user_not_admin(self):
         initial_count = Board.objects.count()
@@ -105,32 +84,44 @@ class CreateBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_token_empty(self):
+    def test_auth_token_empty(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.admin.username,
                                     HTTP_AUTH_TOKEN='')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data, {
-            'token': ErrorDetail(
-                string='Authentication token cannot be empty.',
-                code='blank',
-            )
-        })
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_token_invalid(self):
+    def test_auth_token_invalid(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.url,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.admin.username,
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data, {
-            'token': ErrorDetail(
-                string='Invalid authentication token.',
-                code='invalid',
-            )
-        })
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_user_blank(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER='',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_auth_user_invalid(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(self.url,
+                                    {'team_id': self.team.id},
+                                    HTTP_AUTH_USER='invalidio',
+                                    HTTP_AUTH_TOKEN=self.admin_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, self.forbidden_response)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+
