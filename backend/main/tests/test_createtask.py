@@ -89,22 +89,6 @@ class CreateTaskTests(APITestCase):
         self.assertEqual(subtasks.count(), len(request_data.get('subtasks')))
         self.assertEqual(Task.objects.count(), initial_count + 1)
 
-    def test_not_admin(self):
-        initial_count = Task.objects.count()
-        request_data = {'title': 'Some Task',
-                        'description': 'Lorem ipsum dolor sit amet',
-                        'column': self.column.id}
-        response = self.client.post(self.url,
-                                    request_data,
-                                    HTTP_AUTH_USER=self.member.username,
-                                    HTTP_AUTH_TOKEN=self.member_token)
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='The user is not an admin.',
-                                code='not_authorized')
-        })
-        self.assertEqual(Task.objects.count(), initial_count)
-
     def test_title_blank(self):
         initial_count = Task.objects.count()
         request = {'title': '',
@@ -195,7 +179,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
-        self.assertEqual(Board.objects.count(), initial_count)
+        self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
         initial_count = Task.objects.count()
@@ -208,7 +192,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
-        self.assertEqual(Board.objects.count(), initial_count)
+        self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
         initial_count = Task.objects.count()
@@ -221,7 +205,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
-        self.assertEqual(Board.objects.count(), initial_count)
+        self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
         initial_count = Task.objects.count()
@@ -234,4 +218,20 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin_token)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, self.forbidden_response)
-        self.assertEqual(Board.objects.count(), initial_count)
+        self.assertEqual(Task.objects.count(), initial_count)
+
+    def test_unauthorized(self):
+        initial_count = Task.objects.count()
+        request_data = {'title': 'Some Task',
+                        'description': 'Lorem ipsum dolor sit amet',
+                        'column': self.column.id}
+        response = self.client.post(self.url,
+                                    request_data,
+                                    HTTP_AUTH_USER=self.member.username,
+                                    HTTP_AUTH_TOKEN=self.member_token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
