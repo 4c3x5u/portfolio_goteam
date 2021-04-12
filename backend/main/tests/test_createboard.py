@@ -50,12 +50,10 @@ class CreateBoardTests(APITestCase):
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.member.username,
                                     HTTP_AUTH_TOKEN=self.member_token)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(
-                string='Only the team admin can create a board.',
-                code='not_authorized'
-            )
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
         })
         self.assertEqual(Board.objects.count(), initial_count)
 

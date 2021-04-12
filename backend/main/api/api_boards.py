@@ -3,27 +3,23 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
-from ..models import User, Board
-from .util import authenticate, validate_team_id
+from ..models import Board
+from .util import authenticate, authorize, validate_team_id
 
 
 @api_view(['POST', 'GET'])
 def boards(request):
-    auth_response = authenticate(request)
-    if auth_response:
-        return auth_response
+    username = request.META.get('HTTP_AUTH_USER')
+    token = request.META.get('HTTP_AUTH_TOKEN')
 
-    user = User.objects.get(username=request.META.get('HTTP_AUTH_USER'))
+    authentication_response = authenticate(username, token)
+    if authentication_response:
+        return authentication_response
 
     if request.method == 'POST':
-        # validate is_admin
-        if not user.is_admin:
-            return Response({
-                'username': ErrorDetail(
-                    string='Only the team admin can create a board.',
-                    code='not_authorized'
-                )
-            }, 400)
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
 
         # validate team_id
         team_id = request.data.get('team_id')
@@ -62,7 +58,7 @@ def boards(request):
         # create a board if none exists for the team
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
-            if user.is_admin:
+            if not authorize(username):
                 # create a board
                 serializer = BoardSerializer(data={'team': team_id})
                 if not serializer.is_valid():

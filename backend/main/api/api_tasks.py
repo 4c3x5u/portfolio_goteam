@@ -1,18 +1,24 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Column, Task, User
+from ..models import Column, Task
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-from .util import authenticate
+from .util import authenticate, authorize
 
 
 @api_view(['POST', 'PATCH'])
 def tasks(request):
-    # validate username
-    auth_response = authenticate(request)
-    if auth_response:
-        return auth_response
+    username = request.META.get('HTTP_AUTH_USER')
+    token = request.META.get('HTTP_AUTH_TOKEN')
+
+    authentication_response = authenticate(username, token)
+    if authentication_response:
+        return authentication_response
+
+    authorization_response = authorize(username)
+    if authorization_response:
+        return authorization_response
 
     if request.method == 'POST':
         column_id = request.data.get('column')
