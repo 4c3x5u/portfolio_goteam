@@ -5,17 +5,18 @@ from ..util import new_member, forbidden_response
 
 
 class ListBoardsTests(APITestCase):
+    endpoint = '/boards/?team_id='
+
     def setUp(self):
-        self.base_url = '/boards/?team_id='
-        self.team = Team.objects.create()
         self.member = new_member(self.team)
+        self.team = Team.objects.create()
         self.boards = [
             Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
         ]
 
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.get(f'{self.base_url}{self.team.id}',
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 200)
@@ -29,7 +30,7 @@ class ListBoardsTests(APITestCase):
     def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
-        response = self.client.get(f'{self.base_url}{team.id}',
+        response = self.client.get(f'{self.endpoint}{team.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 404)
@@ -53,7 +54,7 @@ class ListBoardsTests(APITestCase):
         )
         token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2R' \
                            'JJO17thjLOdy'
-        response = self.client.get(self.base_url + str(team.id),
+        response = self.client.get(self.endpoint + str(team.id),
                                    HTTP_AUTH_USER=user.username,
                                    HTTP_AUTH_TOKEN=token)
         self.assertEqual(response.status_code, 201)
@@ -62,7 +63,7 @@ class ListBoardsTests(APITestCase):
 
     def test_team_id_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url,
+        response = self.client.get(self.endpoint,
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 400)
@@ -74,7 +75,7 @@ class ListBoardsTests(APITestCase):
 
     def test_team_not_found(self):
         initial_count = Board.objects.count()
-        response = self.client.get(self.base_url + '123',
+        response = self.client.get(self.endpoint + '123',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 404)
@@ -85,7 +86,7 @@ class ListBoardsTests(APITestCase):
 
     def test_auth_user_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.get(f'{self.base_url}{self.team.id}',
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER='',
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
@@ -94,7 +95,7 @@ class ListBoardsTests(APITestCase):
 
     def test_auth_user_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.get(f'{self.base_url}{self.team.id}',
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER='invalidusername',
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
@@ -103,7 +104,7 @@ class ListBoardsTests(APITestCase):
 
     def test_auth_token_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.get(f'{self.base_url}{self.team.id}',
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
@@ -112,7 +113,7 @@ class ListBoardsTests(APITestCase):
 
     def test_auth_token_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.get(f'{self.base_url}{self.team.id}',
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
         self.assertEqual(response.status_code, 403)

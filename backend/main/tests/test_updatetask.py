@@ -1,12 +1,13 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Task, Column, Board, Team, User
+from ..models import Task, Column, Board, Team
 from ..util import new_member, new_admin, forbidden_response
 
 
 class UpdateTaskTests(APITestCase):
+    endpoint = '/tasks/'
+
     def setUp(self):
-        self.url = '/tasks/'
         team = Team.objects.create()
         self.member = new_member(team)
         self.admin = new_admin(team)
@@ -20,7 +21,7 @@ class UpdateTaskTests(APITestCase):
                                         ))
         
     def help_test_success(self, request_data):
-        response = self.client.patch(self.url,
+        response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -38,7 +39,7 @@ class UpdateTaskTests(APITestCase):
 
     def test_title_blank(self):
         request_data = {'id': self.task.id, 'data': {'title': ''}}
-        response = self.client.patch(self.url,
+        response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -59,7 +60,7 @@ class UpdateTaskTests(APITestCase):
 
     def test_order_blank(self):
         request_data = {'id': self.task.id, 'data': {'order': ''}}
-        response = self.client.patch(self.url,
+        response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -87,7 +88,7 @@ class UpdateTaskTests(APITestCase):
 
     def test_column_blank(self):
         request_data = {'id': self.task.id, 'data': {'column': ''}}
-        response = self.client.patch(self.url,
+        response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -102,7 +103,7 @@ class UpdateTaskTests(APITestCase):
 
     def test_column_invalid(self):
         request_data = {'id': self.task.id, 'data': {'column': '123123'}}
-        response = self.client.patch(self.url,
+        response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -118,7 +119,7 @@ class UpdateTaskTests(APITestCase):
     def test_auth_token_empty(self):
         initial_count = Task.objects.count()
         request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER=self.admin['username'],
@@ -130,7 +131,7 @@ class UpdateTaskTests(APITestCase):
     def test_auth_token_invalid(self):
         initial_count = Task.objects.count()
         request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER=self.admin['username'],
@@ -142,7 +143,7 @@ class UpdateTaskTests(APITestCase):
     def test_auth_user_blank(self):
         initial_count = Task.objects.count()
         request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER='',
@@ -154,7 +155,7 @@ class UpdateTaskTests(APITestCase):
     def test_auth_user_invalid(self):
         initial_count = Task.objects.count()
         request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER='invalidio',
@@ -166,7 +167,7 @@ class UpdateTaskTests(APITestCase):
     def test_not_admin(self):
         initial_count = Task.objects.count()
         request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER=self.member['username'],

@@ -1,12 +1,13 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Team, Board, Column, Task, Subtask, User
+from ..models import Team, Board, Column, Task, Subtask
 from ..util import new_member, new_admin, forbidden_response
 
 
 class CreateTaskTests(APITestCase):
+    endpoint = '/tasks/'
+
     def setUp(self):
-        self.url = '/tasks/'
         team = Team.objects.create()
         self.member = new_member(team)
         self.admin = new_admin(team)
@@ -28,7 +29,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -42,7 +43,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                    'description': '',
                    'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -58,7 +59,7 @@ class CreateTaskTests(APITestCase):
                         'column': self.column.id,
                         'subtasks': [{'title': 'Do something'},
                                      {'title': 'Do some other thing'}]}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER=self.admin['username'],
@@ -75,7 +76,7 @@ class CreateTaskTests(APITestCase):
         request = {'title': '',
                    'description': 'Lorem ipsum dolor sit amet',
                    'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -93,7 +94,7 @@ class CreateTaskTests(APITestCase):
             'description': 'Lorem ipsum dolor sit amet',
             'column': self.column.id
         }
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -118,7 +119,7 @@ class CreateTaskTests(APITestCase):
                 'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo'
             }]
         }
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
                                     HTTP_AUTH_USER=self.admin['username'],
@@ -138,7 +139,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': ''}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -154,7 +155,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='')
@@ -167,7 +168,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
@@ -180,7 +181,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER='',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -193,7 +194,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -206,7 +207,7 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id}
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.member['username'],
                                     HTTP_AUTH_TOKEN=self.member['token'])

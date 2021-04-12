@@ -5,15 +5,16 @@ from ..util import new_member, new_admin, forbidden_response
 
 
 class CreateBoardTests(APITestCase):
+    endpoint = '/boards/'
+
     def setUp(self):
-        self.url = '/boards/'
         self.team = Team.objects.create()
-        self.admin = new_admin(self.team)
         self.member = new_member(self.team)
-        
+        self.admin = new_admin(self.team)
+
     def test_success(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -27,7 +28,7 @@ class CreateBoardTests(APITestCase):
 
     def test_user_not_admin(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.member['username'],
                                     HTTP_AUTH_TOKEN=self.member['token'])
@@ -40,7 +41,7 @@ class CreateBoardTests(APITestCase):
 
     def test_team_id_blank(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': ''},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -53,7 +54,7 @@ class CreateBoardTests(APITestCase):
 
     def test_team_not_found(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': '123'},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -65,7 +66,7 @@ class CreateBoardTests(APITestCase):
 
     def test_auth_token_empty(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='')
@@ -75,7 +76,7 @@ class CreateBoardTests(APITestCase):
 
     def test_auth_token_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
@@ -85,7 +86,7 @@ class CreateBoardTests(APITestCase):
 
     def test_auth_user_blank(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER='',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
@@ -95,7 +96,7 @@ class CreateBoardTests(APITestCase):
 
     def test_auth_user_invalid(self):
         initial_count = Board.objects.count()
-        response = self.client.post(self.url,
+        response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
