@@ -11,14 +11,16 @@ class LoginTests(APITestCase):
         self.user = new_member(Team.objects.create())
 
     def test_success(self):
-        request_data = {'username': self.user.username,
+        request_data = {'username': self.user['username'],
                         'password': self.user['password_raw']}
         response = self.client.post(self.endpoint, request_data)
+        # TODO: password comes back invalid
+        print(f'§responsebody: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('msg'), 'Login successful.')
-        self.assertEqual(response.data.get('username'), self.user.username)
-        self.assertEqual(response.data.get('teamId'), self.user.team_id)
-        self.assertEqual(response.data.get('isAdmin'), self.user.is_admin)
+        self.assertEqual(response.data.get('username'), self.user['username'])
+        self.assertEqual(response.data.get('teamId'), self.user['team'].id)
+        self.assertEqual(response.data.get('isAdmin'), self.user['is_admin'])
         self.assertTrue(response.data.get('token'))
 
     def test_username_blank(self):
@@ -52,7 +54,7 @@ class LoginTests(APITestCase):
             rbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarbar
             barbarbarbarbarbarbarbarbarbarbarbarbarbarbarbarba
         '''
-        request_data = {'username': self.user.username, 'password': password}
+        request_data = {'username': self.user['username'], 'password': password}
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -65,7 +67,7 @@ class LoginTests(APITestCase):
         })
 
     def test_password_blank(self):
-        request_data = {'username': self.user.username, 'password': ''}
+        request_data = {'username': self.user['username'], 'password': ''}
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -83,7 +85,7 @@ class LoginTests(APITestCase):
         })
 
     def test_password_invalid(self):
-        request_data = {'username': self.user.username,
+        request_data = {'username': self.user['username'],
                         'password': 'invalidpassword'}
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)

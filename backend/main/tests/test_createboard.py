@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, User, Column
+from ..models import Board, Team, Column
 from ..util import new_member, new_admin, forbidden_response
 
 
