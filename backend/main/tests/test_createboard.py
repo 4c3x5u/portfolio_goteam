@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..util import new_member, new_admin, not_authenticated_response_data
+from ..util import new_member, new_admin, not_authenticated_response
 
 
 class CreateBoardTests(APITestCase):
@@ -73,7 +73,7 @@ class CreateBoardTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -83,7 +83,7 @@ class CreateBoardTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -93,7 +93,7 @@ class CreateBoardTests(APITestCase):
                                     HTTP_AUTH_USER='',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -103,7 +103,7 @@ class CreateBoardTests(APITestCase):
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
 

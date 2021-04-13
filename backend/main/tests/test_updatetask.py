@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
-from ..util import new_member, new_admin, not_authenticated_response_data
+from ..util import new_member, new_admin, not_authenticated_response
 
 
 class UpdateTaskTests(APITestCase):
@@ -11,14 +11,16 @@ class UpdateTaskTests(APITestCase):
         team = Team.objects.create()
         self.member = new_member(team)
         self.admin = new_admin(team)
-        self.task = Task.objects.create(title="Task Title",
-                                        order=0,
-                                        column=Column.objects.create(
-                                            order=0,
-                                            board=Board.objects.create(
-                                                team=team
-                                            )
-                                        ))
+        self.task = Task.objects.create(
+            title="Task Title",
+            order=0,
+            column=Column.objects.create(
+                order=0,
+                board=Board.objects.create(
+                    team=team
+                )
+            )
+        )
         
     def help_test_success(self, request_data):
         response = self.client.patch(self.endpoint,
@@ -125,7 +127,7 @@ class UpdateTaskTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -137,7 +139,7 @@ class UpdateTaskTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -149,7 +151,7 @@ class UpdateTaskTests(APITestCase):
                                     HTTP_AUTH_USER='',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -161,7 +163,7 @@ class UpdateTaskTests(APITestCase):
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response_data)
+        self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_not_admin(self):

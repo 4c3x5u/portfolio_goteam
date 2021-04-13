@@ -45,11 +45,6 @@ not_authenticated_response = Response({
 
 
 def authenticate(username, token):
-    not_authenticated_response = Response({
-        'auth': ErrorDetail(string="Authentication failure.",
-                            code='not_authenticated')
-    }, 403)
-
     try:
         user = User.objects.get(username=username)
     except (User.DoesNotExist, ValueError):
