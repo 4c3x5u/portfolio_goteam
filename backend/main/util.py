@@ -12,14 +12,13 @@ def new_admin(team):
         is_admin=True,
         team=team
     )
-    auth_header = f'{user.username} $2b$12$yGUdlz0eMW3P6TAX07.CPuCA5u.t10uTE' \
-                  f'KCE2SQ5Vdm3VbnrHbpoK'
+    token = '$2b$12$yGUdlz0eMW3P6TAX07.CPuCA5u.t10uTEKCE2SQ5Vdm3VbnrHbpoK'
     return {'username': user.username,
             'password': user.password,
             'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
-            'auth_header': auth_header}
+            'token': token}
 
 
 def new_member(team):
@@ -30,14 +29,13 @@ def new_member(team):
         is_admin=False,
         team=team
     )
-    auth_header = f'{user.username} $2b$12$qNhh2i1ZPU1qaIKncI7J6O2kr4XmuCWSw' \
-                  f'LEMJF653vyvDMIRekzLO'
+    token = '$2b$12$qNhh2i1ZPU1qaIKncI7J6O2kr4XmuCWSwLEMJF653vyvDMIRekzLO'
     return {'username': user.username,
             'password': user.password,
             'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
-            'auth_header': auth_header}
+            'token': token}
 
 
 not_authenticated_response_data = {
