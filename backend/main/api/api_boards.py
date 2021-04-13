@@ -32,7 +32,10 @@ def boards(request):
             return response
 
         # create board
-        board_serializer = BoardSerializer(data={'team': team_id})
+        board_serializer = BoardSerializer(
+            data={'team': team_id,
+                  'name': request.data.get('name')}
+        )
         if not board_serializer.is_valid():
             return Response(board_serializer.errors, 400)
         board = board_serializer.save()
