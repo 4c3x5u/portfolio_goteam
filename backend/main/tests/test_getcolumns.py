@@ -1,5 +1,6 @@
 from rest_framework.test import APITestCase
-from ..models import Board, Team, Column
+from rest_framework.exceptions import ErrorDetail
+from ..models import Board, Team, Column, Task
 from ..util import new_admin
 
 
@@ -26,3 +27,14 @@ class GetColumnsTests(APITestCase):
         self.assertTrue(columns.count, 4)
         for i in range(0, 4):
             self.assertEqual(self.columns[i].id, columns[i].get('id'))
+
+    def test_board_id_empty(self):
+        response = self.client.get(self.endpoint,
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        })
+
