@@ -11,7 +11,6 @@ from ..util import (
 
 @api_view(['POST', 'GET'])
 def boards(request):
-    # TODO: Use this as an example while updating the other api views
     try:
         [username, token] = request.META.get('HTTP_AUTHORIZATION').split()
     except (ValueError, AttributeError):
@@ -65,7 +64,8 @@ def boards(request):
         if not team_boards:
             if not authorize(username):
                 # create a board
-                serializer = BoardSerializer(data={'team': team_id})
+                serializer = BoardSerializer(data={'team': team_id,
+                                                   'name': 'New Board'})
                 if not serializer.is_valid():
                     return Response({
                         'team_id': ErrorDetail(string='Invalid team ID.',
