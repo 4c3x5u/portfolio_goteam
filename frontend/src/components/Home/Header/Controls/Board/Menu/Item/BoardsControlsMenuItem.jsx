@@ -4,9 +4,9 @@ import { useContextMenu, Item, Menu } from 'react-contexify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 
-import './menuitem.sass';
+import './boardscontrolsmenuitem.sass';
 
-const MenuItem = ({
+const BoardsControlsMenuItem = ({
   id, name, isActive, toggleActive, handleDelete,
 }) => {
   const MENU_ID = `item-${id}`;
@@ -22,13 +22,15 @@ const MenuItem = ({
         onClick={toggleActive}
         onContextMenu={show}
       >
-        {isActive
-          && <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />}
+        {isActive && (
+          <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />
+        )}
 
         {name}
 
-        {isActive
-          && <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />}
+        {isActive && (
+          <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />
+        )}
       </button>
 
       <Menu className="ContextMenu" id={MENU_ID}>
@@ -44,7 +46,7 @@ const MenuItem = ({
   );
 };
 
-MenuItem.propTypes = {
+BoardsControlsMenuItem.propTypes = {
   id: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
@@ -52,4 +54,4 @@ MenuItem.propTypes = {
   handleDelete: PropTypes.bool.isRequired,
 };
 
-export default MenuItem;
+export default BoardsControlsMenuItem;

@@ -15,7 +15,6 @@ class LoginTests(APITestCase):
                         'password': self.user['password_raw']}
         response = self.client.post(self.endpoint, request_data)
         # TODO: password comes back invalid
-        print(f'§responsebody: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('msg'), 'Login successful.')
         self.assertEqual(response.data.get('username'), self.user['username'])

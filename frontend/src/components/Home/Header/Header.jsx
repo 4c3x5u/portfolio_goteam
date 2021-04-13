@@ -5,7 +5,8 @@ import {
   faChalkboardTeacher, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
-import ControlsToggler from './ControlsToggler/ControlsToggler';
+import BoardsControlsToggler from './Controls/Board/BoardsControlsToggler';
+import TeamControlsToggler from './Controls/Team/TeamControlsToggler';
 import HelpToggler from './HelpToggler/HelpToggler';
 import window from '../../../misc/window';
 
@@ -20,8 +21,7 @@ const Header = ({ activeWindow, handleActivate }) => (
     <div className="ControlsWrapper">
       <Container>
         <Row className="ControlsRow">
-          <ControlsToggler
-            name="team"
+          <TeamControlsToggler
             isActive={activeWindow === window.TEAM}
             handleActivate={handleActivate(window.TEAM)}
             handleCreate={handleActivate(window.INVITE_MEMBER)}
@@ -29,8 +29,7 @@ const Header = ({ activeWindow, handleActivate }) => (
             icon={faUsers}
           />
 
-          <ControlsToggler
-            name="boards"
+          <BoardsControlsToggler
             isActive={activeWindow === window.BOARDS}
             handleActivate={handleActivate(window.BOARDS)}
             handleCreate={handleActivate(window.CREATE_BOARD)}

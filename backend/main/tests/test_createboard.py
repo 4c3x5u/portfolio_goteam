@@ -20,7 +20,6 @@ class CreateBoardTests(APITestCase):
             HTTP_AUTH_USER=self.admin['username'],
             HTTP_AUTH_TOKEN=self.admin['token']
         )
-        print(f'§response-body: {response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
                          'Board creation successful.')
