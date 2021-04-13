@@ -17,8 +17,8 @@ class VerifyTokenTests(APITestCase):
         self.assertEqual(response.data, {
             'msg': 'Token verification success.',
             'username': self.user['username'],
-            'teamId': self.user.team_id,
-            'isAdmin': self.user.is_admin,
+            'teamId': self.user['team'].id,
+            'isAdmin': self.user['is_admin']
         })
 
     def test_token_invalid(self):

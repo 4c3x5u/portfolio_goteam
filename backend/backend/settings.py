@@ -27,13 +27,6 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    'localhost',
-    os.environ.get('BACKEND_URL'),
-    os.environ.get('FRONTEND_URL')
-]
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -57,11 +50,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware'
-]
-
-CORS_ORIGIN_WHITELIST = [
-    os.environ.get('BACKEND_URL'),
-    os.environ.get('FRONTEND_URL')
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -143,3 +131,15 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ]
 }
+
+ALLOWED_HOSTS = [
+    'localhost',
+    os.environ.get('BACKEND_URL'),
+    os.environ.get('FRONTEND_URL')
+]
+
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ORIGIN_WHITELIST = (
+    os.environ.get('BACKEND_URL'),
+    os.environ.get('FRONTEND_URL')
+)
