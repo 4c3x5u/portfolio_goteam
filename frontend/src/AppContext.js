@@ -1,6 +1,6 @@
-import React from 'react';
+import { createContext } from 'react';
 
-const UserContext = React.createContext({
+const AppContext = createContext({
   currentUser: {
     username: '',
     teamId: null,
@@ -10,6 +10,8 @@ const UserContext = React.createContext({
   setCurrentUser: () => {},
   boards: [{ id: null, name: '' }],
   setBoards: () => {},
+  activeBoardId: null,
+  setActiveBoardId: () => {},
 });
 
-export default UserContext;
+export default AppContext;

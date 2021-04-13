@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
-import UserContext from '../../UserContext';
+import AppContext from '../../AppContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateLoginForm from './validateLoginForm';
 import inputType from '../../misc/inputType';
@@ -11,7 +11,7 @@ import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
-  const { setCurrentUser } = useContext(UserContext);
+  const { setCurrentUser } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
