@@ -7,6 +7,25 @@ from ..models import Board
 from ..util import authenticate, authorize, validate_team_id
 
 
+def create_board(team_id, name):
+    # create board
+    board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
+    if not board_serializer.is_valid():
+        return Response(board_serializer.errors, 400)
+    board = board_serializer.save()
+
+    # create four columns for the board
+    for order in range(0, 4):
+        column_serializer = ColumnSerializer(
+            data={'board': board.id, 'order': order}
+        )
+        if not column_serializer.is_valid():
+            return Response(column_serializer.errors, 400)
+        column_serializer.save()
+
+    return board
+
+
 @api_view(['POST', 'GET'])
 def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
@@ -27,23 +46,7 @@ def boards(request):
         if response:
             return response
 
-        # create board
-        board_serializer = BoardSerializer(
-            data={'team': team_id,
-                  'name': request.data.get('name')}
-        )
-        if not board_serializer.is_valid():
-            return Response(board_serializer.errors, 400)
-        board = board_serializer.save()
-
-        # create four columns for the board
-        for order in range(0, 4):
-            column_serializer = ColumnSerializer(
-                data={'board': board.id, 'order': order}
-            )
-            if not column_serializer.is_valid():
-                return Response(column_serializer.errors, 400)
-            column_serializer.save()
+        board = create_board(team_id, request.data.get('name'))
 
         # return success response
         return Response({
@@ -62,21 +65,11 @@ def boards(request):
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
             if not authorize(username):
-                # create a board
-                serializer = BoardSerializer(data={'team': team_id,
-                                                   'name': 'New Board'})
-                if not serializer.is_valid():
-                    return Response({
-                        'team_id': ErrorDetail(string='Invalid team ID.',
-                                               code='invalid')
-                    }, 400)
-                board = serializer.save()
+                board = create_board(team_id, 'New Board')
 
                 # return a list containing only the new board
                 return Response({
-                    'boards': [
-                        {'board_id': board.id, 'team_id': board.team.id}
-                    ]
+                    'boards': [{'id': board.id, 'name': board.name}]
                 }, 201)
 
             return Response({
@@ -85,5 +78,11 @@ def boards(request):
             }, 404)
 
         # return pre-existing boards
-        serializer = BoardSerializer(team_boards, many=True)
-        return Response({'boards': serializer.data}, 200)
+        return Response({
+            'boards': list(
+                map(
+                    lambda b: {'id': b['id'], 'name': b['name']},
+                    BoardSerializer(team_boards, many=True).data
+                )
+            )
+        }, 200)
