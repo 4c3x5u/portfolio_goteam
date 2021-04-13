@@ -47,3 +47,12 @@ class GetColumnsTests(APITestCase):
             'board_id': ErrorDetail(string='Board ID must be a number.',
                                     code='invalid')
         })
+
+    def test_board_not_found(self):
+        response = self.client.get(f'{self.endpoint}123123',
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board not found.', code='invalid')
+        })
