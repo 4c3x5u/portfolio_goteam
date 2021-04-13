@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import ErrorDetail
 from ..util import authenticate, authorize
 from ..models import Column
 from ..serializers.ser_column import ColumnSerializer
@@ -19,6 +20,12 @@ def columns(request):
         return authorization_response
 
     board_id = request.query_params.get('board_id')
+    if not board_id:
+        return Response({
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        }, 400)
+
     board_columns = Column.objects.filter(board_id=board_id)
     serializer = ColumnSerializer(board_columns, many=True)
 
