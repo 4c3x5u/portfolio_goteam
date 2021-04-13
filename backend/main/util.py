@@ -38,11 +38,10 @@ def new_member(team):
             'token': token}
 
 
-not_authenticated_response_data = {
+not_authenticated_response = Response({
     'auth': ErrorDetail(string="Authentication failure.",
-                        code='not_authenticated')}
-
-not_authenticated_response = Response(not_authenticated_response_data, 403)
+                        code='not_authenticated')
+}, 403)
 
 
 def authenticate(username, token):
