@@ -14,7 +14,7 @@ class User(Model):
 
 
 class Board(Model):
-    name = CharField(max_length=35)
+    name = CharField(max_length=35, default="New Table")
     team = ForeignKey(Team, on_delete=CASCADE)
     user = ManyToManyField(User)
 
