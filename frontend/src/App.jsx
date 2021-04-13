@@ -32,7 +32,13 @@ const App = () => {
       setCurrentUser(user);
       axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/boards/?team_id=${user.teamId}`,
-        { headers: { authorization: `${user.username} ${user.token}` } },
+        {
+          headers: {
+            // authorization: `${user.username} ${user.token}`,
+            'auth-user': user.username,
+            'auth-token': user.token,
+          },
+        },
       ).then((res) => setBoards(
         res.data.boards.map((board) => ({
           id: board.id,

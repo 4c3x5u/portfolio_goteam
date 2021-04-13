@@ -143,3 +143,17 @@ CORS_ORIGIN_WHITELIST = (
     os.environ.get('BACKEND_URL'),
     os.environ.get('FRONTEND_URL')
 )
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'auth-user',
+    'auth-token'
+]
