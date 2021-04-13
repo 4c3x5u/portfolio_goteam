@@ -25,6 +25,14 @@ def tasks(request):
                                          code='blank')
             }, 400)
 
+        try:
+            int(column_id)
+        except ValueError:
+            return Response({
+                'column_id': ErrorDetail(string='Column ID must be a number.',
+                                         code='invalid')
+            }, 400)
+
         column_tasks = Task.objects.filter(column_id=column_id)
         serializer = TaskSerializer(column_tasks, many=True)
         return Response({

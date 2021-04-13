@@ -48,3 +48,13 @@ class GetTasksTests(APITestCase):
                                      code='blank')
         })
 
+    def test_column_id_invalid(self):
+        response = self.client.get(f'{self.endpoint}aksjda',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'column_id': ErrorDetail(string='Column ID must be a number.',
+                                     code='invalid')
+        })
+
