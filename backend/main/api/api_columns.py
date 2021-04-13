@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..util import authenticate, authorize
+from ..util import authenticate
 from ..models import Column, Board
 from ..serializers.ser_column import ColumnSerializer
 
@@ -14,10 +14,6 @@ def columns(request):
     authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
-
-    authorization_response = authorize(username)
-    if authorization_response:
-        return authorization_response
 
     board_id = request.query_params.get('board_id')
 
