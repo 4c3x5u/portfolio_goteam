@@ -20,10 +20,19 @@ def columns(request):
         return authorization_response
 
     board_id = request.query_params.get('board_id')
+
     if not board_id:
         return Response({
             'board_id': ErrorDetail(string='Board ID cannot be empty.',
                                     code='blank')
+        }, 400)
+
+    try:
+        int(board_id)
+    except ValueError:
+        return Response({
+            'board_id': ErrorDetail(string='Board ID must be a number.',
+                                    code='invalid')
         }, 400)
 
     board_columns = Column.objects.filter(board_id=board_id)
