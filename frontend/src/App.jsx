@@ -10,7 +10,7 @@ import axios from 'axios';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
-import UserContext from './UserContext';
+import AppContext from './AppContext';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
@@ -26,6 +26,7 @@ const App = () => {
     isAuthenticated: false,
   });
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
+  const [activeBoardId, setActiveBoardId] = useState(null);
 
   useEffect(() => {
     verifyToken().then((user) => {
@@ -33,26 +34,30 @@ const App = () => {
       axios.get(
         `${process.env.REACT_APP_BACKEND_URL}/boards/?team_id=${user.teamId}`,
         { headers: { 'auth-user': user.username, 'auth-token': user.token } },
-      ).then((res) => setBoards(
-        res.data.boards.map((board) => ({
-          id: board.id,
-          name: board.name,
-        })),
-      )).catch((err) => (
+      ).then((res) => {
+        setBoards(
+          res.data.boards.map((board) => ({
+            id: board.id,
+            name: board.name,
+          })),
+        );
+        setActiveBoardId(res.data.boards[0].id);
+      }).catch((err) => (
+        // TODO: handle
         console.log(`LIST BOARDS ERROR: ${err.data}`)
       ));
     }).catch((err) => (setErrors(err)));
-
-    console.log(`BOARDS: ${boards}`);
   }, []);
 
   return (
-    <UserContext.Provider
+    <AppContext.Provider
       value={{
         currentUser,
         setCurrentUser,
         boards,
         setBoards,
+        activeBoardId,
+        setActiveBoardId,
       }}
     >
       <Router className="App">
@@ -76,7 +81,7 @@ const App = () => {
           </Route>
         </Switch>
       </Router>
-    </UserContext.Provider>
+    </AppContext.Provider>
   );
 };
 
