@@ -133,7 +133,6 @@ class UpdateSubtaskTests(APITestCase):
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
-        print(f'response: {response.data}')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response_data)
 

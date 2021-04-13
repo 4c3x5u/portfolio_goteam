@@ -3,11 +3,11 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-import MenuItem from './MenuItem/MenuItem';
+import TeamControlsMenuItem from './Item/TeamControlsMenuItem';
 
-import './controlmenu.sass';
+import './teamcontrolsmenu.sass';
 
-const ControlMenu = ({ handleCreate, handleDelete }) => {
+const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
   const [items, setItems] = useState([]);
 
   useEffect(() => (
@@ -28,9 +28,9 @@ const ControlMenu = ({ handleCreate, handleDelete }) => {
   );
 
   return (
-    <div className="ControlMenu">
+    <div className="ControlsMenu">
       {items.map((item, index) => (
-        <MenuItem
+        <TeamControlsMenuItem
           id={item.id}
           name={item.name}
           isActive={item.isActive}
@@ -45,9 +45,9 @@ const ControlMenu = ({ handleCreate, handleDelete }) => {
   );
 };
 
-ControlMenu.propTypes = {
+TeamControlsMenu.propTypes = {
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
 };
 
-export default ControlMenu;
+export default TeamControlsMenu;
