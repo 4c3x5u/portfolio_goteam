@@ -7,7 +7,7 @@ from ..serializers.ser_subtask import SubtaskSerializer
 from ..util import authenticate, authorize
 
 
-@api_view(['POST', 'PATCH'])
+@api_view(['POST', 'PATCH', 'GET'])
 def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -16,11 +16,25 @@ def tasks(request):
     if authentication_response:
         return authentication_response
 
-    authorization_response = authorize(username)
-    if authorization_response:
-        return authorization_response
+    if request.method == 'GET':
+        column_id = request.query_params.get('column_id')
+        column_tasks = Task.objects.filter(column_id=column_id)
+        serializer = TaskSerializer(column_tasks, many=True)
+        return Response({
+            'tasks': list(map(
+                lambda t: {'id': t['id'],
+                           'title': t['title'],
+                           'description': t['description'],
+                           'order': t['order']}
+                , serializer.data
+            ))
+        }, 200)
 
     if request.method == 'POST':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
         column_id = request.data.get('column')
         if not column_id:
             return Response({
@@ -48,7 +62,9 @@ def tasks(request):
                 )
                 if not subtask_serializer.is_valid():
                     task.delete()
-                    return Response({'subtask': subtask_serializer.errors}, 400)
+                    return Response({
+                        'subtask': subtask_serializer.errors
+                    }, 400)
                 subtask_serializer.save()
 
         return Response({
@@ -57,6 +73,10 @@ def tasks(request):
         }, 201)
 
     if request.method == 'PATCH':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
         task_id = request.data.get('id')
         data = request.data.get('data')
 
@@ -101,5 +121,3 @@ def tasks(request):
             'msg': 'Task update successful.',
             'id': task.id
         }, 200)
-
-
