@@ -64,9 +64,7 @@ class UserSerializer(serializers.ModelSerializer):
             }, 'no_match')
 
         if validated_data.get('is_admin') and not validated_data.get('team'):
-            team = Team.objects.create()
-            Board.objects.create(team=team)
-            validated_data['team'] = team
+            validated_data['team'] = Team.objects.create()
 
         validated_data['password'] = bcrypt.hashpw(
             bytes(validated_data['password'], 'utf-8'),

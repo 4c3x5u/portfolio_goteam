@@ -1,10 +1,10 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, User
+from ..models import Board, Team, User, Column
 from ..util import new_member, not_authenticated_response_data
 
 
-class ListBoardsTests(APITestCase):
+class GetBoardsTests(APITestCase):
     endpoint = '/boards/?team_id='
 
     def setUp(self):
@@ -23,8 +23,6 @@ class ListBoardsTests(APITestCase):
         boards = response.data.get('boards')
         self.assertTrue(boards)
         self.assertTrue(boards.count, 3)
-        for board in boards:
-            self.assertEqual(board.get('team'), self.team.id)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_boards_not_found_member(self):
@@ -43,7 +41,8 @@ class ListBoardsTests(APITestCase):
     # if no boards are found for a team admin,
     # a new one is created and returned
     def test_boards_not_found_admin(self):
-        initial_count = Board.objects.count()
+        initial_board_count = Board.objects.count()
+        initial_columns_count = Column.objects.count()
         team = Team.objects.create()
         user = User.objects.create(
             username='teamadmin',
@@ -52,14 +51,18 @@ class ListBoardsTests(APITestCase):
             is_admin=True,
             team=self.team
         )
-        token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2R' \
-                           'JJO17thjLOdy'
+        token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2RJJO17thjLOdy'
         response = self.client.get(self.endpoint + str(team.id),
                                    HTTP_AUTH_USER=user.username,
                                    HTTP_AUTH_TOKEN=token)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data.get('boards')), 1)
-        self.assertEqual(Board.objects.count(), initial_count + 1)
+        self.assertEqual(
+            response.data.get('boards')[0].get('name'),
+            'New Board'
+        )
+        self.assertEqual(Board.objects.count(), initial_board_count + 1)
+        self.assertEqual(Column.objects.count(), initial_columns_count + 4)
 
     def test_team_id_empty(self):
         initial_count = Board.objects.count()
