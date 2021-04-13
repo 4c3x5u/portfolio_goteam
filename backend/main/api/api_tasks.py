@@ -18,6 +18,13 @@ def tasks(request):
 
     if request.method == 'GET':
         column_id = request.query_params.get('column_id')
+
+        if not column_id:
+            return Response({
+                'column_id': ErrorDetail(string='Column ID cannot be empty.',
+                                         code='blank')
+            }, 400)
+
         column_tasks = Task.objects.filter(column_id=column_id)
         serializer = TaskSerializer(column_tasks, many=True)
         return Response({
