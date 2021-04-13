@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..util import authenticate, authorize
-from ..models import Column
+from ..models import Column, Board
 from ..serializers.ser_column import ColumnSerializer
 
 
@@ -35,18 +35,17 @@ def columns(request):
                                     code='invalid')
         }, 400)
 
+    if not Board.objects.filter(id=board_id):
+        return Response({
+            'board_id': ErrorDetail(string='Board not found.', code='invalid')
+        }, 404)
+
     board_columns = Column.objects.filter(board_id=board_id)
     serializer = ColumnSerializer(board_columns, many=True)
 
-    if board_columns:
-        return Response({
-            'columns': list(
-                map(
-                    lambda column: {
-                        'id': column['id'],
-                        'order': column['order']
-                    },
-                    serializer.data
-                )
-            )
-        }, 200)
+    return Response({
+        'columns': list(
+            map(lambda column: {'id': column['id'], 'order': column['order']},
+                serializer.data)
+        )
+    }, 200)
