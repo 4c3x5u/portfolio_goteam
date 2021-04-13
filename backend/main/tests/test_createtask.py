@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
-from ..util import new_member, new_admin, forbidden_response
+from ..util import new_member, new_admin, not_authenticated_response_data
 
 
 class CreateTaskTests(APITestCase):
@@ -160,7 +160,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, forbidden_response)
+        self.assertEqual(response.data, not_authenticated_response_data)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -173,7 +173,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, forbidden_response)
+        self.assertEqual(response.data, not_authenticated_response_data)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -186,7 +186,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_USER='',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, forbidden_response)
+        self.assertEqual(response.data, not_authenticated_response_data)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -199,7 +199,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, forbidden_response)
+        self.assertEqual(response.data, not_authenticated_response_data)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_unauthorized(self):

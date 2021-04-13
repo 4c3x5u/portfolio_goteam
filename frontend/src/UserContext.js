@@ -8,6 +8,8 @@ const UserContext = React.createContext({
     isAuthenticated: false,
   },
   setCurrentUser: () => {},
+  boards: [{ id: null, name: '' }],
+  setBoards: () => {},
 });
 
 export default UserContext;

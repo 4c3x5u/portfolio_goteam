@@ -8,7 +8,7 @@ import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
 import Task from './Task/Task';
 import { columnOrder } from './columnOrder';
-import { capFirstLetterOf } from '../../../../misc/utils';
+import { capFirstLetterOf } from '../../../../misc/util';
 
 import './column.sass';
 import window from '../../../../misc/window';

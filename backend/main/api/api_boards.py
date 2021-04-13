@@ -4,13 +4,18 @@ from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
 from ..models import Board
-from ..util import authenticate, authorize, validate_team_id
+from ..util import (
+    authenticate, authorize, validate_team_id, not_authenticated_response
+)
 
 
 @api_view(['POST', 'GET'])
 def boards(request):
-    username = request.META.get('HTTP_AUTH_USER')
-    token = request.META.get('HTTP_AUTH_TOKEN')
+    # TODO: Use this as an example while updating the other api views
+    try:
+        [username, token] = request.META.get('HTTP_AUTHORIZATION').split()
+    except (ValueError, AttributeError):
+        return not_authenticated_response
 
     authentication_response = authenticate(username, token)
     if authentication_response:
@@ -82,4 +87,5 @@ def boards(request):
 
         # return pre-existing boards
         serializer = BoardSerializer(team_boards, many=True)
+        print(serializer.data)
         return Response({'boards': serializer.data}, 200)

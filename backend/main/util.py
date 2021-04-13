@@ -38,8 +38,11 @@ def new_member(team):
             'token': token}
 
 
-forbidden_response = {'auth': ErrorDetail(string="Authentication failure.",
-                                          code='not_authenticated')}
+not_authenticated_response_data = {
+    'auth': ErrorDetail(string="Authentication failure.",
+                        code='not_authenticated')}
+
+not_authenticated_response = Response(not_authenticated_response_data, 403)
 
 
 def authenticate(username, token):
