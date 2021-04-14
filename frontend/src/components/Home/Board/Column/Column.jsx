@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
 import Task from './Task/Task';
-import { columnOrder } from './columnOrder';
+import columnOrder from './columnOrder';
 import { capFirstLetterOf } from '../../../../misc/util';
 
 import './column.sass';

@@ -46,9 +46,9 @@ def tasks(request):
         return Response({
             'tasks': list(map(
                 lambda t: {'id': t['id'],
+                           'order': t['order'],
                            'title': t['title'],
-                           'description': t['description'],
-                           'order': t['order']}
+                           'description': t['description']}
                 , serializer.data
             ))
         }, 200)
