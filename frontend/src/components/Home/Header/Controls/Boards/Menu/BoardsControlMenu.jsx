@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-import AppContext from '../../../../../../AppContext';
+import ActiveBoardContext from '../../../../ActiveBoardContext';
 import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 
 import './boardscontrolsmenu.sass';
 
-const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
-  const { boards, activeBoardId, setActiveBoardId } = useContext(AppContext);
+const BoardsControlMenu = ({ boards, handleCreate, handleDelete }) => {
+  const { activeBoardId, setActiveBoardId } = useContext(ActiveBoardContext);
 
   return (
     <div className="ControlsMenu">
@@ -22,6 +22,7 @@ const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
           handleDelete={handleDelete}
         />
       ))}
+
       <button className="CreateButton" type="button" onClick={handleCreate}>
         <FontAwesomeIcon icon={faPlusCircle} />
       </button>
@@ -30,6 +31,10 @@ const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
 };
 
 BoardsControlMenu.propTypes = {
+  boards: PropTypes.arrayOf({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  }).isRequired,
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
 };

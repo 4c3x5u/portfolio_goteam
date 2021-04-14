@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
-import AppContext from '../../AppContext';
+import UserContext from '../../UserContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateRegisterForm from './validateRegisterForm';
 import inputType from '../../misc/inputType';
@@ -12,7 +12,7 @@ import logo from './register.svg';
 import './register.sass';
 
 const Register = () => {
-  const { setCurrentUser } = useContext(AppContext);
+  const { setUser } = useContext(UserContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -40,7 +40,7 @@ const Register = () => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
         // TODO: Make sure you absolutely need this
-        setCurrentUser({
+        setUser({
           username: res.data.username,
           teamId: res.data.teamId,
           isAdmin: res.data.isAdmin,

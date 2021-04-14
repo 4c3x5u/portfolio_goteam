@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import axios from 'axios';
 
-import AppContext from '../../AppContext';
+import UserContext from '../../UserContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateLoginForm from './validateLoginForm';
 import inputType from '../../misc/inputType';
@@ -11,7 +11,7 @@ import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
-  const { setCurrentUser } = useContext(AppContext);
+  const { setUser } = useContext(UserContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
@@ -28,7 +28,7 @@ const Login = () => {
       }).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
-        setCurrentUser({
+        setUser({
           username: res.data.username,
           teamId: res.data.teamId,
           isAdmin: res.data.isAdmin,

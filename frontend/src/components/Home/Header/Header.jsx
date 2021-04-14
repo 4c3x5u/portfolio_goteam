@@ -5,7 +5,7 @@ import {
   faChalkboardTeacher, faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
-import BoardsControlsToggler from './Controls/Board/BoardsControlsToggler';
+import BoardsControls from './Controls/Boards/BoardsControls';
 import TeamControlsToggler from './Controls/Team/TeamControlsToggler';
 import HelpToggler from './HelpToggler/HelpToggler';
 import window from '../../../misc/window';
@@ -29,7 +29,7 @@ const Header = ({ activeWindow, handleActivate }) => (
             icon={faUsers}
           />
 
-          <BoardsControlsToggler
+          <BoardsControls
             isActive={activeWindow === window.BOARDS}
             handleActivate={handleActivate(window.BOARDS)}
             handleCreate={handleActivate(window.CREATE_BOARD)}
