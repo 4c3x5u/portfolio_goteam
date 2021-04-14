@@ -33,6 +33,14 @@ def tasks(request):
                                          code='invalid')
             }, 400)
 
+        try:
+            Column.objects.get(id=column_id)
+        except Column.DoesNotExist:
+            return Response({
+                'column_id': ErrorDetail(string='Column not found.',
+                                         code='not_found')
+            }, 404)
+
         column_tasks = Task.objects.filter(column_id=column_id)
         serializer = TaskSerializer(column_tasks, many=True)
         return Response({
