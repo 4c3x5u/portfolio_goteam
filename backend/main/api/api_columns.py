@@ -32,7 +32,7 @@ def columns(request):
         }, 400)
 
     try:
-        Board.objects.filter(id=board_id)
+        Board.objects.get(id=board_id)
     except Board.DoesNotExist:
         return Response({
             'board_id': ErrorDetail(string='Board not found.',
@@ -40,6 +40,15 @@ def columns(request):
         }, 404)
 
     board_columns = Column.objects.filter(board_id=board_id)
+
+    if not board_columns:
+        board_columns = [
+            Column.objects.create(
+                order=i,
+                board_id=board_id
+            ) for i in range(0, 4)
+        ]
+
     serializer = ColumnSerializer(board_columns, many=True)
 
     return Response({

@@ -16,6 +16,7 @@ class GetColumnsTests(APITestCase):
                 order=i, board=self.board
             ) for i in range(0, 4)
         ]
+        self.empty_board = Board.objects.create(team_id=self.team.id)
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.board.id}',
@@ -27,6 +28,17 @@ class GetColumnsTests(APITestCase):
         self.assertTrue(columns.count, 4)
         for i in range(0, 4):
             self.assertEqual(self.columns[i].id, columns[i].get('id'))
+
+    def test_columns_not_found(self):
+        initial_count = Column.objects.count()
+        response = self.client.get(f'{self.endpoint}{self.empty_board.id}',
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(Column.objects.count(), initial_count + 4)
+        self.assertEqual(response.status_code, 200)
+        columns = response.data.get('columns')
+        self.assertTrue(columns)
+        self.assertTrue(columns.count, 4)
 
     def test_board_id_empty(self):
         response = self.client.get(self.endpoint,
