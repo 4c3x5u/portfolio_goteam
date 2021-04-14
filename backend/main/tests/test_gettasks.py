@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
-from ..util import new_member
+from ..util import new_member, not_authenticated_response
 
 
 class GetTasksTests(APITestCase):
@@ -67,4 +67,37 @@ class GetTasksTests(APITestCase):
             'column_id': ErrorDetail(string='Column not found.',
                                      code='not_found')
         })
+
+    def test_auth_user_empty(self):
+        response = self.client.get(f'{self.endpoint}{self.column.id}',
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.column.id}',
+                                   HTTP_AUTH_USER='invalidusername',
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_empty(self):
+        response = self.client.get(f'{self.endpoint}{self.column.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.column.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
 
