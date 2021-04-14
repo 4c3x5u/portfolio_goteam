@@ -31,9 +31,12 @@ def columns(request):
                                     code='invalid')
         }, 400)
 
-    if not Board.objects.filter(id=board_id):
+    try:
+        Board.objects.filter(id=board_id)
+    except Board.DoesNotExist:
         return Response({
-            'board_id': ErrorDetail(string='Board not found.', code='invalid')
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
         }, 404)
 
     board_columns = Column.objects.filter(board_id=board_id)

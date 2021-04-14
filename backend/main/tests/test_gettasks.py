@@ -58,3 +58,13 @@ class GetTasksTests(APITestCase):
                                      code='invalid')
         })
 
+    def test_column_not_found(self):
+        response = self.client.get(f'{self.endpoint}1231231',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'column_id': ErrorDetail(string='Column not found.',
+                                     code='not_found')
+        })
+

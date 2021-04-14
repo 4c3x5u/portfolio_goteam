@@ -54,7 +54,7 @@ class GetColumnsTests(APITestCase):
                                    HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board not found.', code='invalid')
+            'board_id': ErrorDetail(string='Board not found.', code='not_found')
         })
 
     def test_auth_user_empty(self):
