@@ -4,6 +4,7 @@ jsx-a11y/click-events-have-key-events */
 
 import React, { useState } from 'react';
 
+import ActiveBoardContext from './ActiveBoardContext';
 import Header from './Header/Header';
 import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
@@ -22,6 +23,7 @@ import './home.sass';
 const Home = () => {
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
+  const [activeBoardId, setActiveBoardId] = useState(null);
 
   const handleActivate = (newWindow) => (state) => {
     if (newWindow === activeWindow) {
@@ -96,8 +98,10 @@ const Home = () => {
       id="Home"
       onKeyDown={(e) => e.key === 'Escape' && setActiveWindow(window.NONE)}
     >
-      <Header activeWindow={activeWindow} handleActivate={handleActivate} />
-      <Board handleActivate={handleActivate} />
+      <ActiveBoardContext.Provider value={{ activeBoardId, setActiveBoardId }}>
+        <Header activeWindow={activeWindow} handleActivate={handleActivate} />
+        <Board handleActivate={handleActivate} />
+      </ActiveBoardContext.Provider>
       {viewActiveWindow()}
       <Footer />
     </div>
