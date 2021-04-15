@@ -11,7 +11,9 @@ const AppContext = createContext({
   setUser: () => {},
   activeBoard: activeBoardInit,
   setActiveBoard: () => {},
-  loadActiveBoard: () => {},
+  loadBoard: () => {},
+  isLoading: false,
+  setIsLoading: () => {},
 });
 
 export default AppContext;

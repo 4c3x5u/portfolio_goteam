@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
-import ActiveBoardContext from '../../../../ActiveBoardContext';
+import AppContext from '../../../../../../AppContext';
 import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 
 import './boardscontrolsmenu.sass';
 
 const BoardsControlMenu = ({ boards, handleCreate, handleDelete }) => {
-  const { activeBoardId, setActiveBoardId } = useContext(ActiveBoardContext);
+  const { activeBoard, loadActiveBoard } = useContext(AppContext);
 
   return (
     <div className="ControlsMenu">
@@ -17,8 +17,8 @@ const BoardsControlMenu = ({ boards, handleCreate, handleDelete }) => {
         <BoardsControlsMenuItem
           id={board.id}
           name={board.name}
-          isActive={board.id === activeBoardId}
-          toggleActive={() => setActiveBoardId(board.id)}
+          isActive={board.id === activeBoard.id}
+          toggleActive={() => loadActiveBoard(board.id)}
           handleDelete={handleDelete}
         />
       ))}

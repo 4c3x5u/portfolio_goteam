@@ -2,9 +2,10 @@
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 
-import ActiveBoardContext from './ActiveBoardContext';
+import AppContext from '../../AppContext';
+import Spinner from './Spinner/Spinner';
 import Header from './Header/Header';
 import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
@@ -21,9 +22,9 @@ import window from '../../misc/window';
 import './home.sass';
 
 const Home = () => {
+  const { isLoading } = useContext(AppContext);
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
-  const [activeBoardId, setActiveBoardId] = useState(null);
 
   const handleActivate = (newWindow) => (state) => {
     if (newWindow === activeWindow) {
@@ -98,10 +99,9 @@ const Home = () => {
       id="Home"
       onKeyDown={(e) => e.key === 'Escape' && setActiveWindow(window.NONE)}
     >
-      <ActiveBoardContext.Provider value={{ activeBoardId, setActiveBoardId }}>
-        <Header activeWindow={activeWindow} handleActivate={handleActivate} />
-        <Board handleActivate={handleActivate} />
-      </ActiveBoardContext.Provider>
+      {isLoading && <Spinner />}
+      <Header activeWindow={activeWindow} handleActivate={handleActivate} />
+      <Board handleActivate={handleActivate} />
       {viewActiveWindow()}
       <Footer />
     </div>

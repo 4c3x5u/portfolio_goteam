@@ -12,7 +12,7 @@ import logo from './register.svg';
 import './register.sass';
 
 const Register = () => {
-  const { loadActiveBoard } = useContext(AppContext);
+  const { loadBoard } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -39,7 +39,7 @@ const Register = () => {
       }).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
-        loadActiveBoard();
+        loadBoard();
       }).catch((err) => {
         // TODO: Add toastr for server-side errors
         console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
