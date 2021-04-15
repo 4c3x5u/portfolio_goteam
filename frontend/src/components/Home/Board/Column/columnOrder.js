@@ -1,18 +1,22 @@
 const columnOrder = {
-  INBOX: 'INBOX',
-  READY: 'READY',
-  GO: 'GO',
-  DONE: 'DONE',
-};
-
-export const orderToInt = (order) => {
-  switch (order) {
-    case columnOrder.INBOX: return 0;
-    case columnOrder.READY: return 1;
-    case columnOrder.GO: return 2;
-    case columnOrder.DONE: return 3;
-    default: return Error('Number must be between 0 and 4');
-  }
+  INBOX: 'inbox',
+  READY: 'ready',
+  GO: 'go',
+  DONE: 'done',
+  parseInt: (order) => {
+    switch (order) {
+      case 0:
+        return columnOrder.INBOX;
+      case 1:
+        return columnOrder.READY;
+      case 2:
+        return columnOrder.GO;
+      case 3:
+        return columnOrder.DONE;
+      default:
+        return Error('Number must be between 0 and 4');
+    }
+  },
 };
 
 export default columnOrder;
