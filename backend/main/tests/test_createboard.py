@@ -28,6 +28,21 @@ class CreateBoardTests(APITestCase):
         self.assertEqual(len(columns), 4)
         self.assertEqual(Board.objects.count(), initial_count + 1)
 
+    def test_board_name_empty(self):
+        initial_boards_count = Board.objects.count()
+        initial_columns_count = Column.objects.count()
+        response = self.client.post(self.endpoint,
+                                    {'team_id': self.team.id, 'name': ''},
+                                    HTTP_AUTH_USER=self.admin['username'],
+                                    HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'name': ErrorDetail(string='Board name cannot be empty.',
+                                code='blank')
+        })
+        self.assertEqual(Board.objects.count(), initial_boards_count)
+        self.assertEqual(Column.objects.count(), initial_columns_count)
+
     def test_user_not_admin(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.endpoint,
