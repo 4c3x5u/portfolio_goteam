@@ -134,8 +134,8 @@ def tasks(request):
                 }, 400)
 
         subtasks = data.get('subtasks')
-        data.pop('subtasks')
 
+        'subtask' in list(data.keys()) and data.pop('subtasks')
         task_serializer = TaskSerializer(Task.objects.get(id=task_id),
                                          data=data,
                                          partial=True)
@@ -145,19 +145,20 @@ def tasks(request):
 
         Subtask.objects.filter(task_id=task.id).delete()
 
-        for i, subtask in enumerate(subtasks):
-            subtask_serializer = SubtaskSerializer(
-                data={'title': subtask['title'],
-                      'order': i,
-                      'task': task.id,
-                      'done': subtask['done']}
-            )
-            if not subtask_serializer.is_valid():
-                task.delete()
-                return Response({
-                    'subtask': subtask_serializer.errors
-                }, 400)
-            subtask_serializer.save()
+        if subtasks:
+            for i, subtask in enumerate(subtasks):
+                subtask_serializer = SubtaskSerializer(
+                    data={'title': subtask['title'],
+                          'order': i,
+                          'task': task.id,
+                          'done': subtask['done']}
+                )
+                if not subtask_serializer.is_valid():
+                    task.delete()
+                    return Response({
+                        'subtask': subtask_serializer.errors
+                    }, 400)
+                subtask_serializer.save()
 
         return Response({
             'msg': 'Task update successful.',

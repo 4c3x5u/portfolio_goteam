@@ -57,8 +57,8 @@ class CreateTaskTests(APITestCase):
         request_data = {'title': 'Some Task',
                         'description': 'Lorem ipsum dolor sit amet',
                         'column': self.column.id,
-                        'subtasks': [{'title': 'Do something'},
-                                     {'title': 'Do some other thing'}]}
+                        'subtasks': ['Do something',
+                                     'Do some other thing']}
         response = self.client.post(self.endpoint,
                                     request_data,
                                     format='json',
@@ -109,15 +109,15 @@ class CreateTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
-    def test_subtask_title_max_length(self):
+    def test_subtask_max_length(self):
         initial_count = Task.objects.count()
         request_data = {
             'title': 'Some Task',
             'description': 'Lorem ipsum dolor sit amet',
             'column': self.column.id,
-            'subtasks': [{
-                'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo'
-            }]
+            'subtasks': [
+                'foooooooooooooooooooooooooooooooooooooooooooooooooo'
+            ]
         }
         response = self.client.post(self.endpoint,
                                     request_data,
