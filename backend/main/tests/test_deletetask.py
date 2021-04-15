@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task
 from ..util import new_admin
 
@@ -26,3 +27,16 @@ class DeleteTaskTests(APITestCase):
             'id': str(self.task.id),
         })
         self.assertEqual(Task.objects.count(), initial_count - 1)
+
+    def test_task_id_blank(self):
+        initial_count = Task.objects.count()
+        response = self.client.delete(self.endpoint,
+                                      HTTP_AUTH_USER=self.admin['username'],
+                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'task_id': ErrorDetail(string='Task ID cannot be empty.',
+                                   code='blank')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
