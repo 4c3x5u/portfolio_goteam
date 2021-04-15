@@ -172,6 +172,12 @@ def tasks(request):
 
         task_id = request.query_params.get('id')
 
+        if not task_id:
+            return Response({
+                'task_id': ErrorDetail(string='Task ID cannot be empty.',
+                                       code='blank')
+            }, 400)
+
         Task.objects.get(id=task_id).delete()
         return Response({
             'msg': 'Task deleted successfully.',
