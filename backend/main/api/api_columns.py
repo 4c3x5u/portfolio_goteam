@@ -77,20 +77,21 @@ def columns(request):
 
         tasks = request.data
         for task in tasks:
-            task_id = task.get('id')
-
-            if not task_id:
+            try:
+                task_id = task.pop('id')
+            except KeyError:
                 return Response({
                     'task.id': ErrorDetail(string='Task ID cannot be empty.',
                                            code='blank')
                 }, 400)
 
-            task.pop('id')
             serializer = TaskSerializer(Task.objects.get(id=task_id),
                                         data=task,
                                         partial=True)
-            if serializer.is_valid():
-                serializer.save()
+            if not serializer.is_valid():
+                return Response(serializer.errors, 400)
+
+            serializer.save()
 
         return Response({
             'msg': 'Column and all its tasks updated successfully.',
