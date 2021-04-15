@@ -4,7 +4,6 @@ import axios from 'axios';
 
 import AppContext from '../../AppContext';
 import FormGroup from '../_shared/FormGroup/FormGroup';
-import validateLoginForm from './validateLoginForm';
 import inputType from '../../misc/inputType';
 
 import logo from './login.svg';
@@ -14,26 +13,21 @@ const Login = () => {
   const { loadBoard } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({ username: '', password: '' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    setErrors(validateLoginForm(username, password));
-
-    if (!errors.username && !errors.password) {
-      axios.post(`${process.env.REACT_APP_BACKEND_URL}/login/`, {
-        username,
-        password,
-      }).then((res) => {
-        sessionStorage.setItem('username', res.data.username);
-        sessionStorage.setItem('auth-token', res.data.token);
-        loadBoard();
-      }).catch((err) => {
-        // TODO: Add toastr for server-side errors
-        console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
-      });
-    }
+    axios.post(`${process.env.REACT_APP_BACKEND_URL}/login/`, {
+      username,
+      password,
+    }).then((res) => {
+      sessionStorage.setItem('username', res.data.username);
+      sessionStorage.setItem('auth-token', res.data.token);
+      loadBoard();
+    }).catch((err) => {
+      // TODO: Add toastr for server-side errors
+      console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
+    });
   };
 
   return (
@@ -48,7 +42,6 @@ const Login = () => {
           label="username"
           value={username}
           setValue={setUsername}
-          error={errors.username}
         />
 
         <FormGroup
@@ -56,7 +49,6 @@ const Login = () => {
           label="password"
           value={password}
           setValue={setPassword}
-          error={errors.password}
         />
 
         <div className="ButtonWrapper">
