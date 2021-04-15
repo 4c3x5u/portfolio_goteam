@@ -10,7 +10,7 @@ import AppContext from '../../../AppContext';
 import './board.sass';
 
 const Board = ({ handleActivate }) => {
-  const { activeBoard, setActiveBoard } = useContext(AppContext);
+  const { activeBoard } = useContext(AppContext);
 
   // TODO: API call to the database here inside a useEffect
 
@@ -53,7 +53,8 @@ const Board = ({ handleActivate }) => {
       })
     );
 
-    setActiveBoard({ ...activeBoard, columns: newColumns });
+    // TODO: handle
+    console.log({ ...activeBoard, columns: newColumns });
   };
 
   return (

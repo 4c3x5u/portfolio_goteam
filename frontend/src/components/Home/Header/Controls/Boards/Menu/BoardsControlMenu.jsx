@@ -8,8 +8,8 @@ import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 
 import './boardscontrolsmenu.sass';
 
-const BoardsControlMenu = ({ boards, handleCreate, handleDelete }) => {
-  const { activeBoard, loadActiveBoard } = useContext(AppContext);
+const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
+  const { boards, activeBoard, loadActiveBoard } = useContext(AppContext);
 
   return (
     <div className="ControlsMenu">
@@ -31,10 +31,6 @@ const BoardsControlMenu = ({ boards, handleCreate, handleDelete }) => {
 };
 
 BoardsControlMenu.propTypes = {
-  boards: PropTypes.arrayOf({
-    id: PropTypes.number.isRequired,
-    name: PropTypes.string.isRequired,
-  }).isRequired,
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
 };
