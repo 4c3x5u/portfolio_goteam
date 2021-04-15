@@ -12,16 +12,13 @@ class UpdateColumns(APITestCase):
         self.column = Column.objects.create(order=0, board=board)
         self.tasks = [
             Task.objects.create(
-                id=i,
                 title=str(i),
                 order=i,
                 column=self.column
             ) for i in range(0, 5)
         ]
         self.admin = new_admin(team)
-
-    def test_order_success(self):
-        request_data = list(map(
+        self.request_data = list(map(
             lambda task: {
                 'id': task.id,
                 'title': task.title,
@@ -29,8 +26,10 @@ class UpdateColumns(APITestCase):
             },
             self.tasks
         ))
-        response = self.client.patch(f'{self.endpoint}${self.column.id}',
-                                     request_data,
+
+    def test_success(self):
+        response = self.client.patch(f'{self.endpoint}{self.column.id}',
+                                     self.request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -39,8 +38,6 @@ class UpdateColumns(APITestCase):
             'msg': 'Column and all its tasks updated successfully.',
             'id': self.column.id,
         })
-        new_tasks = Task.objects.get(column_id=self.column.id)
-        map(
-            lambda task: self.assertEqual(task.order, 5 - int(task.title)),
-            new_tasks
-        )
+        new_tasks = Task.objects.filter(column_id=self.column.id)
+        map(lambda task: self.assertEqual(task.order, 5 - int(task.title)),
+            new_tasks)
