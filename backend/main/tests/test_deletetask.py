@@ -52,3 +52,15 @@ class DeleteTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
+    def test_task_not_found(self):
+        initial_count = Task.objects.count()
+        response = self.client.delete(f'{self.endpoint}123141',
+                                      HTTP_AUTH_USER=self.admin['username'],
+                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'task_id': ErrorDetail(string='Task not found.',
+                                   code='not_found')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
