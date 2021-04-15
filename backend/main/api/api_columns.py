@@ -66,6 +66,13 @@ def columns(request):
             return authorization_response
 
         column_id = request.query_params.get('id')
+
+        if not column_id:
+            return Response({
+                'id': ErrorDetail(string='Column ID cannot be empty.',
+                                  code='blank')
+            }, 400)
+
         column = Column.objects.get(id=column_id)
 
         tasks = request.data
