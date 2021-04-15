@@ -1,48 +1,35 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-// import axios from 'axios';
 import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-// import UserContext from '../../../../../UserContext';
 import BoardsControlMenu from './Menu/BoardsControlMenu';
 
 import './boardscontrols.sass';
-// import ActiveBoardContext from '../../../ActiveBoardContext';
 
 const BoardsControls = ({
   isActive, handleActivate, handleCreate, handleDelete, icon,
-}) => {
-  // const { currentUser } = useContext(UserContext);
-  // const { activeBoardId, setActiveBoardId } = useContext(ActiveBoardContext);
-  // const [boards, setBoards] = useState([{ id: null, name: '' }]);
+}) => (
+  <Col xs={4} className="BoardsControls">
+    <button
+      className="Button"
+      onClick={handleActivate}
+      aria-label="boards controls toggler"
+      type="button"
+    >
+      <FontAwesomeIcon icon={icon} />
 
-  useEffect(() => {
-  }, []);
+      BOARDS
+    </button>
 
-  return (
-    <Col xs={4} className="BoardsControls">
-      <button
-        className="Button"
-        onClick={handleActivate}
-        aria-label="boards controls toggler"
-        type="button"
-      >
-        <FontAwesomeIcon icon={icon} />
-
-        BOARDS
-      </button>
-
-      {isActive && (
-        <BoardsControlMenu
-          // boards={boards}
-          handleCreate={handleCreate}
-          handleDelete={handleDelete}
-        />
-      )}
-    </Col>
-  );
-};
+    {isActive && (
+      <BoardsControlMenu
+        handleCreate={handleCreate}
+        handleDelete={handleDelete}
+      />
+    )}
+  </Col>
+);
 
 BoardsControls.propTypes = {
   isActive: PropTypes.bool.isRequired,

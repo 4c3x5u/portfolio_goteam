@@ -32,6 +32,7 @@ const App = () => {
     isAdmin: false,
     isAuthenticated: false,
   });
+  const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
 
   const loadBoard = async (boardId) => {
@@ -40,8 +41,10 @@ const App = () => {
       const user = await verifyToken();
       setCurrentUser(user);
 
-      // 1. Get the active board ID
+      // 1. Get boards, and set boards and active board ID
       const boardsRes = await getBoards(user.teamId);
+      setBoards(boardsRes.data.boards);
+
       const activeBoardId = boardId || boardsRes.data.boards[0].id;
 
       // 2. Get the columns
@@ -90,12 +93,10 @@ const App = () => {
     <AppContext.Provider
       value={{
         currentUser,
-        setCurrentUser,
+        boards,
         activeBoard,
-        setActiveBoard,
         loadBoard,
         isLoading,
-        setIsLoading,
       }}
     >
       <Router className="App">
