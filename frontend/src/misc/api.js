@@ -13,35 +13,41 @@ export const verifyToken = () => (
   }))
 );
 
-const authHeaders = {
+const getAuthHeaders = () => ({
   headers: {
     'auth-user': sessionStorage.getItem('username'),
     'auth-token': sessionStorage.getItem('auth-token'),
   },
-};
+});
 
 export const getBoards = (teamId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/boards/?team_id=${teamId}`,
-  authHeaders,
+  getAuthHeaders(),
 );
 
 export const getColumns = (boardId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/columns/?board_id=${boardId}`,
-  authHeaders,
+  getAuthHeaders(),
 );
 
 export const getTasks = (columnId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/tasks/?column_id=${columnId}`,
-  authHeaders,
-);
-
-export const getSubtasks = (taskId) => axios.get(
-  `${process.env.REACT_APP_BACKEND_URL}/subtasks/?task_id=${taskId}`,
-  authHeaders,
+  getAuthHeaders(),
 );
 
 export const postTask = (task) => axios.post(
   `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
   task,
-  authHeaders,
+  getAuthHeaders(),
+);
+
+export const patchTask = (data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
+  data,
+  getAuthHeaders(),
+);
+
+export const getSubtasks = (taskId) => axios.get(
+  `${process.env.REACT_APP_BACKEND_URL}/subtasks/?task_id=${taskId}`,
+  getAuthHeaders(),
 );
