@@ -3,7 +3,7 @@ react/jsx-props-no-spreading,
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import { Draggable } from 'react-beautiful-dnd';
@@ -15,32 +15,11 @@ import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
 
 const Task = ({
-  id, title, description, order, handleActivate,
+  id, title, description, order, handleActivate, subtasks,
 }) => {
-  const [subtasks, setSubtasks] = useState([]);
-
   const MENU_ID = `edit-task-${id}`;
 
   const { show } = useContextMenu({ id: MENU_ID });
-
-  // TODO: API call based on task ID
-  console.log(`Task ID: ${id}`);
-  useEffect(() => {
-    setSubtasks([
-      {
-        id: 0,
-        title: 'Some subtask',
-        order: 0,
-        done: false,
-      },
-      {
-        id: 1,
-        title: 'Some subtask',
-        order: 1,
-        done: false,
-      },
-    ]);
-  }, []);
 
   return (
     <Draggable
@@ -117,6 +96,12 @@ Task.propTypes = {
   description: PropTypes.string.isRequired,
   order: PropTypes.number.isRequired,
   handleActivate: PropTypes.func.isRequired,
+  subtasks: PropTypes.arrayOf({
+    id: PropTypes.number.isRequired,
+    title: PropTypes.string.isRequired,
+    order: PropTypes.number.isRequired,
+    done: PropTypes.bool.isRequired,
+  }).isRequired,
 };
 
 export default Task;

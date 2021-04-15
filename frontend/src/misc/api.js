@@ -39,3 +39,9 @@ export const getSubtasks = (taskId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/subtasks/?task_id=${taskId}`,
   authHeaders,
 );
+
+export const postTask = (task) => axios.post(
+  `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
+  task,
+  authHeaders,
+);

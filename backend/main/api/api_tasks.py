@@ -79,7 +79,7 @@ def tasks(request):
         if subtasks:
             for i, subtask in enumerate(subtasks):
                 subtask_serializer = SubtaskSerializer(
-                    data={'title': subtask.get('title'),
+                    data={'title': subtask,
                           'order': i,
                           'task': task.id}
                 )

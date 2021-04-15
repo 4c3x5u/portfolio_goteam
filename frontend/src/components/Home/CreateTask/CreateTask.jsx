@@ -2,23 +2,44 @@
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
+import AppContext from '../../../AppContext';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import AddSubtasks from './AddSubtasks/AddSubtasks';
 import inputType from '../../../misc/inputType';
+import { postTask } from '../../../misc/api';
 
 import logo from './createtask.svg';
 import './createtask.sass';
 
 const CreateTask = ({ toggleOff }) => {
+  const { activeBoard, loadActiveBoard } = useContext(AppContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState({ value: '', list: [] });
 
-  const handleSubmit = () => console.log('TODO: IMPLEMENT');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // TODO: See if the ordering will work with this. If not, pass the order
+    //       manually
+    postTask({
+      title,
+      description,
+      column: activeBoard.columns[0].id,
+      subtasks: subtasks.list,
+    }).then((res) => {
+      loadActiveBoard();
+
+      console.log(res.msg);
+      toggleOff();
+    }).catch((err) => {
+      console.error(err);
+    });
+  };
 
   return (
     <div className="CreateTask" onClick={toggleOff}>
