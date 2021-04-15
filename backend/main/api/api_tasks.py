@@ -7,7 +7,7 @@ from ..serializers.ser_subtask import SubtaskSerializer
 from ..util import authenticate, authorize
 
 
-@api_view(['POST', 'PATCH', 'GET'])
+@api_view(['GET', 'POST', 'PATCH', 'DELETE'])
 def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -164,3 +164,16 @@ def tasks(request):
             'msg': 'Task update successful.',
             'id': task.id
         }, 200)
+
+    if request.method == 'DELETE':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
+        task_id = request.query_params.get('id')
+
+        Task.objects.get(id=task_id).delete()
+        return Response({
+            'msg': 'Task deleted successfully.',
+            'id': task_id,
+        })
