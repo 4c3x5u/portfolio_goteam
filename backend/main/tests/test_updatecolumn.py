@@ -39,5 +39,6 @@ class UpdateColumns(APITestCase):
             'id': self.column.id,
         })
         new_tasks = Task.objects.filter(column_id=self.column.id)
-        map(lambda task: self.assertEqual(task.order, 5 - int(task.title)),
-            new_tasks)
+        for i in range(0, 5):
+            task = new_tasks.get(title=str(i))
+            self.assertEqual(task.order, 5 - int(task.title))
