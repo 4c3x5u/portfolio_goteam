@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
 from ..util import new_admin
 
@@ -42,3 +43,19 @@ class UpdateColumns(APITestCase):
         for i in range(0, 5):
             task = new_tasks.get(title=str(i))
             self.assertEqual(task.order, 5 - int(task.title))
+
+    def test_column_id_empty(self):
+        response = self.client.patch(self.endpoint,
+                                     self.request_data,
+                                     format='json',
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'id': ErrorDetail(string='Column ID cannot be empty.',
+                              code='blank')
+        })
+        new_tasks = Task.objects.filter(column_id=self.column.id)
+        for i in range(0, 5):
+            task = new_tasks.get(title=str(i))
+            self.assertEqual(task.order, int(task.title))
