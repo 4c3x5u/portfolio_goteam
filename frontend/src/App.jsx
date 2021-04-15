@@ -24,6 +24,7 @@ import './app.sass';
 import columnOrder from './components/Home/Board/Column/columnOrder';
 
 const App = () => {
+  const [isLoading, setIsLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState({
     username: '',
     token: '',
@@ -32,14 +33,16 @@ const App = () => {
     isAuthenticated: false,
   });
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
-  const loadActiveBoard = async () => {
+
+  const loadBoard = async (boardId) => {
+    setIsLoading(true);
     try {
       const user = await verifyToken();
       setCurrentUser(user);
 
       // 1. Get the active board ID
       const boardsRes = await getBoards(user.teamId);
-      const activeBoardId = boardsRes.data.boards[0].id;
+      const activeBoardId = boardId || boardsRes.data.boards[0].id;
 
       // 2. Get the columns
       const columnsRes = await getColumns(activeBoardId);
@@ -78,9 +81,10 @@ const App = () => {
     } catch (err) {
       console.error(err);
     }
+    setIsLoading(false);
   };
 
-  useEffect(() => loadActiveBoard(), []);
+  useEffect(() => loadBoard(), []);
 
   return (
     <AppContext.Provider
@@ -89,7 +93,9 @@ const App = () => {
         setCurrentUser,
         activeBoard,
         setActiveBoard,
-        loadActiveBoard,
+        loadBoard,
+        isLoading,
+        setIsLoading,
       }}
     >
       <Router className="App">
