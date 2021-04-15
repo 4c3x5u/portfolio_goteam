@@ -25,6 +25,11 @@ export const getBoards = (teamId) => axios.get(
   getAuthHeaders(),
 );
 
+export const deleteBoard = (boardId) => axios.delete(
+  `${process.env.REACT_APP_BACKEND_URL}/boards/?id=${boardId}`,
+  getAuthHeaders(),
+);
+
 export const getColumns = (boardId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/columns/?board_id=${boardId}`,
   getAuthHeaders(),

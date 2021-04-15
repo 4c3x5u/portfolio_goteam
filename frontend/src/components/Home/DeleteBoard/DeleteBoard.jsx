@@ -2,21 +2,33 @@
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
 } from 'react-bootstrap';
 
+import AppContext from '../../../AppContext';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
+import { deleteBoard } from '../../../misc/api';
 
 import logo from './deleteboard.svg';
 import './deleteboard.sass';
 
 const DeleteBoard = ({ id, name, toggleOff }) => {
-  // TODO: Delete board using the ID here
-  const handleSubmit = () => console.log(`deleteBoard(${id})`);
+  const { loadBoard } = useContext(AppContext);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    deleteBoard(id).then(() => {
+      toggleOff();
+      loadBoard();
+    }).catch((err) => {
+      // TODO: Toast
+      console.error(err);
+    });
+  };
 
   return (
     <div className="DeleteBoard" onClick={toggleOff}>
