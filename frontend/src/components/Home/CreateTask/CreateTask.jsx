@@ -16,7 +16,7 @@ import logo from './createtask.svg';
 import './createtask.sass';
 
 const CreateTask = ({ toggleOff }) => {
-  const { activeBoard, loadActiveBoard } = useContext(AppContext);
+  const { activeBoard, loadBoard } = useContext(AppContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState({ value: '', list: [] });
@@ -32,10 +32,9 @@ const CreateTask = ({ toggleOff }) => {
       column: activeBoard.columns[0].id,
       subtasks: subtasks.list,
     }).then((res) => {
-      loadActiveBoard();
-
-      console.log(res.msg);
+      loadBoard();
       toggleOff();
+      console.log(res.msg);
     }).catch((err) => {
       console.error(err);
     });

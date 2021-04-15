@@ -2,13 +2,15 @@
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
+import AppContext from '../../../AppContext';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from './EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
+import { patchTask } from '../../../misc/api';
 
 import logo from './edittask.svg';
 import './edittask.sass';
@@ -16,25 +18,35 @@ import './edittask.sass';
 const EditTask = ({
   id, title, description, subtasks, toggleOff,
 }) => {
+  const { activeBoard, loadBoard } = useContext(AppContext);
   const [newTitle, setNewTitle] = useState(title);
   const [newDescription, setNewDescription] = useState(description);
   const [newSubtasks, setNewSubtasks] = useState({
     value: '',
-    list: [],
+    list: subtasks,
   });
 
-  useEffect(() => (
-    // TODO: use task id to find and populate subtasks.
-    setNewSubtasks({
-      value: '',
-      list: subtasks,
-    })
-  ), []);
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-  const handleSubmit = () => (
-    // TODO: Set title, description, and subtasks as needed, submit to API
-    console.log(`Task ID: ${id}`)
-  );
+    const patchData = {
+      id,
+      data: {
+        title: newTitle,
+        description: newDescription,
+        column: activeBoard.columns[0].id,
+        subtasks: newSubtasks.list,
+      },
+    };
+
+    patchTask(patchData).then((res) => {
+      loadBoard();
+      toggleOff();
+      console.log(res.msg);
+    }).catch((err) => {
+      console.error(err);
+    });
+  };
 
   return (
     <div className="EditTask" onClick={toggleOff}>

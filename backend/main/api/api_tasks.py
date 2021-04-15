@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Column, Task
+from ..models import Column, Task, Subtask
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
 from ..util import authenticate, authorize
@@ -133,13 +133,32 @@ def tasks(request):
                                                code='invalid')
                 }, 400)
 
-        serializer = TaskSerializer(Task.objects.get(id=task_id),
-                                    data=data,
-                                    partial=True)
-        if not serializer.is_valid():
-            return Response(serializer.errors, 400)
+        subtasks = data.get('subtasks')
+        data.pop('subtasks')
 
-        task = serializer.save()
+        task_serializer = TaskSerializer(Task.objects.get(id=task_id),
+                                         data=data,
+                                         partial=True)
+        if not task_serializer.is_valid():
+            return Response(task_serializer.errors, 400)
+        task = task_serializer.save()
+
+        Subtask.objects.filter(task_id=task.id).delete()
+
+        for i, subtask in enumerate(subtasks):
+            subtask_serializer = SubtaskSerializer(
+                data={'title': subtask['title'],
+                      'order': i,
+                      'task': task.id,
+                      'done': subtask['done']}
+            )
+            if not subtask_serializer.is_valid():
+                task.delete()
+                return Response({
+                    'subtask': subtask_serializer.errors
+                }, 400)
+            subtask_serializer.save()
+
         return Response({
             'msg': 'Task update successful.',
             'id': task.id

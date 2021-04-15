@@ -48,6 +48,7 @@ const Login = () => {
           label="username"
           value={username}
           setValue={setUsername}
+          error={errors.username}
         />
 
         <FormGroup
@@ -55,6 +56,7 @@ const Login = () => {
           label="password"
           value={password}
           setValue={setPassword}
+          error={errors.password}
         />
 
         <div className="ButtonWrapper">
