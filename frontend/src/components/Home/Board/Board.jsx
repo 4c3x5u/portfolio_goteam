@@ -1,41 +1,23 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 // import axios from 'axios';
 import { Row } from 'react-bootstrap';
 import { DragDropContext } from 'react-beautiful-dnd';
 
-import ActiveBoardContext from '../ActiveBoardContext';
+import AppContext from '../../../AppContext';
 import Column from './Column/Column';
-import columnOrder from './Column/columnOrder';
 
 import './board.sass';
 
 const Board = ({ handleActivate }) => {
-  const { activeBoardId } = useContext(ActiveBoardContext);
-  // TODO: handle
-  console.log(activeBoardId);
-  const [columns, setColumns] = useState([
-    {
-      id: 0,
-      order: columnOrder.INBOX,
-      tasks: [
-        { id: 0, title: 'Do Something', order: 0 },
-      ],
-    },
-    { id: 1, order: columnOrder.READY, tasks: [] },
-    { id: 2, order: columnOrder.GO, tasks: [] },
-    { id: 3, order: columnOrder.DONE, tasks: [] },
-  ]);
+  const { activeBoard, setActiveBoard } = useContext(AppContext);
 
   // TODO: API call to the database here inside a useEffect
-  useEffect(() => {
-    console.log('Getting columns for board as well as tasks');
-  }, []);
 
   const handleOnDragEnd = (result) => {
     if (!result.destination) return;
 
-    const source = columns.find(
+    const source = activeBoard.columns.find(
       (column) => column.id.toString() === result.source.droppableId,
     );
 
@@ -48,7 +30,7 @@ const Board = ({ handleActivate }) => {
       ),
     };
 
-    const destination = columns.find(
+    const destination = activeBoard.columns.find(
       (column) => column.id.toString() === result.destination.droppableId,
     );
 
@@ -62,7 +44,7 @@ const Board = ({ handleActivate }) => {
     };
 
     const newColumns = (
-      columns.map((column) => {
+      activeBoard.columns.map((column) => {
         switch (column.id) {
           case destination.id: return newDestination;
           case source.id: return newSource;
@@ -71,13 +53,13 @@ const Board = ({ handleActivate }) => {
       })
     );
 
-    setColumns(newColumns);
+    setActiveBoard({ ...activeBoard, columns: newColumns });
   };
 
   return (
     <Row id="Board">
       <DragDropContext onDragEnd={handleOnDragEnd}>
-        {columns.map((column) => (
+        {activeBoard.columns.map((column) => (
           <Column
             id={column.id}
             name={column.order}

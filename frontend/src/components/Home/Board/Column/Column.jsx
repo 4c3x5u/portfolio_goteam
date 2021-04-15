@@ -17,10 +17,12 @@ const Column = ({
   id, name, tasks, handleActivate,
 }) => (
   <Col className="Col" xs={3}>
-    <div className={`Column ${capFirstLetterOf(name)}Column`}>
-      <div className="Header">{name.toUpperCase()}</div>
+    <div
+      className={`Column ${name && capFirstLetterOf(name)}Column`}
+    >
+      <div className="Header">{name && name.toUpperCase()}</div>
 
-      <Droppable droppableId={id.toString()}>
+      <Droppable droppableId={`${id}`}>
         {(provided) => (
           <div
             className="Body"

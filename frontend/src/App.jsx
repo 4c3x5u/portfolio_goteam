@@ -21,6 +21,7 @@ import {
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
+import columnOrder from './components/Home/Board/Column/columnOrder';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState({
@@ -39,46 +40,42 @@ const App = () => {
 
       // 1. Get the active board ID
       const boardsRes = await getBoards(user.teamId);
-      let tempActiveBoard = { id: boardsRes.data.boards[0].id };
+      const activeBoardId = boardsRes.data.boards[0].id;
 
       // 2. Get the columns
-      const columnsRes = await getColumns(tempActiveBoard.id);
+      const columnsRes = await getColumns(activeBoardId);
       const columns = columnsRes.data.columns.sort((column) => column.order);
-      tempActiveBoard = { ...tempActiveBoard, columns };
 
-      // 3. Get the tasks
+      // 3. Get the tasks per column
       const rawTasksPerColumn = await Promise.all(
-        tempActiveBoard.columns.map(async (column) => {
+        columns.map(async (column) => {
           const tasksRes = await getTasks(column.id);
           return tasksRes.data.tasks.sort((task) => task.order);
         }),
       );
-      tempActiveBoard = {
-        ...tempActiveBoard,
-        columns: columns.map((column, i) => (
-          { id: column.id, tasks: rawTasksPerColumn[i] }
-        )),
-      };
 
       // 4. Get the subtasks and feed them into tasks
       const tasksPerColumn = await Promise.all(
-        tempActiveBoard.columns.map(async (column) => (
-          Promise.all(column.tasks.map(async (task) => {
+        rawTasksPerColumn.map(async (tasks) => (
+          Promise.all(tasks.map(async (task) => {
             const subtasksRes = await getSubtasks(task.id);
             const { subtasks } = subtasksRes.data;
             return { ...task, subtasks };
           }))
         )),
       );
-      tempActiveBoard = {
-        ...tempActiveBoard,
-        columns: columns.map((column, i) => (
-          { id: column.id, tasks: tasksPerColumn[i] }
-        )),
-      };
 
-      // 5. Set the active board state as the accumulated result
-      setActiveBoard(tempActiveBoard);
+      // 5. Set the active board
+      setActiveBoard({
+        id: activeBoardId,
+        columns: columns.sort((column) => column.order).map((column, i) => (
+          {
+            id: column.id,
+            order: columnOrder.parseInt(column.order),
+            tasks: tasksPerColumn[i],
+          }
+        )),
+      });
     } catch (err) {
       console.log(err);
     }
@@ -87,7 +84,10 @@ const App = () => {
   return (
     <AppContext.Provider
       value={{
-        currentUser, setCurrentUser, activeBoard, setActiveBoard,
+        currentUser,
+        setCurrentUser,
+        activeBoard,
+        setActiveBoard,
       }}
     >
       <Router className="App">
