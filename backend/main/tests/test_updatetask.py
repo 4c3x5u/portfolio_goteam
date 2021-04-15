@@ -5,7 +5,7 @@ from ..util import new_member, new_admin, not_authenticated_response
 
 
 class UpdateTaskTests(APITestCase):
-    endpoint = '/tasks/'
+    endpoint = '/tasks/?id='
 
     def setUp(self):
         team = Team.objects.create()
@@ -22,8 +22,8 @@ class UpdateTaskTests(APITestCase):
             )
         )
         
-    def help_test_success(self, request_data):
-        response = self.client.patch(self.endpoint,
+    def help_test_success(self, task_id, request_data):
+        response = self.client.patch(f'{self.endpoint}{task_id}',
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -34,15 +34,14 @@ class UpdateTaskTests(APITestCase):
         self.assertEqual(self.task.id, response.data.get('id'))
 
     def test_title_success(self):
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        self.help_test_success(request_data)
+        request_data = {'title': 'New Title'}
+        self.help_test_success(self.task.id, request_data)
         self.assertEqual(Task.objects.get(id=self.task.id).title,
-                         request_data.get('data').get('title'))
+                         request_data.get('title'))
 
     def test_title_blank(self):
-        request_data = {'id': self.task.id, 'data': {'title': ''}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': ''},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -55,15 +54,14 @@ class UpdateTaskTests(APITestCase):
                          self.task.title)
 
     def test_order_success(self):
-        request_data = {'id': self.task.id, 'data': {'order': 10}}
-        self.help_test_success(request_data)
+        request_data = {'order': 10}
+        self.help_test_success(self.task.id, request_data)
         self.assertEqual(Task.objects.get(id=self.task.id).order,
-                         request_data.get('data').get('order'))
+                         request_data.get('order'))
 
     def test_order_blank(self):
-        request_data = {'id': self.task.id, 'data': {'order': ''}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'order': ''},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -82,16 +80,14 @@ class UpdateTaskTests(APITestCase):
                 team=Team.objects.create()
             )
         )
-        request_data = {'id': self.task.id,
-                        'data': {'column': another_column.id}}
-        self.help_test_success(request_data)
+        request_data = {'column': another_column.id}
+        self.help_test_success(self.task.id, request_data)
         self.assertEqual(Task.objects.get(id=self.task.id).column.id,
-                         request_data.get('data').get('column'))
+                         request_data.get('column'))
 
     def test_column_blank(self):
-        request_data = {'id': self.task.id, 'data': {'column': ''}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'column': ''},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -104,9 +100,8 @@ class UpdateTaskTests(APITestCase):
                          self.task.column)
 
     def test_column_invalid(self):
-        request_data = {'id': self.task.id, 'data': {'column': '123123'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'column': '123123'},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -120,60 +115,55 @@ class UpdateTaskTests(APITestCase):
 
     def test_auth_token_empty(self):
         initial_count = Task.objects.count()
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.endpoint,
-                                    request_data,
-                                    format='json',
-                                    HTTP_AUTH_USER=self.admin['username'],
-                                    HTTP_AUTH_TOKEN='')
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': 'New Title'},
+                                     format='json',
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
         initial_count = Task.objects.count()
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.endpoint,
-                                    request_data,
-                                    format='json',
-                                    HTTP_AUTH_USER=self.admin['username'],
-                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': 'New Title'},
+                                     format='json',
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
         initial_count = Task.objects.count()
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.endpoint,
-                                    request_data,
-                                    format='json',
-                                    HTTP_AUTH_USER='',
-                                    HTTP_AUTH_TOKEN=self.admin['token'])
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': 'New Title'},
+                                     format='json',
+                                     HTTP_AUTH_USER='',
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
         initial_count = Task.objects.count()
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.endpoint,
-                                    request_data,
-                                    format='json',
-                                    HTTP_AUTH_USER='invalidio',
-                                    HTTP_AUTH_TOKEN=self.admin['token'])
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': 'New Title'},
+                                     format='json',
+                                     HTTP_AUTH_USER='invalidio',
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_not_admin(self):
         initial_count = Task.objects.count()
-        request_data = {'id': self.task.id, 'data': {'title': 'New Title'}}
-        response = self.client.post(self.endpoint,
-                                    request_data,
-                                    format='json',
-                                    HTTP_AUTH_USER=self.member['username'],
-                                    HTTP_AUTH_TOKEN=self.member['token'])
+        response = self.client.patch(f'{self.endpoint}{self.task.id}',
+                                     {'title': 'New Title'},
+                                     format='json',
+                                     HTTP_AUTH_USER=self.member['username'],
+                                     HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
             'auth': ErrorDetail(string='The user is not an admin.',
