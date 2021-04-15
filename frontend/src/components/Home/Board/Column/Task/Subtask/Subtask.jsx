@@ -1,22 +1,34 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
+import AppContext from '../../../../../../AppContext';
+import { patchSubtask } from '../../../../../../misc/api';
+
 import './subtask.sass';
 
 const Subtask = ({ id, title, done }) => {
-  // TODO: Use subtask's 'DONE' field rather than a state here
-  const [checked, setChecked] = useState(false);
+  const { loadBoard } = useContext(AppContext);
 
-  // TODO Use subtask ID to handle set done/undone
-  console.log(id);
+  const check = (subtaskId) => {
+    console.log(`SUBTASK ID: ${subtaskId}`);
+
+    patchSubtask({
+      id: subtaskId,
+      data: { done: !done },
+    }).then(() => (
+      loadBoard()
+    )).catch((err) => (
+      console.error(err)
+    ));
+  };
 
   return (
     <li className="Subtask">
       <button
         className="CheckButton"
-        onClick={() => setChecked(!checked)}
+        onClick={() => check(id)}
         type="button"
       >
         {

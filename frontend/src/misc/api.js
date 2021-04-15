@@ -51,3 +51,9 @@ export const getSubtasks = (taskId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/subtasks/?task_id=${taskId}`,
   getAuthHeaders(),
 );
+
+export const patchSubtask = (data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/subtasks/`,
+  data,
+  getAuthHeaders(),
+);

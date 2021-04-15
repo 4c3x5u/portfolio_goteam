@@ -41,8 +41,8 @@ class CreateTaskTests(APITestCase):
     def test_success_without_description(self):
         initial_count = Task.objects.count()
         request_data = {'title': 'Some Task',
-                   'description': '',
-                   'column': self.column.id}
+                        'description': '',
+                        'column': self.column.id}
         response = self.client.post(self.endpoint,
                                     request_data,
                                     HTTP_AUTH_USER=self.admin['username'],
