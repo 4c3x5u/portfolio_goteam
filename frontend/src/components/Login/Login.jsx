@@ -11,7 +11,7 @@ import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
-  const { setUser } = useContext(AppContext);
+  const { loadActiveBoard } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
@@ -28,12 +28,7 @@ const Login = () => {
       }).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
-        setUser({
-          username: res.data.username,
-          teamId: res.data.teamId,
-          isAdmin: res.data.isAdmin,
-          isAuthenticated: true,
-        });
+        loadActiveBoard();
       }).catch((err) => {
         // TODO: Add toastr for server-side errors
         console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
