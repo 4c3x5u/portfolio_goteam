@@ -77,7 +77,14 @@ def columns(request):
 
         tasks = request.data
         for task in tasks:
-            task_id = task['id']
+            task_id = task.get('id')
+
+            if not task_id:
+                return Response({
+                    'task.id': ErrorDetail(string='Task ID cannot be empty.',
+                                           code='blank')
+                }, 400)
+
             task.pop('id')
             serializer = TaskSerializer(Task.objects.get(id=task_id),
                                         data=task,
