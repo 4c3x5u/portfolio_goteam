@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task
-from ..util import new_admin
+from ..util import new_admin, new_member, not_authenticated_response
 
 
 class DeleteTaskTests(APITestCase):
@@ -15,6 +15,7 @@ class DeleteTaskTests(APITestCase):
                                         order=0,
                                         column=column)
         self.admin = new_admin(team)
+        self.member = new_member(team)
 
     def test_success(self):
         initial_count = Task.objects.count()
@@ -64,3 +65,41 @@ class DeleteTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
+
+    def test_auth_token_empty(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER=self.admin['username'],
+                                      HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER=self.admin['username'],
+                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_blank(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER='',
+                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER='invalidio',
+                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_unauthorized(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER=self.member['username'],
+                                      HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
+        })
