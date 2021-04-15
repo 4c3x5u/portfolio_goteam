@@ -24,10 +24,9 @@ class UpdateSubtaskTests(APITestCase):
             )
         )
 
-    def help_test_success(self, subtaskId, request_data):
-        response = self.client.patch(f'{self.endpoint}{subtaskId}',
+    def help_test_success(self, subtask_id, request_data):
+        response = self.client.patch(f'{self.endpoint}{subtask_id}',
                                      request_data,
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 200)
@@ -59,7 +58,6 @@ class UpdateSubtaskTests(APITestCase):
         request_data = {'title': 'New task title.'}
         response = self.client.patch(self.endpoint,
                                      request_data,
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -70,10 +68,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_data_blank(self):
-        request_data = ''
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
-                                     request_data,
-                                     format='json',
+                                     None,
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -85,7 +81,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_title_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': ''},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -99,7 +94,6 @@ class UpdateSubtaskTests(APITestCase):
         request_data = {'done': ''}
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      request_data,
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -112,7 +106,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_order_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'order': ''},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -125,7 +118,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_auth_token_empty(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
@@ -134,7 +126,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
         self.assertEqual(response.status_code, 403)
@@ -143,7 +134,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_auth_user_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
-                                     format='json',
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
@@ -152,7 +142,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
-                                     format='json',
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
@@ -161,7 +150,6 @@ class UpdateSubtaskTests(APITestCase):
     def test_unauthorized(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)

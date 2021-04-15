@@ -25,7 +25,6 @@ class UpdateTaskTests(APITestCase):
     def help_test_success(self, task_id, request_data):
         response = self.client.patch(f'{self.endpoint}{task_id}',
                                      request_data,
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 200)
@@ -42,7 +41,6 @@ class UpdateTaskTests(APITestCase):
     def test_title_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': ''},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -62,7 +60,6 @@ class UpdateTaskTests(APITestCase):
     def test_order_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'order': ''},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -88,7 +85,6 @@ class UpdateTaskTests(APITestCase):
     def test_column_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'column': ''},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -102,7 +98,6 @@ class UpdateTaskTests(APITestCase):
     def test_column_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'column': '123123'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
@@ -117,7 +112,6 @@ class UpdateTaskTests(APITestCase):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
@@ -128,7 +122,6 @@ class UpdateTaskTests(APITestCase):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
@@ -139,7 +132,6 @@ class UpdateTaskTests(APITestCase):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
-                                     format='json',
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
@@ -150,7 +142,6 @@ class UpdateTaskTests(APITestCase):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
-                                     format='json',
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
@@ -161,7 +152,6 @@ class UpdateTaskTests(APITestCase):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
-                                     format='json',
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
