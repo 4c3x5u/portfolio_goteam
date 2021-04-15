@@ -62,10 +62,8 @@ def authenticate(username, token):
 
 def authorize(username):
     not_authorized_response = Response({
-        'auth': ErrorDetail(
-            string='The user is not an admin.',
-            code='not_authorized'
-        )
+        'auth': ErrorDetail(string='The user is not an admin.',
+                            code='not_authorized')
     }, 403)
 
     try:
