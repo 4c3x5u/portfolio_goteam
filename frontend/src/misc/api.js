@@ -41,8 +41,8 @@ export const postTask = (task) => axios.post(
   getAuthHeaders(),
 );
 
-export const patchTask = (data) => axios.patch(
-  `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
+export const patchTask = (id, data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${id}`,
   data,
   getAuthHeaders(),
 );
@@ -52,8 +52,8 @@ export const getSubtasks = (taskId) => axios.get(
   getAuthHeaders(),
 );
 
-export const patchSubtask = (data) => axios.patch(
-  `${process.env.REACT_APP_BACKEND_URL}/subtasks/`,
+export const patchSubtask = (id, data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/subtasks/?id=${id}`,
   data,
   getAuthHeaders(),
 );

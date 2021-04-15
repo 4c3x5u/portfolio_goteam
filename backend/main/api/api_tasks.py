@@ -100,8 +100,8 @@ def tasks(request):
         if authorization_response:
             return authorization_response
 
-        task_id = request.data.get('id')
-        data = request.data.get('data')
+        task_id = request.query_params.get('id')
+        data = request.data
 
         if 'title' in list(data.keys()) and not data.get('title'):
             return Response({
