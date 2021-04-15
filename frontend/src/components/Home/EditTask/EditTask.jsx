@@ -36,13 +36,14 @@ const EditTask = ({
       subtasks: newSubtasks.list,
     };
 
-    patchTask(id, data).then((res) => {
-      loadBoard();
-      toggleOff();
-      console.log(res.msg);
-    }).catch((err) => {
-      console.error(err);
-    });
+    patchTask(id, data)
+      .then(() => {
+        loadBoard();
+        toggleOff();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   return (
@@ -70,7 +71,9 @@ const EditTask = ({
           setValue={setNewDescription}
         />
 
-        <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
+        {newSubtasks.length > 0 && (
+          <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
+        )}
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">

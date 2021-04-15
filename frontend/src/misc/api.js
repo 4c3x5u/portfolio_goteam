@@ -41,9 +41,14 @@ export const postTask = (task) => axios.post(
   getAuthHeaders(),
 );
 
-export const patchTask = (id, data) => axios.patch(
-  `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${id}`,
+export const patchTask = (taskId, data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${taskId}`,
   data,
+  getAuthHeaders(),
+);
+
+export const deleteTask = (taskId) => axios.delete(
+  `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${taskId}`,
   getAuthHeaders(),
 );
 

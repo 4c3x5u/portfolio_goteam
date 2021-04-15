@@ -2,15 +2,17 @@
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Form, Row, Col,
 } from 'react-bootstrap';
 
+import AppContext from '../../../AppContext';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from '../EditTask/EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
+import { deleteTask } from '../../../misc/api';
 
 import logo from './deletetask.svg';
 import './deletetask.sass';
@@ -18,8 +20,17 @@ import './deletetask.sass';
 const DeleteTask = ({
   id, title, description, subtasks, toggleOff,
 }) => {
-  // TODO: Use the task ID to delete it here
-  const handleSubmit = () => (console.log(`Delete Task ${id}`));
+  const { loadBoard } = useContext(AppContext);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    deleteTask(id)
+      .then(() => {
+        loadBoard();
+        toggleOff();
+      })
+      .catch((err) => console.log(err)); // TODO: Toast
+  };
 
   return (
     <div className="DeleteTask" onClick={toggleOff}>
@@ -46,7 +57,9 @@ const DeleteTask = ({
           disabled
         />
 
-        <EditSubtasks subtasks={{ list: subtasks }} />
+        {subtasks.length > 0 && (
+          <EditSubtasks subtasks={{ list: subtasks }} />
+        )}
 
         <Row className="ButtonWrapper">
           <Col className="ButtonCol">
