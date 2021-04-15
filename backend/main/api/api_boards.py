@@ -26,7 +26,7 @@ def create_board(team_id, name):
     return board
 
 
-@api_view(['POST', 'GET'])
+@api_view(['GET', 'POST', 'DELETE'])
 def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -34,25 +34,6 @@ def boards(request):
     authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
-
-    if request.method == 'POST':
-        authorization_response = authorize(username)
-        if authorization_response:
-            return authorization_response
-
-        # validate team_id
-        team_id = request.data.get('team_id')
-        response = validate_team_id(team_id)
-        if response:
-            return response
-
-        board = create_board(team_id, request.data.get('name'))
-
-        # return success response
-        return Response({
-            'msg': 'Board creation successful.',
-            'board_id': board.id
-        }, 201)
 
     if request.method == 'GET':
         # validate team_id
@@ -86,3 +67,56 @@ def boards(request):
                 )
             )
         }, 200)
+
+    if request.method == 'POST':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
+        # validate team_id
+        team_id = request.data.get('team_id')
+        response = validate_team_id(team_id)
+        if response:
+            return response
+
+        board = create_board(team_id, request.data.get('name'))
+
+        # return success response
+        return Response({
+            'msg': 'Board creation successful.',
+            'board_id': board.id
+        }, 201)
+
+    if request.method == 'DELETE':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
+        board_id = request.query_params.get('id')
+
+        if not board_id:
+            return Response({
+                'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                        code='blank')
+            }, 400)
+
+        try:
+            int(board_id)
+        except ValueError:
+            return Response({
+                'board_id': ErrorDetail(string='Board ID must be a number.',
+                                        code='invalid')
+            }, 400)
+
+        try:
+            Board.objects.get(id=board_id).delete()
+        except Board.DoesNotExist:
+            return Response({
+                'board_id': ErrorDetail(string='Board not found.',
+                                        code='not_found')
+            }, 404)
+
+        return Response({
+            'msg': 'Board deleted successfully.',
+            'id': board_id,
+        })
