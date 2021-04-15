@@ -5,7 +5,7 @@ from ..util import new_member, new_admin, not_authenticated_response
 
 
 class UpdateSubtaskTests(APITestCase):
-    endpoint = '/subtasks/'
+    endpoint = '/subtasks/?id='
 
     def setUp(self):
         team = Team.objects.create()
@@ -24,8 +24,8 @@ class UpdateSubtaskTests(APITestCase):
             )
         )
 
-    def help_test_success(self, request_data):
-        response = self.client.patch(self.endpoint,
+    def help_test_success(self, subtaskId, request_data):
+        response = self.client.patch(f'{self.endpoint}{subtaskId}',
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -41,23 +41,22 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(subtask.done, self.subtask.done)
 
     def test_title_success(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        subtask = self.help_test_success(request_data)
-        self.assertEqual(subtask.title, request_data.get('data').get('title'))
+        request_data = {'title': 'New Task Title'}
+        subtask = self.help_test_success(self.subtask.id, request_data)
+        self.assertEqual(subtask.title, request_data.get('title'))
 
     def test_done_success(self):
-        request_data = {'id': self.subtask.id, 'data': {'done': True}}
-        subtask = self.help_test_success(request_data)
-        self.assertEqual(subtask.done, request_data.get('data').get('done'))
+        request_data = {'done': True}
+        subtask = self.help_test_success(self.subtask.id, request_data)
+        self.assertEqual(subtask.done, request_data.get('done'))
 
     def test_order_success(self):
-        request_data = {'id': self.subtask.id, 'data': {'order': 10}}
-        subtask = self.help_test_success(request_data)
-        self.assertEqual(subtask.order, request_data.get('data').get('order'))
+        request_data = {'order': 10}
+        subtask = self.help_test_success(self.subtask.id, request_data)
+        self.assertEqual(subtask.order, request_data.get('order'))
 
     def test_id_blank(self):
-        request_data = {'id': '', 'data': {'title': 'New task title.'}}
+        request_data = {'title': 'New task title.'}
         response = self.client.patch(self.endpoint,
                                      request_data,
                                      format='json',
@@ -71,8 +70,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_data_blank(self):
-        request_data = {'id': self.subtask.id, 'data': ''}
-        response = self.client.patch(self.endpoint,
+        request_data = ''
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -84,9 +83,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_title_blank(self):
-        request_data = {'id': self.subtask.id, 'data': {'title': ''}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': ''},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -98,8 +96,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_done_blank(self):
-        request_data = {'id': self.subtask.id, 'data': {'done': ''}}
-        response = self.client.patch(self.endpoint,
+        request_data = {'done': ''}
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      request_data,
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
@@ -112,9 +110,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_order_blank(self):
-        request = {'id': self.subtask.id, 'data': {'order': ''}}
-        response = self.client.patch(self.endpoint,
-                                     request,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'order': ''},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -126,10 +123,8 @@ class UpdateSubtaskTests(APITestCase):
         self.help_test_failure()
 
     def test_auth_token_empty(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': 'New Task Title'},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
@@ -137,10 +132,8 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_invalid(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': 'New Task Title'},
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
@@ -148,10 +141,8 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_user_blank(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': 'New Task Title'},
                                      format='json',
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -159,10 +150,8 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_user_invalid(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': 'New Task Title'},
                                      format='json',
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
@@ -170,10 +159,8 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_unauthorized(self):
-        request_data = {'id': self.subtask.id,
-                        'data': {'title': 'New Task Title'}}
-        response = self.client.patch(self.endpoint,
-                                     request_data,
+        response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
+                                     {'title': 'New Task Title'},
                                      format='json',
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
