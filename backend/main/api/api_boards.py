@@ -9,21 +9,27 @@ from ..util import authenticate, authorize, validate_team_id
 
 def create_board(team_id, name):
     # create board
+    response = None
+    board = None
+
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
-        return Response(board_serializer.errors, 400)
-    board = board_serializer.save()
+        response = Response(board_serializer.errors, 400)
+    else:
+        board = board_serializer.save()
 
-    # create four columns for the board
-    for order in range(0, 4):
-        column_serializer = ColumnSerializer(
-            data={'board': board.id, 'order': order}
-        )
-        if not column_serializer.is_valid():
-            return Response(column_serializer.errors, 400)
-        column_serializer.save()
+        # create four columns for the board
+        for order in range(0, 4):
+            column_serializer = ColumnSerializer(
+                data={'board': board.id, 'order': order}
+            )
+            if not column_serializer.is_valid():
+                response = Response(
+                    column_serializer.errors, 400
+                ) if not response else response
+            column_serializer.save()
 
-    return board
+    return board, response
 
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -46,11 +52,11 @@ def boards(request):
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
             if not authorize(username):
-                board = create_board(team_id, 'New Board')
+                create_board_response = create_board(team_id, 'New Board')
 
                 # return a list containing only the new board
                 return Response({
-                    'boards': [{'id': board.id, 'name': board.name}]
+                    'boards': [{'id': create_board_response.id, 'name': create_board_response.name}]
                 }, 201)
 
             return Response({
@@ -79,12 +85,16 @@ def boards(request):
         if response:
             return response
 
-        board = create_board(team_id, request.data.get('name'))
+        board_name = request.data.get('name')
+
+        board, create_board_response = create_board(team_id, board_name)
+        if create_board_response:
+            return create_board_response
 
         # return success response
         return Response({
             'msg': 'Board creation successful.',
-            'board_id': board.id
+            'id': board.id,
         }, 201)
 
     if request.method == 'DELETE':
