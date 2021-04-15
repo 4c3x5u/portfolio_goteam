@@ -40,3 +40,15 @@ class DeleteTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
+    def test_task_id_invalid(self):
+        initial_count = Task.objects.count()
+        response = self.client.delete(f'{self.endpoint}qwerty',
+                                      HTTP_AUTH_USER=self.admin['username'],
+                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'task_id': ErrorDetail(string='Task ID must be a number.',
+                                   code='invalid')
+        })
+        self.assertEqual(Task.objects.count(), initial_count)
+
