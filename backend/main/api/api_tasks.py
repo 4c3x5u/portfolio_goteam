@@ -186,8 +186,14 @@ def tasks(request):
                                        code='invalid')
             }, 400)
 
+        try:
+            Task.objects.get(id=task_id).delete()
+        except Task.DoesNotExist:
+            return Response({
+                'task_id': ErrorDetail(string='Task not found.',
+                                       code='not_found')
+            }, 404)
 
-        Task.objects.get(id=task_id).delete()
         return Response({
             'msg': 'Task deleted successfully.',
             'id': task_id,
