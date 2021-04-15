@@ -6,62 +6,22 @@ const activeBoardInit = {
     {
       id: null,
       order: columnOrder.INBOX,
-      tasks: [
-        {
-          id: null,
-          order: null,
-          title: '',
-          description: '',
-          subtasks: [
-            { id: null, order: null, title: '' },
-          ],
-        },
-      ],
+      tasks: [],
     },
     {
       id: null,
       order: columnOrder.READY,
-      tasks: [
-        {
-          id: null,
-          order: null,
-          title: '',
-          description: '',
-          subtasks: [
-            { id: null, order: null, title: '' },
-          ],
-        },
-      ],
+      tasks: [],
     },
     {
       id: null,
       order: columnOrder.GO,
-      tasks: [
-        {
-          id: null,
-          order: null,
-          title: '',
-          description: '',
-          subtasks: [
-            { id: null, order: null, title: '' },
-          ],
-        },
-      ],
+      tasks: [],
     },
     {
       id: null,
       order: columnOrder.DONE,
-      tasks: [
-        {
-          id: null,
-          order: null,
-          title: '',
-          description: '',
-          subtasks: [
-            { id: null, order: null, title: '' },
-          ],
-        },
-      ],
+      tasks: [],
     },
   ],
 };

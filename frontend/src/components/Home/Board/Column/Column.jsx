@@ -38,6 +38,7 @@ const Column = ({
                   description={task.description}
                   order={task.order}
                   handleActivate={handleActivate}
+                  subtasks={task.subtasks}
                 />
               ))}
 

@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import { Row } from 'react-bootstrap';
 import { DragDropContext } from 'react-beautiful-dnd';
 
-import AppContext from '../../../AppContext';
 import Column from './Column/Column';
+import AppContext from '../../../AppContext';
 
 import './board.sass';
 

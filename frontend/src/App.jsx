@@ -17,7 +17,7 @@ import {
   getColumns,
   getTasks,
   getSubtasks,
-} from './misc/apiCalls';
+} from './misc/api';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
@@ -32,8 +32,7 @@ const App = () => {
     isAuthenticated: false,
   });
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
-
-  useEffect(async () => {
+  const loadActiveBoard = async () => {
     try {
       const user = await verifyToken();
       setCurrentUser(user);
@@ -77,9 +76,11 @@ const App = () => {
         )),
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
-  }, []);
+  };
+
+  useEffect(() => loadActiveBoard(), []);
 
   return (
     <AppContext.Provider
@@ -88,6 +89,7 @@ const App = () => {
         setCurrentUser,
         activeBoard,
         setActiveBoard,
+        loadActiveBoard,
       }}
     >
       <Router className="App">
