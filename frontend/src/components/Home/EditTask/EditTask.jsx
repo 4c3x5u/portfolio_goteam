@@ -29,17 +29,14 @@ const EditTask = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const patchData = {
-      id,
-      data: {
-        title: newTitle,
-        description: newDescription,
-        column: activeBoard.columns[0].id,
-        subtasks: newSubtasks.list,
-      },
+    const data = {
+      title: newTitle,
+      description: newDescription,
+      column: activeBoard.columns[0].id,
+      subtasks: newSubtasks.list,
     };
 
-    patchTask(patchData).then((res) => {
+    patchTask(id, data).then((res) => {
       loadBoard();
       toggleOff();
       console.log(res.msg);

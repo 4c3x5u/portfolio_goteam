@@ -11,18 +11,15 @@ import './subtask.sass';
 const Subtask = ({ id, title, done }) => {
   const { loadBoard } = useContext(AppContext);
 
-  const check = (subtaskId) => {
-    console.log(`SUBTASK ID: ${subtaskId}`);
-
-    patchSubtask({
-      id: subtaskId,
-      data: { done: !done },
+  const check = (subtaskId) => (
+    patchSubtask(subtaskId, {
+      done: !done,
     }).then(() => (
       loadBoard()
     )).catch((err) => (
       console.error(err)
-    ));
-  };
+    ))
+  );
 
   return (
     <li className="Subtask">

@@ -63,17 +63,19 @@ def subtasks(request):
         if authorization_response:
             return authorization_response
 
-        subtask_id = request.data.get('id')
+        subtask_id = request.query_params.get('id')
         if not subtask_id:
             return Response({
                 'id': ErrorDetail(string='Subtask ID cannot be empty.',
                                   code='blank')
             }, 400)
 
-        data = request.data.get('data')
+        data = request.data
+
         if not data:
             return Response({
-                'data': ErrorDetail(string='Data cannot be empty.', code='blank')
+                'data': ErrorDetail(string='Data cannot be empty.',
+                                    code='blank')
             }, 400)
 
         if 'title' in list(data.keys()) and not data.get('title'):
