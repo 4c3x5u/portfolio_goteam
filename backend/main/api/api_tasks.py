@@ -178,6 +178,15 @@ def tasks(request):
                                        code='blank')
             }, 400)
 
+        try:
+            int(task_id)
+        except ValueError:
+            return Response({
+                'task_id': ErrorDetail(string='Task ID must be a number.',
+                                       code='invalid')
+            }, 400)
+
+
         Task.objects.get(id=task_id).delete()
         return Response({
             'msg': 'Task deleted successfully.',
