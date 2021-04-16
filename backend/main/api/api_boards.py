@@ -42,8 +42,14 @@ def boards(request):
         return authentication_response
 
     if request.method == 'GET':
-        board_id = request.query_params.get('id')
-        if board_id:
+        if 'id' in request.query_params.keys():
+            board_id = request.query_params.get('id')
+            if not board_id:
+                return Response({
+                    'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                            code='blank')
+                }, 400)
+
             # if board ID is passed in, return a single board with all its
             # columns, tasks, and subtasks as a nested structure
             board = Board.objects.get(id=board_id)
