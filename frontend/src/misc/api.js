@@ -20,15 +20,18 @@ const getAuthHeaders = () => ({
   },
 });
 
-export const getBoards = (teamId) => axios.get(
-  `${process.env.REACT_APP_BACKEND_URL}/boards/?team_id=${teamId}`,
-  getAuthHeaders(),
-);
+export const getBoards = (boardId, teamId) => {
+  let queryString = '';
+  if (boardId || teamId) { queryString += '?'; }
+  if (boardId) { queryString += `id=${boardId}`; }
+  if (boardId && teamId) { queryString += '&'; }
+  if (teamId) { queryString += `team_id=${teamId}`; }
 
-export const getBoard = (boardId) => axios.get(
-  `${process.env.REACT_APP_BACKEND_URL}/boards/?id=${boardId}`,
-  getAuthHeaders(),
-);
+  return axios.get(
+    `${process.env.REACT_APP_BACKEND_URL}/boards/${queryString}`,
+    getAuthHeaders(),
+  );
+};
 
 export const postBoard = (board) => axios.post(
   `${process.env.REACT_APP_BACKEND_URL}/boards/`,
