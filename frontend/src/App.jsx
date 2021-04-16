@@ -34,7 +34,6 @@ const App = () => {
   });
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
-
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     try {
