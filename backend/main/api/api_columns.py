@@ -76,6 +76,7 @@ def columns(request):
         column = Column.objects.get(id=column_id)
 
         tasks = request.data
+
         for task in tasks:
             try:
                 task_id = task.pop('id')
@@ -86,7 +87,7 @@ def columns(request):
                 }, 400)
 
             serializer = TaskSerializer(Task.objects.get(id=task_id),
-                                        data=task,
+                                        data={**task, 'column': column.id},
                                         partial=True)
             if not serializer.is_valid():
                 return Response(serializer.errors, 400)

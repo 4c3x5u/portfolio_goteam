@@ -1,12 +1,12 @@
 import { createContext } from 'react';
-import activeBoardInit from './misc/activeBoardInit';
 
 const AppContext = createContext({
   user: {},
   boards: [],
-  activeBoard: activeBoardInit,
+  activeBoard: {},
   loadBoard: () => {},
   isLoading: false,
+  setIsLoading: () => {},
 });
 
 export default AppContext;
