@@ -71,9 +71,7 @@ const EditTask = ({
           setValue={setNewDescription}
         />
 
-        {newSubtasks.length > 0 && (
-          <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
-        )}
+        <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
 
         <div className="ButtonWrapper">
           <Button className="Button" type="submit" aria-label="submit">
