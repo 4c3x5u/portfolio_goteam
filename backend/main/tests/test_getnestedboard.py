@@ -1,10 +1,11 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column, Task, Subtask
 from ..util import new_member
 
 
 class GetNestedBoardTests(APITestCase):
-    endpoint = '/boards/?board_id='
+    endpoint = '/boards/?id='
 
     def setUp(self):
         self.team = Team.objects.create()
@@ -33,7 +34,7 @@ class GetNestedBoardTests(APITestCase):
             ) for i in range(0, 2)
         ]
 
-    def test_nested_success(self):
+    def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
@@ -63,3 +64,12 @@ class GetNestedBoardTests(APITestCase):
             self.assertEqual(subtasks[i].get('order'), self.subtasks[i].order)
             self.assertEqual(subtasks[i].get('done'), self.subtasks[i].done)
 
+    def test_board_id_blank(self):
+        response = self.client.get(self.endpoint,
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        })

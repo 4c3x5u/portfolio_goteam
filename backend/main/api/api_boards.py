@@ -42,7 +42,7 @@ def boards(request):
         return authentication_response
 
     if request.method == 'GET':
-        board_id = request.query_params.get('board_id')
+        board_id = request.query_params.get('id')
         if board_id:
             # if board ID is passed in, return a single board with all its
             # columns, tasks, and subtasks as a nested structure
