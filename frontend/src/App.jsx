@@ -45,7 +45,9 @@ const App = () => {
       const boardsRes = await getBoards(user.teamId);
       setBoards(boardsRes.data.boards);
 
-      const activeBoardId = boardId || boardsRes.data.boards[0].id;
+      const activeBoardId = (
+        boardId || activeBoard.id || boardsRes.data.boards[0].id
+      );
 
       // 2. Get the columns
       const columnsRes = await getColumns(activeBoardId);

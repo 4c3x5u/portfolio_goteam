@@ -154,7 +154,6 @@ def tasks(request):
                           'done': subtask['done']}
                 )
                 if not subtask_serializer.is_valid():
-                    task.delete()
                     return Response({
                         'subtask': subtask_serializer.errors
                     }, 400)
