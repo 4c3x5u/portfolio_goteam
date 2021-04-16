@@ -134,8 +134,8 @@ def tasks(request):
                 }, 400)
 
         subtasks = data.get('subtasks')
-
         'subtask' in list(data.keys()) and data.pop('subtasks')
+
         task_serializer = TaskSerializer(Task.objects.get(id=task_id),
                                          data=data,
                                          partial=True)

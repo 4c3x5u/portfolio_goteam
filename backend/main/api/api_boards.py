@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..serializers.ser_column import ColumnSerializer
-from ..models import Board
+from ..models import Board, Column, Task, Subtask
 from ..util import authenticate, authorize, validate_team_id
 
 
@@ -42,6 +42,43 @@ def boards(request):
         return authentication_response
 
     if request.method == 'GET':
+        board_id = request.query_params.get('board_id')
+        if board_id:
+            # if board ID is passed in, return a single board with all its
+            # columns, tasks, and subtasks as a nested structure
+            board = Board.objects.get(id=board_id)
+
+            columns = list(map(
+                lambda column: {
+                    'id': column.id,
+                    'order': column.order,
+                    'tasks': list(map(
+                        lambda task: {
+                            'id': task.id,
+                            'title': task.title,
+                            'description': task.description,
+                            'order': task.order,
+                            'subtasks': list(map(
+                                lambda subtask: {
+                                    'id': subtask.id,
+                                    'title': subtask.title,
+                                    'order': subtask.order,
+                                    'done': subtask.done
+                                },
+                                Subtask.objects.filter(task_id=task.id)
+                            ))
+                        },
+                        Task.objects.filter(column_id=column.id)
+                    ))
+                },
+                Column.objects.filter(board_id=board.id)
+            ))
+
+            return Response({
+                'id': board.id,
+                'columns': columns
+            }, 200)
+
         # validate team_id
         team_id = request.query_params.get('team_id')
         response = validate_team_id(team_id)
@@ -52,11 +89,13 @@ def boards(request):
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
             if not authorize(username):
-                create_board_response = create_board(team_id, 'New Board')
+                board, response = create_board(team_id, 'New Board')
+                if response:
+                    return response
 
                 # return a list containing only the new board
                 return Response({
-                    'boards': [{'id': create_board_response.id, 'name': create_board_response.name}]
+                    'boards': [{'id': board.id, 'name': board.name}]
                 }, 201)
 
             return Response({
