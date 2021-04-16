@@ -49,13 +49,13 @@ const App = () => {
 
       // 2. Get the columns
       const columnsRes = await getColumns(activeBoardId);
-      const columns = columnsRes.data.columns.sort((column) => column.order);
+      const { columns } = columnsRes.data;
 
       // 3. Get the tasks per column
       const rawTasksPerColumn = await Promise.all(
         columns.map(async (column) => {
           const tasksRes = await getTasks(column.id);
-          return tasksRes.data.tasks.sort((task) => task.order);
+          return tasksRes.data.tasks;
         }),
       );
 
@@ -73,13 +73,16 @@ const App = () => {
       // 5. Set the active board
       setActiveBoard({
         id: activeBoardId,
-        columns: columns.sort((column) => column.order).map((column, i) => (
-          {
-            id: column.id,
-            order: columnOrder.parseInt(column.order),
-            tasks: tasksPerColumn[i],
-          }
-        )),
+        columns: columns
+          .sort((c1, c2) => c1.order - c2.order)
+          .map((column) => (
+            {
+              id: column.id,
+              order: columnOrder.parseInt(column.order),
+              tasks: tasksPerColumn[column.order]
+                .sort((t1, t2) => t1.order - t2.order),
+            }
+          )),
       });
     } catch (err) {
       console.error(err);
@@ -97,6 +100,7 @@ const App = () => {
         activeBoard,
         loadBoard,
         isLoading,
+        setIsLoading,
       }}
     >
       <Router className="App">

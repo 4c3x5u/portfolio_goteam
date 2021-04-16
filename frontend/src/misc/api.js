@@ -41,6 +41,12 @@ export const getColumns = (boardId) => axios.get(
   getAuthHeaders(),
 );
 
+export const patchColumn = (columnId, data) => axios.patch(
+  `${process.env.REACT_APP_BACKEND_URL}/columns/?id=${columnId}`,
+  data,
+  getAuthHeaders(),
+);
+
 export const getTasks = (columnId) => axios.get(
   `${process.env.REACT_APP_BACKEND_URL}/tasks/?column_id=${columnId}`,
   getAuthHeaders(),

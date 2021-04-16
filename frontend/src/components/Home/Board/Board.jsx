@@ -6,15 +6,18 @@ import { DragDropContext } from 'react-beautiful-dnd';
 
 import Column from './Column/Column';
 import AppContext from '../../../AppContext';
+import { patchColumn } from '../../../misc/api';
 
 import './board.sass';
 
 const Board = ({ handleActivate }) => {
-  const { activeBoard } = useContext(AppContext);
+  const { activeBoard, loadBoard, setIsLoading } = useContext(AppContext);
 
   // TODO: API call to the database here inside a useEffect
 
-  const handleOnDragEnd = (result) => {
+  const handleOnDragEnd = async (result) => {
+    setIsLoading(true);
+
     if (!result.destination) return;
 
     const source = activeBoard.columns.find(
@@ -23,12 +26,15 @@ const Board = ({ handleActivate }) => {
 
     const [item] = source.tasks.splice(result.source.index, 1);
 
-    const newSource = {
-      ...source,
-      tasks: source.tasks.map(
-        (task, index) => ({ ...task, order: index }),
-      ),
-    };
+    const sourceTasks = source.tasks.map(
+      (task, index) => ({ ...task, order: index }),
+    );
+
+    try {
+      await patchColumn(source.id, sourceTasks);
+    } catch (err) {
+      console.error(err);
+    }
 
     const destination = activeBoard.columns.find(
       (column) => column.id.toString() === result.destination.droppableId,
@@ -36,25 +42,17 @@ const Board = ({ handleActivate }) => {
 
     destination.tasks.splice(result.destination.index, 0, item);
 
-    const newDestination = {
-      ...destination,
-      tasks: destination.tasks.map(
-        (task, index) => ({ ...task, order: index }),
-      ),
-    };
-
-    const newColumns = (
-      activeBoard.columns.map((column) => {
-        switch (column.id) {
-          case destination.id: return newDestination;
-          case source.id: return newSource;
-          default: return column;
-        }
-      })
+    const destinationTasks = destination.tasks.map(
+      (task, index) => ({ ...task, order: index }),
     );
 
-    // TODO: handle
-    console.log({ ...activeBoard, columns: newColumns });
+    try {
+      await patchColumn(destination.id, destinationTasks);
+    } catch (err) {
+      console.error(err);
+    }
+
+    await loadBoard(activeBoard.id);
   };
 
   return (
