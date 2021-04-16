@@ -61,7 +61,7 @@ const Board = ({ handleActivate }) => {
         {activeBoard.columns.map((column) => (
           <Column
             id={column.id}
-            name={column.order}
+            order={column.order}
             tasks={column.tasks}
             handleActivate={handleActivate}
           />

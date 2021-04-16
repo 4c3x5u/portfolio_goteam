@@ -14,14 +14,11 @@ import activeBoardInit from './misc/activeBoardInit';
 import {
   verifyToken,
   getBoards,
-  getColumns,
-  getTasks,
-  getSubtasks,
+  getBoard,
 } from './misc/api';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
-import columnOrder from './components/Home/Board/Column/columnOrder';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -48,43 +45,52 @@ const App = () => {
         boardId || activeBoard.id || boardsRes.data.boards[0].id
       );
 
-      // 2. Get the columns
-      const columnsRes = await getColumns(activeBoardId);
-      const { columns } = columnsRes.data;
+      const boardRes = await getBoard(activeBoardId);
 
-      // 3. Get the tasks per column
-      const rawTasksPerColumn = await Promise.all(
-        columns.map(async (column) => {
-          const tasksRes = await getTasks(column.id);
-          return tasksRes.data.tasks;
-        }),
-      );
+      console.log(`COLUMNS: ${JSON.stringify(boardRes.data.columns)}`);
 
-      // 4. Get the subtasks and feed them into tasks
-      const tasksPerColumn = await Promise.all(
-        rawTasksPerColumn.map(async (tasks) => (
-          Promise.all(tasks.map(async (task) => {
-            const subtasksRes = await getSubtasks(task.id);
-            const { subtasks } = subtasksRes.data;
-            return { ...task, subtasks };
-          }))
-        )),
-      );
-
-      // 5. Set the active board
       setActiveBoard({
-        id: activeBoardId,
-        columns: columns
-          .sort((c1, c2) => c1.order - c2.order)
-          .map((column) => (
-            {
-              id: column.id,
-              order: columnOrder.parseInt(column.order),
-              tasks: tasksPerColumn[column.order]
-                .sort((t1, t2) => t1.order - t2.order),
-            }
-          )),
+        id: boardRes.data.id,
+        columns: boardRes.data.columns,
       });
+
+      // // 2. Get the columns
+      // const columnsRes = await getColumns(activeBoardId);
+      // const { columns } = columnsRes.data;
+      //
+      // // 3. Get the tasks per column
+      // const rawTasksPerColumn = await Promise.all(
+      //   columns.map(async (column) => {
+      //     const tasksRes = await getTasks(column.id);
+      //     return tasksRes.data.tasks;
+      //   }),
+      // );
+      //
+      // // 4. Get the subtasks and feed them into tasks
+      // const tasksPerColumn = await Promise.all(
+      //   rawTasksPerColumn.map(async (tasks) => (
+      //     Promise.all(tasks.map(async (task) => {
+      //       const subtasksRes = await getSubtasks(task.id);
+      //       const { subtasks } = subtasksRes.data;
+      //       return { ...task, subtasks };
+      //     }))
+      //   )),
+      // );
+      //
+      // // 5. Set the active board
+      // setActiveBoard({
+      //   id: activeBoardId,
+      //   columns: columns
+      //     .sort((c1, c2) => c1.order - c2.order)
+      //     .map((column) => (
+      //       {
+      //         id: column.id,
+      //         order: columnOrder.parseInt(column.order),
+      //         tasks: tasksPerColumn[column.order]
+      //           .sort((t1, t2) => t1.order - t2.order),
+      //       }
+      //     )),
+      // });
     } catch (err) {
       console.error(err);
     }
