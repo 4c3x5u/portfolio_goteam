@@ -64,57 +64,19 @@ def boards(request):
         return authentication_response
 
     if request.method == 'GET':
-        if 'id' in request.query_params.keys():
-            board_id = request.query_params.get('id')
-
-            board, response = validate_board_id(board_id)
-            if response:
-                return response
-
-            columns = list(map(
-                lambda column: {
-                    'id': column.id,
-                    'order': column.order,
-                    'tasks': list(map(
-                        lambda task: {
-                            'id': task.id,
-                            'title': task.title,
-                            'description': task.description,
-                            'order': task.order,
-                            'subtasks': list(map(
-                                lambda subtask: {
-                                    'id': subtask.id,
-                                    'title': subtask.title,
-                                    'order': subtask.order,
-                                    'done': subtask.done
-                                },
-                                Subtask.objects.filter(task_id=task.id)
-                            ))
-                        },
-                        Task.objects.filter(column_id=column.id)
-                    ))
-                },
-                Column.objects.filter(board_id=board.id)
-            ))
-
-            return Response({
-                'id': board.id,
-                'columns': columns
-            }, 200)
-
         # validate team_id
         team_id = request.query_params.get('team_id')
-        response = validate_team_id(team_id)
-        if response:
-            return response
+        validation_response = validate_team_id(team_id)
+        if validation_response:
+            return validation_response
 
         # create a board if none exists for the team
         team_boards = Board.objects.filter(team=team_id)
         if not team_boards:
             if not authorize(username):
-                board, response = create_board(team_id, 'New Board')
-                if response:
-                    return response
+                board, validation_response = create_board(team_id, 'New Board')
+                if validation_response:
+                    return validation_response
 
                 # return a list containing only the new board
                 return Response({
@@ -126,14 +88,45 @@ def boards(request):
                                        code='not_found')
             }, 404)
 
-        # return pre-existing boards
+        team_boards = list(map(lambda b: {'id': b['id'], 'name': b['name']},
+                               BoardSerializer(team_boards, many=True).data))
+
+        board_id = request.query_params.get('id') or team_boards[0]['id']
+
+        board, validation_response = validate_board_id(board_id)
+        if validation_response:
+            return validation_response
+
+        columns = list(map(
+            lambda column: {
+                'id': column.id,
+                'order': column.order,
+                'tasks': list(map(
+                    lambda task: {
+                        'id': task.id,
+                        'title': task.title,
+                        'description': task.description,
+                        'order': task.order,
+                        'subtasks': list(map(
+                            lambda subtask: {
+                                'id': subtask.id,
+                                'title': subtask.title,
+                                'order': subtask.order,
+                                'done': subtask.done
+                            },
+                            Subtask.objects.filter(task_id=task.id)
+                        ))
+                    },
+                    Task.objects.filter(column_id=column.id)
+                ))
+            },
+            Column.objects.filter(board_id=board.id)
+        ))
+
         return Response({
-            'boards': list(
-                map(
-                    lambda b: {'id': b['id'], 'name': b['name']},
-                    BoardSerializer(team_boards, many=True).data
-                )
-            )
+            'boards': team_boards,
+            'active_board': {'id': board.id,
+                             'columns': columns}
         }, 200)
 
     if request.method == 'POST':
@@ -143,9 +136,9 @@ def boards(request):
 
         # validate team_id
         team_id = request.data.get('team_id')
-        response = validate_team_id(team_id)
-        if response:
-            return response
+        validation_response = validate_team_id(team_id)
+        if validation_response:
+            return validation_response
 
         board_name = request.data.get('name')
 
@@ -166,9 +159,9 @@ def boards(request):
 
         board_id = request.query_params.get('id')
 
-        board, response = validate_board_id(board_id)
-        if response:
-            return response
+        board, validation_response = validate_board_id(board_id)
+        if validation_response:
+            return validation_response
         board.delete()
 
         return Response({
