@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column, Task, Subtask
-from ..util import new_member
+from ..util import new_member, not_authenticated_response
 
 
 class GetNestedBoardTests(APITestCase):
@@ -93,3 +93,31 @@ class GetNestedBoardTests(APITestCase):
             'board_id': ErrorDetail(string='Board not found.',
                                     code='not_found')
         })
+
+    def test_auth_token_empty(self):
+        response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_blank(self):
+        response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
+                                   HTTP_AUTH_USER='invalidio',
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
