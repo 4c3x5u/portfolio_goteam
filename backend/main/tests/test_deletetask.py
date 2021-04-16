@@ -65,7 +65,6 @@ class DeleteTaskTests(APITestCase):
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
-
     def test_auth_token_empty(self):
         response = self.client.delete(f'{self.endpoint}{self.task.id}',
                                       HTTP_AUTH_USER=self.admin['username'],
