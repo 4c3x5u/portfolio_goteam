@@ -7,29 +7,51 @@ from ..models import Board, Column, Task, Subtask
 from ..util import authenticate, authorize, validate_team_id
 
 
-def create_board(team_id, name):
-    # create board
-    response = None
-    board = None
-
+def create_board(team_id, name):  # -> (board, response)
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
-        response = Response(board_serializer.errors, 400)
-    else:
-        board = board_serializer.save()
+        return None, Response(board_serializer.errors, 400)
 
-        # create four columns for the board
-        for order in range(0, 4):
-            column_serializer = ColumnSerializer(
-                data={'board': board.id, 'order': order}
+    board = board_serializer.save()
+
+    # create four columns for the board
+    for order in range(0, 4):
+        column_serializer = ColumnSerializer(
+            data={'board': board.id, 'order': order}
+        )
+        if not column_serializer.is_valid():
+            return board, Response(
+                column_serializer.errors, 400
             )
-            if not column_serializer.is_valid():
-                response = Response(
-                    column_serializer.errors, 400
-                ) if not response else response
-            column_serializer.save()
+        column_serializer.save()
 
-    return board, response
+    return board, None
+
+
+def validate_board_id(board_id):  # -> (board, response)
+    if not board_id:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        }, 400)
+
+    try:
+        int(board_id)
+    except ValueError:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board ID must be a number.',
+                                    code='invalid')
+        }, 400)
+
+    try:
+        board = Board.objects.get(id=board_id)
+    except Board.DoesNotExist:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
+        }, 404)
+
+    return board, None
 
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -44,15 +66,10 @@ def boards(request):
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
-            if not board_id:
-                return Response({
-                    'board_id': ErrorDetail(string='Board ID cannot be empty.',
-                                            code='blank')
-                }, 400)
 
-            # if board ID is passed in, return a single board with all its
-            # columns, tasks, and subtasks as a nested structure
-            board = Board.objects.get(id=board_id)
+            board, response = validate_board_id(board_id)
+            if response:
+                return response
 
             columns = list(map(
                 lambda column: {
@@ -149,27 +166,10 @@ def boards(request):
 
         board_id = request.query_params.get('id')
 
-        if not board_id:
-            return Response({
-                'board_id': ErrorDetail(string='Board ID cannot be empty.',
-                                        code='blank')
-            }, 400)
-
-        try:
-            int(board_id)
-        except ValueError:
-            return Response({
-                'board_id': ErrorDetail(string='Board ID must be a number.',
-                                        code='invalid')
-            }, 400)
-
-        try:
-            Board.objects.get(id=board_id).delete()
-        except Board.DoesNotExist:
-            return Response({
-                'board_id': ErrorDetail(string='Board not found.',
-                                        code='not_found')
-            }, 404)
+        board, response = validate_board_id(board_id)
+        if response:
+            return response
+        board.delete()
 
         return Response({
             'msg': 'Board deleted successfully.',
