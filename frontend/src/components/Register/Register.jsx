@@ -32,14 +32,14 @@ const Register = () => {
     ));
 
     if (!errors.username && !errors.password && !errors.passwordConfirmation) {
-      UserAPI.register(username, password).then((res) => {
-        sessionStorage.setItem('username', res.data.username);
-        sessionStorage.setItem('auth-token', res.data.token);
-        loadBoard();
-      }).catch((err) => {
-        // TODO: Add toastr for server-side errors
-        console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
-      });
+      UserAPI
+        .register(username, password, passwordConfirmation)
+        .then((res) => {
+          sessionStorage.setItem('username', res.data.username);
+          sessionStorage.setItem('auth-token', res.data.token);
+          loadBoard();
+        })
+        .catch((err) => console.error(err)); // TODO: Toastr
     }
   };
 

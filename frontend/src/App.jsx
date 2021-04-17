@@ -37,9 +37,9 @@ const App = () => {
       const teamBoards = await BoardsAPI.get(null, user.teamId);
       setBoards(teamBoards.data);
 
-      const nestedBoard = await BoardsAPI.get(
-        boardId || activeBoard.id || teamBoards.data[0].id
-      );
+      const nestedBoard = await BoardsAPI.get((
+        teamBoards.data.length === 1 && teamBoards.data[0].id
+      ) || boardId || activeBoard.id);
 
       setActiveBoard(nestedBoard.data);
     } catch (err) {
