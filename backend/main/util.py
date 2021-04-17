@@ -1,6 +1,9 @@
 from main.models import Team, User
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
+from .serializers.ser_board import BoardSerializer
+from .serializers.ser_column import ColumnSerializer
+from .models import Board
 import bcrypt
 
 
@@ -87,5 +90,52 @@ def validate_team_id(team_id):
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
         }, 404)
+
+
+def create_board(team_id, name):  # -> (board, response)
+    board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
+    if not board_serializer.is_valid():
+        return None, Response(board_serializer.errors, 400)
+
+    board = board_serializer.save()
+
+    # create four columns for the board
+    for order in range(0, 4):
+        column_serializer = ColumnSerializer(
+            data={'board': board.id, 'order': order}
+        )
+        if not column_serializer.is_valid():
+            return board, Response(
+                column_serializer.errors, 400
+            )
+        column_serializer.save()
+
+    return board, None
+
+
+def validate_board_id(board_id):  # -> (board, response)
+    if not board_id:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        }, 400)
+
+    try:
+        int(board_id)
+    except ValueError:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board ID must be a number.',
+                                    code='invalid')
+        }, 400)
+
+    try:
+        board = Board.objects.get(id=board_id)
+    except Board.DoesNotExist:
+        return None, Response({
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
+        }, 404)
+
+    return board, None
 
 

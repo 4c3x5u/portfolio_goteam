@@ -2,59 +2,13 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
-from ..serializers.ser_column import ColumnSerializer
 from ..models import Board, Column, Task, Subtask
-from ..util import authenticate, authorize, validate_team_id
+from ..util import (
+    authenticate, authorize, validate_team_id, validate_board_id, create_board
+)
 
 
-def create_board(team_id, name):  # -> (board, response)
-    board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
-    if not board_serializer.is_valid():
-        return None, Response(board_serializer.errors, 400)
-
-    board = board_serializer.save()
-
-    # create four columns for the board
-    for order in range(0, 4):
-        column_serializer = ColumnSerializer(
-            data={'board': board.id, 'order': order}
-        )
-        if not column_serializer.is_valid():
-            return board, Response(
-                column_serializer.errors, 400
-            )
-        column_serializer.save()
-
-    return board, None
-
-
-def validate_board_id(board_id):  # -> (board, response)
-    if not board_id:
-        return None, Response({
-            'board_id': ErrorDetail(string='Board ID cannot be empty.',
-                                    code='blank')
-        }, 400)
-
-    try:
-        int(board_id)
-    except ValueError:
-        return None, Response({
-            'board_id': ErrorDetail(string='Board ID must be a number.',
-                                    code='invalid')
-        }, 400)
-
-    try:
-        board = Board.objects.get(id=board_id)
-    except Board.DoesNotExist:
-        return None, Response({
-            'board_id': ErrorDetail(string='Board not found.',
-                                    code='not_found')
-        }, 404)
-
-    return board, None
-
-
-@api_view(['GET', 'POST', 'DELETE'])
+@api_view(['GET', 'POST', 'DELETE', 'PATCH'])
 def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -66,9 +20,9 @@ def boards(request):
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
-            board, response = validate_board_id(board_id)
-            if response:
-                return response
+            board, validation_response = validate_board_id(board_id)
+            if validation_response:
+                return validation_response
 
             columns = list(map(
                 lambda column: {
@@ -99,17 +53,17 @@ def boards(request):
 
         if 'team_id' in request.query_params.keys():
             team_id = request.query_params.get('team_id')
-            response = validate_team_id(team_id)
-            if response:
-                return response
+            validation_response = validate_team_id(team_id)
+            if validation_response:
+                return validation_response
 
             # create a board if none exists for the team
             queryset = Board.objects.filter(team=team_id)
             if not queryset:
                 if not authorize(username):
-                    board, response = create_board(team_id, 'New Board')
-                    if response:
-                        return response
+                    board, create_response = create_board(team_id, 'New Board')
+                    if create_response:
+                        return create_response
 
                     # return a list containing only the new board
                     return Response([{
@@ -144,15 +98,15 @@ def boards(request):
 
         # validate team_id
         team_id = request.data.get('team_id')
-        response = validate_team_id(team_id)
-        if response:
-            return response
+        validation_response = validate_team_id(team_id)
+        if validation_response:
+            return validation_response
 
         board_name = request.data.get('name')
 
-        board, create_board_response = create_board(team_id, board_name)
-        if create_board_response:
-            return create_board_response
+        board, create_response = create_board(team_id, board_name)
+        if create_response:
+            return create_response
 
         # return success response
         return Response({
@@ -167,12 +121,26 @@ def boards(request):
 
         board_id = request.query_params.get('id')
 
-        board, response = validate_board_id(board_id)
-        if response:
-            return response
+        board, validation_response = validate_board_id(board_id)
+        if validation_response:
+            return validation_response
         board.delete()
 
         return Response({
             'msg': 'Board deleted successfully.',
             'id': board_id,
         })
+
+    if request.method == 'PATCH':
+        board_id = request.query_params.get('id')
+        serializer = BoardSerializer(Board.objects.get(id=board_id),
+                                     data=request.data,
+                                     partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                'msg': 'Board updated successfuly.',
+                'id': serializer.data['id'],
+            }, 200)
+
+
