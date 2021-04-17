@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team
-from ..util import new_admin
+from ..util import new_admin, new_member, not_authenticated_response
 
 
 class PatchBoardTests(APITestCase):
@@ -10,6 +10,7 @@ class PatchBoardTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
         self.admin = new_admin(team)
+        self.member = new_member(team)
         self.board = Board.objects.create(name='Some Board',
                                           team=team)
 
@@ -64,3 +65,53 @@ class PatchBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')
+
+    def test_auth_user_empty(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER='',
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER='invalidusername',
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_empty(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpajfosia')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_unauthorized(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER=self.member['username'],
+                                     HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='The user is not an admin.',
+                                code='not_authorized')
+        })
+
+
+
