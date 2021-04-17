@@ -133,9 +133,11 @@ def boards(request):
 
     if request.method == 'PATCH':
         board_id = request.query_params.get('id')
-        serializer = BoardSerializer(Board.objects.get(id=board_id),
-                                     data=request.data,
-                                     partial=True)
+        board, validation_response = validate_board_id(board_id)
+        if validation_response:
+            return validation_response
+
+        serializer = BoardSerializer(board, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({
