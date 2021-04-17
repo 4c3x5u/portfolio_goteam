@@ -63,8 +63,9 @@ const DeleteTask = ({
           <Col className="ButtonCol">
             <Button
               className="Button CancelButton"
-              type="submit"
-              aria-label="submit"
+              type="button"
+              aria-label="cancel"
+              onClick={toggleOff}
             >
               CANCEL
             </Button>
