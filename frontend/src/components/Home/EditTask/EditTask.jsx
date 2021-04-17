@@ -4,7 +4,9 @@ jsx-a11y/no-static-element-interactions */
 
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form } from 'react-bootstrap';
+import {
+  Button, Form, Row, Col,
+} from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
 import TasksAPI from '../../../api/TasksAPI';
@@ -69,11 +71,28 @@ const EditTask = ({
 
         <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
 
-        <div className="ButtonWrapper">
-          <Button className="Button" type="submit" aria-label="submit">
-            GO!
-          </Button>
-        </div>
+        <Row className="ButtonWrapper">
+          <Col className="ButtonCol">
+            <Button
+              className="Button CancelButton"
+              type="button"
+              aria-label="cancel"
+              onClick={toggleOff}
+            >
+              CANCEL
+            </Button>
+          </Col>
+
+          <Col className="ButtonCol">
+            <Button
+              className="Button GoButton"
+              type="submit"
+              aria-label="submit"
+            >
+              GO!
+            </Button>
+          </Col>
+        </Row>
       </Form>
     </div>
   );
