@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
-import UserAPI from '../../api/UserAPI';
+import AuthAPI from '../../api/AuthAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateRegisterForm from './validateRegisterForm';
 import inputType from '../../misc/inputType';
@@ -32,7 +32,7 @@ const Register = () => {
     ));
 
     if (!errors.username && !errors.password && !errors.passwordConfirmation) {
-      UserAPI
+      AuthAPI
         .register(username, password, passwordConfirmation)
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);

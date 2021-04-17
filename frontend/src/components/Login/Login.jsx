@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
-import UserAPI from '../../api/UserAPI';
+import AuthAPI from '../../api/AuthAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import inputType from '../../misc/inputType';
 
@@ -17,7 +17,7 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    UserAPI
+    AuthAPI
       .login(username, password)
       .then((res) => {
         sessionStorage.setItem('username', res.data.username);

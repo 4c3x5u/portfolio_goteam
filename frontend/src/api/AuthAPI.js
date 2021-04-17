@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const UserAPI = {
+const AuthAPI = {
   login: (username, password) => (
     axios.post(`${process.env.REACT_APP_BACKEND_URL}/login/`, {
       username,
@@ -22,4 +22,4 @@ const UserAPI = {
   ),
 };
 
-export default UserAPI;
+export default AuthAPI;
