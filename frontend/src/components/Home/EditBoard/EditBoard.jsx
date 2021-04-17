@@ -2,7 +2,7 @@
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
@@ -13,22 +13,23 @@ import BoardsAPI from '../../../api/BoardsAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
 
-import logo from './deleteboard.svg';
-import './deleteboard.sass';
+import logo from './editboard.svg';
+import './editboard.sass';
 
-const DeleteBoard = ({ id, name, toggleOff }) => {
+const EditBoard = ({ id, name, toggleOff }) => {
   const { loadBoard } = useContext(AppContext);
+  const [newName, setNewName] = useState(name);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     BoardsAPI
-      .delete(id)
+      .patch(id, { name: newName })
       .then(() => { toggleOff(); loadBoard(); })
       .catch((err) => console.error(err)); // TODO: Toast
   };
 
   return (
-    <div className="DeleteBoard" onClick={toggleOff}>
+    <div className="EditBoard" onClick={toggleOff}>
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -41,8 +42,8 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
         <FormGroup
           type={inputType.TEXT}
           label="name"
-          value={name}
-          disabled
+          value={newName}
+          setValue={setNewName}
         />
 
         <Row className="ButtonWrapper">
@@ -72,10 +73,10 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
   );
 };
 
-DeleteBoard.propTypes = {
+EditBoard.propTypes = {
   id: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 
-export default DeleteBoard;
+export default EditBoard;
