@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
-from ..util import new_member
 
 
 class GetUsersTests(APITestCase):
@@ -29,3 +29,13 @@ class GetUsersTests(APITestCase):
             lambda user: {'username': user.username},
             self.users
         )))
+
+    def test_team_id_blank(self):
+        response = self.client.get(f'{self.endpoint}',
+                                   HTTP_AUTH_USER=self.users[0].username,
+                                   HTTP_AUTH_TOKEN=self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Team ID cannot be empty.',
+                                   code='blank')
+        })
