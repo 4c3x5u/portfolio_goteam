@@ -7,7 +7,8 @@ import {
 } from 'react-router-dom';
 
 import AppContext from './AppContext';
-import UserAPI from './api/UserAPI';
+import AuthAPI from './api/AuthAPI';
+import UsersAPI from './api/UsersAPI';
 import BoardsAPI from './api/BoardsAPI';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
@@ -25,18 +26,22 @@ const App = () => {
     isAdmin: false,
     isAuthenticated: false,
   });
+  const [members, setMembers] = useState([{ id: null, username: '' }]);
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
 
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     try {
-      const userResponse = await UserAPI.verifyToken();
+      const userResponse = await AuthAPI.verifyToken();
       delete userResponse.data.msg;
       setUser({ ...userResponse.data, isAuthenticated: true });
 
       const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
       setBoards(teamBoards.data);
+
+      const teamMembers = await UsersAPI.get(userResponse.data.teamId);
+      setMembers(teamMembers.data);
 
       const nestedBoard = await BoardsAPI.get((
         teamBoards.data.length === 1 && teamBoards.data[0].id
@@ -44,9 +49,6 @@ const App = () => {
 
       setActiveBoard(nestedBoard.data);
     } catch (err) {
-      setUser({ ...user, isAuthenticated: false });
-      sessionStorage.removeItem('username');
-      sessionStorage.removeItem('auth-token');
       console.error(err);
     }
     setIsLoading(false);
@@ -58,6 +60,7 @@ const App = () => {
     <AppContext.Provider
       value={{
         user,
+        members,
         boards,
         activeBoard,
         loadBoard,
