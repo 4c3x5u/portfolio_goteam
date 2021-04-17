@@ -55,9 +55,8 @@ const DeleteTask = ({
           disabled
         />
 
-        {subtasks.length > 0 && (
-          <EditSubtasks subtasks={{ list: subtasks }} />
-        )}
+        {subtasks.length > 0
+          && <EditSubtasks subtasks={{ list: subtasks }} />}
 
         <Row className="ButtonWrapper">
           <Col className="ButtonCol">

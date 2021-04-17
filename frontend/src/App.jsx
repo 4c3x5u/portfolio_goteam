@@ -19,22 +19,23 @@ import './app.sass';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState({
+  const [user, setUser] = useState({
     username: '',
-    token: '',
     teamId: null,
     isAdmin: false,
     isAuthenticated: false,
   });
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
+
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     try {
-      const user = await UserAPI.verifyToken();
-      setCurrentUser(user);
+      const userResponse = await UserAPI.verifyToken();
+      delete userResponse.data.msg;
+      setUser({ ...userResponse.data, isAuthenticated: true });
 
-      const teamBoards = await BoardsAPI.get(null, user.teamId);
+      const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
       setBoards(teamBoards.data);
 
       const nestedBoard = await BoardsAPI.get((
@@ -43,6 +44,9 @@ const App = () => {
 
       setActiveBoard(nestedBoard.data);
     } catch (err) {
+      setUser({ ...user, isAuthenticated: false });
+      sessionStorage.removeItem('username');
+      sessionStorage.removeItem('auth-token');
       console.error(err);
     }
     setIsLoading(false);
@@ -53,7 +57,7 @@ const App = () => {
   return (
     <AppContext.Provider
       value={{
-        currentUser,
+        user,
         boards,
         activeBoard,
         loadBoard,
@@ -64,19 +68,19 @@ const App = () => {
       <Router className="App">
         <Switch>
           <Route exact path="/">
-            {currentUser.isAuthenticated
+            {user.isAuthenticated
               ? <Home />
               : <Redirect to="/login" />}
           </Route>
 
           <Route exact path="/login">
-            {!currentUser.isAuthenticated
+            {!user.isAuthenticated
               ? <Login />
               : <Redirect to="/" />}
           </Route>
 
           <Route exact path="/register">
-            {!currentUser.isAuthenticated
+            {!user.isAuthenticated
               ? <Register />
               : <Redirect to="/" />}
           </Route>
