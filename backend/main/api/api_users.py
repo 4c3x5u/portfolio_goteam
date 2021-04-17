@@ -2,16 +2,16 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import User
+from ..util import validate_team_id
 
 
 @api_view(['GET'])
 def users(request):
     team_id = request.query_params.get('team_id')
-    if not team_id:
-        return Response({
-            'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                   code='blank')
-        }, 400)
+
+    validation_response = validate_team_id(team_id)
+    if validation_response:
+        return validation_response
 
     users_queryset = User.objects.filter(team_id=team_id)
     return Response(list(map(
