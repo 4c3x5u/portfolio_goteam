@@ -1,40 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 
+import AppContext from '../../../../../../AppContext';
 import TeamControlsMenuItem from './Item/TeamControlsMenuItem';
 
 import './teamcontrolsmenu.sass';
 
 const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
-  const [items, setItems] = useState([]);
-
-  useEffect(() => (
-    // TODO: API call here to get items
-    setItems([
-      { id: 0, name: 'An Item', isActive: false },
-      { id: 1, name: 'An Active Item', isActive: true },
-    ])
-  ), []);
-
-  const toggleItemActive = (item, index) => (
-    // TODO: API call here to set items active
-    setItems(items.map((currentItem, i) => (
-      i === index
-        ? { ...currentItem, isActive: !currentItem.isActive }
-        : currentItem
-    )))
-  );
+  const { members } = useContext(AppContext);
 
   return (
     <div className="ControlsMenu">
-      {items.map((item, index) => (
+      {members.map((member) => (
         <TeamControlsMenuItem
-          id={item.id}
-          name={item.name}
-          isActive={item.isActive}
-          toggleActive={() => toggleItemActive(item, index)}
+          id={member.username}
+          name={member.username}
+          isActive={false}
+          toggleActive={() => {}}
           handleDelete={handleDelete}
         />
       ))}
