@@ -26,7 +26,7 @@ const App = () => {
     isAdmin: false,
     isAuthenticated: false,
   });
-  const [members, setMembers] = useState([{ id: null, username: '' }]);
+  const [members, setMembers] = useState([{ username: '', isActive: false }]);
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
 
@@ -40,12 +40,15 @@ const App = () => {
       const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
       setBoards(teamBoards.data);
 
-      const teamMembers = await UsersAPI.get(userResponse.data.teamId);
-      setMembers(teamMembers.data);
-
       const nestedBoard = await BoardsAPI.get((
         teamBoards.data.length === 1 && teamBoards.data[0].id
       ) || boardId || activeBoard.id);
+
+      const teamMembers = await UsersAPI.get(
+        userResponse.data.teamId,
+        nestedBoard.data.id,
+      );
+      setMembers(teamMembers.data);
 
       setActiveBoard(nestedBoard.data);
     } catch (err) {
