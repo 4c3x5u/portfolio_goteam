@@ -4,7 +4,9 @@ jsx-a11y/click-events-have-key-events */
 
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Form } from 'react-bootstrap';
+import {
+  Button, Col, Form, Row,
+} from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
 import TasksAPI from '../../../api/TasksAPI';
@@ -62,11 +64,28 @@ const CreateTask = ({ toggleOff }) => {
 
         <AddSubtasks subtasks={subtasks} setSubtasks={setSubtasks} />
 
-        <div className="ButtonWrapper">
-          <Button className="Button" type="submit" aria-label="submit">
-            GO!
-          </Button>
-        </div>
+        <Row className="ButtonWrapper">
+          <Col className="ButtonCol">
+            <Button
+              className="Button CancelButton"
+              type="button"
+              aria-label="cancel"
+              onClick={toggleOff}
+            >
+              CANCEL
+            </Button>
+          </Col>
+
+          <Col className="ButtonCol">
+            <Button
+              className="Button GoButton"
+              type="submit"
+              aria-label="submit"
+            >
+              GO!
+            </Button>
+          </Col>
+        </Row>
       </Form>
     </div>
   );
