@@ -27,6 +27,8 @@ export const getBoards = (boardId, teamId) => {
   if (boardId && teamId) { queryString += '&'; }
   if (teamId) { queryString += `team_id=${teamId}`; }
 
+  console.log(`QUERY STRING: ${queryString}`);
+
   return axios.get(
     `${process.env.REACT_APP_BACKEND_URL}/boards/${queryString}`,
     getAuthHeaders(),
