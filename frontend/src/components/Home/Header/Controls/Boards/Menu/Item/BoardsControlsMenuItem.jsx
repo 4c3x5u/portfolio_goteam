@@ -7,7 +7,7 @@ import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
 import './boardscontrolsmenuitem.sass';
 
 const BoardsControlsMenuItem = ({
-  id, name, isActive, toggleActive, handleDelete,
+  id, name, isActive, toggleActive, handleDelete, handleEdit,
 }) => {
   const MENU_ID = `item-${id}`;
 
@@ -36,6 +36,12 @@ const BoardsControlsMenuItem = ({
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
           className="ContextMenuItem"
+          onClick={() => handleEdit({ id, name })}
+        >
+          <span>EDIT</span>
+        </Item>
+        <Item
+          className="ContextMenuItem"
           onClick={() => handleDelete({ id, name })}
         >
           <span>DELETE</span>
@@ -51,7 +57,8 @@ BoardsControlsMenuItem.propTypes = {
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
   toggleActive: PropTypes.func.isRequired,
-  handleDelete: PropTypes.bool.isRequired,
+  handleDelete: PropTypes.func.isRequired,
+  handleEdit: PropTypes.func.isRequired,
 };
 
 export default BoardsControlsMenuItem;

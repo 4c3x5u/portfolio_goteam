@@ -8,7 +8,7 @@ import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 
 import './boardscontrolsmenu.sass';
 
-const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
+const BoardsControlMenu = ({ handleCreate, handleDelete, handleEdit }) => {
   const { boards, activeBoard, loadBoard } = useContext(AppContext);
 
   return (
@@ -20,6 +20,7 @@ const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
           isActive={board.id === activeBoard.id}
           toggleActive={() => loadBoard(board.id)}
           handleDelete={handleDelete}
+          handleEdit={handleEdit}
         />
       ))}
 
@@ -33,6 +34,7 @@ const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
 BoardsControlMenu.propTypes = {
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
+  handleEdit: PropTypes.func.isRequired,
 };
 
 export default BoardsControlMenu;

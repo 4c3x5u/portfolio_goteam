@@ -1,15 +1,16 @@
 const window = {
-  NONE: 0,
-  TEAM: 1,
-  INVITE_MEMBER: 2,
-  DELETE_MEMBER: 3,
-  BOARDS: 4,
-  CREATE_BOARD: 5,
-  DELETE_BOARD: 6,
-  CREATE_TASK: 7,
-  EDIT_TASK: 8,
-  DELETE_TASK: 9,
-  MODAL: 10,
+  NONE: 'none',
+  HELP: 'help',
+  TEAM: 'team',
+  INVITE_MEMBER: 'invite_member',
+  DELETE_MEMBER: 'delete_member',
+  BOARDS: 'boards',
+  CREATE_BOARD: 'create_board',
+  DELETE_BOARD: 'delete_board',
+  EDIT_BOARD: 'edit_board',
+  CREATE_TASK: 'create_task',
+  EDIT_TASK: 'edit_task',
+  DELETE_TASK: 'delete_task',
 };
 
 export default window;

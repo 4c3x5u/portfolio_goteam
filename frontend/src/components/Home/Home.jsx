@@ -9,14 +9,15 @@ import Spinner from './Spinner/Spinner';
 import Header from './Header/Header';
 import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
-import CreateTask from './CreateTask/CreateTask';
-import InviteMember from './Invite/Invite';
-import HelpModal from './Help/Help';
-import Footer from './Footer/Footer';
-import EditTask from './EditTask/EditTask';
-import DeleteTask from './DeleteTask/DeleteTask';
-import DeleteMember from './DeleteMember/DeleteMember';
 import DeleteBoard from './DeleteBoard/DeleteBoard';
+import EditBoard from './EditBoard/EditBoard';
+import CreateTask from './CreateTask/CreateTask';
+import DeleteTask from './DeleteTask/DeleteTask';
+import EditTask from './EditTask/EditTask';
+import InviteMember from './Invite/Invite';
+import Help from './Help/Help';
+import Footer from './Footer/Footer';
+import DeleteMember from './DeleteMember/DeleteMember';
 import window from '../../misc/window';
 
 import './home.sass';
@@ -43,6 +44,15 @@ const Home = () => {
       case window.DELETE_BOARD:
         return (
           <DeleteBoard
+            id={windowState.id}
+            name={windowState.name}
+            toggleOff={handleActivate(window.NONE)}
+          />
+        );
+
+      case window.EDIT_BOARD:
+        return (
+          <EditBoard
             id={windowState.id}
             name={windowState.name}
             toggleOff={handleActivate(window.NONE)}
@@ -86,8 +96,8 @@ const Home = () => {
           />
         );
 
-      case window.MODAL:
-        return <HelpModal toggleOff={handleActivate(window.NONE)} />;
+      case window.HELP:
+        return <Help toggleOff={handleActivate(window.NONE)} />;
 
       default:
         return <></>;
