@@ -24,10 +24,9 @@ const Column = ({
 
   return (
     <Col className="Col" xs={3}>
-      {console.log(`NAME: ${name}`)}
       <div
         className={
-          `Column ${name && name !== '' && capFirstLetterOf(name)}Column`
+          `Column ${name && capFirstLetterOf(name)}Column`
         }
       >
         <div className="Header">

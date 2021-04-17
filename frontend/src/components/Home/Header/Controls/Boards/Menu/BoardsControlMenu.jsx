@@ -13,7 +13,7 @@ const BoardsControlMenu = ({ handleCreate, handleDelete }) => {
 
   return (
     <div className="ControlsMenu">
-      {boards.map((board) => (
+      {boards.length > 0 && boards.map((board) => (
         <BoardsControlsMenuItem
           id={board.id}
           name={board.name}

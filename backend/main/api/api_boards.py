@@ -66,9 +66,9 @@ def boards(request):
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
-            board, validation_response = validate_board_id(board_id)
-            if validation_response:
-                return validation_response
+            board, response = validate_board_id(board_id)
+            if response:
+                return response
 
             columns = list(map(
                 lambda column: {
@@ -99,23 +99,22 @@ def boards(request):
 
         if 'team_id' in request.query_params.keys():
             team_id = request.query_params.get('team_id')
-            validation_response = validate_team_id(team_id)
-            if validation_response:
-                return validation_response
+            response = validate_team_id(team_id)
+            if response:
+                return response
 
             # create a board if none exists for the team
             queryset = Board.objects.filter(team=team_id)
             if not queryset:
                 if not authorize(username):
-                    board, validation_response = create_board(team_id,
-                                                              'New Board')
-                    if validation_response:
-                        return validation_response
+                    board, response = create_board(team_id, 'New Board')
+                    if response:
+                        return response
 
                     # return a list containing only the new board
-                    return Response({
-                        'boards': [{'id': board.id, 'name': board.name}]
-                    }, 201)
+                    return Response([{
+                        'id': board.id, 'name': board.name
+                    }], 201)
 
                 return Response({
                     'team_id': ErrorDetail(string='Boards not found.',
@@ -145,9 +144,9 @@ def boards(request):
 
         # validate team_id
         team_id = request.data.get('team_id')
-        validation_response = validate_team_id(team_id)
-        if validation_response:
-            return validation_response
+        response = validate_team_id(team_id)
+        if response:
+            return response
 
         board_name = request.data.get('name')
 
@@ -168,9 +167,9 @@ def boards(request):
 
         board_id = request.query_params.get('id')
 
-        board, validation_response = validate_board_id(board_id)
-        if validation_response:
-            return validation_response
+        board, response = validate_board_id(board_id)
+        if response:
+            return response
         board.delete()
 
         return Response({
