@@ -132,6 +132,10 @@ def boards(request):
         })
 
     if request.method == 'PATCH':
+        authorization_response = authorize(username)
+        if authorization_response:
+            return authorization_response
+
         board_id = request.query_params.get('id')
         board, validation_response = validate_board_id(board_id)
         if validation_response:

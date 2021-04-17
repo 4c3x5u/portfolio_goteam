@@ -43,7 +43,7 @@ class CreateBoardTests(APITestCase):
         self.assertEqual(Board.objects.count(), initial_boards_count)
         self.assertEqual(Column.objects.count(), initial_columns_count)
 
-    def test_user_not_admin(self):
+    def test_unauthorized(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.endpoint,
                                     {'team_id': self.team.id},
