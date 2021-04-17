@@ -20,9 +20,7 @@ class GetBoardsTests(APITestCase):
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 200)
-        boards = response.data.get('boards')
-        self.assertTrue(boards)
-        self.assertTrue(boards.count, 3)
+        self.assertTrue(len(response.data), 3)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_boards_not_found_member(self):
@@ -56,11 +54,8 @@ class GetBoardsTests(APITestCase):
                                    HTTP_AUTH_USER=user.username,
                                    HTTP_AUTH_TOKEN=token)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(len(response.data.get('boards')), 1)
-        self.assertEqual(
-            response.data.get('boards')[0].get('name'),
-            'New Board'
-        )
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0].get('name'), 'New Board')
         self.assertEqual(Board.objects.count(), initial_board_count + 1)
         self.assertEqual(Column.objects.count(), initial_columns_count + 4)
 

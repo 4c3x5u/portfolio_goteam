@@ -112,6 +112,3 @@ class PatchBoardTests(APITestCase):
             'auth': ErrorDetail(string='The user is not an admin.',
                                 code='not_authorized')
         })
-
-
-
