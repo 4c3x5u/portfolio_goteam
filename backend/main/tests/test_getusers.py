@@ -49,3 +49,13 @@ class GetUsersTests(APITestCase):
             'team_id': ErrorDetail(string='Team ID must be a number.',
                                    code='invalid')
         })
+
+    def test_team_not_found(self):
+        response = self.client.get(f'{self.endpoint}12412312',
+                                   HTTP_AUTH_USER=self.users[0].username,
+                                   HTTP_AUTH_TOKEN=self.token)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Team not found.',
+                                   code='not_found')
+        })
