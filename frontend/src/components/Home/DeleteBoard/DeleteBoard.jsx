@@ -9,9 +9,9 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
+import BoardsAPI from '../../../api/BoardsAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
-import { deleteBoard } from '../../../misc/api';
 
 import logo from './deleteboard.svg';
 import './deleteboard.sass';
@@ -21,7 +21,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    deleteBoard(id).then(() => {
+    BoardsAPI.delete(id).then(() => {
       toggleOff();
       loadBoard();
     }).catch((err) => {

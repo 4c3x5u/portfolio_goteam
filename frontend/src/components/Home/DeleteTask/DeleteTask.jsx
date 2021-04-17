@@ -9,10 +9,10 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
+import TasksAPI from '../../../api/TasksAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from '../EditTask/EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
-import { deleteTask } from '../../../misc/api';
 
 import logo from './deletetask.svg';
 import './deletetask.sass';
@@ -24,11 +24,9 @@ const DeleteTask = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    deleteTask(id)
-      .then(() => {
-        loadBoard();
-        toggleOff();
-      })
+    TasksAPI
+      .delete(id)
+      .then(() => { loadBoard(); toggleOff(); })
       .catch((err) => console.log(err)); // TODO: Toast
   };
 

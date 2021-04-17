@@ -7,10 +7,10 @@ import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
+import TasksAPI from '../../../api/TasksAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import AddSubtasks from './AddSubtasks/AddSubtasks';
 import inputType from '../../../misc/inputType';
-import { postTask } from '../../../misc/api';
 
 import logo from './createtask.svg';
 import './createtask.sass';
@@ -24,20 +24,15 @@ const CreateTask = ({ toggleOff }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // TODO: See if the ordering will work with this. If not, pass the order
-    //       manually
-    postTask({
-      title,
-      description,
-      column: activeBoard.columns[0].id,
-      subtasks: subtasks.list,
-    }).then((res) => {
-      loadBoard();
-      toggleOff();
-      console.log(res.msg);
-    }).catch((err) => {
-      console.error(err);
-    });
+    TasksAPI
+      .post({
+        title,
+        description,
+        column: activeBoard.columns[0].id,
+        subtasks: subtasks.list,
+      })
+      .then(() => { loadBoard(); toggleOff(); })
+      .catch((err) => console.error(err)); // TODO: Toast
   };
 
   return (

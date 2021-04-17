@@ -6,12 +6,13 @@ import {
   Redirect,
 } from 'react-router-dom';
 
+import AppContext from './AppContext';
+import UserAPI from './api/UserAPI';
+import BoardsAPI from './api/BoardsAPI';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
-import AppContext from './AppContext';
 import activeBoardInit from './misc/activeBoardInit';
-import { verifyToken, getBoards } from './misc/api';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
@@ -30,14 +31,14 @@ const App = () => {
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     try {
-      const user = await verifyToken();
+      const user = await UserAPI.verifyToken();
       setCurrentUser(user);
 
-      const teamBoards = await getBoards(null, user.teamId);
+      const teamBoards = await BoardsAPI.get(null, user.teamId);
       setBoards(teamBoards.data);
 
-      const nestedBoard = await getBoards(
-        boardId || activeBoard.id || teamBoards.data[0].id,
+      const nestedBoard = await BoardsAPI.get(
+        boardId || activeBoard.id || teamBoards.data[0].id
       );
 
       setActiveBoard(nestedBoard.data);

@@ -1,8 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import axios from 'axios';
 
 import AppContext from '../../AppContext';
+import UserAPI from '../../api/UserAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import inputType from '../../misc/inputType';
 
@@ -17,17 +17,14 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    axios.post(`${process.env.REACT_APP_BACKEND_URL}/login/`, {
-      username,
-      password,
-    }).then((res) => {
-      sessionStorage.setItem('username', res.data.username);
-      sessionStorage.setItem('auth-token', res.data.token);
-      loadBoard();
-    }).catch((err) => {
-      // TODO: Add toastr for server-side errors
-      console.error(`SERVER-SIDE ERROR: ${JSON.stringify(err)}`);
-    });
+    UserAPI
+      .login(username, password)
+      .then((res) => {
+        sessionStorage.setItem('username', res.data.username);
+        sessionStorage.setItem('auth-token', res.data.token);
+        loadBoard();
+      })
+      .catch((err) => console.error(err)); // TODO: Toast
   };
 
   return (
