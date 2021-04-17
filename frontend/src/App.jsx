@@ -33,16 +33,14 @@ const App = () => {
       const user = await verifyToken();
       setCurrentUser(user);
 
-      const boardsRes = await getBoards(
-        boardId || activeBoard.id,
-        user.teamId,
+      const teamBoards = await getBoards(null, user.teamId);
+      setBoards(teamBoards.data);
+
+      const nestedBoard = await getBoards(
+        boardId || activeBoard.id || teamBoards.data[0].id,
       );
 
-      setBoards(boardsRes.data.boards);
-      setActiveBoard({
-        id: boardsRes.data.active_board.id,
-        columns: boardsRes.data.active_board.columns,
-      });
+      setActiveBoard(nestedBoard.data);
     } catch (err) {
       console.error(err);
     }
