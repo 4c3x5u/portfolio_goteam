@@ -7,10 +7,10 @@ import PropTypes from 'prop-types';
 import { Button, Form } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
+import TasksAPI from '../../../api/TasksAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from './EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
-import { patchTask } from '../../../misc/api';
 
 import logo from './edittask.svg';
 import './edittask.sass';
@@ -36,14 +36,10 @@ const EditTask = ({
       subtasks: newSubtasks.list,
     };
 
-    patchTask(id, data)
-      .then(() => {
-        loadBoard();
-        toggleOff();
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    TasksAPI
+      .patch(id, data)
+      .then(() => { loadBoard(); toggleOff(); })
+      .catch((err) => console.error(err));
   };
 
   return (

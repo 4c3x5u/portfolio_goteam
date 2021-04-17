@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 import AppContext from '../../../../../../AppContext';
-import { patchSubtask } from '../../../../../../misc/api';
+import SubtasksAPI from '../../../../../../api/SubtasksAPI';
 
 import './subtask.sass';
 
@@ -12,13 +12,10 @@ const Subtask = ({ id, title, done }) => {
   const { loadBoard } = useContext(AppContext);
 
   const check = (subtaskId) => (
-    patchSubtask(subtaskId, {
-      done: !done,
-    }).then(() => (
-      loadBoard()
-    )).catch((err) => (
-      console.error(err)
-    ))
+    SubtasksAPI
+      .patch(subtaskId, { done: !done })
+      .then(() => loadBoard())
+      .catch((err) => console.error(err))
   );
 
   return (
@@ -28,11 +25,9 @@ const Subtask = ({ id, title, done }) => {
         onClick={() => check(id)}
         type="button"
       >
-        {
-          done
-            ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
-            : <FontAwesomeIcon className="CheckBox" icon={faSquare} />
-        }
+        {done
+          ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
+          : <FontAwesomeIcon className="CheckBox" icon={faSquare} />}
 
         {title}
       </button>

@@ -1,9 +1,9 @@
 import React, { useContext, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
-import axios from 'axios';
 
 import AppContext from '../../AppContext';
+import UserAPI from '../../api/UserAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import validateRegisterForm from './validateRegisterForm';
 import inputType from '../../misc/inputType';
@@ -32,11 +32,7 @@ const Register = () => {
     ));
 
     if (!errors.username && !errors.password && !errors.passwordConfirmation) {
-      axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
-        username,
-        password,
-        password_confirmation: passwordConfirmation,
-      }).then((res) => {
+      UserAPI.register(username, password).then((res) => {
         sessionStorage.setItem('username', res.data.username);
         sessionStorage.setItem('auth-token', res.data.token);
         loadBoard();
