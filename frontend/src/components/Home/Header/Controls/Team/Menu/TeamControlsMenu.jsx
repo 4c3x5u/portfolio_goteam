@@ -17,7 +17,7 @@ const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
         <TeamControlsMenuItem
           id={member.username}
           name={member.username}
-          isActive={false}
+          isActive={member.isActive}
           toggleActive={() => {}}
           handleDelete={handleDelete}
         />
