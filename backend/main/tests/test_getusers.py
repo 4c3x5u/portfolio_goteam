@@ -39,3 +39,13 @@ class GetUsersTests(APITestCase):
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
                                    code='blank')
         })
+
+    def test_team_id_invalid(self):
+        response = self.client.get(f'{self.endpoint}qwerty',
+                                   HTTP_AUTH_USER=self.users[0].username,
+                                   HTTP_AUTH_TOKEN=self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Team ID must be a number.',
+                                   code='invalid')
+        })
