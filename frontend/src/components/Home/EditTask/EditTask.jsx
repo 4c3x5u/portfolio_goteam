@@ -31,7 +31,7 @@ const EditTask = ({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const data = {
+    const taskData = {
       title: newTitle,
       description: newDescription,
       column: activeBoard.columns[0].id,
@@ -39,7 +39,7 @@ const EditTask = ({
     };
 
     TasksAPI
-      .patch(id, data)
+      .patch(id, taskData)
       .then(() => { loadBoard(); toggleOff(); })
       .catch((err) => console.error(err));
   };
