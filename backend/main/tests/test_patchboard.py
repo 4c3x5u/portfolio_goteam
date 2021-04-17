@@ -51,3 +51,16 @@ class PatchBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')
+
+    def test_board_not_found(self):
+        response = self.client.patch(f'{self.endpoint}1231231',
+                                     {'name': 'New Title'},
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
+        })
+        self.assertEqual(Board.objects.get(id=self.board.id).name,
+                         'Some Board')
