@@ -34,10 +34,11 @@ const Header = ({ activeWindow, handleActivate }) => (
             handleActivate={handleActivate(window.BOARDS)}
             handleCreate={handleActivate(window.CREATE_BOARD)}
             handleDelete={handleActivate(window.DELETE_BOARD)}
+            handleEdit={handleActivate(window.EDIT_BOARD)}
             icon={faChalkboardTeacher}
           />
 
-          <HelpToggler toggle={handleActivate(window.MODAL)} />
+          <HelpToggler toggle={handleActivate(window.HELP)} />
         </Row>
       </Container>
     </div>

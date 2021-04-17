@@ -8,7 +8,7 @@ import BoardsControlMenu from './Menu/BoardsControlMenu';
 import './boardscontrols.sass';
 
 const BoardsControls = ({
-  isActive, handleActivate, handleCreate, handleDelete, icon,
+  isActive, handleActivate, handleCreate, handleEdit, handleDelete, icon,
 }) => (
   <Col xs={4} className="BoardsControls">
     <button
@@ -26,6 +26,7 @@ const BoardsControls = ({
       <BoardsControlMenu
         handleCreate={handleCreate}
         handleDelete={handleDelete}
+        handleEdit={handleEdit}
       />
     )}
   </Col>
@@ -36,6 +37,7 @@ BoardsControls.propTypes = {
   handleActivate: PropTypes.func.isRequired,
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
+  handleEdit: PropTypes.func.isRequired,
   icon: PropTypes.string.isRequired,
 };
 

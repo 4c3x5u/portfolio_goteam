@@ -60,11 +60,11 @@ const EditBoard = ({ id, name, toggleOff }) => {
 
           <Col className="ButtonCol">
             <Button
-              className="Button DeleteButton"
+              className="Button GoButton"
               type="submit"
               aria-label="submit"
             >
-              DELETE
+              GO!
             </Button>
           </Col>
         </Row>
