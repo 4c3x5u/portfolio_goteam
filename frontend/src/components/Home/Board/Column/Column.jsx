@@ -24,11 +24,7 @@ const Column = ({
 
   return (
     <Col className="Col" xs={3}>
-      <div
-        className={
-          `Column ${name && capFirstLetterOf(name)}Column`
-        }
-      >
+      <div className={`Column ${name && capFirstLetterOf(name)}Column`}>
         <div className="Header">
           {name && name.toUpperCase()}
         </div>
@@ -40,20 +36,18 @@ const Column = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {tasks
-                .sort((task) => task.order)
-                .map((task) => (
-                  task && (
-                    <Task
-                      id={task.id}
-                      title={task.title}
-                      description={task.description}
-                      order={task.order}
-                      handleActivate={handleActivate}
-                      subtasks={task.subtasks}
-                    />
-                  )
-                ))}
+              {tasks.sort((task) => task.order).map((task) => (
+                task && (
+                  <Task
+                    id={task.id}
+                    title={task.title}
+                    description={task.description}
+                    order={task.order}
+                    handleActivate={handleActivate}
+                    subtasks={task.subtasks}
+                  />
+                )
+              ))}
 
               {provided.placeholder}
 
