@@ -71,6 +71,13 @@ def users(request):
 
     if request.method == 'DELETE':
         username = request.query_params.get('username')
+
+        if not username:
+            return Response({
+                'username': ErrorDetail(string='Username cannot be empty.',
+                                        code='blank')
+            }, 400)
+
         user = User.objects.get(username=username)
         user.delete()
         return Response({

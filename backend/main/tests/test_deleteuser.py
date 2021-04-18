@@ -25,14 +25,14 @@ class DeleteUserTests(APITestCase):
         })
         self.assertFalse(User.objects.filter(username=self.member['username']))
 
-    def test_username_empty(self):
+    def test_username_blank(self):
         response = self.delete_user('',
                                     self.admin['username'],
                                     self.admin['token'])
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='Username cannot be empty.',
                                     code='blank')
         })
-        self.assertFalse(User.objects.filter(username=self.member['username']))
+        self.assertTrue(User.objects.filter(username=self.member['username']))
 
