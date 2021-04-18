@@ -53,3 +53,17 @@ class PostUsersTests(APITestCase):
             'username': ErrorDetail(string='Username cannot be empty.',
                                     code='blank')
         })
+
+    def test_user_not_found(self):
+        response = self.postUser({
+            'username': 'adksjhdsak',
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.admin['username'], self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': ErrorDetail(string='User not found.',
+                                    code='not_found')
+        })
+
+
