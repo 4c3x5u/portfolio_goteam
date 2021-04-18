@@ -155,6 +155,11 @@ def validate_is_active(is_active):
                                      code='blank')
         }, 400)
 
-    is_active_bool = is_active.lower() == 'true'
+    is_active_lower = is_active.lower()
+    if is_active_lower != 'true' and is_active_lower != 'false':
+        return None, Response({
+            'is_active': ErrorDetail(string='Is Valid must be a boolean.',
+                                     code='invalid')
+        }, 400)
 
-    return is_active_bool, None
+    return is_active_lower == 'true', None
