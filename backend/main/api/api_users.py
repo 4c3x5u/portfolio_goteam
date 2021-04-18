@@ -42,10 +42,17 @@ def users(request):
                                         code='blank')
             }, 400)
 
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({
+                'username': ErrorDetail(string='User not found.',
+                                        code='not_found')
+            }, 400)
+
         board_id = request.data.get('board_id')
         is_active = request.data.get('is_active')
 
-        user = User.objects.get(username=username)
         board = Board.objects.get(id=board_id)
 
         if is_active == 'True':
