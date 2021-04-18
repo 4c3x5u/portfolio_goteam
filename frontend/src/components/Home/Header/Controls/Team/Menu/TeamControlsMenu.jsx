@@ -15,7 +15,6 @@ const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
     <div className="ControlsMenu">
       {members.map((member) => (
         <TeamControlsMenuItem
-          id={member.username}
           username={member.username}
           isAdmin={member.isAdmin}
           isActive={member.isActive}

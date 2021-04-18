@@ -2,7 +2,7 @@
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
@@ -10,13 +10,23 @@ import {
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
+import AppContext from '../../../AppContext';
+import UsersAPI from '../../../api/UsersAPI';
 
-import './deletemember.sass';
 import logo from './deletemember.svg';
+import './deletemember.sass';
 
-const DeleteMember = ({ id, username, toggleOff }) => {
-  // TODO: Delete member using the ID here
-  const handleSubmit = () => console.log(`Remove member ${id}`);
+const DeleteMember = ({ username, toggleOff }) => {
+  const { loadBoard } = useContext(AppContext);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    UsersAPI
+      .delete(username)
+      .then(() => { toggleOff(); loadBoard(); })
+      .catch((err) => console.error(err));
+  };
 
   return (
     <div className="DeleteMember" onClick={toggleOff}>
@@ -64,7 +74,6 @@ const DeleteMember = ({ id, username, toggleOff }) => {
 };
 
 DeleteMember.propTypes = {
-  id: PropTypes.number.isRequired,
   username: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };

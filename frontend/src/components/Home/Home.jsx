@@ -90,8 +90,7 @@ const Home = () => {
       case window.DELETE_MEMBER:
         return (
           <DeleteMember
-            id={windowState.id}
-            username={windowState.name}
+            username={windowState.username}
             toggleOff={handleActivate(window.NONE)}
           />
         );

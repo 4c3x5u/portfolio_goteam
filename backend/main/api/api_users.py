@@ -92,6 +92,7 @@ def users(request):
             }, 404)
 
         user.delete()
+
         return Response({
             'msg': 'Member has been deleted successfully.',
         }, 200)
