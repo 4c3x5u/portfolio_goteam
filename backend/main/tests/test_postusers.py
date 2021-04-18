@@ -122,7 +122,7 @@ class PostUsersTests(APITestCase):
         }, self.admin['username'], self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'is_active': ErrorDetail(string='Is Valid is invalid.',
+            'is_active': ErrorDetail(string='Is Valid must be a boolean.',
                                      code='invalid')
         })
 
