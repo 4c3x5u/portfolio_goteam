@@ -78,7 +78,14 @@ def users(request):
                                         code='blank')
             }, 400)
 
-        user = User.objects.get(username=username)
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({
+                'username': ErrorDetail(string='User is not found.',
+                                        code='not_found')
+            }, 404)
+
         user.delete()
         return Response({
             'msg': 'Member has been deleted successfully.',
