@@ -24,6 +24,7 @@ class PostUsersTests(APITestCase):
     def postUser(self, user_data, auth_user, auth_token):
         return self.client.post(f'/users/',
                                 user_data,
+                                format='json',
                                 HTTP_AUTH_USER=auth_user,
                                 HTTP_AUTH_TOKEN=auth_token)
 
