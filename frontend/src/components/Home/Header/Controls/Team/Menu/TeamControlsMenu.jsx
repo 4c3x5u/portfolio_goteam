@@ -16,9 +16,8 @@ const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
       {members.map((member) => (
         <TeamControlsMenuItem
           id={member.username}
-          name={member.username}
+          username={member.username}
           isActive={member.isActive}
-          toggleActive={() => {}}
           handleDelete={handleDelete}
         />
       ))}

@@ -33,24 +33,27 @@ const App = () => {
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     try {
+      // 1. set the current user
       const userResponse = await AuthAPI.verifyToken();
       delete userResponse.data.msg;
       setUser({ ...userResponse.data, isAuthenticated: true });
 
+      // 2. set boards lists
       const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
       setBoards(teamBoards.data);
 
+      // 3. set the active board
       const nestedBoard = await BoardsAPI.get((
         teamBoards.data.length === 1 && teamBoards.data[0].id
       ) || boardId || activeBoard.id);
+      setActiveBoard(nestedBoard.data);
 
+      // 4. set members list
       const teamMembers = await UsersAPI.get(
         userResponse.data.teamId,
         nestedBoard.data.id,
       );
       setMembers(teamMembers.data);
-
-      setActiveBoard(nestedBoard.data);
     } catch (err) {
       console.error(err);
     }
