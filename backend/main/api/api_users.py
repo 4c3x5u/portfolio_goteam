@@ -48,12 +48,13 @@ def users(request):
             return Response({
                 'username': ErrorDetail(string='User not found.',
                                         code='not_found')
-            }, 400)
+            }, 404)
 
-        board_id = request.data.get('board_id')
+        board, response = validate_board_id(request.data.get('board_id'))
+        if response:
+            return response
+
         is_active = request.data.get('is_active')
-
-        board = Board.objects.get(id=board_id)
 
         if is_active == 'True':
             board.user.add(user)
