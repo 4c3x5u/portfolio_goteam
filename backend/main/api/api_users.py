@@ -32,7 +32,8 @@ def users(request):
 
         return Response(list(map(
             lambda user: {'username': user.username,
-                          'isActive': user in board_users},
+                          'isActive': user in board_users,
+                          'isAdmin': user.is_admin},
             users_list
         )), 200)
 
