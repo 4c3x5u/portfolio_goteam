@@ -1,11 +1,16 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Team, User
+from ..models import Team, User, Board
 from ..util import not_authenticated_response, new_member
 
 
 class GetUsersTests(APITestCase):
-    endpoint = '/users/?team_id='
+    def get_users(self, team_id, board_id, auth_user, auth_token):
+        return self.client.get(
+            f'/users/?team_id={team_id}&board_id={board_id}',
+            HTTP_AUTH_USER=auth_user,
+            HTTP_AUTH_TOKEN=auth_token
+        )
 
     def setUp(self):
         self.team = Team.objects.create()
@@ -18,23 +23,26 @@ class GetUsersTests(APITestCase):
                 team=self.team
             ) for i in range(0, 3)
         ]
+        self.username = self.users[0].username
         self.token = '$2b$12$WLmxQnf9kbDoW/8jA6kfIO9TfchCiGphBpckS2oy755wtdT' \
                      'aIQsoq'
+        self.board = Board.objects.create(name='Board', team=self.team)
+        self.board.user.add(self.users[0])
 
     def test_success(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN=self.token)
+        response = self.get_users(self.team.id,
+                                  self.board.id,
+                                  self.username,
+                                  self.token)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, list(map(
-            lambda user: {'username': user.username},
-            self.users
+            lambda i_user: {'username': i_user[1].username,
+                            'isActive': i_user[0] == 0},
+            enumerate(self.users)
         )))
 
     def test_team_id_blank(self):
-        response = self.client.get(f'{self.endpoint}',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN=self.token)
+        response = self.get_users('', self.board.id, self.username, self.token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
@@ -42,9 +50,10 @@ class GetUsersTests(APITestCase):
         })
 
     def test_team_id_invalid(self):
-        response = self.client.get(f'{self.endpoint}qwerty',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN=self.token)
+        response = self.get_users('qwert',
+                                  self.board.id,
+                                  self.username,
+                                  self.token)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID must be a number.',
@@ -52,41 +61,34 @@ class GetUsersTests(APITestCase):
         })
 
     def test_team_not_found(self):
-        response = self.client.get(f'{self.endpoint}12412312',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN=self.token)
+        response = self.get_users('12412312',
+                                  self.board.id,
+                                  self.username,
+                                  self.token)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
         })
 
-
-    def test_auth_user_empty(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}',
-                                   HTTP_AUTH_USER='',
-                                   HTTP_AUTH_TOKEN=self.token)
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
-
     def test_auth_user_invalid(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}',
-                                   HTTP_AUTH_USER='invalidusername',
-                                   HTTP_AUTH_TOKEN=self.token)
+        response = self.get_users('12412312', self.board.id, 'foo', self.token)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_empty(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN='')
+        response = self.get_users(self.team.id,
+                                  self.board.id,
+                                  self.username,
+                                  '')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_invalid(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}',
-                                   HTTP_AUTH_USER=self.users[0].username,
-                                   HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
+        response = self.get_users(self.team.id,
+                                  self.board.id,
+                                  self.username,
+                                  'AFW£IJA')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
