@@ -149,17 +149,21 @@ def validate_board_id(board_id):  # -> (board, response)
 
 
 def validate_is_active(is_active):
-    if not is_active:
-        return None, Response({
-            'is_active': ErrorDetail(string='Is Active cannot be empty.',
-                                     code='blank')
-        }, 400)
+    is_empty_response = Response({
+        'is_active': ErrorDetail(string='Is Active cannot be empty.',
+                                 code='blank')
+    }, 400)
 
-    is_active_lower = is_active.lower()
-    if is_active_lower != 'true' and is_active_lower != 'false':
+    try:
+        if not str(is_active):
+            return None, is_empty_response
+    except ValueError:
+        return None, is_empty_response
+
+    if not isinstance(is_active, bool):
         return None, Response({
             'is_active': ErrorDetail(string='Is Valid must be a boolean.',
                                      code='invalid')
         }, 400)
 
-    return is_active_lower == 'true', None
+    return is_active, None
