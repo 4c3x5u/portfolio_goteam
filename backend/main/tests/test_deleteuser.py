@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
-from ..util import new_admin, new_member
+from ..util import new_admin, new_member, not_authenticated_response
 
 
 class DeleteUserTests(APITestCase):
@@ -44,6 +44,49 @@ class DeleteUserTests(APITestCase):
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='User is not found.',
                                     code='not_found')
+        })
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_auth_token_empty(self):
+        response = self.delete_user(self.member['username'],
+                                    self.admin['username'],
+                                    '')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_auth_token_invalid(self):
+        response = self.delete_user(self.member['username'],
+                                    self.admin['username'],
+                                    'kasjdaksdjalsdkjasd')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_auth_user_blank(self):
+        response = self.delete_user(self.member['username'],
+                                    '',
+                                    self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_auth_user_invalid(self):
+        response = self.delete_user(self.member['username'],
+                                    'invaliditto',
+                                    self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_unauthorized(self):
+        response = self.delete_user(self.member['username'],
+                                    self.member['username'],
+                                    self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='You must be an admin to do this.',
+                                code='not_authorized')
         })
         self.assertTrue(User.objects.filter(username=self.member['username']))
 

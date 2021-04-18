@@ -37,7 +37,7 @@ class DeleteBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_task_id_invalid(self):
+    def test_board_id_invalid(self):
         initial_count = Board.objects.count()
         response = self.client.delete(f'{self.endpoint}qwerty',
                                       HTTP_AUTH_USER=self.admin['username'],
@@ -49,7 +49,7 @@ class DeleteBoardTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_task_not_found(self):
+    def test_board_not_found(self):
         initial_count = Board.objects.count()
         response = self.client.delete(f'{self.endpoint}123141',
                                       HTTP_AUTH_USER=self.admin['username'],
@@ -104,7 +104,7 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='The user is not an admin.',
+            'auth': ErrorDetail(string='You must be an admin to do this.',
                                 code='not_authorized')
         })
         self.assertEqual(Board.objects.count(), initial_count)
