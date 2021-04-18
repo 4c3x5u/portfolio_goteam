@@ -1,5 +1,5 @@
 from rest_framework.test import APITestCase
-from ..models import Team
+from ..models import Team, User
 from ..util import new_admin, new_member
 
 
@@ -20,6 +20,6 @@ class DeleteUserTests(APITestCase):
                                     self.admin['token'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
-            'msg': 'Member is removed successfuly.',
-            'username': self.member['username']
+            'msg': 'Member has been deleted successfully.',
         })
+        self.assertFalse(User.objects.filter(username=self.member['username']))
