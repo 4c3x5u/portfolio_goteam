@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
 from ..util import new_admin
 
@@ -9,8 +10,8 @@ class PostUsersTests(APITestCase):
         self.admin = new_admin(team)
         self.user = User.objects.create(
             username='Some User',
-            password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTI'
-                     b'MeeJpC6m',
+            password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJ'
+                     b'pC6m',
             is_admin=False,
             team=team
         )
@@ -40,3 +41,15 @@ class PostUsersTests(APITestCase):
             len(self.board.user.filter(username=self.user.username)),
             0
         )
+
+    def test_username_blank(self):
+        response = self.postUser({
+            'username': '',
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.admin['username'], self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'username': ErrorDetail(string='Username cannot be empty.',
+                                    code='blank')
+        })
