@@ -37,7 +37,8 @@ class GetUsersTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, list(map(
             lambda i_user: {'username': i_user[1].username,
-                            'isActive': i_user[0] == 0},
+                            'isActive': i_user[0] == 0,
+                            'isAdmin': i_user[1].is_admin},
             enumerate(self.users)
         )))
 
