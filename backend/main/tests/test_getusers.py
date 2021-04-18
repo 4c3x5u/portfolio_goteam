@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User, Board
-from ..util import not_authenticated_response, new_member
+from ..util import not_authenticated_response
 
 
 class GetUsersTests(APITestCase):
@@ -69,6 +69,36 @@ class GetUsersTests(APITestCase):
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
+        })
+
+    def test_board_id_blank(self):
+        response = self.get_users(self.team.id, '', self.username, self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        })
+
+    def test_board_id_invalid(self):
+        response = self.get_users(self.team.id,
+                                  'asldfjasldjf',
+                                  self.username,
+                                  self.token)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID must be a number.',
+                                    code='invalid')
+        })
+
+    def test_board_not_found(self):
+        response = self.get_users(self.team.id,
+                                  '123891231',
+                                  self.username,
+                                  self.token)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
         })
 
     def test_auth_user_invalid(self):
