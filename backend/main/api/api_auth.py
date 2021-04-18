@@ -76,5 +76,4 @@ def verify_token(request):
         'username': user.username,
         'teamId': user.team_id,
         'isAdmin': user.is_admin,
-        'isAuthenticated': True,
     }, 200)
