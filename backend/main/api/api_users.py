@@ -7,7 +7,7 @@ from ..util import (
 )
 
 
-@api_view(['GET', 'POST'])
+@api_view(['GET', 'POST', 'DELETE'])
 def users(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
@@ -68,3 +68,11 @@ def users(request):
 
         return Response({'msg': f'{username} is removed from {board.name}.'},
                         200)
+
+    if request.method == 'DELETE':
+        username = request.query_params.get('username')
+        user = User.objects.get(username=username)
+        user.delete()
+        return Response({
+            'msg': 'Member has been deleted successfully.',
+        }, 200)
