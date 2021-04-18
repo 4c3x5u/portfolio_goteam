@@ -32,11 +32,11 @@ class DeleteUserTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
             'username': ErrorDetail(
-                string='Admin accounts cannot be deleted.',
+                string='Team leaders cannot be deleted from their teams.',
                 code='forbidden'
             )
         })
-        self.assertFalse(User.objects.filter(username=self.member['username']))
+        self.assertTrue(User.objects.filter(username=self.admin['username']))
 
     def test_username_blank(self):
         response = self.delete_user('',
