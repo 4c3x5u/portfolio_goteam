@@ -53,7 +53,7 @@ class CreateBoardTests(APITestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='The user is not an admin.',
+            'auth': ErrorDetail(string='You must be an admin to do this.',
                                 code='not_authorized')
         })
         self.assertEqual(Board.objects.count(), initial_count)

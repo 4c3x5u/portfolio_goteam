@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import User
 from ..util import (
-    authenticate, validate_team_id, validate_board_id, validate_is_active
+    authenticate, authorize, validate_team_id, validate_board_id,
+    validate_is_active
 )
 
 
@@ -70,6 +71,10 @@ def users(request):
                         200)
 
     if request.method == 'DELETE':
+        authorization_response = authorize(username=auth_user)
+        if authorization_response:
+            return authorization_response
+
         username = request.query_params.get('username')
 
         if not username:
