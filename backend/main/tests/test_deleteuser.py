@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
 from ..util import new_admin, new_member
 
@@ -23,3 +24,15 @@ class DeleteUserTests(APITestCase):
             'msg': 'Member has been deleted successfully.',
         })
         self.assertFalse(User.objects.filter(username=self.member['username']))
+
+    def test_username_empty(self):
+        response = self.delete_user('',
+                                    self.admin['username'],
+                                    self.admin['token'])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {
+            'username': ErrorDetail(string='Username cannot be empty.',
+                                    code='blank')
+        })
+        self.assertFalse(User.objects.filter(username=self.member['username']))
+
