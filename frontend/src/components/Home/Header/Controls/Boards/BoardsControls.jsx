@@ -2,13 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChalkboard } from '@fortawesome/free-solid-svg-icons';
 
 import BoardsControlMenu from './Menu/BoardsControlMenu';
 
 import './boardscontrols.sass';
 
 const BoardsControls = ({
-  isActive, handleActivate, handleCreate, handleEdit, handleDelete, icon,
+  isActive, handleActivate, handleCreate, handleEdit, handleDelete,
 }) => (
   <Col xs={4} className="BoardsControls">
     <button
@@ -17,7 +18,7 @@ const BoardsControls = ({
       aria-label="boards controls toggler"
       type="button"
     >
-      <FontAwesomeIcon icon={icon} />
+      <FontAwesomeIcon icon={faChalkboard} />
 
       BOARDS
     </button>
@@ -38,7 +39,6 @@ BoardsControls.propTypes = {
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired,
-  icon: PropTypes.string.isRequired,
 };
 
 export default BoardsControls;

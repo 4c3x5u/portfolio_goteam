@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useContextMenu, Item, Menu } from 'react-contexify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
 import './boardscontrolsmenuitem.sass';
 
@@ -22,15 +22,10 @@ const BoardsControlsMenuItem = ({
         onClick={toggleActive}
         onContextMenu={show}
       >
-        {isActive && (
-          <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />
-        )}
+        {isActive
+          && <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />}
 
         {name}
-
-        {isActive && (
-          <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />
-        )}
       </button>
 
       <Menu className="ContextMenu" id={MENU_ID}>

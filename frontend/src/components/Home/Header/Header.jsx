@@ -1,9 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Container, Row } from 'react-bootstrap';
-import {
-  faChalkboardTeacher, faUsers,
-} from '@fortawesome/free-solid-svg-icons';
+import { faUsers } from '@fortawesome/free-solid-svg-icons';
 
 import BoardsControls from './Controls/Boards/BoardsControls';
 import TeamControlsToggler from './Controls/Team/TeamControlsToggler';
@@ -35,7 +33,6 @@ const Header = ({ activeWindow, handleActivate }) => (
             handleCreate={handleActivate(window.CREATE_BOARD)}
             handleDelete={handleActivate(window.DELETE_BOARD)}
             handleEdit={handleActivate(window.EDIT_BOARD)}
-            icon={faChalkboardTeacher}
           />
 
           <HelpToggler toggle={handleActivate(window.HELP)} />

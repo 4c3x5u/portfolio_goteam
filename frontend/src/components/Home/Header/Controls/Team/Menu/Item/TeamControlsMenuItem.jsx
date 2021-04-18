@@ -2,7 +2,10 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useContextMenu, Item, Menu } from 'react-contexify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPlay,
+  faChalkboardTeacher,
+} from '@fortawesome/free-solid-svg-icons';
 
 import AppContext from '../../../../../../../AppContext';
 import UsersAPI from '../../../../../../../api/UsersAPI';
@@ -10,12 +13,9 @@ import UsersAPI from '../../../../../../../api/UsersAPI';
 import './teamcontrolsmenuitem.sass';
 
 const TeamControlsMenuItem = ({
-  id, username, isActive, handleDelete,
+  id, username, isAdmin, isActive, handleDelete,
 }) => {
   const { activeBoard, loadBoard } = useContext(AppContext);
-
-  const MENU_ID = `item-${id}`;
-  const { show } = useContextMenu({ id: MENU_ID });
 
   const toggleActive = () => (
     UsersAPI
@@ -23,6 +23,19 @@ const TeamControlsMenuItem = ({
       .then(() => loadBoard())
       .catch((err) => console.error(err)) // TODO: Toast
   );
+
+  const MENU_ID = `item-${id}`;
+  const { show } = useContextMenu({ id: MENU_ID });
+
+  const getIcon = () => {
+    if (isAdmin) {
+      return <FontAwesomeIcon className="AdminIcon" icon={faChalkboardTeacher} />;
+    }
+    if (isActive) {
+      return <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />;
+    }
+    return <></>;
+  };
 
   return (
     <div className="MenuItem">
@@ -33,15 +46,8 @@ const TeamControlsMenuItem = ({
         onClick={toggleActive}
         onContextMenu={show}
       >
-        {isActive && (
-          <FontAwesomeIcon className="IconLeft" icon={faCaretRight} />
-        )}
-
+        {getIcon()}
         {username}
-
-        {isActive && (
-          <FontAwesomeIcon className="IconRight" icon={faCaretLeft} />
-        )}
       </button>
 
       <Menu className="ContextMenu" id={MENU_ID}>
@@ -60,6 +66,7 @@ const TeamControlsMenuItem = ({
 TeamControlsMenuItem.propTypes = {
   id: PropTypes.number.isRequired,
   username: PropTypes.string.isRequired,
+  isAdmin: PropTypes.bool.isRequired,
   isActive: PropTypes.bool.isRequired,
   handleDelete: PropTypes.bool.isRequired,
 };

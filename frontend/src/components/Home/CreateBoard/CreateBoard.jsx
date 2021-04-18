@@ -15,14 +15,14 @@ import logo from './createboard.svg';
 import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
-  const { currentUser, loadBoard } = useContext(AppContext);
+  const { user, loadBoard } = useContext(AppContext);
   const [name, setName] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     BoardsAPI
-      .post({ name, team_id: currentUser.teamId })
+      .post({ name, team_id: user.teamId })
       .then((res) => { toggleOff(); loadBoard(res.data.id); })
       .catch((err) => console.error(err)); // TODO: Toast
   };
