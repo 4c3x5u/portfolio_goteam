@@ -44,7 +44,7 @@ const TeamControlsMenuItem = ({
         key={username}
         type="button"
         onClick={toggleActive}
-        onContextMenu={show}
+        onContextMenu={(e) => (isAdmin ? e.preventDefault() : show(e))}
       >
         {getIcon()}
         {username}
