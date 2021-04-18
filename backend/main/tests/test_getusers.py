@@ -5,13 +5,6 @@ from ..util import not_authenticated_response
 
 
 class GetUsersTests(APITestCase):
-    def get_users(self, team_id, board_id, auth_user, auth_token):
-        return self.client.get(
-            f'/users/?team_id={team_id}&board_id={board_id}',
-            HTTP_AUTH_USER=auth_user,
-            HTTP_AUTH_TOKEN=auth_token
-        )
-
     def setUp(self):
         self.team = Team.objects.create()
         self.users = [
@@ -28,6 +21,13 @@ class GetUsersTests(APITestCase):
                      'aIQsoq'
         self.board = Board.objects.create(name='Board', team=self.team)
         self.board.user.add(self.users[0])
+
+    def get_users(self, team_id, board_id, auth_user, auth_token):
+        return self.client.get(
+            f'/users/?team_id={team_id}&board_id={board_id}',
+            HTTP_AUTH_USER=auth_user,
+            HTTP_AUTH_TOKEN=auth_token
+        )
 
     def test_success(self):
         response = self.get_users(self.team.id,
