@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from main.models import Team, User, Board
+from main.models import Team, User
 import bcrypt
 
 

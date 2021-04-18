@@ -14,7 +14,7 @@ class PostUsersTests(APITestCase):
             is_admin=False,
             team=team
         )
-        self.board = Board.objects.create(name='Board', team=team)
+        self.board = Board.objects.create(name='Some Board', team=team)
         self.board.user.add(self.user)
         self.username = self.user.username
         self.token = '$2b$12$WLmxQnf9kbDoW/8jA6kfIO9TfchCiGphBpckS2oy755wtdT' \
@@ -36,3 +36,7 @@ class PostUsersTests(APITestCase):
         self.assertEqual(response.data, {
             'msg': f'{self.user.username} is removed from {self.board.name}.'
         })
+        self.assertEqual(
+            len(self.board.user.filter(username=self.user.username)),
+            0
+        )
