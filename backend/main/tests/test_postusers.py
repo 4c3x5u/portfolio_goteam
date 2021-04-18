@@ -60,10 +60,44 @@ class PostUsersTests(APITestCase):
             'board_id': self.board.id,
             'is_active': False
         }, self.admin['username'], self.admin['token'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='User not found.',
                                     code='not_found')
         })
 
+    def test_board_id_blank(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': '',
+            'is_active': False
+        }, self.admin['username'], self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID cannot be empty.',
+                                    code='blank')
+        })
 
+    def test_board_id_invalid(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': 'sakdjas',
+            'is_active': False
+        }, self.admin['username'], self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board ID must be a number.',
+                                    code='invalid')
+        })
+
+    def test_board_not_found(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': '12301024',
+            'is_active': False
+        }, self.admin['username'], self.admin['token'])
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
+        })
