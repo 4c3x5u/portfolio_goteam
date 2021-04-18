@@ -23,6 +23,11 @@ const UsersAPI = {
     },
     getAuthHeaders(),
   ),
+
+  delete: (username) => axios.delete(
+    `${process.env.REACT_APP_BACKEND_URL}/users/?username=${username}`,
+    getAuthHeaders(),
+  ),
 };
 
 export default UsersAPI;

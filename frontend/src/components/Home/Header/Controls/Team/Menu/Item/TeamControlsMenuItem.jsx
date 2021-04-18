@@ -13,7 +13,7 @@ import UsersAPI from '../../../../../../../api/UsersAPI';
 import './teamcontrolsmenuitem.sass';
 
 const TeamControlsMenuItem = ({
-  id, username, isAdmin, isActive, handleDelete,
+  username, isAdmin, isActive, handleDelete,
 }) => {
   const { activeBoard, loadBoard } = useContext(AppContext);
 
@@ -24,7 +24,7 @@ const TeamControlsMenuItem = ({
       .catch((err) => console.error(err)) // TODO: Toast
   );
 
-  const MENU_ID = `item-${id}`;
+  const MENU_ID = `item-${username}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
   const getIcon = () => {
@@ -41,7 +41,7 @@ const TeamControlsMenuItem = ({
     <div className="MenuItem">
       <button
         className="ControlButton"
-        key={id}
+        key={username}
         type="button"
         onClick={toggleActive}
         onContextMenu={show}
@@ -53,7 +53,7 @@ const TeamControlsMenuItem = ({
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
           className="ContextMenuItem"
-          onClick={() => handleDelete({ id, name: username })}
+          onClick={() => handleDelete({ username })}
         >
           <span>DELETE</span>
         </Item>
@@ -64,7 +64,6 @@ const TeamControlsMenuItem = ({
 };
 
 TeamControlsMenuItem.propTypes = {
-  id: PropTypes.number.isRequired,
   username: PropTypes.string.isRequired,
   isAdmin: PropTypes.bool.isRequired,
   isActive: PropTypes.bool.isRequired,
