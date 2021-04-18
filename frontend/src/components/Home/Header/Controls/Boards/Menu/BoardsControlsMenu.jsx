@@ -8,11 +8,11 @@ import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 
 import './boardscontrolsmenu.sass';
 
-const BoardsControlMenu = ({ handleCreate, handleDelete, handleEdit }) => {
+const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
   const { boards, activeBoard, loadBoard } = useContext(AppContext);
 
   return (
-    <div className="ControlsMenu">
+    <div className="BoardsControlsMenu">
       {boards.length > 0 && boards.map((board) => (
         <BoardsControlsMenuItem
           id={board.id}
@@ -31,10 +31,10 @@ const BoardsControlMenu = ({ handleCreate, handleDelete, handleEdit }) => {
   );
 };
 
-BoardsControlMenu.propTypes = {
+BoardsControlsMenu.propTypes = {
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired,
 };
 
-export default BoardsControlMenu;
+export default BoardsControlsMenu;

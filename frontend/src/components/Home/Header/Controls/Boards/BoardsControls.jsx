@@ -4,7 +4,7 @@ import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChalkboard } from '@fortawesome/free-solid-svg-icons';
 
-import BoardsControlMenu from './Menu/BoardsControlMenu';
+import BoardsControlsMenu from './Menu/BoardsControlsMenu';
 
 import './boardscontrols.sass';
 
@@ -24,7 +24,7 @@ const BoardsControls = ({
     </button>
 
     {isActive && (
-      <BoardsControlMenu
+      <BoardsControlsMenu
         handleCreate={handleCreate}
         handleDelete={handleDelete}
         handleEdit={handleEdit}

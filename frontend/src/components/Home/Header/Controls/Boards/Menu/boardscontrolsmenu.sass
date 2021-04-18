@@ -1,14 +1,4 @@
 @use '../../../../../../misc/vars'
 
-.ControlsMenu
-  top: 100%
-  width: 92%
-  position: absolute
-  background-color: vars.$true-blue
-  z-index: 1
-  box-shadow: 0 .3rem .2rem .2rem rgba(67, 67, 67, 50%)
-
-  .CreateButton
-    font-size: 1rem
-    padding: .5rem 0 .3rem 0
-
+.BoardsControlsMenu
+  @extend .ControlsMenu

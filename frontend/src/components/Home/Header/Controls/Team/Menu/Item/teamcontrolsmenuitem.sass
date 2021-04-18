@@ -1,21 +1,10 @@
-.MenuItem
-  .ControlButton
-    font-size: 1rem
-    padding: .5rem 0 .3rem 0
-    position: relative
+@use '../../../../../../../misc/vars'
 
-    .ActiveIcon
-      font-size: 1.1rem
-      position: absolute
-      top: .6rem
-      left: .6rem
+.TeamControlsMenuItem
+  @extend .MenuItem
 
-    .AdminIcon
-      font-size: 1.3rem
-      position: absolute
-      top: .5rem
-      left: .2rem
-
-  .react-contexify__item span
-    padding: .2rem 0 0 0
-    margin: 0
+  .AdminIcon
+    font-size: 1.3rem
+    position: absolute
+    top: .5rem
+    left: .2rem

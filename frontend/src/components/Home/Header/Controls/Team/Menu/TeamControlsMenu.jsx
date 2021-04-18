@@ -12,7 +12,7 @@ const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
   const { members } = useContext(AppContext);
 
   return (
-    <div className="ControlsMenu">
+    <div className="TeamControlsMenu">
       {members.map((member) => (
         <TeamControlsMenuItem
           username={member.username}
