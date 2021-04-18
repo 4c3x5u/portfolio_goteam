@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board
 from ..util import validate_team_id, validate_board_id, authenticate
 
@@ -35,6 +36,12 @@ def users(request):
 
     if request.method == 'POST':
         username = request.data.get('username')
+        if not username:
+            return Response({
+                'username': ErrorDetail(string='Username cannot be empty.',
+                                        code='blank')
+            }, 400)
+
         board_id = request.data.get('board_id')
         is_active = request.data.get('is_active')
 
