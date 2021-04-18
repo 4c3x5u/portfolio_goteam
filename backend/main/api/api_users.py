@@ -91,6 +91,14 @@ def users(request):
                                         code='not_found')
             }, 404)
 
+        if user.is_admin:
+            return Response({
+                'username': ErrorDetail(
+                    string='Team leaders cannot be deleted from their teams.',
+                    code='forbidden'
+                )
+            }, 403)
+
         user.delete()
 
         return Response({
