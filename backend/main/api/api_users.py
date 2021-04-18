@@ -1,8 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import User, Board
-from ..util import validate_team_id, validate_board_id, authenticate
+from ..models import User
+from ..util import (
+    authenticate, validate_team_id, validate_board_id, validate_is_active
+)
 
 
 @api_view(['GET', 'POST'])
@@ -54,9 +56,11 @@ def users(request):
         if response:
             return response
 
-        is_active = request.data.get('is_active')
+        is_active, response = validate_is_active(request.data.get('is_active'))
+        if response:
+            return response
 
-        if is_active == 'True':
+        if is_active:
             board.user.add(user)
         else:
             board.user.remove(user)

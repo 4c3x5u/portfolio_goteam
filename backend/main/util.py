@@ -148,3 +148,13 @@ def validate_board_id(board_id):  # -> (board, response)
     return board, None
 
 
+def validate_is_active(is_active):
+    if not is_active:
+        return None, Response({
+            'is_active': ErrorDetail(string='Is Active cannot be empty.',
+                                     code='blank')
+        }, 400)
+
+    is_active_bool = is_active.lower() == 'true'
+
+    return is_active_bool, None
