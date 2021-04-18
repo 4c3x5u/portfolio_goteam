@@ -37,16 +37,14 @@ const Column = ({
               ref={provided.innerRef}
             >
               {tasks.sort((task) => task.order).map((task) => (
-                task && (
-                  <Task
-                    id={task.id}
-                    title={task.title}
-                    description={task.description}
-                    order={task.order}
-                    handleActivate={handleActivate}
-                    subtasks={task.subtasks}
-                  />
-                )
+                <Task
+                  id={task.id}
+                  title={task.title}
+                  description={task.description}
+                  order={task.order}
+                  handleActivate={handleActivate}
+                  subtasks={task.subtasks}
+                />
               ))}
 
               {provided.placeholder}

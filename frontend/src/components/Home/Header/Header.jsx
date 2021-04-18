@@ -4,7 +4,7 @@ import { Container, Row } from 'react-bootstrap';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 
 import BoardsControls from './Controls/Boards/BoardsControls';
-import TeamControlsToggler from './Controls/Team/TeamControlsToggler';
+import TeamControls from './Controls/Team/TeamControls';
 import HelpToggler from './HelpToggler/HelpToggler';
 import window from '../../../misc/window';
 
@@ -19,7 +19,7 @@ const Header = ({ activeWindow, handleActivate }) => (
     <div className="ControlsWrapper">
       <Container>
         <Row className="ControlsRow">
-          <TeamControlsToggler
+          <TeamControls
             isActive={activeWindow === window.TEAM}
             handleActivate={handleActivate(window.TEAM)}
             handleCreate={handleActivate(window.INVITE_MEMBER)}

@@ -14,7 +14,7 @@ const BoardsControlsMenuItem = ({
   const { show } = useContextMenu({ id: MENU_ID });
 
   return (
-    <div className="MenuItem">
+    <div className="BoardsControlsMenuItem">
       <button
         className="ControlButton"
         key={id}

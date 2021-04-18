@@ -38,7 +38,7 @@ const TeamControlsMenuItem = ({
   };
 
   return (
-    <div className="MenuItem">
+    <div className="TeamControlsMenuItem">
       <button
         className="ControlButton"
         key={username}

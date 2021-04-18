@@ -5,12 +5,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import TeamControlsMenu from './Menu/TeamControlsMenu';
 
-import './teamcontrolstoggler.sass';
+import './teamcontrols.sass';
 
-const TeamControlsToggler = ({
+const TeamControls = ({
   isActive, handleActivate, handleCreate, handleDelete, icon,
 }) => (
-  <Col xs={4} className="ControlsToggler">
+  <Col xs={4} className="TeamControls">
     <button
       className="Button"
       onClick={handleActivate}
@@ -26,7 +26,7 @@ const TeamControlsToggler = ({
   </Col>
 );
 
-TeamControlsToggler.propTypes = {
+TeamControls.propTypes = {
   isActive: PropTypes.bool.isRequired,
   handleActivate: PropTypes.func.isRequired,
   handleCreate: PropTypes.func.isRequired,
@@ -34,4 +34,4 @@ TeamControlsToggler.propTypes = {
   icon: PropTypes.string.isRequired,
 };
 
-export default TeamControlsToggler;
+export default TeamControls;

@@ -82,3 +82,43 @@ $default-font: Helvetica, sans-serif
       a
         color: $true-blue
         text-decoration: underline !important
+
+.Controls
+  display: inline-flex
+  position: relative
+  justify-content: center
+
+  button
+    @extend #ControlButton
+
+.ControlsMenu
+  top: 100%
+  width: 92%
+  position: absolute
+  display: block
+  background-color: $true-blue
+  box-shadow: 0 .3rem .2rem .2rem rgba(67, 67, 67, 50%)
+  max-height: 17.5rem
+  overflow-y: scroll
+  overflow-x: hidden
+  z-index: 2
+
+  .CreateButton
+    font-size: 1rem
+    padding: .5rem 0 .3rem 0
+
+.MenuItem
+  .ControlButton
+    font-size: 1rem
+    padding: .5rem 0 .3rem 0
+    position: relative
+
+    .ActiveIcon
+      font-size: 1.1rem
+      position: absolute
+      top: .6rem
+      left: .6rem
+
+  .react-contexify__item span
+    padding: .2rem 0 0 0
+    margin: 0
