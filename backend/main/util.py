@@ -77,9 +77,9 @@ def authorize(username):
         return not_authorized_response
 
 
-def validate_team_id(team_id):
+def validate_team_id(team_id):  # -> (team, validation_response)
     if not team_id:
-        return Response({
+        return None, Response({
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
                                    code='blank')
         }, 400)
@@ -87,18 +87,20 @@ def validate_team_id(team_id):
     try:
         int(team_id)
     except ValueError:
-        return Response({
+        return None, Response({
             'team_id': ErrorDetail(string='Team ID must be a number.',
                                    code='invalid')
         }, 400)
 
     try:
-        Team.objects.get(id=team_id)
+        team = Team.objects.get(id=team_id)
     except Team.DoesNotExist:
-        return Response({
+        return None, Response({
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
         }, 404)
+
+    return team, None
 
 
 def create_board(team_id, name):  # -> (board, response)

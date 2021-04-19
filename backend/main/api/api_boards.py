@@ -53,15 +53,15 @@ def boards(request):
 
         if 'team_id' in request.query_params.keys():
             team_id = request.query_params.get('team_id')
-            validation_response = validate_team_id(team_id)
-            if validation_response:
-                return validation_response
+            team, response = validate_team_id(team_id)
+            if response:
+                return response
 
             # create a board if none exists for the team
-            queryset = Board.objects.filter(team=team_id)
+            queryset = Board.objects.filter(team=team.id)
             if not queryset:
                 if not authorize(username):
-                    board, create_response = create_board(team_id, 'New Board')
+                    board, create_response = create_board(team.id, 'New Board')
                     if create_response:
                         return create_response
 
@@ -98,13 +98,13 @@ def boards(request):
 
         # validate team_id
         team_id = request.data.get('team_id')
-        validation_response = validate_team_id(team_id)
+        team, validation_response = validate_team_id(team_id)
         if validation_response:
             return validation_response
 
         board_name = request.data.get('name')
 
-        board, create_response = create_board(team_id, board_name)
+        board, create_response = create_board(team.id, board_name)
         if create_response:
             return create_response
 
