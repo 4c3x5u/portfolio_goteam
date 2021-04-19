@@ -5,6 +5,7 @@ import {
   Route,
   Redirect,
 } from 'react-router-dom';
+import { sortBy } from 'lodash/core';
 
 import AppContext from './AppContext';
 import AuthAPI from './api/AuthAPI';
@@ -66,7 +67,10 @@ const App = () => {
         userResponse.data.teamId,
         nestedBoard.data.id,
       );
-      setMembers(teamMembers.data);
+
+      setMembers(
+        sortBy(teamMembers.data, (member) => !member.isAdmin),
+      );
     } catch (err) {
       console.error(err);
     }
