@@ -63,12 +63,13 @@ def authenticate(username, token):
         return not_authenticated_response
 
 
-def authorize(username):
-    not_authorized_response = Response({
-        'auth': ErrorDetail(string='You must be an admin to do this.',
-                            code='not_authorized')
-    }, 403)
+not_authorized_response = Response({
+    'auth': ErrorDetail(string='You must be an admin to do this.',
+                        code='not_authorized')
+}, 403)
 
+
+def authorize(username):
     try:
         user = User.objects.get(username=username)
         if not user.is_admin:

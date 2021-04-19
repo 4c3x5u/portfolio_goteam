@@ -34,7 +34,7 @@ class GetTeamTests(APITestCase):
 
     def test_team_id_invalid(self):
         response = self.client.get(f'{self.endpoint}asdfsa',
-                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_USER=self.admin['username'],
                                    HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
@@ -44,7 +44,7 @@ class GetTeamTests(APITestCase):
 
     def test_team_not_found(self):
         response = self.client.get(f'{self.endpoint}12314241',
-                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_USER=self.admin['username'],
                                    HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
