@@ -9,7 +9,16 @@ from ..models import User
 
 @api_view(['POST'])
 def register(request):
-    serializer = UserSerializer(data=request.data)
+    invite_code = request.query_params.get('invite_code')
+
+    data = {
+        'username': request.data.get('username'),
+        'password': request.data.get('password'),
+        'password_confirmation': request.data.get('password_confirmation'),
+        'invite_code': invite_code
+    } if invite_code else request.data
+
+    serializer = UserSerializer(data=data)
     if not serializer.is_valid():
         return Response(serializer.errors, 400)
     user = serializer.save()
