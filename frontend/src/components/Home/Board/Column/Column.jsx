@@ -1,5 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Droppable } from 'react-beautiful-dnd';
 import { Col } from 'react-bootstrap';
@@ -9,6 +9,7 @@ import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import Task from './Task/Task';
 import columnOrder from './columnOrder';
 import { capFirstLetterOf } from '../../../../misc/util';
+import AppContext from '../../../../AppContext';
 
 import './column.sass';
 import window from '../../../../misc/window';
@@ -16,6 +17,7 @@ import window from '../../../../misc/window';
 const Column = ({
   id, order, tasks, handleActivate,
 }) => {
+  const { user } = useContext(AppContext);
   const [name, setName] = useState('');
 
   useEffect(() => (
@@ -49,7 +51,7 @@ const Column = ({
 
               {provided.placeholder}
 
-              {name === columnOrder.INBOX && (
+              {user.isAdmin && name === columnOrder.INBOX && (
                 <button
                   className="CreateButton"
                   onClick={handleActivate(window.CREATE_TASK)}

@@ -9,7 +9,9 @@ import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 import './boardscontrolsmenu.sass';
 
 const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
-  const { boards, activeBoard, loadBoard } = useContext(AppContext);
+  const {
+    user, boards, activeBoard, loadBoard,
+  } = useContext(AppContext);
 
   return (
     <div className="BoardsControlsMenu">
@@ -24,9 +26,11 @@ const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
         />
       ))}
 
-      <button className="CreateButton" type="button" onClick={handleCreate}>
-        <FontAwesomeIcon icon={faPlusCircle} />
-      </button>
+      {user.isAdmin && (
+        <button className="CreateButton" type="button" onClick={handleCreate}>
+          <FontAwesomeIcon icon={faPlusCircle} />
+        </button>
+      )}
     </div>
   );
 };

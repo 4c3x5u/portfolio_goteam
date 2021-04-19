@@ -9,7 +9,7 @@ import TeamControlsMenuItem from './Item/TeamControlsMenuItem';
 import './teamcontrolsmenu.sass';
 
 const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
-  const { members } = useContext(AppContext);
+  const { user, members } = useContext(AppContext);
 
   return (
     <div className="TeamControlsMenu">
@@ -21,9 +21,11 @@ const TeamControlsMenu = ({ handleCreate, handleDelete }) => {
           handleDelete={handleDelete}
         />
       ))}
-      <button className="CreateButton" type="button" onClick={handleCreate}>
-        <FontAwesomeIcon icon={faPlusCircle} />
-      </button>
+      {user.isAdmin && (
+        <button className="CreateButton" type="button" onClick={handleCreate}>
+          <FontAwesomeIcon icon={faPlusCircle} />
+        </button>
+      )}
     </div>
   );
 };
