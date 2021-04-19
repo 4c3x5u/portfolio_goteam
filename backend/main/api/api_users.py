@@ -19,7 +19,7 @@ def users(request):
 
     if request.method == 'GET':
         team_id = request.query_params.get('team_id')
-        validation_response = validate_team_id(team_id)
+        team, validation_response = validate_team_id(team_id)
         if validation_response:
             return validation_response
 
