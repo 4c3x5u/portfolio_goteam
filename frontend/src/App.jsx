@@ -96,13 +96,13 @@ const App = () => {
               : <Redirect to="/login" />}
           </Route>
 
-          <Route exact path="/login">
+          <Route path="/login">
             {!user.isAuthenticated
               ? <Login />
               : <Redirect to="/" />}
           </Route>
 
-          <Route exact path="/register">
+          <Route path="/register/:inviteCode">
             {!user.isAuthenticated
               ? <Register />
               : <Redirect to="/" />}

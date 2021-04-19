@@ -20,11 +20,9 @@ import './invite.sass';
 const Invite = ({ toggleOff }) => {
   const { team } = useContext(AppContext);
 
-  const inviteLink = `${
-    process.env.REACT_APP_FRONTEND_URL
-  }/register/?invite_code=${
-    team.inviteCode
-  }`;
+  const inviteLink = (
+    `${process.env.REACT_APP_FRONTEND_URL}/register/${team.inviteCode}`
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
