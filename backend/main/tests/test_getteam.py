@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team
-from ..util import new_admin
+from ..util import new_admin, new_member, not_authenticated_response
 
 
 class GetTeamTests(APITestCase):
@@ -9,10 +9,13 @@ class GetTeamTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.member = new_admin(self.team)
+        self.admin = new_admin(self.team)
+        self.member = new_member(self.team)
 
     def test_success(self):
-        response = self.client.get(f'{self.endpoint}{self.team.id}')
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'id': self.team.id,
@@ -20,7 +23,9 @@ class GetTeamTests(APITestCase):
         })
 
     def test_team_id_empty(self):
-        response = self.client.get(self.endpoint)
+        response = self.client.get(self.endpoint,
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID cannot be empty.',
@@ -28,19 +33,66 @@ class GetTeamTests(APITestCase):
         })
 
     def test_team_id_invalid(self):
-        response = self.client.get(f'{self.endpoint}asdfsa')
+        response = self.client.get(f'{self.endpoint}asdfsa',
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team ID must be a number.',
                                    code='invalid')
         })
 
-
     def test_team_not_found(self):
-        response = self.client.get(f'{self.endpoint}12314241')
+        response = self.client.get(f'{self.endpoint}12314241',
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Team not found.',
                                    code='not_found')
         })
+
+    def test_auth_user_empty(self):
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER='',
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER='invalidusername',
+                                   HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_empty(self):
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN='')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER=self.admin['username'],
+                                   HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_unauthorized(self):
+        response = self.client.get(f'{self.endpoint}{self.team.id}',
+                                   HTTP_AUTH_USER=self.member['username'],
+                                   HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='You must be an admin to do this.',
+                                code='not_authorized')
+        })
+
+
 
