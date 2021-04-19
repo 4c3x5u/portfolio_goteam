@@ -2,6 +2,7 @@ import { createContext } from 'react';
 
 const AppContext = createContext({
   user: {},
+  team: {},
   members: [],
   boards: [],
   activeBoard: {},
