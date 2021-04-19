@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
@@ -21,6 +21,7 @@ const Register = () => {
     password: '',
     passwordConfirmation: '',
   });
+  const { inviteCode } = useParams();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,7 +34,7 @@ const Register = () => {
 
     if (!errors.username && !errors.password && !errors.passwordConfirmation) {
       AuthAPI
-        .register(username, password, passwordConfirmation)
+        .register(username, password, passwordConfirmation, inviteCode)
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
           sessionStorage.setItem('auth-token', res.data.token);

@@ -7,13 +7,20 @@ const AuthAPI = {
       password,
     })
   ),
-  register: (username, password, passwordConfirmation) => (
-    axios.post(`${process.env.REACT_APP_BACKEND_URL}/register/`, {
-      username,
-      password,
-      password_confirmation: passwordConfirmation,
-    })
-  ),
+
+  register: (username, password, passwordConfirmation, inviteCode) => {
+    const queryString = inviteCode ? `?invite_code=${inviteCode}` : '';
+
+    return axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/register/${queryString}`,
+      {
+        username,
+        password,
+        password_confirmation: passwordConfirmation,
+      },
+    );
+  },
+
   verifyToken: () => (
     axios.post(`${process.env.REACT_APP_BACKEND_URL}/verify-token/`, {
       username: sessionStorage.getItem('username'),

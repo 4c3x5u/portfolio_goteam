@@ -17,7 +17,6 @@ class RegisterTests(APITestCase):
                           url_suffix=''):
         response = self.client.post(f'{self.endpoint}{url_suffix}',
                                     request_data)
-        print(f'RESPONSE BODY: {response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'), 'Registration successful.')
         self.assertEqual(response.data.get('username'),
