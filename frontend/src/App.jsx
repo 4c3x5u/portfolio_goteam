@@ -17,6 +17,7 @@ import activeBoardInit from './misc/activeBoardInit';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
+import TeamsAPI from './api/TeamsAPI';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,7 @@ const App = () => {
     isAdmin: false,
     isAuthenticated: false,
   });
+  const [team, setTeam] = useState({ id: null, inviteCode: '' });
   const [members, setMembers] = useState([{
     username: '',
     isActive: false,
@@ -42,17 +44,24 @@ const App = () => {
       delete userResponse.data.msg;
       setUser({ ...userResponse.data, isAuthenticated: true });
 
-      // 2. set boards lists
+      // 2. set current team (only needed for inviting members, which means
+      // only needed if the current user is the team admin)
+      if (userResponse.data.isAdmin) {
+        const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
+        setTeam(teamResponse.data);
+      }
+
+      // 3. set boards lists
       const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
       setBoards(teamBoards.data);
 
-      // 3. set the active board
+      // 4. set the active board
       const nestedBoard = await BoardsAPI.get(
         boardId || activeBoard.id || teamBoards.data[0].id,
       );
       setActiveBoard(nestedBoard.data);
 
-      // 4. set members list
+      // 5. set members list
       const teamMembers = await UsersAPI.get(
         userResponse.data.teamId,
         nestedBoard.data.id,
@@ -70,6 +79,7 @@ const App = () => {
     <AppContext.Provider
       value={{
         user,
+        team,
         members,
         boards,
         activeBoard,

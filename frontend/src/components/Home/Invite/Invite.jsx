@@ -3,7 +3,7 @@ jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/mouse-events-have-key-events */
 
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Button, OverlayTrigger, Tooltip,
@@ -12,12 +12,19 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 import FormGroup from '../../_shared/FormGroup/FormGroup';
+import AppContext from '../../../AppContext';
 
 import logo from './invite.svg';
 import './invite.sass';
 
 const Invite = ({ toggleOff }) => {
-  const [inviteLink] = useState('TODO: IMPLEMENT');
+  const { team } = useContext(AppContext);
+
+  const inviteLink = `${
+    process.env.REACT_APP_FRONTEND_URL
+  }/register/?invite_code=${
+    team.inviteCode
+  }`;
 
   const handleSubmit = (e) => {
     e.preventDefault();
