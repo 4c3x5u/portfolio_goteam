@@ -45,8 +45,8 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.title': ErrorDetail(string='Task title cannot be empty.',
-                                      code='blank')
+            'title': ErrorDetail(string='Task title cannot be empty.',
+                                 code='blank')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).title,
                          self.task.title)
@@ -64,8 +64,8 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.order': ErrorDetail(string='Task order cannot be empty.',
-                                      code='blank')
+            'order': ErrorDetail(string='Task order cannot be empty.',
+                                 code='blank')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).order,
                          self.task.order)
@@ -89,8 +89,8 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.column': ErrorDetail(string='Task column cannot be empty.',
-                                       code='blank')
+            'column': ErrorDetail(string='Task column cannot be empty.',
+                                  code='blank')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
@@ -102,8 +102,8 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.column': ErrorDetail(string='Invalid column id.',
-                                       code='invalid')
+            'column': ErrorDetail(string='Invalid column id.',
+                                  code='invalid')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
