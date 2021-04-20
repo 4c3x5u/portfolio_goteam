@@ -74,7 +74,9 @@ const Register = () => {
               password: serverErrors.password,
               passwordConfirmation: serverErrors.passwordConfirmation,
             });
-          } else { notify(err?.message); }
+          } else {
+            notify(err?.message || 'Server Error', 'Registration failure.');
+          }
         });
     }
   };

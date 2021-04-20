@@ -17,7 +17,7 @@ import logo from './createboard.svg';
 import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
-  const { user, loadBoard } = useContext(AppContext);
+  const { user, loadBoard, notify } = useContext(AppContext);
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
 
@@ -26,19 +26,24 @@ const CreateBoard = ({ toggleOff }) => {
 
     const clientNameError = ValidateBoard.name(name);
 
-    BoardsAPI
-      .post({ name, team_id: user.teamId })
-      .then((res) => { toggleOff(); loadBoard(res.data.id); })
-      .catch((err) => (
-        err?.message
-          ? toast(
-            <>
-              <h5>{err.message}</h5>
-              <p>The board has NOT been deleted.</p>
-            </>,
-          )
-          : setNameError(clientNameError || err?.response?.data?.name || '')
-      ));
+    if (clientNameError) {
+      setName(clientNameError);
+    } else {
+      BoardsAPI
+        .post({ name, team_id: user.teamId })
+        .then((res) => {
+          toggleOff();
+          loadBoard(res.data.id);
+        })
+        .catch((err) => {
+          const serverNameError = err?.response?.data?.name;
+          if (serverNameError) {
+            setNameError(serverNameError);
+          } else if (err?.message) {
+            notify(err.message || 'Server Error', 'Board creation failure.');
+          }
+        });
+    }
   };
 
   return (
