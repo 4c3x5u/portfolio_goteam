@@ -59,8 +59,8 @@ class UserSerializer(serializers.ModelSerializer):
 
         if password_confirmation != validated_data.get('password'):
             raise serializers.ValidationError({
-                'password_confirmation': 'Confirmation does not match the '
-                                         'password.'
+                'password_confirmation':
+                    'Confirmation must match the password.'
             }, 'no_match')
 
         if validated_data.get('is_admin') and not validated_data.get('team'):
