@@ -105,32 +105,33 @@ def tasks(request):
 
         if 'title' in list(data.keys()) and not data.get('title'):
             return Response({
-                'data.title': ErrorDetail(string='Task title cannot be empty.',
-                                          code='blank')
+                'title': ErrorDetail(string='Task title cannot be empty.',
+                                     code='blank')
             }, 400)
 
         order = data.get('order')
         if 'order' in list(data.keys()) and (order == '' or order is None):
             return Response({
-                'data.order': ErrorDetail(string='Task order cannot be empty.',
-                                          code='blank')
+                'order': ErrorDetail(string='Task order cannot be empty.',
+                                     code='blank')
             }, 400)
 
         if 'column' in list(data.keys()):
             column_id = data.get('column')
             if not column_id:
                 return Response({
-                    'data.column': ErrorDetail(string='Task column cannot be '
-                                                      'empty.',
-                                               code='blank')
+                    'column': ErrorDetail(
+                        string='Task column cannot be empty.',
+                        code='blank',
+                    )
                 }, 400)
 
             try:
                 Column.objects.get(id=column_id)
             except Column.DoesNotExist:
                 return Response({
-                    'data.column': ErrorDetail(string='Invalid column id.',
-                                               code='invalid')
+                    'column': ErrorDetail(string='Invalid column id.',
+                                          code='invalid')
                 }, 400)
 
         subtasks = data.get('subtasks')
@@ -155,7 +156,7 @@ def tasks(request):
                 )
                 if not subtask_serializer.is_valid():
                     return Response({
-                        'subtask': subtask_serializer.errors
+                        'subtasks': subtask_serializer.errors
                     }, 400)
                 subtask_serializer.save()
 

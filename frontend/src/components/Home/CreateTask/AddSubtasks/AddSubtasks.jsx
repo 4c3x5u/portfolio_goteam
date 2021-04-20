@@ -24,6 +24,13 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
     }
   };
 
+  const removeSubtask = (subtaskIndex) => {
+    setSubtasks({
+      value: '',
+      list: subtasks.list.filter((_, i) => i !== subtaskIndex),
+    });
+  };
+
   return (
     <div className="AddSubtasks">
       <Form.Label className="Label">
@@ -42,12 +49,7 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
 
           <Button
             className="Remove"
-            onClick={() => {
-              setSubtasks({
-                value: '',
-                list: subtasks.list.filter((_, i) => i !== index),
-              });
-            }}
+            onClick={() => removeSubtask(index)}
             type="button"
           >
             <FontAwesomeIcon className="Icon" icon={faTimes} />
