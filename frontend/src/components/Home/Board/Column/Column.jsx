@@ -5,6 +5,7 @@ import { Droppable } from 'react-beautiful-dnd';
 import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import _ from 'lodash/core';
 
 import Task from './Task/Task';
 import columnOrder from './columnOrder';
@@ -38,16 +39,17 @@ const Column = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {tasks.sort((task) => task.order).map((task) => (
-                <Task
-                  id={task.id}
-                  title={task.title}
-                  description={task.description}
-                  order={task.order}
-                  handleActivate={handleActivate}
-                  subtasks={task.subtasks}
-                />
-              ))}
+              {_.sortBy(tasks, (task) => task.order)
+                .map((task) => (
+                  <Task
+                    id={task.id}
+                    title={task.title}
+                    description={task.description}
+                    order={task.order}
+                    handleActivate={handleActivate}
+                    subtasks={task.subtasks}
+                  />
+                ))}
 
               {provided.placeholder}
 
