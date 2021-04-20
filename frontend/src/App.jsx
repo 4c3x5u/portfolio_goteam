@@ -116,7 +116,7 @@ const App = () => {
                 : <Redirect to="/" />}
             </Route>
 
-            <Route path="/register/:inviteCode">
+            <Route path="/register/:inviteCode?">
               {!user.isAuthenticated
                 ? <Register />
                 : <Redirect to="/" />}

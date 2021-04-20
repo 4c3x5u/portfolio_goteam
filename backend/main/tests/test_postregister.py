@@ -128,7 +128,7 @@ class RegisterTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': ErrorDetail(
-                string='Confirmation does not match the password.',
+                string='Confirmation must match the password.',
                 code='no_match'
             )
         })
