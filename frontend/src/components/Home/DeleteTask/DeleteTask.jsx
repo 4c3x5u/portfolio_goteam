@@ -20,14 +20,22 @@ import './deletetask.sass';
 const DeleteTask = ({
   id, title, description, subtasks, toggleOff,
 }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { loadBoard, notify } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     TasksAPI
       .delete(id)
-      .then(() => { loadBoard(); toggleOff(); })
-      .catch((err) => console.log(err)); // TODO: Toast
+      .then(() => {
+        loadBoard();
+        toggleOff();
+      })
+      .catch((err) => {
+        notify(
+          'Unable to delete task.',
+          `${err?.message || 'Server Error'}.`,
+        );
+      });
   };
 
   return (
