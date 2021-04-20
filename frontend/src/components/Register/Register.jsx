@@ -10,10 +10,9 @@ import inputType from '../../misc/inputType';
 
 import logo from './register.svg';
 import './register.sass';
-import {toast} from 'react-toastify';
 
 const Register = () => {
-  const { loadBoard } = useContext(AppContext);
+  const { loadBoard, notify } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -28,36 +27,56 @@ const Register = () => {
     e.preventDefault();
 
     const clientErrors = {
-      username: ValidateUser.username(username),
-      password: ValidateUser.username(password),
-      passwordConfirmation: ValidateUser.username(passwordConfirmation),
+      username:
+        ValidateUser.username(username),
+      password:
+        ValidateUser.password(password),
+      passwordConfirmation:
+        ValidateUser.passwordConfirmation(passwordConfirmation),
     };
 
-    AuthAPI
-      .register(username, password, passwordConfirmation, inviteCode)
-      .then((res) => {
-        sessionStorage.setItem('username', res.data.username);
-        sessionStorage.setItem('auth-token', res.data.token);
-        loadBoard();
-      })
-      .catch((err) => (
-        err?.message
-          ? toast(
-            <>
-              <h5>{err.message}</h5>
-              <p>The board has NOT been deleted.</p>
-            </>,
-          )
-          : setErrors({
-            username: clientErrors.username || err.response.data.username || '',
-            password: clientErrors.password || err.response.data.password || '',
-            passwordConfirmation: (
-              clientErrors.passwordConfirmation
-              || err.response.data.password_confirmation
-              || ''
-            ),
-          })
-      ));
+    if (
+      clientErrors.username
+        || clientErrors.password
+        || clientErrors.passwordConfirmation
+    ) {
+      setErrors({
+        username: clientErrors.username,
+        password: clientErrors.password,
+        passwordConfirmation: clientErrors.passwordConfirmation,
+      });
+    } else {
+      AuthAPI
+        .register(username, password, passwordConfirmation, inviteCode)
+        .then((res) => {
+          sessionStorage.setItem('username', res.data.username);
+          sessionStorage.setItem('auth-token', res.data.token);
+          loadBoard();
+        })
+        .catch((err) => {
+          const serverErrors = {
+            username:
+              err?.response?.data?.username || '',
+            password:
+              err?.response?.data?.password || '',
+            passwordConfirmation:
+              // eslint-disable-next-line camelcase
+              err?.response?.data?.password_confirmation || '',
+          };
+
+          if (
+            serverErrors.username
+              || serverErrors.password
+              || serverErrors.passwordConfirmation
+          ) {
+            setErrors({
+              username: serverErrors.username,
+              password: serverErrors.password,
+              passwordConfirmation: serverErrors.passwordConfirmation,
+            });
+          } else { notify(err?.message); }
+        });
+    }
   };
 
   return (
