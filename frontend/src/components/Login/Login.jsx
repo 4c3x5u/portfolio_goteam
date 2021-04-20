@@ -25,10 +25,7 @@ const Login = () => {
     };
 
     if (clientErrors.username || clientErrors.password) {
-      setErrors({
-        username: clientErrors.username,
-        password: clientErrors.password,
-      });
+      setErrors(clientErrors);
     } else {
       AuthAPI
         .login(username, password)
@@ -44,10 +41,7 @@ const Login = () => {
           };
 
           if (serverErrors.username || serverErrors.password) {
-            setErrors({
-              username: serverErrors.username,
-              password: serverErrors.password,
-            });
+            setErrors(serverErrors);
           } else {
             notify(
               'Unable to log in.',
