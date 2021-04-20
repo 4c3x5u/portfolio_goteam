@@ -1,5 +1,5 @@
-export const User = {
-  validateUsername: (username) => {
+const ValidateUser = {
+  username: (username) => {
     if (!username) {
       return 'Username cannot be empty.';
     } if (username.length < 5) {
@@ -8,7 +8,7 @@ export const User = {
       return 'Username cannot be longer than 35 characters.';
     } return '';
   },
-  validatePassword: (password) => {
+  password: (password) => {
     if (!password) {
       return 'Password cannot be empty.';
     } if (password.length < 8) {
@@ -17,7 +17,7 @@ export const User = {
       return 'Password cannot be longer than 255 characters.';
     } return '';
   },
-  validatePasswordConfirmation: (passwordConfirmation, password) => {
+  passwordConfirmation: (passwordConfirmation, password) => {
     if (!passwordConfirmation) {
       return 'Confirmation cannot be empty.';
     } if (passwordConfirmation.length < 8) {
@@ -30,4 +30,4 @@ export const User = {
   },
 };
 
-export default { User };
+export default ValidateUser;
