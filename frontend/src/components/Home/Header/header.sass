@@ -21,6 +21,24 @@
     box-shadow: 0 .3rem .4rem 0.001rem rgba(67, 67, 67, 50%)
     width: 100vw
     min-width: 50rem
+    position: relative
 
     .ControlsRow
       min-width: 40rem !important
+
+      .LogoutButton
+        background-color: transparent
+        border: none
+        color: vars.$maize-crayola
+        position: absolute
+        left: 0
+        height: 100%
+        padding-right: .5rem
+        &:hover
+          color: vars.$cultured
+          background-color: #365e99
+
+        .Icon
+          font-size: 1.8rem
+          padding-top: 0.3rem
+          padding-bottom: 0.1rem
