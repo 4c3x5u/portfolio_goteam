@@ -76,9 +76,13 @@ const App = () => {
     } catch (err) {
       setUser({ ...user, isAuthenticated: false });
 
-      const errMsg = err.response.data.msg;
+      // TODO: Check for cases where you want token verification failure
+      //       message to render
+      const errMsg = err?.response?.data?.msg;
       if (errMsg && errMsg !== 'Token verification failure.') {
         toast(errMsg);
+      } else if (err?.message) {
+        toast(err.message);
       }
     }
     setIsLoading(false);
@@ -88,8 +92,6 @@ const App = () => {
 
   return (
     <div className="App">
-      <ToastContainer />
-
       <AppContext.Provider
         value={{
           user,
@@ -124,6 +126,8 @@ const App = () => {
           </Switch>
         </Router>
       </AppContext.Provider>
+
+      <ToastContainer />
     </div>
   );
 };
