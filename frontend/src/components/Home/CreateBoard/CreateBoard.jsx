@@ -5,6 +5,7 @@ jsx-a11y/click-events-have-key-events */
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -28,10 +29,16 @@ const CreateBoard = ({ toggleOff }) => {
     BoardsAPI
       .post({ name, team_id: user.teamId })
       .then((res) => { toggleOff(); loadBoard(res.data.id); })
-      .catch((err) => {
-        setNameError(clientNameError || err.response.data.name || '');
-        // TODO: Handle other errors that may arise (Toast)
-      });
+      .catch((err) => (
+        err?.message
+          ? toast(
+            <>
+              <h5>{err.message}</h5>
+              <p>The board has NOT been deleted.</p>
+            </>,
+          )
+          : setNameError(clientNameError || err?.response?.data?.name || '')
+      ));
   };
 
   return (
