@@ -40,11 +40,7 @@ const Register = () => {
         || clientErrors.password
         || clientErrors.passwordConfirmation
     ) {
-      setErrors({
-        username: clientErrors.username,
-        password: clientErrors.password,
-        passwordConfirmation: clientErrors.passwordConfirmation,
-      });
+      setErrors(clientErrors);
     } else {
       AuthAPI
         .register(username, password, passwordConfirmation, inviteCode)
@@ -69,11 +65,7 @@ const Register = () => {
               || serverErrors.password
               || serverErrors.passwordConfirmation
           ) {
-            setErrors({
-              username: serverErrors.username,
-              password: serverErrors.password,
-              passwordConfirmation: serverErrors.passwordConfirmation,
-            });
+            setErrors(serverErrors);
           } else {
             notify(
               'Unable to register.',
