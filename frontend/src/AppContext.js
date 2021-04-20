@@ -9,6 +9,7 @@ const AppContext = createContext({
   loadBoard: () => {},
   isLoading: false,
   setIsLoading: () => {},
+  notify: () => {},
 });
 
 export default AppContext;

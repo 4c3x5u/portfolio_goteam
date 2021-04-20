@@ -38,6 +38,12 @@ const App = () => {
   }]);
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
+  const notify = (header, body) => (header || body) && toast(
+    <>
+      {header && <h4>{header}</h4>}
+      {body && <p>{body}</p>}
+    </>,
+  );
 
   const loadBoard = async (boardId) => {
     setIsLoading(true);
@@ -78,11 +84,10 @@ const App = () => {
 
       // TODO: Check for cases where you want token verification failure
       //       message to render
-      const errMsg = err?.response?.data?.msg;
-      if (errMsg && errMsg !== 'Token verification failure.') {
-        toast(errMsg);
-      } else if (err?.message) {
-        toast(err.message);
+      if (!err?.config?.url?.includes('verify-token')) {
+        const errMsg = err?.response?.data?.msg;
+        if (errMsg) { notify(errMsg); }
+        if (err?.message) { notify(err.message); }
       }
     }
     setIsLoading(false);
@@ -102,6 +107,7 @@ const App = () => {
           loadBoard,
           isLoading,
           setIsLoading,
+          notify,
         }}
       >
         <Router>
