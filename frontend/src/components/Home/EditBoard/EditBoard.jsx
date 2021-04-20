@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
 } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -30,10 +31,16 @@ const EditBoard = ({ id, name, toggleOff }) => {
     BoardsAPI
       .patch(id, { name: newName })
       .then(() => { toggleOff(); loadBoard(); })
-      .catch((err) => {
-        setNameError(clientNameError || err.response.data.name || '');
-        // TODO: Handle other errors that may arise (Toast)
-      });
+      .catch((err) => (
+        err?.message
+          ? toast(
+            <>
+              <h5>{err.message}</h5>
+              <p>The board has NOT been deleted.</p>
+            </>,
+          )
+          : setNameError(clientNameError || err?.response?.data?.name || '')
+      ));
   };
 
   return (

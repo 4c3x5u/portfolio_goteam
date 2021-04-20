@@ -25,15 +25,12 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
     BoardsAPI
       .delete(id)
       .then(() => { toggleOff(); loadBoard(); })
-      .catch((err) => {
-        toast(
-          <>
-            <h5>{err.message}</h5>
-            <p>The board has NOT been deleted.</p>
-          </>,
-        );
-        // TODO: Toast
-      });
+      .catch((err) => err?.message && toast(
+        <>
+          <h5>{err.message}</h5>
+          <p>The board has NOT been deleted.</p>
+        </>,
+      ));
   };
 
   return (
