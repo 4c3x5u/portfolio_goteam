@@ -7,7 +7,6 @@ import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
 } from 'react-bootstrap';
-import { toast } from 'react-toastify';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -18,18 +17,21 @@ import logo from './deleteboard.svg';
 import './deleteboard.sass';
 
 const DeleteBoard = ({ id, name, toggleOff }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { loadBoard, notify } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     BoardsAPI
       .delete(id)
-      .then(() => { toggleOff(); loadBoard(); })
-      .catch((err) => err?.message && toast(
-        <>
-          <h5>{err.message}</h5>
-          <p>The board has NOT been deleted.</p>
-        </>,
+      .then(() => {
+        toggleOff();
+        loadBoard();
+      })
+      .catch((err) => (
+        notify(
+          err?.message || 'Server Error',
+          'Board deletion failure.',
+        )
       ));
   };
 

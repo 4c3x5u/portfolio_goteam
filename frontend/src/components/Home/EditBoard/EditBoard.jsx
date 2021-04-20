@@ -7,7 +7,6 @@ import PropTypes from 'prop-types';
 import {
   Button, Col, Form, Row,
 } from 'react-bootstrap';
-import { toast } from 'react-toastify';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -19,7 +18,7 @@ import logo from './editboard.svg';
 import './editboard.sass';
 
 const EditBoard = ({ id, name, toggleOff }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { loadBoard, notify } = useContext(AppContext);
   const [newName, setNewName] = useState(name);
   const [nameError, setNameError] = useState('');
 
@@ -28,19 +27,24 @@ const EditBoard = ({ id, name, toggleOff }) => {
 
     const clientNameError = ValidateBoard.name(newName);
 
-    BoardsAPI
-      .patch(id, { name: newName })
-      .then(() => { toggleOff(); loadBoard(); })
-      .catch((err) => (
-        err?.message
-          ? toast(
-            <>
-              <h5>{err.message}</h5>
-              <p>The board has NOT been deleted.</p>
-            </>,
-          )
-          : setNameError(clientNameError || err?.response?.data?.name || '')
-      ));
+    if (clientNameError) {
+      setNameError(clientNameError);
+    } else {
+      BoardsAPI
+        .patch(id, { name: newName })
+        .then(() => {
+          toggleOff();
+          loadBoard();
+        })
+        .catch((err) => {
+          const serverNameError = err?.response?.data?.name;
+          if (serverNameError) {
+            setNameError(serverNameError);
+          } else if (err?.message) {
+            notify(err.message || 'Server Error', 'Edit board failure.');
+          }
+        });
+    }
   };
 
   return (

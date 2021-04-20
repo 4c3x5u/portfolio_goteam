@@ -48,7 +48,9 @@ const Login = () => {
               username: serverErrors.username,
               password: serverErrors.password,
             });
-          } else { notify(err?.message); }
+          } else {
+            notify(err?.message || 'Server Error', 'Login failure.');
+          }
         });
     }
   };
