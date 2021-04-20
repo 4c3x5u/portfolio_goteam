@@ -1,6 +1,5 @@
 import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import { toast } from 'react-toastify';
 
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
@@ -12,7 +11,7 @@ import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
-  const { loadBoard } = useContext(AppContext);
+  const { loadBoard, notify } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
@@ -25,26 +24,33 @@ const Login = () => {
       password: ValidateUser.password(password),
     };
 
-    AuthAPI
-      .login(username, password)
-      .then((res) => {
-        sessionStorage.setItem('username', res.data.username);
-        sessionStorage.setItem('auth-token', res.data.token);
-        loadBoard();
-      })
-      .catch((err) => (
-        err?.message
-          ? toast(
-            <>
-              <h5>{err.message}</h5>
-              <p>The board has NOT been deleted.</p>
-            </>,
-          )
-          : setErrors({
-            username: clientErrors.username || err.response.data.username || '',
-            password: clientErrors.password || err.response.data.password || '',
-          })
-      ));
+    if (clientErrors.username || clientErrors.password) {
+      setErrors({
+        username: clientErrors.username,
+        password: clientErrors.password,
+      });
+    } else {
+      AuthAPI
+        .login(username, password)
+        .then((res) => {
+          sessionStorage.setItem('username', res.data.username);
+          sessionStorage.setItem('auth-token', res.data.token);
+          loadBoard();
+        })
+        .catch((err) => {
+          const serverErrors = {
+            username: err?.response?.data?.username || '',
+            password: err?.response?.data?.password || '',
+          };
+
+          if (serverErrors.username || serverErrors.password) {
+            setErrors({
+              username: serverErrors.username,
+              password: serverErrors.password,
+            });
+          } else { notify(err?.message); }
+        });
+    }
   };
 
   return (
