@@ -66,6 +66,19 @@ class PatchBoardTests(APITestCase):
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')
 
+    def test_board_name_blank(self):
+        response = self.client.patch(f'{self.endpoint}{self.board.id}',
+                                     {'name': ''},
+                                     HTTP_AUTH_USER=self.admin['username'],
+                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {
+            'name': [ErrorDetail(string='Board name cannot be empty.',
+                                 code='blank')]
+        })
+        self.assertEqual(Board.objects.get(id=self.board.id).name,
+                         'Some Board')
+
     def test_auth_user_empty(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
                                      {'name': 'New Title'},
