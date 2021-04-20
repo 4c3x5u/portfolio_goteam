@@ -6,6 +6,8 @@ import {
   Redirect,
 } from 'react-router-dom';
 import _ from 'lodash/core';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.min.css';
 
 import AppContext from './AppContext';
 import AuthAPI from './api/AuthAPI';
@@ -73,7 +75,11 @@ const App = () => {
       );
     } catch (err) {
       setUser({ ...user, isAuthenticated: false });
-      console.error(err); // TODO: Toastr
+
+      const errMsg = err.response.data.msg;
+      if (errMsg && errMsg !== 'Token verification failure.') {
+        toast(errMsg);
+      }
     }
     setIsLoading(false);
   };
@@ -81,40 +87,44 @@ const App = () => {
   useEffect(() => loadBoard(), []);
 
   return (
-    <AppContext.Provider
-      value={{
-        user,
-        team,
-        members,
-        boards,
-        activeBoard,
-        loadBoard,
-        isLoading,
-        setIsLoading,
-      }}
-    >
-      <Router className="App">
-        <Switch>
-          <Route exact path="/">
-            {user.isAuthenticated
-              ? <Home />
-              : <Redirect to="/login" />}
-          </Route>
+    <div className="App">
+      <ToastContainer />
 
-          <Route path="/login">
-            {!user.isAuthenticated
-              ? <Login />
-              : <Redirect to="/" />}
-          </Route>
+      <AppContext.Provider
+        value={{
+          user,
+          team,
+          members,
+          boards,
+          activeBoard,
+          loadBoard,
+          isLoading,
+          setIsLoading,
+        }}
+      >
+        <Router>
+          <Switch>
+            <Route exact path="/">
+              {user.isAuthenticated
+                ? <Home />
+                : <Redirect to="/login" />}
+            </Route>
 
-          <Route path="/register/:inviteCode">
-            {!user.isAuthenticated
-              ? <Register />
-              : <Redirect to="/" />}
-          </Route>
-        </Switch>
-      </Router>
-    </AppContext.Provider>
+            <Route path="/login">
+              {!user.isAuthenticated
+                ? <Login />
+                : <Redirect to="/" />}
+            </Route>
+
+            <Route path="/register/:inviteCode">
+              {!user.isAuthenticated
+                ? <Register />
+                : <Redirect to="/" />}
+            </Route>
+          </Switch>
+        </Router>
+      </AppContext.Provider>
+    </div>
   );
 };
 
