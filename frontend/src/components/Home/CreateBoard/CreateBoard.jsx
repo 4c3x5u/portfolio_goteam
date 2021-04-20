@@ -5,7 +5,6 @@ jsx-a11y/click-events-have-key-events */
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import { Form, Button } from 'react-bootstrap';
-import { toast } from 'react-toastify';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -27,7 +26,7 @@ const CreateBoard = ({ toggleOff }) => {
     const clientNameError = ValidateBoard.name(name);
 
     if (clientNameError) {
-      setName(clientNameError);
+      setNameError(clientNameError);
     } else {
       BoardsAPI
         .post({ name, team_id: user.teamId })
@@ -40,7 +39,10 @@ const CreateBoard = ({ toggleOff }) => {
           if (serverNameError) {
             setNameError(serverNameError);
           } else if (err?.message) {
-            notify(err.message || 'Server Error', 'Board creation failure.');
+            notify(
+              'Unable to create board.',
+              `${err.message || 'Server Error'}.`,
+            );
           }
         });
     }

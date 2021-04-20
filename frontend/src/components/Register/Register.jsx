@@ -75,7 +75,10 @@ const Register = () => {
               passwordConfirmation: serverErrors.passwordConfirmation,
             });
           } else {
-            notify(err?.message || 'Server Error', 'Registration failure.');
+            notify(
+              'Unable to register.',
+              `${err.message || 'Server Error'}.`,
+            );
           }
         });
     }
