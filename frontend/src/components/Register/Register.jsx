@@ -5,7 +5,7 @@ import { Form, Button } from 'react-bootstrap';
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
-import validateRegisterForm from './validateRegisterForm';
+import ValidateUser from '../../validation/ValidateUser';
 import inputType from '../../misc/inputType';
 
 import logo from './register.svg';
@@ -26,9 +26,11 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const clientErrors = validateRegisterForm(
-      username, password, passwordConfirmation,
-    );
+    const clientErrors = {
+      username: ValidateUser.username(username),
+      password: ValidateUser.username(password),
+      passwordConfirmation: ValidateUser.username(passwordConfirmation),
+    };
 
     AuthAPI
       .register(username, password, passwordConfirmation, inviteCode)
