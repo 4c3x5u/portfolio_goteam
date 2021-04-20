@@ -1,19 +1,19 @@
-import { User } from '../../misc/validators';
+import ValidateUser from '../../validation/ValidateUser';
 
 const validateRegisterForm = (username, password, passwordConfirmation) => {
   let errors = { username: '', password: '', passwordConfirmation: '' };
 
-  const usernameError = User.validateUsername(username);
+  const usernameError = ValidateUser.username(username);
   if (usernameError) {
     errors = { ...errors, username: usernameError };
   }
 
-  const passwordError = User.validatePassword(password);
+  const passwordError = ValidateUser.password(password);
   if (passwordError) {
     errors = { ...errors, password: passwordError };
   }
 
-  const passwordConfirmationError = User.validatePasswordConfirmation(
+  const passwordConfirmationError = ValidateUser.passwordConfirmation(
     passwordConfirmation, password,
   );
   if (passwordConfirmationError) {
