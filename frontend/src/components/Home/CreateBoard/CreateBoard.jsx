@@ -10,6 +10,7 @@ import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
+import ValidateBoard from '../../../validation/ValidateBoard';
 
 import logo from './createboard.svg';
 import './createboard.sass';
@@ -17,6 +18,7 @@ import './createboard.sass';
 const CreateBoard = ({ toggleOff }) => {
   const { user, loadBoard } = useContext(AppContext);
   const [name, setName] = useState('');
+  const [nameError, setNameError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,7 +26,10 @@ const CreateBoard = ({ toggleOff }) => {
     BoardsAPI
       .post({ name, team_id: user.teamId })
       .then((res) => { toggleOff(); loadBoard(res.data.id); })
-      .catch((err) => console.error(err)); // TODO: Toast
+      .catch((err) => {
+        setNameError(ValidateBoard.name(name) || err.response.data.name || '');
+        // TODO: Handle other errors that may arise (Toast)
+      });
   };
 
   return (
@@ -40,9 +45,10 @@ const CreateBoard = ({ toggleOff }) => {
 
         <FormGroup
           type={inputType.TEXT}
-          label="title"
+          label="name"
           value={name}
           setValue={setName}
+          error={nameError}
         />
 
         <div className="ButtonWrapper">
