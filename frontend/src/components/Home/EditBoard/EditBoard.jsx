@@ -11,6 +11,7 @@ import {
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
+import ValidateBoard from '../../../validation/ValidateBoard';
 import inputType from '../../../misc/inputType';
 
 import logo from './editboard.svg';
@@ -19,13 +20,20 @@ import './editboard.sass';
 const EditBoard = ({ id, name, toggleOff }) => {
   const { loadBoard } = useContext(AppContext);
   const [newName, setNewName] = useState(name);
+  const [nameError, setNameError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const clientNameError = ValidateBoard.name(newName);
+
     BoardsAPI
       .patch(id, { name: newName })
       .then(() => { toggleOff(); loadBoard(); })
-      .catch((err) => console.error(err)); // TODO: Toast
+      .catch((err) => {
+        setNameError(clientNameError || err.response.data.name || '');
+        // TODO: Handle other errors that may arise (Toast)
+      });
   };
 
   return (
@@ -44,6 +52,7 @@ const EditBoard = ({ id, name, toggleOff }) => {
           label="name"
           value={newName}
           setValue={setNewName}
+          error={nameError}
         />
 
         <Row className="ButtonWrapper">

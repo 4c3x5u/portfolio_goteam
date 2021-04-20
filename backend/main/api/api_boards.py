@@ -142,11 +142,13 @@ def boards(request):
             return validation_response
 
         serializer = BoardSerializer(board, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'msg': 'Board updated successfuly.',
-                'id': serializer.data['id'],
-            }, 200)
+        if not serializer.is_valid():
+            return Response(serializer.errors, 400)
+
+        serializer.save()
+        return Response({
+            'msg': 'Board updated successfuly.',
+            'id': serializer.data['id'],
+        }, 200)
 
 
