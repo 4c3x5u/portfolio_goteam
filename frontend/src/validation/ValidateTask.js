@@ -1,11 +1,7 @@
+import Validate from './Validate';
+
 const ValidateTask = {
-  title: (title) => {
-    if (!title) {
-      return 'Task title cannot be empty.';
-    } if (title.length > 50) {
-      return 'Task title cannot be longer than 50 characters.';
-    } return '';
-  },
+  title: Validate.requiredString('task title', 50),
 };
 
 export default ValidateTask;

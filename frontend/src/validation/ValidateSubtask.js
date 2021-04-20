@@ -1,11 +1,7 @@
+import Validate from './Validate';
+
 const ValidateSubtask = {
-  title: (title) => {
-    if (!title) {
-      return 'Subtask title cannot be empty.';
-    } if (title.length > 50) {
-      return 'Subtask title cannot be longer than 50 characters.';
-    } return '';
-  },
+  title: Validate.requiredString('subtask title', 50),
 };
 
 export default ValidateSubtask;
