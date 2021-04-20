@@ -7,6 +7,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import { Draggable } from 'react-beautiful-dnd';
+import _ from 'lodash/core';
 
 import Subtask from './Subtask/Subtask';
 import window from '../../../../../misc/window';
@@ -46,13 +47,14 @@ const Task = ({
 
             {subtasks.length > 0 && (
               <ul className="Subtasks">
-                {subtasks.sort((subtask) => subtask.order).map((subtask) => (
-                  <Subtask
-                    id={subtask.id}
-                    title={subtask.title}
-                    done={subtask.done}
-                  />
-                ))}
+                {_.sortBy(subtasks, (subtask) => subtask.order)
+                  .map((subtask) => (
+                    <Subtask
+                      id={subtask.id}
+                      title={subtask.title}
+                      done={subtask.done}
+                    />
+                  ))}
               </ul>
             )}
           </div>
