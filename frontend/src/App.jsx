@@ -5,7 +5,7 @@ import {
   Route,
   Redirect,
 } from 'react-router-dom';
-import { sortBy } from 'lodash/core';
+import _ from 'lodash/core';
 
 import AppContext from './AppContext';
 import AuthAPI from './api/AuthAPI';
@@ -69,10 +69,11 @@ const App = () => {
       );
 
       setMembers(
-        sortBy(teamMembers.data, (member) => !member.isAdmin),
+        _.sortBy(teamMembers.data, (member) => !member.isAdmin),
       );
     } catch (err) {
-      console.error(err);
+      setUser({ ...user, isAuthenticated: false });
+      console.error(err); // TODO: Toastr
     }
     setIsLoading(false);
   };

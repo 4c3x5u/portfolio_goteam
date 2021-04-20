@@ -16,7 +16,11 @@ import './header.sass';
 const Header = ({ activeWindow, handleActivate }) => {
   const { loadBoard } = useContext(AppContext);
 
-  const logout = () => console.log('loggig out');
+  const logout = () => {
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('auth-token');
+    loadBoard();
+  };
 
   return (
     <div id="Header">
@@ -28,7 +32,7 @@ const Header = ({ activeWindow, handleActivate }) => {
           <Row className="ControlsRow">
             <button className="LogoutButton" onClick={logout} type="button">
               <FontAwesomeIcon
-                className="fa-flip-horizontal"
+                className="Icon fa-flip-horizontal"
                 icon={faSignOutAlt}
               />
             </button>
