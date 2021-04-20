@@ -10,6 +10,7 @@ import inputType from '../../misc/inputType';
 
 import logo from './register.svg';
 import './register.sass';
+import {toast} from 'react-toastify';
 
 const Register = () => {
   const { loadBoard } = useContext(AppContext);
@@ -39,18 +40,24 @@ const Register = () => {
         sessionStorage.setItem('auth-token', res.data.token);
         loadBoard();
       })
-      .catch((err) => {
-        setErrors({
-          username: clientErrors.username || err.response.data.username || '',
-          password: clientErrors.password || err.response.data.password || '',
-          passwordConfirmation: (
-            clientErrors.passwordConfirmation
-            || err.response.data.password_confirmation
-            || ''
-          ),
-        });
-        // TODO: Handle other errors that may arise (Toast)
-      });
+      .catch((err) => (
+        err?.message
+          ? toast(
+            <>
+              <h5>{err.message}</h5>
+              <p>The board has NOT been deleted.</p>
+            </>,
+          )
+          : setErrors({
+            username: clientErrors.username || err.response.data.username || '',
+            password: clientErrors.password || err.response.data.password || '',
+            passwordConfirmation: (
+              clientErrors.passwordConfirmation
+              || err.response.data.password_confirmation
+              || ''
+            ),
+          })
+      ));
   };
 
   return (

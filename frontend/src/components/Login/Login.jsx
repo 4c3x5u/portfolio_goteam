@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
@@ -31,13 +32,19 @@ const Login = () => {
         sessionStorage.setItem('auth-token', res.data.token);
         loadBoard();
       })
-      .catch((err) => {
-        setErrors({
-          username: clientErrors.username || err.response.data.username || '',
-          password: clientErrors.password || err.response.data.password || '',
-        });
-        // TODO: Handle other errors that may arise (Toast)
-      });
+      .catch((err) => (
+        err?.message
+          ? toast(
+            <>
+              <h5>{err.message}</h5>
+              <p>The board has NOT been deleted.</p>
+            </>,
+          )
+          : setErrors({
+            username: clientErrors.username || err.response.data.username || '',
+            password: clientErrors.password || err.response.data.password || '',
+          })
+      ));
   };
 
   return (
