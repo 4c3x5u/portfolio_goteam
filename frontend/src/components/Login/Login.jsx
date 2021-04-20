@@ -4,7 +4,7 @@ import { Form, Button } from 'react-bootstrap';
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
-import validateLoginForm from './validateLoginForm';
+import ValidateUser from '../../validation/ValidateUser';
 import inputType from '../../misc/inputType';
 
 import logo from './login.svg';
@@ -19,7 +19,10 @@ const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const clientErrors = validateLoginForm(username, password);
+    const clientErrors = {
+      username: ValidateUser.username(username),
+      password: ValidateUser.password(password),
+    };
 
     AuthAPI
       .login(username, password)
