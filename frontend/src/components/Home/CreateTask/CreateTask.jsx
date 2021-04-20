@@ -12,7 +12,7 @@ import AppContext from '../../../AppContext';
 import TasksAPI from '../../../api/TasksAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import AddSubtasks from './AddSubtasks/AddSubtasks';
-// import ValidateTask from '../../../validation/ValidateTask';
+import ValidateTask from '../../../validation/ValidateTask';
 import inputType from '../../../misc/inputType';
 
 import logo from './createtask.svg';

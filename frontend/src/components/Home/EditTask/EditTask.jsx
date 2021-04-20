@@ -13,6 +13,7 @@ import TasksAPI from '../../../api/TasksAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from './EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
+import ValidateTask from '../../../validation/ValidateTask';
 
 import logo from './edittask.svg';
 import './edittask.sass';
@@ -20,28 +21,47 @@ import './edittask.sass';
 const EditTask = ({
   id, title, description, subtasks, toggleOff,
 }) => {
-  const { activeBoard, loadBoard } = useContext(AppContext);
+  const { activeBoard, loadBoard, notify } = useContext(AppContext);
   const [newTitle, setNewTitle] = useState(title);
   const [newDescription, setNewDescription] = useState(description);
   const [newSubtasks, setNewSubtasks] = useState({
     value: '',
     list: subtasks,
   });
+  const [titleError, setTitleError] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const taskData = {
-      title: newTitle,
-      description: newDescription,
-      column: activeBoard.columns[0].id,
-      subtasks: newSubtasks.list,
-    };
+    const clientTitleError = ValidateTask.title(newTitle);
 
-    TasksAPI
-      .patch(id, taskData)
-      .then(() => { loadBoard(); toggleOff(); })
-      .catch((err) => console.error(err));
+    if (clientTitleError) {
+      setTitleError(clientTitleError);
+    } else {
+      TasksAPI
+        .patch(id, {
+          title: newTitle,
+          description: newDescription,
+          column: activeBoard.columns[0].id,
+          subtasks: newSubtasks.list,
+        })
+        .then(() => {
+          loadBoard();
+          toggleOff();
+        })
+        .catch((err) => {
+          const serverTitleError = err?.response?.data?.title || '';
+
+          if (serverTitleError) {
+            setTitleError(serverTitleError);
+          } else {
+            notify(
+              'Unable to edit task.',
+              `${err?.message || 'Server Error'}.`,
+            );
+          }
+        });
+    }
   };
 
   return (
@@ -60,6 +80,7 @@ const EditTask = ({
           label="title"
           value={newTitle}
           setValue={setNewTitle}
+          error={titleError}
         />
 
         <FormGroup
@@ -69,7 +90,10 @@ const EditTask = ({
           setValue={setNewDescription}
         />
 
-        <EditSubtasks subtasks={newSubtasks} setSubtasks={setNewSubtasks} />
+        <EditSubtasks
+          subtasks={newSubtasks}
+          setSubtasks={setNewSubtasks}
+        />
 
         <Row className="ButtonWrapper">
           <Col className="ButtonCol">
