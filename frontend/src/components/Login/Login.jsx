@@ -4,6 +4,7 @@ import { Form, Button } from 'react-bootstrap';
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
+import validateLoginForm from './validateLoginForm';
 import inputType from '../../misc/inputType';
 
 import logo from './login.svg';
@@ -13,9 +14,12 @@ const Login = () => {
   const { loadBoard } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({ username: '', password: '' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    const clientErrors = validateLoginForm(username, password);
 
     AuthAPI
       .login(username, password)
@@ -24,7 +28,12 @@ const Login = () => {
         sessionStorage.setItem('auth-token', res.data.token);
         loadBoard();
       })
-      .catch((err) => console.error(err)); // TODO: Toast
+      .catch((err) => {
+        setErrors({
+          username: clientErrors.username || err.response.data.username || '',
+          password: clientErrors.password || err.response.data.password || '',
+        });
+      });
   };
 
   return (
@@ -39,6 +48,7 @@ const Login = () => {
           label="username"
           value={username}
           setValue={setUsername}
+          error={errors.username}
         />
 
         <FormGroup
@@ -46,6 +56,7 @@ const Login = () => {
           label="password"
           value={password}
           setValue={setPassword}
+          error={errors.password}
         />
 
         <div className="ButtonWrapper">

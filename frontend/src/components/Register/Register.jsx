@@ -26,22 +26,26 @@ const Register = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    setErrors(validateRegisterForm(
-      username,
-      password,
-      passwordConfirmation,
-    ));
+    const clientErrors = validateRegisterForm(
+      username, password, passwordConfirmation,
+    );
 
-    if (!errors.username && !errors.password && !errors.passwordConfirmation) {
-      AuthAPI
-        .register(username, password, passwordConfirmation, inviteCode)
-        .then((res) => {
-          sessionStorage.setItem('username', res.data.username);
-          sessionStorage.setItem('auth-token', res.data.token);
-          loadBoard();
-        })
-        .catch((err) => console.error(err)); // TODO: Toastr
-    }
+    AuthAPI
+      .register(username, password, passwordConfirmation, inviteCode)
+      .then((res) => {
+        sessionStorage.setItem('username', res.data.username);
+        sessionStorage.setItem('auth-token', res.data.token);
+        loadBoard();
+      })
+      .catch((err) => setErrors({
+        username: clientErrors.username || err.response.data.username || '',
+        password: clientErrors.password || err.response.data.password || '',
+        passwordConfirmation: (
+          clientErrors.passwordConfirmation
+          || err.response.data.password_confirmation
+          || ''
+        ),
+      }));
   };
 
   return (
