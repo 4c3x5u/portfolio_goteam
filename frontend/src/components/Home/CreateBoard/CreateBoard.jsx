@@ -23,11 +23,13 @@ const CreateBoard = ({ toggleOff }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    const clientNameError = ValidateBoard.name(name);
+
     BoardsAPI
       .post({ name, team_id: user.teamId })
       .then((res) => { toggleOff(); loadBoard(res.data.id); })
       .catch((err) => {
-        setNameError(ValidateBoard.name(name) || err.response.data.name || '');
+        setNameError(clientNameError || err.response.data.name || '');
         // TODO: Handle other errors that may arise (Toast)
       });
   };
