@@ -37,15 +37,18 @@ const Register = () => {
         sessionStorage.setItem('auth-token', res.data.token);
         loadBoard();
       })
-      .catch((err) => setErrors({
-        username: clientErrors.username || err.response.data.username || '',
-        password: clientErrors.password || err.response.data.password || '',
-        passwordConfirmation: (
-          clientErrors.passwordConfirmation
-          || err.response.data.password_confirmation
-          || ''
-        ),
-      }));
+      .catch((err) => {
+        setErrors({
+          username: clientErrors.username || err.response.data.username || '',
+          password: clientErrors.password || err.response.data.password || '',
+          passwordConfirmation: (
+            clientErrors.passwordConfirmation
+            || err.response.data.password_confirmation
+            || ''
+          ),
+        });
+        // TODO: Handle other errors that may arise (Toast)
+      });
   };
 
   return (

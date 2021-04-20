@@ -33,6 +33,7 @@ const Login = () => {
           username: clientErrors.username || err.response.data.username || '',
           password: clientErrors.password || err.response.data.password || '',
         });
+        // TODO: Handle other errors that may arise (Toast)
       });
   };
 
