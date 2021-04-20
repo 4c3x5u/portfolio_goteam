@@ -29,8 +29,8 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
       })
       .catch((err) => (
         notify(
-          err?.message || 'Server Error',
-          'Board deletion failure.',
+          'Unable to delete board.',
+          `${err.message || 'Server Error'}.`,
         )
       ));
   };

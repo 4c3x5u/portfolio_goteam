@@ -49,7 +49,10 @@ const Login = () => {
               password: serverErrors.password,
             });
           } else {
-            notify(err?.message || 'Server Error', 'Login failure.');
+            notify(
+              'Unable to log in.',
+              `${err?.message || 'Server Error'}.`,
+            );
           }
         });
     }

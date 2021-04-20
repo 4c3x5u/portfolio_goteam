@@ -41,7 +41,10 @@ const EditBoard = ({ id, name, toggleOff }) => {
           if (serverNameError) {
             setNameError(serverNameError);
           } else if (err?.message) {
-            notify(err.message || 'Server Error', 'Edit board failure.');
+            notify(
+              'Unable to edit board.',
+              `${err.message || 'Server Error'}.`,
+            );
           }
         });
     }
