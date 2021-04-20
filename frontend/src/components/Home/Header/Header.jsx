@@ -1,8 +1,10 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Container, Row } from 'react-bootstrap';
+import {
+  Container, Row, OverlayTrigger, Tooltip,
+} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 
 import BoardsControls from './Controls/Boards/BoardsControls';
 import TeamControls from './Controls/Team/TeamControls';
@@ -14,7 +16,7 @@ import logo from '../home.svg';
 import './header.sass';
 
 const Header = ({ activeWindow, handleActivate }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { user, loadBoard } = useContext(AppContext);
 
   const logout = () => {
     sessionStorage.removeItem('username');
@@ -54,6 +56,22 @@ const Header = ({ activeWindow, handleActivate }) => {
             />
 
             <HelpToggler toggle={handleActivate(window.HELP)} />
+
+            <OverlayTrigger
+              placement="bottom"
+              overlay={(
+                <Tooltip id="UserTooltip">
+                  {`Logged in as ${user.username}.`}
+                </Tooltip>
+              )}
+            >
+              <button className="UserButton" type="button">
+                <FontAwesomeIcon
+                  className="Icon fa-flip-horizontal"
+                  icon={faUser}
+                />
+              </button>
+            </OverlayTrigger>
           </Row>
         </Container>
       </div>
