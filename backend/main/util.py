@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 from .serializers.ser_board import BoardSerializer
 from .serializers.ser_column import ColumnSerializer
-from .models import Board
+from .models import Board, Column, Task
 import bcrypt
 
 
@@ -151,6 +151,58 @@ def validate_board_id(board_id):  # -> (board, response)
         }, 404)
 
     return board, None
+
+
+def validate_column_id(column_id):  # -> (column, response)
+    if not column_id:
+        return None, Response({
+            'column_id': ErrorDetail(string='Column ID cannot be empty.',
+                                     code='blank')
+        }, 400)
+
+    try:
+        int(column_id)
+    except ValueError:
+        return None, Response({
+            'column_id': ErrorDetail(string='Column ID must be a number.',
+                                     code='invalid')
+        }, 400)
+
+    try:
+        column = Column.objects.get(id=column_id)
+    except Column.DoesNotExist:
+        return None, Response({
+            'column_id': ErrorDetail(string='Column not found.',
+                                     code='not_found')
+        }, 404)
+
+    return column, None
+
+
+def validate_task_id(task_id):  # -> (task, response)
+    if not task_id:
+        return None, Response({
+            'task_id': ErrorDetail(string='Task ID cannot be empty.',
+                                   code='blank')
+        }, 400)
+
+    try:
+        int(task_id)
+    except ValueError:
+        return None, Response({
+            'task_id': ErrorDetail(string='Task ID must be a number.',
+                                   code='invalid')
+        }, 400)
+
+    try:
+        task = Task.objects.get(id=task_id)
+    except Column.DoesNotExist:
+        return None, Response({
+            'task_id': ErrorDetail(string='Task not found.',
+                                   code='not_found')
+        }, 404)
+
+    return task, None
 
 
 def validate_is_active(is_active):

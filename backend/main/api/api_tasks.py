@@ -4,7 +4,10 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Task, Subtask
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-from ..util import authenticate, authorize, not_authenticated_response
+from ..util import (
+    authenticate, authorize, not_authenticated_response, validate_column_id,
+    validate_task_id
+)
 
 
 @api_view(['GET', 'POST', 'PATCH', 'DELETE'])
@@ -19,27 +22,9 @@ def tasks(request):
     if request.method == 'GET':
         column_id = request.query_params.get('column_id')
 
-        if not column_id:
-            return Response({
-                'column_id': ErrorDetail(string='Column ID cannot be empty.',
-                                         code='blank')
-            }, 400)
-
-        try:
-            int(column_id)
-        except ValueError:
-            return Response({
-                'column_id': ErrorDetail(string='Column ID must be a number.',
-                                         code='invalid')
-            }, 400)
-
-        try:
-            column = Column.objects.get(id=column_id)
-        except Column.DoesNotExist:
-            return Response({
-                'column_id': ErrorDetail(string='Column not found.',
-                                         code='not_found')
-            }, 404)
+        column, validation_response = validate_column_id(column_id)
+        if validation_response:
+            return validation_response
 
         if column.board.team_id != team_id:
             return not_authenticated_response
@@ -62,11 +47,12 @@ def tasks(request):
             return authorization_response
 
         column_id = request.data.get('column')
-        if not column_id:
-            return Response({
-                'column': ErrorDetail(string='Column cannot be empty.',
-                                      code='blank')
-            }, 400)
+        column, validation_response = validate_column_id(column_id)
+        if validation_response:
+            return validation_response
+
+        if column.board.team.id != team_id:
+            return not_authenticated_response
 
         task_serializer = TaskSerializer(
             data={'title': request.data.get('title'),
@@ -104,6 +90,14 @@ def tasks(request):
             return authorization_response
 
         task_id = request.query_params.get('id')
+
+        task, validation_response = validate_task_id(task_id)
+        if validation_response:
+            return validation_response
+
+        if task.column.board.team.id != team_id:
+            return not_authenticated_response
+
         data = request.data
 
         if 'title' in list(data.keys()) and not data.get('title'):
@@ -121,21 +115,9 @@ def tasks(request):
 
         if 'column' in list(data.keys()):
             column_id = data.get('column')
-            if not column_id:
-                return Response({
-                    'column': ErrorDetail(
-                        string='Task column cannot be empty.',
-                        code='blank',
-                    )
-                }, 400)
-
-            try:
-                Column.objects.get(id=column_id)
-            except Column.DoesNotExist:
-                return Response({
-                    'column': ErrorDetail(string='Invalid column id.',
-                                          code='invalid')
-                }, 400)
+            _, validation_response = validate_column_id(column_id)
+            if validation_response:
+                return validation_response
 
         subtasks = data.get('subtasks')
         'subtask' in list(data.keys()) and data.pop('subtasks')
@@ -175,27 +157,14 @@ def tasks(request):
 
         task_id = request.query_params.get('id')
 
-        if not task_id:
-            return Response({
-                'task_id': ErrorDetail(string='Task ID cannot be empty.',
-                                       code='blank')
-            }, 400)
+        task, validation_response = validate_task_id(task_id)
+        if validation_response:
+            return validation_response
 
-        try:
-            int(task_id)
-        except ValueError:
-            return Response({
-                'task_id': ErrorDetail(string='Task ID must be a number.',
-                                       code='invalid')
-            }, 400)
+        if task.column.board.team.id != team_id:
+            return not_authenticated_response
 
-        try:
-            Task.objects.get(id=task_id).delete()
-        except Task.DoesNotExist:
-            return Response({
-                'task_id': ErrorDetail(string='Task not found.',
-                                       code='not_found')
-            }, 404)
+        task.delete()
 
         return Response({
             'msg': 'Task deleted successfully.',
