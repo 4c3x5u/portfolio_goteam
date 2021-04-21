@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useContextMenu, Item, Menu } from 'react-contexify';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlay,
@@ -37,18 +38,35 @@ const TeamControlsMenuItem = ({
     return <></>;
   };
 
+  const viewTooltip = (children) => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={<Tooltip id="Username">{username}</Tooltip>}
+    >
+      {children}
+    </OverlayTrigger>
+  );
+
+  const viewButton = (text) => (
+    <button
+      className="ControlButton"
+      key={username}
+      type="button"
+      onClick={toggleActive}
+      onContextMenu={(e) => (isAdmin ? e.preventDefault() : show(e))}
+    >
+      {getIcon()}
+      {text}
+    </button>
+  );
+
   return (
     <div className="TeamControlsMenuItem">
-      <button
-        className="ControlButton"
-        key={username}
-        type="button"
-        onClick={toggleActive}
-        onContextMenu={(e) => (isAdmin ? e.preventDefault() : show(e))}
-      >
-        {getIcon()}
-        {username}
-      </button>
+      {username.length <= 20
+        ? viewButton(username)
+        : viewTooltip(
+          viewButton(`${username.substring(0, 17)}...`),
+        )}
 
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
