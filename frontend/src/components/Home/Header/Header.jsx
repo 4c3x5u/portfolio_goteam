@@ -6,19 +6,34 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 
+import AppContext from '../../../AppContext';
+import InitialStates from '../../../misc/InitialStates';
 import BoardsControls from './Controls/Boards/BoardsControls';
 import TeamControls from './Controls/Team/TeamControls';
 import HelpToggler from './HelpToggler/HelpToggler';
 import window from '../../../misc/window';
-import AppContext from '../../../AppContext';
 
 import logo from '../home.svg';
 import './header.sass';
 
 const Header = ({ activeWindow, handleActivate }) => {
-  const { user, loadBoard } = useContext(AppContext);
+  const {
+    user,
+    setUser,
+    setTeam,
+    setMembers,
+    setBoards,
+    setActiveBoard,
+    loadBoard,
+  } = useContext(AppContext);
 
   const logout = () => {
+    setUser(InitialStates.user);
+    setTeam(InitialStates.team);
+    setMembers(InitialStates.members);
+    setBoards(InitialStates.boards);
+    setActiveBoard(InitialStates.activeBoard);
+
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('auth-token');
     loadBoard();
