@@ -24,9 +24,9 @@ def new_admin(team):
             'token': token}
 
 
-def new_member(team):
+def new_member(team, username_suffix=''):
     user = User.objects.create(
-        username='teammember',
+        username=f'teammember{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
                  b'e',
         is_admin=False,
@@ -51,16 +51,18 @@ def authenticate(username, token):
     try:
         user = User.objects.get(username=username)
     except (User.DoesNotExist, ValueError):
-        return not_authenticated_response
+        return None, not_authenticated_response
 
     try:
         tokens_match = bcrypt.checkpw(
             bytes(user.username, 'utf-8') + user.password,
             bytes(token, 'utf-8'))
         if not tokens_match:
-            return not_authenticated_response
+            return None, not_authenticated_response
     except ValueError:
-        return not_authenticated_response
+        return None, not_authenticated_response
+
+    return user.team_id, None
 
 
 not_authorized_response = Response({

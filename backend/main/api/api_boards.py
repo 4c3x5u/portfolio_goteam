@@ -3,9 +3,12 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..models import Board, Column, Task, Subtask
-from ..util import (
-    authenticate, authorize, validate_team_id, validate_board_id, create_board
-)
+from ..util import (authenticate,
+                    authorize,
+                    validate_team_id,
+                    validate_board_id,
+                    create_board,
+                    not_authenticated_response)
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PATCH'])
@@ -13,7 +16,7 @@ def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(username, token)
+    team_id, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -23,6 +26,9 @@ def boards(request):
             board, validation_response = validate_board_id(board_id)
             if validation_response:
                 return validation_response
+
+            if board.team_id != team_id:
+                return not_authenticated_response
 
             columns = list(map(
                 lambda column: {
