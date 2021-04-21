@@ -7,7 +7,7 @@ const ColumnsAPI = {
     getAuthHeaders(),
   ),
   patch: (columnId, data) => axios.patch(
-    `${process.env.REACT_APP_BACKEND_URL}/column/?id=${columnId}`,
+    `${process.env.REACT_APP_BACKEND_URL}/columns/?id=${columnId}`,
     data,
     getAuthHeaders(),
   ),
