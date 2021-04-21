@@ -16,9 +16,13 @@ def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
+    print('BOARDS API HIT')
+
     team_id, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
+
+    print(f'AUTHENTICATION RESPONSE: {authentication_response}')
 
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
@@ -27,7 +31,8 @@ def boards(request):
             if validation_response:
                 return validation_response
 
-            if board.team_id != team_id:
+            print(f'BOARD TEAM ID: {str(board)}')
+            if board.team.id != team_id:
                 return not_authenticated_response
 
             columns = list(map(
@@ -58,10 +63,13 @@ def boards(request):
             return Response({'id': board.id, 'columns': columns}, 200)
 
         if 'team_id' in request.query_params.keys():
-            team_id = request.query_params.get('team_id')
-            team, response = validate_team_id(team_id)
+            request_team_id = request.query_params.get('team_id')
+            team, response = validate_team_id(request_team_id)
             if response:
                 return response
+
+            if team.id != team_id:
+                return not_authenticated_response
 
             # create a board if none exists for the team
             queryset = Board.objects.filter(team=team.id)
@@ -103,10 +111,13 @@ def boards(request):
             return authorization_response
 
         # validate team_id
-        team_id = request.data.get('team_id')
-        team, validation_response = validate_team_id(team_id)
+        request_team_id = request.data.get('team_id')
+        team, validation_response = validate_team_id(request_team_id)
         if validation_response:
             return validation_response
+
+        if team.id != team_id:
+            return not_authenticated_response
 
         board_name = request.data.get('name')
 
@@ -130,6 +141,10 @@ def boards(request):
         board, validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        if board.team.id != team_id:
+            return not_authenticated_response
+
         board.delete()
 
         return Response({
@@ -146,6 +161,9 @@ def boards(request):
         board, validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        if board.team.id != team_id:
+            return not_authenticated_response
 
         serializer = BoardSerializer(board, data=request.data, partial=True)
         if not serializer.is_valid():
