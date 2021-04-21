@@ -11,8 +11,8 @@ class PatchBoardTests(APITestCase):
         team = Team.objects.create()
         self.admin = new_admin(team)
         self.member = new_member(team)
-        self.board = Board.objects.create(name='Some Board',
-                                          team=team)
+        self.board = Board.objects.create(name='Some Board', team=team)
+        self.wrong_team_member = new_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -115,6 +115,17 @@ class PatchBoardTests(APITestCase):
                          not_authenticated_response.status_code)
         self.assertEqual(response.data, not_authenticated_response.data)
 
+    def test_wrong_team(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(
+            f'{self.endpoint}{self.board.id}',
+            HTTP_AUTH_USER=self.wrong_team_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
+
     def test_unauthorized(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
                                      {'name': 'New Title'},
@@ -125,3 +136,4 @@ class PatchBoardTests(APITestCase):
             'auth': ErrorDetail(string='You must be an admin to do this.',
                                 code='not_authorized')
         })
+
