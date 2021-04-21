@@ -26,6 +26,7 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
           done: false,
         }],
       });
+      setError('');
     }
   };
 

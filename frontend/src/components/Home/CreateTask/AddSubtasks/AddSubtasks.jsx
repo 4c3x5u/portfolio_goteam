@@ -21,6 +21,7 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
         value: '',
         list: [...subtasks.list, subtasks.value],
       });
+      setError('');
     }
   };
 
