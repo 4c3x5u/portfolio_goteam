@@ -146,7 +146,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Column cannot be empty.',
+            'column_id': ErrorDetail(string='Column ID cannot be empty.',
                                      code='blank')
         })
         self.assertEqual(Task.objects.count(), initial_count)
