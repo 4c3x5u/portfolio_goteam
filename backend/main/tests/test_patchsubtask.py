@@ -1,7 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task, Column, Board, Team
-from ..util import new_member, new_admin, not_authenticated_response
+from ..util import (
+    new_member, new_admin, not_authenticated_response, not_authorized_response
+)
 
 
 class UpdateSubtaskTests(APITestCase):
@@ -23,6 +25,7 @@ class UpdateSubtaskTests(APITestCase):
                 )
             )
         )
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
 
     def help_test_success(self, subtask_id, request_data):
         response = self.client.patch(f'{self.endpoint}{subtask_id}',
@@ -85,8 +88,8 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.title': ErrorDetail(string='Title cannot be empty.',
-                                      code='blank')
+            'title': ErrorDetail(string='Title cannot be empty.',
+                                code='blank')
         })
         self.help_test_failure()
 
@@ -98,8 +101,8 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.done': ErrorDetail(string='Done cannot be empty.',
-                                     code='blank')
+            'done': ErrorDetail(string='Done cannot be empty.',
+                                code='blank')
         })
         self.help_test_failure()
 
@@ -110,8 +113,8 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data.order': ErrorDetail(string='Order cannot be empty.',
-                                      code='blank')
+            'order': ErrorDetail(string='Order cannot be empty.',
+                                 code='blank')
         })
         self.help_test_failure()
 
@@ -147,13 +150,20 @@ class UpdateSubtaskTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
+    def test_wrong_team(self):
+        response = self.client.patch(
+            f'{self.endpoint}{self.subtask.id}',
+            {'title': 'New Task Title'},
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
     def test_unauthorized(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
+        self.assertEqual(response.data, not_authorized_response.data)
