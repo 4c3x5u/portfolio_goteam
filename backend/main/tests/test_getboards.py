@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, User, Column
-from ..util import new_member, not_authenticated_response
+from ..models import Board, Team, Column
+from ..util import new_member, new_admin, not_authenticated_response
 
 
 class GetBoardsTests(APITestCase):
@@ -27,9 +27,10 @@ class GetBoardsTests(APITestCase):
     def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
+        member = new_member(team, '2')
         response = self.client.get(f'{self.endpoint}{team.id}',
-                                   HTTP_AUTH_USER=self.member['username'],
-                                   HTTP_AUTH_TOKEN=self.member['token'])
+                                   HTTP_AUTH_USER=member['username'],
+                                   HTTP_AUTH_TOKEN=member['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'team_id': ErrorDetail(string='Boards not found.',
@@ -43,17 +44,11 @@ class GetBoardsTests(APITestCase):
         initial_board_count = Board.objects.count()
         initial_columns_count = Column.objects.count()
         team = Team.objects.create()
-        user = User.objects.create(
-            username='teamadmin',
-            password=b'$2b$12$lrkDnrwXSBU.YJvdzbpAWOd9GhwHJGVYafRXTHct2gm3akPJ'
-                     b'gB5Zq',
-            is_admin=True,
-            team=self.team
-        )
-        token = '$2b$12$TVdxI.a.ZlOkhH1/mZQ/IOHmKxklQJWiB0n6ZSg2RJJO17thjLOdy'
+        admin = new_admin(team)
         response = self.client.get(self.endpoint + str(team.id),
-                                   HTTP_AUTH_USER=user.username,
-                                   HTTP_AUTH_TOKEN=token)
+                                   HTTP_AUTH_USER=admin['username'],
+                                   HTTP_AUTH_TOKEN=admin['token'])
+        print(response.data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0].get('name'), 'New Board')
