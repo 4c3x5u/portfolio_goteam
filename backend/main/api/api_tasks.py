@@ -4,7 +4,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Task, Subtask
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-from ..util import authenticate, authorize
+from ..util import authenticate, authorize, not_authenticated_response
 
 
 @api_view(['GET', 'POST', 'PATCH', 'DELETE'])
@@ -12,7 +12,7 @@ def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(username, token)
+    team_id, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -34,12 +34,15 @@ def tasks(request):
             }, 400)
 
         try:
-            Column.objects.get(id=column_id)
+            column = Column.objects.get(id=column_id)
         except Column.DoesNotExist:
             return Response({
                 'column_id': ErrorDetail(string='Column not found.',
                                          code='not_found')
             }, 404)
+
+        if column.board.team_id != team_id:
+            return not_authenticated_response
 
         column_tasks = Task.objects.filter(column_id=column_id)
         serializer = TaskSerializer(column_tasks, many=True)

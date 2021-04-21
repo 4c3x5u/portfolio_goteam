@@ -13,7 +13,7 @@ class GetBoardsTests(APITestCase):
         self.boards = [
             Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
         ]
-        self.wrong_team_member = new_member(Team.objects.create(), '1')
+        self.wrong_member = new_member(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -123,8 +123,8 @@ class GetBoardsTests(APITestCase):
         initial_count = Board.objects.count()
         response = self.client.get(
             f'{self.endpoint}{self.team.id}',
-            HTTP_AUTH_USER=self.wrong_team_member['username'],
-            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
+            HTTP_AUTH_USER=self.wrong_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_member['token'],
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
