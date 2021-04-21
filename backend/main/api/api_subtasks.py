@@ -6,7 +6,7 @@ from ..serializers.ser_subtask import SubtaskSerializer
 from ..util import authenticate, authorize, not_authenticated_response
 
 
-@api_view(['PATCH', 'GET'])
+@api_view(['GET', 'PATCH'])
 def subtasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
