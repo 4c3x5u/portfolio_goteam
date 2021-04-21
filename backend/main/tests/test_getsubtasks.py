@@ -32,6 +32,7 @@ class GetSubtasksTests(APITestCase):
             )
         )
         self.member = new_member(team)
+        self.wrong_member = new_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.task.id}',
@@ -102,4 +103,12 @@ class GetSubtasksTests(APITestCase):
                          not_authenticated_response.status_code)
         self.assertEqual(response.data, not_authenticated_response.data)
 
-
+    def test_wrong_team(self):
+        response = self.client.get(
+            f'{self.endpoint}{self.column.id}',
+            HTTP_AUTH_USER=self.wrong_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_member['token']
+        )
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
