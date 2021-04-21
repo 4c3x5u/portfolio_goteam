@@ -38,7 +38,7 @@ const App = () => {
   }]);
   const [boards, setBoards] = useState([{ id: null, name: '' }]);
   const [activeBoard, setActiveBoard] = useState(activeBoardInit);
-  const notify = (header, body) => (header || body) && toast(
+  const notify = (header, body) => (header || body) && toast.error(
     <>
       {header && <h4>{header}</h4>}
       {body && <p>{body}</p>}
@@ -133,7 +133,7 @@ const App = () => {
         </Router>
       </AppContext.Provider>
 
-      <ToastContainer />
+      <ToastContainer toastClassName="ErrorToast" position="bottom-left" />
     </div>
   );
 };
