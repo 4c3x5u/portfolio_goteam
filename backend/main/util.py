@@ -203,7 +203,7 @@ def validate_task_id(task_id):  # -> (task, response)
 
     try:
         task = Task.objects.get(id=task_id)
-    except Column.DoesNotExist:
+    except Task.DoesNotExist:
         return None, Response({
             'task_id': ErrorDetail(string='Task not found.',
                                    code='not_found')
