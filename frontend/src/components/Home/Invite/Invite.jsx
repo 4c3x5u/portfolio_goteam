@@ -1,8 +1,3 @@
-/* eslint-disable
-jsx-a11y/no-static-element-interactions,
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/mouse-events-have-key-events */
-
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -38,7 +33,7 @@ const Invite = ({ toggleOff }) => {
   };
 
   return (
-    <div className="Invite" onClick={toggleOff}>
+    <div className="Invite">
       <Form
         className="Form"
         onSubmit={handleSubmit}

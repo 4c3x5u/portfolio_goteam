@@ -1,7 +1,3 @@
-/* eslint-disable
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/no-static-element-interactions */
-
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -24,7 +20,10 @@ const DeleteMember = ({ username, toggleOff }) => {
 
     UsersAPI
       .delete(username)
-      .then(() => { toggleOff(); loadBoard(); })
+      .then(() => {
+        toggleOff();
+        loadBoard();
+      })
       .catch((err) => {
         notify(
           'Unable to delete member.',
@@ -34,7 +33,7 @@ const DeleteMember = ({ username, toggleOff }) => {
   };
 
   return (
-    <div className="DeleteMember" onClick={toggleOff}>
+    <div className="DeleteMember">
       <Form
         className="Form"
         onSubmit={handleSubmit}

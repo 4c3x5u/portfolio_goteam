@@ -1,10 +1,8 @@
-/* eslint-disable
-jsx-a11y/no-static-element-interactions,
-jsx-a11y/click-events-have-key-events */
-
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Form, Button } from 'react-bootstrap';
+import {
+  Form, Button, Row, Col,
+} from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
 import BoardsAPI from '../../../api/BoardsAPI';
@@ -49,7 +47,7 @@ const CreateBoard = ({ toggleOff }) => {
   };
 
   return (
-    <div className="CreateBoard" onClick={toggleOff}>
+    <div className="CreateBoard">
       <Form
         className="Form"
         onSubmit={handleSubmit}
@@ -67,11 +65,28 @@ const CreateBoard = ({ toggleOff }) => {
           error={nameError}
         />
 
-        <div className="ButtonWrapper">
-          <Button className="Button" type="submit" aria-label="submit">
-            GO!
-          </Button>
-        </div>
+        <Row className="ButtonWrapper">
+          <Col className="ButtonCol">
+            <Button
+              className="Button CancelButton"
+              type="button"
+              aria-label="cancel"
+              onClick={toggleOff}
+            >
+              CANCEL
+            </Button>
+          </Col>
+
+          <Col className="ButtonCol">
+            <Button
+              className="Button GoButton"
+              type="submit"
+              aria-label="submit"
+            >
+              GO!
+            </Button>
+          </Col>
+        </Row>
       </Form>
     </div>
   );

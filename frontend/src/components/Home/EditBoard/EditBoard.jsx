@@ -1,7 +1,3 @@
-/* eslint-disable
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/no-static-element-interactions */
-
 import React, { useContext, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -51,7 +47,7 @@ const EditBoard = ({ id, name, toggleOff }) => {
   };
 
   return (
-    <div className="EditBoard" onClick={toggleOff}>
+    <div className="EditBoard">
       <Form
         className="Form"
         onSubmit={handleSubmit}
