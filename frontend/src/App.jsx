@@ -10,13 +10,13 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
 
 import AppContext from './AppContext';
+import InitialStates from './misc/InitialStates';
 import AuthAPI from './api/AuthAPI';
 import UsersAPI from './api/UsersAPI';
 import BoardsAPI from './api/BoardsAPI';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
-import activeBoardInit from './misc/activeBoardInit';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
@@ -24,20 +24,11 @@ import TeamsAPI from './api/TeamsAPI';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState({
-    username: '',
-    teamId: null,
-    isAdmin: false,
-    isAuthenticated: false,
-  });
-  const [team, setTeam] = useState({ id: null, inviteCode: '' });
-  const [members, setMembers] = useState([{
-    username: '',
-    isActive: false,
-    isAdmin: false,
-  }]);
-  const [boards, setBoards] = useState([{ id: null, name: '' }]);
-  const [activeBoard, setActiveBoard] = useState(activeBoardInit);
+  const [user, setUser] = useState(InitialStates.user);
+  const [team, setTeam] = useState(InitialStates.team);
+  const [members, setMembers] = useState(InitialStates.members);
+  const [boards, setBoards] = useState(InitialStates.boards);
+  const [activeBoard, setActiveBoard] = useState(InitialStates.activeBoard);
   const notify = (header, body) => (header || body) && toast.error(
     <>
       {header && <h4>{header}</h4>}
@@ -100,10 +91,15 @@ const App = () => {
       <AppContext.Provider
         value={{
           user,
+          setUser,
           team,
+          setTeam,
           members,
+          setMembers,
           boards,
+          setBoards,
           activeBoard,
+          setActiveBoard,
           loadBoard,
           isLoading,
           setIsLoading,
