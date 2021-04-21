@@ -33,7 +33,7 @@ class GetNestedBoardTests(APITestCase):
                 done=(i % 2 == 0)
             ) for i in range(0, 2)
         ]
-        self.wrong_team_member = new_member(Team.objects.create(), '1')
+        self.wrong_member = new_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
@@ -127,8 +127,8 @@ class GetNestedBoardTests(APITestCase):
         initial_count = Board.objects.count()
         response = self.client.get(
             f'{self.endpoint}{self.boards[0].id}',
-            HTTP_AUTH_USER=self.wrong_team_member['username'],
-            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
+            HTTP_AUTH_USER=self.wrong_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_member['token'],
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
