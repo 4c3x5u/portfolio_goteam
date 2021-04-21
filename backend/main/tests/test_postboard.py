@@ -4,13 +4,14 @@ from ..models import Board, Team, Column
 from ..util import new_member, new_admin, not_authenticated_response
 
 
-class CreateBoardTests(APITestCase):
+class PostBoardTests(APITestCase):
     endpoint = '/boards/'
 
     def setUp(self):
         self.team = Team.objects.create()
         self.member = new_member(self.team)
         self.admin = new_admin(self.team)
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -126,6 +127,18 @@ class CreateBoardTests(APITestCase):
             {'team_id': self.team.id, 'name': 'New Board'},
             HTTP_AUTH_USER='invalidio',
             HTTP_AUTH_TOKEN=self.admin['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_wrong_team(self):
+        initial_count = Board.objects.count()
+        response = self.client.post(
+            self.endpoint,
+            {'team_id': self.team.id, 'name': 'New Board'},
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)

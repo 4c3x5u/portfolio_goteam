@@ -7,9 +7,9 @@ from .models import Board
 import bcrypt
 
 
-def new_admin(team):
+def new_admin(team, username_suffix=''):
     user = User.objects.create(
-        username='teamadmin',
+        username=f'teamadmin{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
                  b'e',
         is_admin=True,
