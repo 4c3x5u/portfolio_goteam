@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useContextMenu, Item, Menu } from 'react-contexify';
+import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
@@ -13,20 +14,36 @@ const BoardsControlsMenuItem = ({
 
   const { show } = useContextMenu({ id: MENU_ID });
 
+  const viewTooltip = (children) => (
+    <OverlayTrigger
+      placement="bottom"
+      overlay={<Tooltip id="BoardName">{name}</Tooltip>}
+    >
+      {children}
+    </OverlayTrigger>
+  );
+
+  const viewButton = (text) => (
+    <button
+      className="ControlButton"
+      key={id}
+      type="button"
+      onClick={toggleActive}
+      onContextMenu={show}
+    >
+      {isActive
+        && <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />}
+      {text}
+    </button>
+  );
+
   return (
     <div className="BoardsControlsMenuItem">
-      <button
-        className="ControlButton"
-        key={id}
-        type="button"
-        onClick={toggleActive}
-        onContextMenu={show}
-      >
-        {isActive
-          && <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />}
-
-        {name}
-      </button>
+      {name.length <= 20
+        ? viewButton(name)
+        : viewTooltip(
+          viewButton(`${name.substring(0, 17)}...`),
+        )}
 
       <Menu className="ContextMenu" id={MENU_ID}>
         <Item
