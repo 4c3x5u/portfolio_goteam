@@ -16,6 +16,7 @@ class DeleteTaskTests(APITestCase):
                                         column=column)
         self.admin = new_admin(team)
         self.member = new_member(team)
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Task.objects.count()
@@ -73,9 +74,11 @@ class DeleteTaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_invalid(self):
-        response = self.client.delete(f'{self.endpoint}{self.task.id}',
-                                      HTTP_AUTH_USER=self.admin['username'],
-                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
+        response = self.client.delete(
+            f'{self.endpoint}{self.task.id}',
+            HTTP_AUTH_USER=self.admin['username'],
+            HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos'
+        )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
@@ -102,3 +105,14 @@ class DeleteTaskTests(APITestCase):
             'auth': ErrorDetail(string='You must be an admin to do this.',
                                 code='not_authorized')
         })
+
+    def test_wrong_team(self):
+        initial_count = Board.objects.count()
+        response = self.client.delete(
+            f'{self.endpoint}{self.task.id}',
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
