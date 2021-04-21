@@ -26,7 +26,7 @@ const Column = ({
   ), [order]);
 
   return (
-    <Col className="Col" xs={3}>
+    <Col className="ColumnWrapper" xs={3}>
       <div className={`Column ${name && capFirstLetterOf(name)}Column`}>
         <div className="Header">
           {name && name.toUpperCase()}

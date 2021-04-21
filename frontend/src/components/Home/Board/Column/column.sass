@@ -1,55 +1,57 @@
 @use '../../../../misc/vars'
 
-.Column
-  height: 77vh
-  display: block
+.ColumnWrapper
+  min-width: 15rem
 
-  .Header
-    text-align: center
-    font-family: vars.$default-font
-    font-weight: bold
-    color: vars.$cultured
-    font-size: 2rem
-    margin-bottom: 0.5rem
-    padding-top: 0.4rem
+  .Column
+    height: 77vh
+    display: block
 
-    img
-      height: 4rem
+    .Header
+      text-align: center
+      font-weight: bold
+      color: vars.$cultured
+      font-size: 2rem
+      margin-bottom: 0.5rem
+      padding-top: 0.4rem
 
-  .Body
-    height: 100%
-    box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
-    width: 100%
-    padding: 1rem
-    overflow-y: auto
-    overflow-x: hidden
+      img
+        height: 4rem
 
-    .CreateButton
-      background-color: vars.$eggshell
-      border-radius: .7rem
-      box-shadow: 0 0 .3rem .3rem rgba(67, 67, 67, 50%)
-      border: none
+    .Body
+      height: 100%
+      box-shadow: 0 0 0.3rem 0.3rem rgba(67, 67, 67, 50%) inset
       width: 100%
-      padding: .4rem 0 .2rem 0
-      margin-bottom: 1rem
+      padding: 1rem
+      overflow-y: auto
+      overflow-x: hidden
 
-      .Icon
-        font-size: 2rem
-        color: vars.$black-coral
+      .CreateButton
+        background-color: vars.$eggshell
+        border-radius: .7rem
+        box-shadow: 0 0 .3rem .3rem rgba(67, 67, 67, 50%)
+        border: none
+        width: 100%
+        padding: .4rem 0 .2rem 0
+        margin-bottom: 1rem
 
-.InboxColumn
-  .Header, .Body
-    background-color: vars.$cadet-grey !important
+        .Icon
+          font-size: 2rem
+          color: vars.$black-coral
 
-.ReadyColumn
-  .Header, .Body
-    background-color: vars.$maize-crayola !important
+  .InboxColumn
+    .Header, .Body
+      background-color: vars.$cadet-grey !important
 
-.GoColumn
-  .Header, .Body
-    background-color: vars.$true-blue !important
+  .ReadyColumn
+    .Header, .Body
+      background-color: vars.$maize-crayola !important
 
-.DoneColumn
-  .Header, .Body
-    background-color: vars.$bittersweet-shimmer !important
+  .GoColumn
+    .Header, .Body
+      background-color: vars.$true-blue !important
+
+  .DoneColumn
+    .Header, .Body
+      background-color: vars.$bittersweet-shimmer !important
 
