@@ -10,48 +10,53 @@ import Column from './Column/Column';
 import './board.sass';
 
 const Board = ({ handleActivate }) => {
-  const { activeBoard, loadBoard, setIsLoading } = useContext(AppContext);
+  const {
+    activeBoard,
+    loadBoard,
+    setIsLoading,
+    notify,
+  } = useContext(AppContext);
 
   const handleOnDragEnd = async (result) => {
-    setIsLoading(true);
-
-    if (!result.destination) return;
-
-    const source = activeBoard.columns.find((column) => (
-      column.id.toString() === result.source.droppableId
-    ));
-
-    const [item] = source.tasks.splice(result.source.index, 1);
-
-    const sourceTasks = source.tasks.map((task, index) => ({
-      ...task,
-      order: index,
-    }));
-
     try {
+      setIsLoading(true);
+
+      if (!result.destination) return;
+
+      const source = activeBoard.columns.find((column) => (
+        column.id.toString() === result.source.droppableId
+      ));
+
+      const [item] = source.tasks.splice(result.source.index, 1);
+
+      const sourceTasks = source.tasks.map((task, index) => ({
+        ...task,
+        order: index,
+      }));
+
       await ColumnsAPI.patch(source.id, sourceTasks);
-    } catch (err) {
-      console.error(err);
-    }
 
-    const destination = activeBoard.columns.find((column) => (
-      column.id.toString() === result.destination.droppableId
-    ));
+      const destination = activeBoard.columns.find((column) => (
+        column.id.toString() === result.destination.droppableId
+      ));
 
-    destination.tasks.splice(result.destination.index, 0, item);
+      destination.tasks.splice(result.destination.index, 0, item);
 
-    const destinationTasks = destination.tasks.map((task, index) => ({
-      ...task,
-      order: index,
-    }));
+      const destinationTasks = destination.tasks.map((task, index) => ({
+        ...task,
+        order: index,
+      }));
 
-    try {
       await ColumnsAPI.patch(destination.id, destinationTasks);
-    } catch (err) {
-      console.error(err);
-    }
 
-    await loadBoard(activeBoard.id);
+      await loadBoard(activeBoard.id);
+    } catch (err) {
+      notify(
+        'Unable to update task.',
+        `${err?.message || 'Server Error'}.`,
+      );
+      setIsLoading(false);
+    }
   };
 
   return (
