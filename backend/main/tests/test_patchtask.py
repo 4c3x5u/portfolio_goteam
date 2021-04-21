@@ -92,21 +92,21 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Task column cannot be empty.',
+            'column_id': ErrorDetail(string='Column ID cannot be empty.',
                                      code='blank')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
 
-    def test_column_invalid(self):
+    def test_column_not_found(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'column': '123123'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Invalid column id.',
-                                     code='invalid')
+            'column_id': ErrorDetail(string='Column not found.',
+                                     code='not_found')
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)

@@ -32,7 +32,7 @@ class GetSubtasksTests(APITestCase):
             )
         )
         self.member = new_member(team)
-        self.wrong_member = new_member(Team.objects.create(), '1')
+        self.wrong_member = new_member(Team.objects.create(), '4')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.task.id}',
@@ -41,7 +41,7 @@ class GetSubtasksTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('subtasks'), self.subtasks)
 
-    def test_column_id_empty(self):
+    def test_task_id_empty(self):
         response = self.client.get(self.endpoint,
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
@@ -51,7 +51,7 @@ class GetSubtasksTests(APITestCase):
                                    code='blank')
         })
 
-    def test_column_id_invalid(self):
+    def test_task_id_invalid(self):
         response = self.client.get(f'{self.endpoint}aksjda',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
@@ -61,7 +61,7 @@ class GetSubtasksTests(APITestCase):
                                    code='invalid')
         })
 
-    def test_column_not_found(self):
+    def test_task_not_found(self):
         response = self.client.get(f'{self.endpoint}1231231',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
@@ -72,7 +72,7 @@ class GetSubtasksTests(APITestCase):
         })
 
     def test_auth_user_empty(self):
-        response = self.client.get(f'{self.endpoint}{self.column.id}',
+        response = self.client.get(f'{self.endpoint}{self.task.id}',
                                    HTTP_AUTH_USER='',
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code,
@@ -80,7 +80,7 @@ class GetSubtasksTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_user_invalid(self):
-        response = self.client.get(f'{self.endpoint}{self.column.id}',
+        response = self.client.get(f'{self.endpoint}{self.task.id}',
                                    HTTP_AUTH_USER='invalidusername',
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code,
@@ -88,7 +88,7 @@ class GetSubtasksTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_empty(self):
-        response = self.client.get(f'{self.endpoint}{self.column.id}',
+        response = self.client.get(f'{self.endpoint}{self.task.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code,
@@ -96,7 +96,7 @@ class GetSubtasksTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_invalid(self):
-        response = self.client.get(f'{self.endpoint}{self.column.id}',
+        response = self.client.get(f'{self.endpoint}{self.task.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
         self.assertEqual(response.status_code,
@@ -105,11 +105,10 @@ class GetSubtasksTests(APITestCase):
 
     def test_wrong_team(self):
         response = self.client.get(
-            f'{self.endpoint}{self.column.id}',
+            f'{self.endpoint}{self.task.id}',
             HTTP_AUTH_USER=self.wrong_member['username'],
             HTTP_AUTH_TOKEN=self.wrong_member['token']
         )
-        print(response)
         self.assertEqual(response.status_code,
                          not_authenticated_response.status_code)
         self.assertEqual(response.data, not_authenticated_response.data)
