@@ -13,6 +13,7 @@ class CreateTaskTests(APITestCase):
         self.admin = new_admin(team)
         board = Board.objects.create(team=team)
         self.column = Column.objects.create(board=board, order=0)
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
 
     def help_test_success(self, response_data, status_code, request_data):
         self.assertEqual(status_code, 201)
@@ -198,6 +199,19 @@ class CreateTaskTests(APITestCase):
                                     request_data,
                                     HTTP_AUTH_USER='invalidio',
                                     HTTP_AUTH_TOKEN=self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Task.objects.count(), initial_count)
+
+    def test_wrong_team(self):
+        initial_count = Task.objects.count()
+        request_data = {'title': 'Some Task',
+                        'description': 'Lorem ipsum dolor sit amet',
+                        'column': self.column.id}
+        response = self.client.post(self.endpoint,
+                                    request_data,
+                                    HTTP_AUTH_USER=self.wrong_admin['username'],
+                                    HTTP_AUTH_TOKEN=self.wrong_admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Task.objects.count(), initial_count)
