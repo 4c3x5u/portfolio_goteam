@@ -59,8 +59,6 @@ def subtasks(request):
             )
         }, 200)
 
-
-
     if request.method == 'PATCH':
         authorization_response = authorize(username)
         if authorization_response:
@@ -73,6 +71,17 @@ def subtasks(request):
                                   code='blank')
             }, 400)
 
+        try:
+            subtask = Subtask.objects.get(id=subtask_id)
+        except Subtask.DoesNotExist:
+            return Response ({
+                'id': ErrorDetail(string='Subtask not found.',
+                                  code='not_found')
+            })
+
+        if subtask.task.column.board.team.id != team_id:
+            return not_authenticated_response
+
         data = request.data
 
         if not data:
@@ -83,21 +92,21 @@ def subtasks(request):
 
         if 'title' in list(data.keys()) and not data.get('title'):
             return Response({
-                'data.title': ErrorDetail(string='Title cannot be empty.',
+                'title': ErrorDetail(string='Title cannot be empty.',
                                           code='blank')
             }, 400)
 
         done = data.get('done')
         if 'done' in list(data.keys()) and (done == '' or done is None):
             return Response({
-                'data.done': ErrorDetail(string='Done cannot be empty.',
+                'done': ErrorDetail(string='Done cannot be empty.',
                                          code='blank')
             }, 400)
 
         order = data.get('order')
         if 'order' in list(data.keys()) and (order == '' or order is None):
             return Response({
-                'data.order': ErrorDetail(string='Order cannot be empty.',
+                'order': ErrorDetail(string='Order cannot be empty.',
                                           code='blank')
             }, 400)
 
