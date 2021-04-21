@@ -4,6 +4,7 @@ jsx-a11y/click-events-have-key-events */
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Button } from 'react-bootstrap';
 
 import './help.sass';
 import logo from './help.svg';
@@ -85,6 +86,14 @@ const Help = ({ toggleOff }) => (
           to it.
         </li>
       </ol>
+      <Button
+        className="Button"
+        type="button"
+        aria-label="cancel"
+        onClick={toggleOff}
+      >
+        OK
+      </Button>
     </div>
   </div>
 );

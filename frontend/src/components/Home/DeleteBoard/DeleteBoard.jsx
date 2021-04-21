@@ -1,7 +1,3 @@
-/* eslint-disable
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/no-static-element-interactions */
-
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -21,6 +17,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     BoardsAPI
       .delete(id)
       .then(() => {
@@ -36,7 +33,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
   };
 
   return (
-    <div className="DeleteBoard" onClick={toggleOff}>
+    <div className="DeleteBoard">
       <Form
         className="Form"
         onSubmit={handleSubmit}

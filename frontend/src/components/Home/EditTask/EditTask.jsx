@@ -1,7 +1,3 @@
-/* eslint-disable
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/no-static-element-interactions */
-
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -65,7 +61,7 @@ const EditTask = ({
   };
 
   return (
-    <div className="EditTask" onClick={toggleOff}>
+    <div className="EditTask">
       <Form
         className="Form"
         onSubmit={handleSubmit}
