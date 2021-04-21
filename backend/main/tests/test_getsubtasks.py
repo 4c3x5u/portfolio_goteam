@@ -109,6 +109,7 @@ class GetSubtasksTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_member['username'],
             HTTP_AUTH_TOKEN=self.wrong_member['token']
         )
+        print(response)
         self.assertEqual(response.status_code,
                          not_authenticated_response.status_code)
         self.assertEqual(response.data, not_authenticated_response.data)
