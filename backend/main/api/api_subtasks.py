@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task
 from ..serializers.ser_subtask import SubtaskSerializer
-from ..util import authenticate, authorize
+from ..util import authenticate, authorize, not_authenticated_response
 
 
 @api_view(['PATCH', 'GET'])
@@ -11,7 +11,7 @@ def subtasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(username, token)
+    team_id, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -33,12 +33,15 @@ def subtasks(request):
             }, 400)
 
         try:
-            Task.objects.get(id=task_id)
+            task = Task.objects.get(id=task_id)
         except Task.DoesNotExist:
             return Response({
                 'task_id': ErrorDetail(string='Task not found.',
                                        code='not_found')
             }, 404)
+
+        if task.column.board.team_id != team_id:
+            return not_authenticated_response
 
         task_subtasks = Subtask.objects.filter(task_id=task_id)
         serializer = SubtaskSerializer(task_subtasks, many=True)
