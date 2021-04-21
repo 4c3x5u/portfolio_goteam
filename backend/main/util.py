@@ -21,7 +21,10 @@ def new_admin(team, username_suffix=''):
             'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
-            'token': token}
+            'token': token if not username_suffix else bcrypt.hashpw(
+                bytes(user.username, 'utf-8') + user.password,
+                bcrypt.gensalt()
+            ).decode('utf-8')}
 
 
 def new_member(team, username_suffix=''):
@@ -38,7 +41,11 @@ def new_member(team, username_suffix=''):
             'password_raw': 'barbarbar',
             'is_admin': user.is_admin,
             'team': user.team,
-            'token': token}
+            'token': token if not username_suffix else bcrypt.hashpw(
+                bytes(user.username, 'utf-8') + user.password,
+                bcrypt.gensalt()
+            ).decode('utf-8')
+}
 
 
 not_authenticated_response = Response({
@@ -47,7 +54,7 @@ not_authenticated_response = Response({
 }, 403)
 
 
-def authenticate(username, token):
+def authenticate(username, token):  # -> (team id, response)
     try:
         user = User.objects.get(username=username)
     except (User.DoesNotExist, ValueError):
