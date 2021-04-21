@@ -1,7 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
-from ..util import new_member, new_admin, not_authenticated_response
+from ..util import (
+    new_member, new_admin, not_authenticated_response, not_authorized_response
+)
 
 
 class UpdateTaskTests(APITestCase):
@@ -21,7 +23,8 @@ class UpdateTaskTests(APITestCase):
                 )
             )
         )
-        
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
+
     def help_test_success(self, task_id, request_data):
         response = self.client.patch(f'{self.endpoint}{task_id}',
                                      request_data,
@@ -155,9 +158,17 @@ class UpdateTaskTests(APITestCase):
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Task.objects.count(), initial_count)
 
+    def test_wrong_team(self):
+        initial_count = Task.objects.count()
+        response = self.client.patch(
+            f'{self.endpoint}{self.task.id}',
+            {'title': 'New Title'},
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Task.objects.count(), initial_count)
