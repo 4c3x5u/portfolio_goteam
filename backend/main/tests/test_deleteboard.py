@@ -12,6 +12,7 @@ class DeleteBoardTests(APITestCase):
         self.board = Board.objects.create(team=team)
         self.admin = new_admin(team)
         self.member = new_member(team)
+        self.wrong_team_member = new_member(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -108,3 +109,15 @@ class DeleteBoardTests(APITestCase):
                                 code='not_authorized')
         })
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_wrong_team(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(
+            f'{self.endpoint}{self.board.id}',
+            HTTP_AUTH_USER=self.wrong_team_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
+

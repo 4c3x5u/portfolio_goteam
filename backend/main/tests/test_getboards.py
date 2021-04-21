@@ -124,7 +124,7 @@ class GetBoardsTests(APITestCase):
         response = self.client.get(
             f'{self.endpoint}{self.team.id}',
             HTTP_AUTH_USER=self.wrong_team_member['username'],
-            HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia'
+            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
