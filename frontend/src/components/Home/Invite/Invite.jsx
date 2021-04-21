@@ -74,7 +74,7 @@ const Invite = ({ toggleOff }) => {
             type="submit"
             aria-label="submit"
           >
-            GO!
+            OK
           </Button>
         </div>
       </Form>

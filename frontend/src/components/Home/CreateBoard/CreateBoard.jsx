@@ -83,7 +83,7 @@ const CreateBoard = ({ toggleOff }) => {
               type="submit"
               aria-label="submit"
             >
-              GO!
+              CREATE
             </Button>
           </Col>
         </Row>

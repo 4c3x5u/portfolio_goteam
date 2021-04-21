@@ -109,7 +109,7 @@ const EditTask = ({
               type="submit"
               aria-label="submit"
             >
-              GO!
+              SUBMIT
             </Button>
           </Col>
         </Row>

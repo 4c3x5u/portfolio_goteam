@@ -83,7 +83,7 @@ const EditBoard = ({ id, name, toggleOff }) => {
               type="submit"
               aria-label="submit"
             >
-              GO!
+              SUBMIT
             </Button>
           </Col>
         </Row>
