@@ -1,6 +1,6 @@
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
-bbfrom ..models import User
+from ..models import User
 
 
 # return (user, response)

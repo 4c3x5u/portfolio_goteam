@@ -19,17 +19,19 @@ def users(request):
         return authentication_response
 
     if request.method == 'GET':
-        team_id = request.query_params.get('team_id')
-        team, validation_response = validate_team_id(team_id)
+        request_team_id = request.query_params.get('team_id')
+        team, validation_response = validate_team_id(request_team_id)
         if validation_response:
             return validation_response
+        if team.id != team_id:
+            return not_authenticated_response
 
         board_id = request.query_params.get('board_id')
         board, validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
 
-        users_list = User.objects.filter(team_id=team_id)
+        users_list = User.objects.filter(team_id=team.id)
         board_users = User.objects.filter(board=board)
 
         return Response(list(map(
