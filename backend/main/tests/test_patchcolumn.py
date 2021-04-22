@@ -29,6 +29,7 @@ class UpdateColumns(APITestCase):
             },
             self.tasks
         ))
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
@@ -120,7 +121,18 @@ class UpdateColumns(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
-    def test_not_admin(self):
+    def test_wrong_team(self):
+        response = self.client.patch(
+            f'{self.endpoint}{self.column.id}',
+            self.task_data,
+            format='json',
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_not_authorized(self):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
                                      self.task_data,
                                      format='json',
