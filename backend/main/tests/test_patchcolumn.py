@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
-from ..util import new_admin, new_member
+from ..util import create_admin, create_member
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -19,8 +19,8 @@ class UpdateColumns(APITestCase):
                 column=self.column
             ) for i in range(0, 5)
         ]
-        self.admin = new_admin(team)
-        self.member = new_member(team)
+        self.admin = create_admin(team)
+        self.member = create_member(team)
         self.task_data = list(map(
             lambda task: {
                 'id': task.id,

@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..util import new_member, new_admin
+from ..util import create_member, create_admin
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -10,11 +10,11 @@ class GetBoardsTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.member = new_member(self.team)
+        self.member = create_member(self.team)
         self.boards = [
             Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
         ]
-        self.wrong_member = new_member(Team.objects.create(), '1')
+        self.wrong_member = create_member(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -28,7 +28,7 @@ class GetBoardsTests(APITestCase):
     def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
-        member = new_member(team, '2')
+        member = create_member(team, '2')
         response = self.client.get(f'{self.endpoint}{team.id}',
                                    HTTP_AUTH_USER=member['username'],
                                    HTTP_AUTH_TOKEN=member['token'])
@@ -45,7 +45,7 @@ class GetBoardsTests(APITestCase):
         initial_board_count = Board.objects.count()
         initial_columns_count = Column.objects.count()
         team = Team.objects.create()
-        admin = new_admin(team)
+        admin = create_admin(team)
         response = self.client.get(self.endpoint + str(team.id),
                                    HTTP_AUTH_USER=admin['username'],
                                    HTTP_AUTH_TOKEN=admin['token'])

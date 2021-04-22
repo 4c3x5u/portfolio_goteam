@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..util import new_admin
+from ..util import create_admin
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -10,7 +10,7 @@ class GetColumnsTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.admin = new_admin(self.team)
+        self.admin = create_admin(self.team)
         self.board = Board.objects.create(team_id=self.team.id)
         self.columns = [
             Column.objects.create(

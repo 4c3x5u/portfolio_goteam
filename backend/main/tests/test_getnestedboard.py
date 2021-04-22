@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column, Task, Subtask
-from ..util import new_member
+from ..util import create_member
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -10,7 +10,7 @@ class GetNestedBoardTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.member = new_member(self.team)
+        self.member = create_member(self.team)
         self.boards = [
             Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
         ]
@@ -34,7 +34,7 @@ class GetNestedBoardTests(APITestCase):
                 done=(i % 2 == 0)
             ) for i in range(0, 2)
         ]
-        self.wrong_member = new_member(Team.objects.create(), '1')
+        self.wrong_member = create_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.boards[0].id}',

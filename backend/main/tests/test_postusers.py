@@ -1,13 +1,13 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
-from ..util import new_admin
+from ..util import create_admin
 
 
 class PostUsersTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
-        self.admin = new_admin(team)
+        self.admin = create_admin(team)
         self.user = User.objects.create(
             username='Some User',
             password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJ'

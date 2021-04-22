@@ -5,7 +5,7 @@ from .serializers.ser_column import ColumnSerializer
 import bcrypt
 
 
-def new_admin(team, username_suffix=''):
+def create_admin(team, username_suffix=''):
     user = User.objects.create(
         username=f'teamadmin{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
@@ -25,7 +25,7 @@ def new_admin(team, username_suffix=''):
             ).decode('utf-8')}
 
 
-def new_member(team, username_suffix=''):
+def create_member(team, username_suffix=''):
     user = User.objects.create(
         username=f'teammember{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'

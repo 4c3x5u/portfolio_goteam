@@ -1,16 +1,16 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
-from ..util import new_admin, new_member
+from ..util import create_admin, create_member
 from ..validation.val_auth import not_authenticated_response
 
 
 class DeleteUserTests(APITestCase):
     def setUp(self):
         self.team = Team.objects.create()
-        self.admin = new_admin(self.team)
-        self.member = new_member(self.team)
-        self.wrong_admin = new_admin(Team.objects.create(), '1')
+        self.admin = create_admin(self.team)
+        self.member = create_member(self.team)
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def delete_user(self, username, auth_user, auth_token):
         return self.client.delete(f'/users/?username={username}',

@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..util import new_member, new_admin
+from ..util import create_member, create_admin
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -11,9 +11,9 @@ class PostBoardTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.member = new_member(self.team)
-        self.admin = new_admin(self.team)
-        self.wrong_admin = new_admin(Team.objects.create(), '1')
+        self.member = create_member(self.team)
+        self.admin = create_admin(self.team)
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def test_success(self):
         initial_count = Board.objects.count()
