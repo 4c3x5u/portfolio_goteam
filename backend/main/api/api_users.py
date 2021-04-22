@@ -2,10 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import User
-from ..util import (
-    authenticate, authorize, validate_team_id, validate_board_id,
-    validate_is_active
-)
+from ..validation.val_auth import authenticate, authorize
+from ..validation.val_team import validate_team_id
+from ..validation.val_board import validate_board_id
+from ..validation.val_user import validate_is_active
 
 
 @api_view(['GET', 'POST', 'DELETE'])

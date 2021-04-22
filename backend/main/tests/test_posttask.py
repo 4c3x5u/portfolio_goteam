@@ -1,7 +1,8 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
-from ..util import new_member, new_admin, not_authenticated_response
+from ..util import new_member, new_admin
+from ..validation.val_auth import not_authenticated_response
 
 
 class CreateTaskTests(APITestCase):

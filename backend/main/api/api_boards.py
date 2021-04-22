@@ -3,12 +3,11 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
 from ..models import Board, Column, Task, Subtask
-from ..util import (authenticate,
-                    authorize,
-                    validate_team_id,
-                    validate_board_id,
-                    create_board,
-                    not_authenticated_response)
+from ..validation.val_auth import \
+    authenticate, authorize, not_authenticated_response
+from ..validation.val_team import validate_team_id
+from ..validation.val_board import validate_board_id
+from ..util import create_board
 
 
 @api_view(['GET', 'POST', 'DELETE', 'PATCH'])
