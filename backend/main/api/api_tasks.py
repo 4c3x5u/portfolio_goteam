@@ -4,10 +4,10 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Task, Subtask
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
-from ..util import (
-    authenticate, authorize, not_authenticated_response, validate_column_id,
-    validate_task_id
-)
+from ..validation.val_auth import \
+    authenticate, authorize, not_authenticated_response
+from ..validation.val_column import validate_column_id
+from ..validation.val_task import validate_task_id
 
 
 @api_view(['GET', 'POST', 'PATCH', 'DELETE'])

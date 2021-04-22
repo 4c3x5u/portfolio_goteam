@@ -1,10 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..util import authenticate, authorize
 from ..models import Column, Board, Task
 from ..serializers.ser_column import ColumnSerializer
 from ..serializers.ser_task import TaskSerializer
+from ..validation.val_auth import authenticate, authorize
 
 
 @api_view(['GET', 'PATCH'])

@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from ..util import  authenticate, authorize, validate_team_id
+from ..validation.val_auth import authenticate, authorize
+from ..validation.val_team import validate_team_id
 
 
 @api_view(['GET'])
