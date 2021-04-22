@@ -2,6 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
 from ..util import create_admin
+from ..validation.val_auth import not_authenticated_response
 
 
 class PostUsersTests(APITestCase):
@@ -20,6 +21,7 @@ class PostUsersTests(APITestCase):
         self.username = self.user.username
         self.token = '$2b$12$WLmxQnf9kbDoW/8jA6kfIO9TfchCiGphBpckS2oy755wtdT' \
                      'aIQsoq'
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def postUser(self, user_data, auth_user, auth_token):
         return self.client.post(f'/users/',
@@ -126,4 +128,65 @@ class PostUsersTests(APITestCase):
             'is_active': ErrorDetail(string='Is Valid must be a boolean.',
                                      code='invalid')
         })
+
+
+    def test_auth_token_empty(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.admin['username'], '')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_token_invalid(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.admin['username'], 'kasjdaksdjalsdkjasd')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_blank(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, '', self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_auth_user_invalid(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, 'invaliditto', self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_wrong_team(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.wrong_admin['username'], self.wrong_admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_unauthorized(self):
+        response = self.postUser({
+            'username': self.user.username,
+            'board_id': self.board.id,
+            'is_active': False
+        }, self.username, self.token)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='You must be an admin to do this.',
+                                code='not_authorized')
+        })
+
+
 
