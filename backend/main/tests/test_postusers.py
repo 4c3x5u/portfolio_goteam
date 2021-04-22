@@ -2,7 +2,8 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
 from ..util import create_admin
-from ..validation.val_auth import not_authenticated_response
+from ..validation.val_auth import \
+    not_authenticated_response, not_authorized_response
 
 
 class PostUsersTests(APITestCase):
@@ -19,8 +20,8 @@ class PostUsersTests(APITestCase):
         self.board = Board.objects.create(name='Some Board', team=team)
         self.board.user.add(self.user)
         self.username = self.user.username
-        self.token = '$2b$12$WLmxQnf9kbDoW/8jA6kfIO9TfchCiGphBpckS2oy755wtdT' \
-                     'aIQsoq'
+        self.token = '$2b$12$l3pvxK.Ig.RYsPvR6gpE1eaxpzAlqkFFznQ1uBGgHnFA8Ui' \
+                     'mhbykO'
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def postUser(self, user_data, auth_user, auth_token):
@@ -125,7 +126,7 @@ class PostUsersTests(APITestCase):
         }, self.admin['username'], self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'is_active': ErrorDetail(string='Is Valid must be a boolean.',
+            'is_active': ErrorDetail(string='Is Active must be a boolean.',
                                      code='invalid')
         })
 
@@ -174,7 +175,6 @@ class PostUsersTests(APITestCase):
         }, self.wrong_admin['username'], self.wrong_admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_unauthorized(self):
         response = self.postUser({
@@ -183,10 +183,4 @@ class PostUsersTests(APITestCase):
             'is_active': False
         }, self.username, self.token)
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
-
-
-
+        self.assertEqual(response.data, not_authorized_response.data)

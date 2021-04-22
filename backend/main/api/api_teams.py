@@ -23,6 +23,8 @@ def teams(request):
     team, validation_response = validate_team_id(team_id)
     if validation_response:
         return validation_response
+    if team.id != auth_team_id:
+        return not_authenticated_response
 
     return Response({
         'id': team.id,

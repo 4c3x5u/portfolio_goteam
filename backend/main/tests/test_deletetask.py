@@ -97,16 +97,6 @@ class DeleteTaskTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
-    def test_unauthorized(self):
-        response = self.client.delete(f'{self.endpoint}{self.task.id}',
-                                      HTTP_AUTH_USER=self.member['username'],
-                                      HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
-
     def test_wrong_team(self):
         initial_count = Board.objects.count()
         response = self.client.delete(
@@ -117,3 +107,14 @@ class DeleteTaskTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_unauthorized(self):
+        response = self.client.delete(f'{self.endpoint}{self.task.id}',
+                                      HTTP_AUTH_USER=self.member['username'],
+                                      HTTP_AUTH_TOKEN=self.member['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, {
+            'auth': ErrorDetail(string='You must be an admin to do this.',
+                                code='not_authorized')
+        })
+
