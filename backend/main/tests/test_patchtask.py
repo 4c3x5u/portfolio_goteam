@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
-from ..util import new_member, new_admin
+from ..util import create_member, create_admin
 from ..validation.val_auth import \
     not_authenticated_response, not_authorized_response
 
@@ -11,8 +11,8 @@ class UpdateTaskTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.member = new_member(team)
-        self.admin = new_admin(team)
+        self.member = create_member(team)
+        self.admin = create_admin(team)
         self.task = Task.objects.create(
             title="Task Title",
             order=0,
@@ -23,7 +23,7 @@ class UpdateTaskTests(APITestCase):
                 )
             )
         )
-        self.wrong_admin = new_admin(Team.objects.create(), '1')
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def help_test_success(self, task_id, request_data):
         response = self.client.patch(f'{self.endpoint}{task_id}',

@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team
-from ..util import new_member
+from ..util import create_member
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -29,8 +29,8 @@ class GetTasksTests(APITestCase):
                 }, tasks_raw
             )
         )
-        self.member = new_member(team)
-        self.wrong_member = new_member(Team.objects.create(), '1')
+        self.member = create_member(team)
+        self.wrong_member = create_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.column.id}',

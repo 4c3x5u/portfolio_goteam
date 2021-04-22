@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team
-from ..util import new_admin, new_member
+from ..util import create_admin, create_member
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -10,8 +10,8 @@ class GetTeamTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.admin = new_admin(self.team)
-        self.member = new_member(self.team)
+        self.admin = create_admin(self.team)
+        self.member = create_member(self.team)
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.team.id}',

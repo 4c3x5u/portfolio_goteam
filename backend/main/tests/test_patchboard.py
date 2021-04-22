@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team
-from ..util import new_admin, new_member
+from ..util import create_admin, create_member
 from ..validation.val_auth import not_authenticated_response
 
 
@@ -10,10 +10,10 @@ class PatchBoardTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.admin = new_admin(team)
-        self.member = new_member(team)
+        self.admin = create_admin(team)
+        self.member = create_member(team)
         self.board = Board.objects.create(name='Some Board', team=team)
-        self.wrong_admin = new_admin(Team.objects.create(), '1')
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',

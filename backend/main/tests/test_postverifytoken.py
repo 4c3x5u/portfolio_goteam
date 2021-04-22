@@ -1,13 +1,13 @@
 from rest_framework.test import APITestCase
 from main.models import Team
-from ..util import new_member
+from ..util import create_member
 
 
 class VerifyTokenTests(APITestCase):
     endpoint = '/verify-token/'
 
     def setUp(self):
-        self.user = new_member(Team.objects.create())
+        self.user = create_member(Team.objects.create())
 
     def test_success(self):
         request_data = {'username': self.user['username'],

@@ -2,6 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User, Board
 from ..validation.val_auth import not_authenticated_response
+from ..util import create_member
 
 
 class GetUsersTests(APITestCase):
