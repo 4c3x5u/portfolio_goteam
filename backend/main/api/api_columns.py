@@ -12,7 +12,7 @@ def columns(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(username, token)
+    user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
