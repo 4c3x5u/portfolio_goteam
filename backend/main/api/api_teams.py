@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from ..validation.val_auth import authenticate, authorize
+from ..validation.val_auth import \
+    authenticate, authorize, not_authenticated_response
 from ..validation.val_team import validate_team_id
 
 
@@ -9,7 +10,7 @@ def teams(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(auth_user, auth_token)
+    auth_team_id, authentication_response = authenticate(auth_user, auth_token)
     if authentication_response:
         return authentication_response
 
