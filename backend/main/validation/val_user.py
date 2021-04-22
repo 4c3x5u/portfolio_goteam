@@ -1,5 +1,25 @@
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
+bbfrom ..models import User
+
+
+# return (user, response)
+def validate_username(username):
+    if not username:
+        return None, Response({
+            'username': ErrorDetail(string='Username cannot be empty.',
+                                    code='blank')
+        }, 400)
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return None, Response({
+            'username': ErrorDetail(string='User not found.',
+                                    code='not_found')
+        }, 404)
+
+    return user, None
 
 
 # return (is_active, response)
