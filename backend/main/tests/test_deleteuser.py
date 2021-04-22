@@ -57,7 +57,7 @@ class DeleteUserTests(APITestCase):
                                     self.admin['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='User is not found.',
+            'username': ErrorDetail(string='User not found.',
                                     code='not_found')
         })
         self.assertTrue(User.objects.filter(username=self.member['username']))

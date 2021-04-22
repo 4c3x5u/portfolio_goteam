@@ -2,10 +2,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import User
-from ..validation.val_auth import authenticate, authorize
+from ..validation.val_auth import \
+    authenticate, authorize, not_authenticated_response
 from ..validation.val_team import validate_team_id
 from ..validation.val_board import validate_board_id
-from ..validation.val_user import validate_is_active
+from ..validation.val_user import validate_username, validate_is_active
 
 
 @api_view(['GET', 'POST', 'DELETE'])
@@ -13,7 +14,7 @@ def users(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
 
-    authentication_response = authenticate(auth_user, auth_token)
+    team_id, authentication_response = authenticate(auth_user, auth_token)
     if authentication_response:
         return authentication_response
 
@@ -76,21 +77,14 @@ def users(request):
             return authorization_response
 
         username = request.query_params.get('username')
+        user, validation_response = validate_username(username)
+        if validation_response:
+            return validation_response
+        if user.team.id != team_id:
+            return not_authenticated_response
 
-        if not username:
-            return Response({
-                'username': ErrorDetail(string='Username cannot be empty.',
-                                        code='blank')
-            }, 400)
-
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({
-                'username': ErrorDetail(string='User is not found.',
-                                        code='not_found')
-            }, 404)
-
+        # this is not authorization. it checks whether the user that is up for
+        # deletion is admin
         if user.is_admin:
             return Response({
                 'username': ErrorDetail(
