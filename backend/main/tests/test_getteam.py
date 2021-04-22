@@ -12,6 +12,7 @@ class GetTeamTests(APITestCase):
         self.team = Team.objects.create()
         self.admin = create_admin(self.team)
         self.member = create_member(self.team)
+        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.team.id}',
@@ -81,6 +82,16 @@ class GetTeamTests(APITestCase):
         response = self.client.get(f'{self.endpoint}{self.team.id}',
                                    HTTP_AUTH_USER=self.admin['username'],
                                    HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosia')
+        self.assertEqual(response.status_code,
+                         not_authenticated_response.status_code)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_wrong_team(self):
+        response = self.client.get(
+            f'{self.endpoint}{self.team.id}',
+            HTTP_AUTH_USER=self.wrong_admin['username'],
+            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+        )
         self.assertEqual(response.status_code,
                          not_authenticated_response.status_code)
         self.assertEqual(response.data, not_authenticated_response.data)
