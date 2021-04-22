@@ -9,6 +9,7 @@ class DeleteUserTests(APITestCase):
         self.team = Team.objects.create()
         self.admin = new_admin(self.team)
         self.member = new_member(self.team)
+        self.wrong_admin = new_admin(Team.objects.create(), '1')
 
     def delete_user(self, username, auth_user, auth_token):
         return self.client.delete(f'/users/?username={username}',
@@ -88,6 +89,14 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user(self.member['username'],
                                     'invaliditto',
                                     self.admin['token'])
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertTrue(User.objects.filter(username=self.member['username']))
+
+    def test_wrong_team(self):
+        response = self.delete_user(self.member['username'],
+                                    self.wrong_admin['username'],
+                                    self.wrong_admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertTrue(User.objects.filter(username=self.member['username']))
