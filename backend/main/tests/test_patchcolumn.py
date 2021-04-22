@@ -55,8 +55,8 @@ class UpdateColumns(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'id': ErrorDetail(string='Column ID cannot be empty.',
-                              code='blank')
+            'column_id': ErrorDetail(string='Column ID cannot be empty.',
+                                     code='blank')
         })
         new_tasks = Task.objects.filter(column_id=self.column.id)
         for i in range(0, 5):

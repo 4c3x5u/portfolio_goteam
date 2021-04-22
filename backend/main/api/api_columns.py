@@ -1,12 +1,13 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Column, Board, Task
+from ..models import Column, Task
 from ..serializers.ser_column import ColumnSerializer
 from ..serializers.ser_task import TaskSerializer
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.val_board import validate_board_id
+from ..validation.val_column import validate_column_id
 
 
 @api_view(['GET', 'PATCH'])
@@ -49,18 +50,13 @@ def columns(request):
             return authorization_response
 
         column_id = request.query_params.get('id')
+        column, validation_response = validate_column_id(column_id)
+        if validation_response:
+            return validation_response
+        if column.board.team.id != team_id:
+            return not_authenticated_response
 
-        if not column_id:
-            return Response({
-                'id': ErrorDetail(string='Column ID cannot be empty.',
-                                  code='blank')
-            }, 400)
-
-        column = Column.objects.get(id=column_id)
-
-        tasks = request.data
-
-        for task in tasks:
+        for task in request.data:
             try:
                 task_id = task.pop('id')
             except KeyError:
