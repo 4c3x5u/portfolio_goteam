@@ -41,7 +41,7 @@ def subtasks(request):
                                        code='not_found')
             }, 404)
 
-        if task.column.board.team_id != team_id:
+        if task.column.board.team.id != team_id:
             return not_authenticated_response
 
         task_subtasks = Subtask.objects.filter(task_id=task_id)

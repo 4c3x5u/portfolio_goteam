@@ -42,6 +42,10 @@ def users(request):
         )), 200)
 
     if request.method == 'POST':
+        authorization_response = authorize(username=auth_user)
+        if authorization_response:
+            return authorization_response
+
         username = request.data.get('username')
         user, validation_response = validate_username(username)
         if validation_response:
