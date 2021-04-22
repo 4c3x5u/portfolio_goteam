@@ -22,6 +22,7 @@ class GetUsersTests(APITestCase):
                      'aIQsoq'
         self.board = Board.objects.create(name='Board', team=self.team)
         self.board.user.add(self.users[0])
+        self.wrong_member = create_member(Team.objects.create(), '1')
 
     def get_users(self, team_id, board_id, auth_user, auth_token):
         return self.client.get(
@@ -113,6 +114,14 @@ class GetUsersTests(APITestCase):
                                   self.board.id,
                                   self.username,
                                   '')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authenticated_response.data)
+
+    def test_wrong_team(self):
+        response = self.get_users(self.team.id,
+                                  self.board.id,
+                                  self.wrong_member['username'],
+                                  self.wrong_member['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
