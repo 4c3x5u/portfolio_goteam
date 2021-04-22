@@ -43,27 +43,21 @@ def users(request):
 
     if request.method == 'POST':
         username = request.data.get('username')
-        if not username:
-            return Response({
-                'username': ErrorDetail(string='Username cannot be empty.',
-                                        code='blank')
-            }, 400)
+        user, validation_response = validate_username(username)
+        if validation_response:
+            return validation_response
+        if user.team.id != team_id:
+            return not_authenticated_response
 
-        try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
-            return Response({
-                'username': ErrorDetail(string='User not found.',
-                                        code='not_found')
-            }, 404)
+        board_id = request.data.get('board_id')
+        board, validation_response = validate_board_id(board_id)
+        if validation_response:
+            return validation_response
 
-        board, response = validate_board_id(request.data.get('board_id'))
-        if response:
-            return response
-
-        is_active, response = validate_is_active(request.data.get('is_active'))
-        if response:
-            return response
+        is_active = request.data.get('is_active')
+        is_active, validation_response = validate_is_active(is_active)
+        if validation_response:
+            return validation_response
 
         if is_active:
             board.user.add(user)
