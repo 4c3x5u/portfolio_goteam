@@ -12,10 +12,9 @@ import './boardscontrolsmenuitem.sass';
 const BoardsControlsMenuItem = ({
   id, name, isActive, handleDelete, handleEdit,
 }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { user, loadBoard } = useContext(AppContext);
 
   const MENU_ID = `item-${id}`;
-
   const { show } = useContextMenu({ id: MENU_ID });
 
   const toggleActive = () => {
@@ -37,7 +36,7 @@ const BoardsControlsMenuItem = ({
       key={id}
       type="button"
       onClick={toggleActive}
-      onContextMenu={show}
+      onContextMenu={user.isAdmin && show}
     >
       {isActive
         && <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />}
