@@ -2,7 +2,8 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
 from ..util import create_admin, create_member
-from ..validation.val_auth import not_authenticated_response
+from ..validation.val_auth import \
+    not_authenticated_response, not_authorized_response
 
 
 class DeleteUserTests(APITestCase):
@@ -99,7 +100,7 @@ class DeleteUserTests(APITestCase):
                                     self.wrong_admin['username'],
                                     self.wrong_admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_unauthorized(self):
@@ -107,9 +108,6 @@ class DeleteUserTests(APITestCase):
                                     self.member['username'],
                                     self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
