@@ -15,7 +15,7 @@ def columns(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    team_id, authentication_response = authenticate(username, token)
+    user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -24,7 +24,7 @@ def columns(request):
         board, validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
-        if board.team.id != team_id:
+        if board.team.id != user.team.id:
             return not_authenticated_response
 
         board_columns = Column.objects.filter(board_id=board_id)
@@ -53,7 +53,7 @@ def columns(request):
         column, validation_response = validate_column_id(column_id)
         if validation_response:
             return validation_response
-        if column.board.team.id != team_id:
+        if column.board.team.id != user.team.id:
             return not_authenticated_response
 
         for task in request.data:

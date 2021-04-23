@@ -20,8 +20,6 @@ def boards(request):
     if authentication_response:
         return authentication_response
 
-    print(f'AUTHENTICATION RESPONSE: {authentication_response}')
-
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
@@ -123,7 +121,7 @@ def boards(request):
         if validation_response:
             return validation_response
 
-        if team.id != team_id:
+        if team.id != user.team.id:
             return not_authenticated_response
 
         board_name = request.data.get('name')
@@ -149,7 +147,7 @@ def boards(request):
         if validation_response:
             return validation_response
 
-        if board.team.id != team_id:
+        if board.team.id != user.team.id:
             return not_authenticated_response
 
         board.delete()
@@ -169,7 +167,7 @@ def boards(request):
         if validation_response:
             return validation_response
 
-        if board.team.id != team_id:
+        if board.team.id != user.team.id:
             return not_authenticated_response
 
         serializer = BoardSerializer(board, data=request.data, partial=True)

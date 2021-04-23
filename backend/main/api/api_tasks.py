@@ -15,7 +15,7 @@ def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    team_id, authentication_response = authenticate(username, token)
+    user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -26,7 +26,7 @@ def tasks(request):
         if validation_response:
             return validation_response
 
-        if column.board.team_id != team_id:
+        if column.board.team_id != user.team.id:
             return not_authenticated_response
 
         column_tasks = Task.objects.filter(column_id=column_id)
@@ -51,7 +51,7 @@ def tasks(request):
         if validation_response:
             return validation_response
 
-        if column.board.team.id != team_id:
+        if column.board.team.id != user.team.id:
             return not_authenticated_response
 
         column_tasks = Task.objects.filter(column_id=column_id)
@@ -100,7 +100,7 @@ def tasks(request):
         if validation_response:
             return validation_response
 
-        if task.column.board.team.id != team_id:
+        if task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
         data = request.data
@@ -166,7 +166,7 @@ def tasks(request):
         if validation_response:
             return validation_response
 
-        if task.column.board.team.id != team_id:
+        if task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
         task.delete()

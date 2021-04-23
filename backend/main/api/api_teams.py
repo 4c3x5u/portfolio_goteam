@@ -10,7 +10,7 @@ def teams(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
 
-    auth_team_id, authentication_response = authenticate(auth_user, auth_token)
+    user, authentication_response = authenticate(auth_user, auth_token)
     if authentication_response:
         return authentication_response
 
@@ -23,7 +23,7 @@ def teams(request):
     team, validation_response = validate_team_id(team_id)
     if validation_response:
         return validation_response
-    if team.id != auth_team_id:
+    if team.id != user.team.id:
         return not_authenticated_response
 
     return Response({

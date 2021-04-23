@@ -12,7 +12,7 @@ def subtasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    team_id, authentication_response = authenticate(username, token)
+    user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -41,7 +41,7 @@ def subtasks(request):
                                        code='not_found')
             }, 404)
 
-        if task.column.board.team.id != team_id:
+        if task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
         task_subtasks = Subtask.objects.filter(task_id=task_id)
@@ -80,7 +80,7 @@ def subtasks(request):
                                   code='not_found')
             })
 
-        if subtask.task.column.board.team.id != team_id:
+        if subtask.task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
         data = request.data
