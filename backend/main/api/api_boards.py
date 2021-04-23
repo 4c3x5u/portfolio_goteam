@@ -2,9 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
-from ..models import Board, Column, Task, Subtask
+from ..models import Board, Column, Task, Subtask, User
 from ..validation.val_auth import \
-    authenticate, authorize, not_authenticated_response
+    authenticate, authorize, not_authenticated_response, \
+    not_authorized_response
 from ..validation.val_team import validate_team_id
 from ..validation.val_board import validate_board_id
 from ..util import create_board
@@ -15,9 +16,7 @@ def boards(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
 
-    print('BOARDS API HIT')
-
-    team_id, authentication_response = authenticate(username, token)
+    user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
 
@@ -30,9 +29,14 @@ def boards(request):
             if validation_response:
                 return validation_response
 
-            print(f'BOARD TEAM ID: {str(board)}')
-            if board.team.id != team_id:
+            if board.team.id != user.team.id:
                 return not_authenticated_response
+
+            try:
+                board.user.get(username=user.username)
+            except User.DoesNotExist:
+                if not user.is_admin:
+                    return not_authorized_response
 
             columns = list(map(
                 lambda column: {
@@ -67,11 +71,15 @@ def boards(request):
             if response:
                 return response
 
-            if team.id != team_id:
+            if team.id != user.team.id:
                 return not_authenticated_response
 
-            # create a board if none exists for the team
-            queryset = Board.objects.filter(team=team.id)
+            if user.is_admin:
+                queryset = Board.objects.filter(team=team.id)
+            else:
+                queryset = Board.objects.filter(team=team.id, user=user)
+
+            # create a board if none exists for the team and the user is admin
             if not queryset:
                 if not authorize(username):
                     board, create_response = create_board(team.id, 'New Board')
