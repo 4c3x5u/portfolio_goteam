@@ -14,7 +14,7 @@ def users(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
 
-    team_id, authentication_response = authenticate(auth_user, auth_token)
+    user, authentication_response = authenticate(auth_user, auth_token)
     if authentication_response:
         return authentication_response
 
@@ -23,7 +23,7 @@ def users(request):
         team, validation_response = validate_team_id(request_team_id)
         if validation_response:
             return validation_response
-        if team.id != team_id:
+        if team.id != user.team.id:
             return not_authenticated_response
 
         board_id = request.query_params.get('board_id')
@@ -31,14 +31,14 @@ def users(request):
         if validation_response:
             return validation_response
 
-        users_list = User.objects.filter(team_id=team.id)
-        board_users = User.objects.filter(board=board)
+        members = User.objects.filter(team_id=team.id)
+        board_members = User.objects.filter(board=board)
 
         return Response(list(map(
-            lambda user: {'username': user.username,
-                          'isActive': user in board_users,
-                          'isAdmin': user.is_admin},
-            users_list
+            lambda member: {'username': member.username,
+                            'isActive': member in board_members,
+                            'isAdmin': member.is_admin},
+            members
         )), 200)
 
     if request.method == 'POST':
@@ -50,7 +50,7 @@ def users(request):
         user, validation_response = validate_username(username)
         if validation_response:
             return validation_response
-        if user.team.id != team_id:
+        if user.team.id != user.team.id:
             return not_authenticated_response
 
         board_id = request.data.get('board_id')
@@ -80,7 +80,7 @@ def users(request):
         user, validation_response = validate_username(username)
         if validation_response:
             return validation_response
-        if user.team.id != team_id:
+        if user.team.id != user.team.id:
             return not_authenticated_response
 
         # this is not authorization. it checks whether the user that is up for
