@@ -35,7 +35,7 @@ const Task = ({
       {(provided) => (
         <div
           className="Task"
-          onContextMenu={show}
+          onContextMenu={user.isAdmin && show}
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
