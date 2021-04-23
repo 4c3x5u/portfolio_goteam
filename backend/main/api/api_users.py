@@ -27,17 +27,26 @@ def users(request):
         if team.id != auth_user.team.id:
             return not_authenticated_response
 
-        board_id = request.query_params.get('board_id')
-        board, validation_response = validate_board_id(board_id)
-        if validation_response:
-            return validation_response
-
         members = User.objects.filter(team_id=team.id)
-        board_members = User.objects.filter(board=board)
+
+        if 'board_id' in request.query_params.keys():
+            board_id = request.query_params.get('board_id')
+            board, validation_response = validate_board_id(board_id)
+            if validation_response:
+                return validation_response
+
+            board_members = User.objects.filter(board=board)
+
+            return Response(list(map(
+                lambda member: {'username': member.username,
+                                'isActive': member in board_members,
+                                'isAdmin': member.is_admin},
+                members
+            )), 200)
 
         return Response(list(map(
             lambda member: {'username': member.username,
-                            'isActive': member in board_members,
+                            'isActive': None,
                             'isAdmin': member.is_admin},
             members
         )), 200)
