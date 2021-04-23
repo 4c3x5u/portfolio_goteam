@@ -5,13 +5,16 @@ jsx-a11y/no-static-element-interactions */
 
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Menu, Item, useContextMenu } from 'react-contexify';
+import {
+  Menu, Submenu, Item, useContextMenu,
+} from 'react-contexify';
 import { Draggable } from 'react-beautiful-dnd';
 import _ from 'lodash/core';
 
 import AppContext from '../../../../../AppContext';
 import Subtask from './Subtask/Subtask';
 import window from '../../../../../misc/window';
+import TasksAPI from '../../../../../api/TasksAPI';
 
 import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
@@ -19,11 +22,30 @@ import 'react-contexify/dist/ReactContexify.css';
 const Task = ({
   id, title, description, order, handleActivate, subtasks,
 }) => {
-  const { user } = useContext(AppContext);
+  const {
+    user,
+    members,
+    setIsLoading,
+    loadBoard,
+    notify,
+  } = useContext(AppContext);
 
   const MENU_ID = `edit-task-${id}`;
-
   const { show } = useContextMenu({ id: MENU_ID });
+
+  const assignMember = (username) => {
+    setIsLoading();
+    TasksAPI
+      .patch(id, { user: username })
+      .then(() => loadBoard())
+      .catch((err) => {
+        notify(
+          'Unable to assign user.',
+          err?.response?.data?.user || err?.message || 'Server Error.',
+        );
+      });
+    loadBoard();
+  };
 
   return (
     <Draggable
@@ -64,6 +86,28 @@ const Task = ({
           </div>
 
           <Menu className="ContextMenu" id={MENU_ID}>
+            <Submenu
+              className="Submenu"
+              label={(
+                <div
+                  style={{
+                    textAlign: 'center',
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
+                  ASSIGN
+                </div>
+              )}
+              arrow={<div style={{ display: 'none' }} />}
+            >
+              {members.filter((member) => member.isActive).map((member) => (
+                <Item onClick={() => assignMember(member.username)}>
+                  {member.username}
+                </Item>
+              ))}
+            </Submenu>
+
             <Item
               className="ContextMenuItem"
               onClick={() => handleActivate(window.EDIT_TASK)({

@@ -11,21 +11,25 @@ body
   box-shadow: 0 0 .3rem .2rem rgba(67, 67, 67, 50%)
   padding: 0
   border-radius: 0
+  text-align: center !important
 
-  .react-contexify__item
-    width: 100%
-    color: vars.$maize-crayola !important
+.react-contexify__item
+  width: 100%
+  color: vars.$maize-crayola !important
 
-    .react-contexify__item__content
-      width: 100%
-      display: flex
-      justify-content: center
-      color: vars.$maize-crayola
-      font-weight: bold
+.react-contexify__item__content
+  width: 100%
+  display: flex
+  justify-content: center
+  color: vars.$maize-crayola
+  font-weight: bold
+  text-align: center
+  &:hover
+    color: vars.$cultured !important
+    background-color: #365e99 !important
 
-      &:hover
-        color: vars.$cultured !important
-        background-color: #365e99 !important
+.react-contexify__submenu-arrow
+  display: none
 
 .ErrorToast
   background-color: vars.$bittersweet-shimmer
