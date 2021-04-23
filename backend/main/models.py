@@ -26,7 +26,7 @@ class Column(Model):
 
 class Task(Model):
     title = CharField(max_length=50)
-    description = TextField(null=True)
+    description = TextField(blank=True, null=True)
     order = IntegerField()
     column = ForeignKey(Column, on_delete=CASCADE)
     user = ForeignKey(User, null=True, on_delete=SET_NULL)
