@@ -146,7 +146,7 @@ const App = () => {
 
       <ToastContainer
         toastClassName="ErrorToast"
-        position="bottom-left"
+        position="bottom-right"
         autoClose={false}
       />
     </div>
