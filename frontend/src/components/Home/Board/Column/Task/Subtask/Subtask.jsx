@@ -9,13 +9,18 @@ import SubtasksAPI from '../../../../../../api/SubtasksAPI';
 import './subtask.sass';
 
 const Subtask = ({ id, title, done }) => {
-  const { loadBoard } = useContext(AppContext);
+  const { user, loadBoard, notify } = useContext(AppContext);
 
   const check = (subtaskId) => (
     SubtasksAPI
       .patch(subtaskId, { done: !done })
       .then(() => loadBoard())
-      .catch((err) => console.error(err))
+      .catch((err) => {
+        notify(
+          'Unable to check subtask done.',
+          `${err?.message || 'Server Error'}.`,
+        );
+      })
   );
 
   return (
@@ -24,6 +29,7 @@ const Subtask = ({ id, title, done }) => {
         className="CheckButton"
         onClick={() => check(id)}
         type="button"
+        disabled={!user.isAdmin}
       >
         {done
           ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
