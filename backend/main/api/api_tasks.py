@@ -54,10 +54,15 @@ def tasks(request):
         if column.board.team.id != team_id:
             return not_authenticated_response
 
+        column_tasks = Task.objects.filter(column_id=column_id)
+        for task in column_tasks:
+            task.order += 1
+            task.save()
+
         task_serializer = TaskSerializer(
             data={'title': request.data.get('title'),
                   'description': request.data.get('description'),
-                  'order': Column.objects.filter(id=column_id).count() + 1,
+                  'order': 0,
                   'column': request.data.get('column')}
         )
         if not task_serializer.is_valid():
