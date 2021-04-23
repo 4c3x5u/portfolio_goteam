@@ -174,7 +174,7 @@ class PostUsersTests(APITestCase):
             'is_active': False
         }, self.wrong_admin['username'], self.wrong_admin['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.data, not_authorized_response.data)
 
     def test_unauthorized(self):
         response = self.postUser({

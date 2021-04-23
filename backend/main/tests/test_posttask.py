@@ -2,7 +2,8 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
 from ..util import create_member, create_admin
-from ..validation.val_auth import not_authenticated_response
+from ..validation.val_auth import \
+    not_authenticated_response, not_authorized_response
 
 
 class CreateTaskTests(APITestCase):
@@ -228,8 +229,5 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_USER=self.member['username'],
                                     HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, {
-            'auth': ErrorDetail(string='You must be an admin to do this.',
-                                code='not_authorized')
-        })
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Task.objects.count(), initial_count)
