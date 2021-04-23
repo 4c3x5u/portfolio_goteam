@@ -26,11 +26,11 @@ def authenticate(username, token):
     except ValueError:
         return None, not_authenticated_response
 
-    return user.team_id, None
+    return user, None
 
 
 not_authorized_response = Response({
-    'auth': ErrorDetail(string='You must be an admin to do this.',
+    'auth': ErrorDetail(string='Authorization failure.',
                         code='not_authorized')
 }, 403)
 

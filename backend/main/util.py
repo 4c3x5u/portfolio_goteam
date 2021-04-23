@@ -51,6 +51,10 @@ def create_board(team_id, name):  # -> (board, response)
 
     board = board_serializer.save()
 
+    team_admin = User.objects.get(team_id=team_id, is_admin=True)
+
+    board.user.add(team_admin)
+
     # create four columns for the board
     for order in range(0, 4):
         column_serializer = ColumnSerializer(
