@@ -36,6 +36,7 @@ const Header = ({ activeWindow, handleActivate }) => {
 
     sessionStorage.removeItem('username');
     sessionStorage.removeItem('auth-token');
+    sessionStorage.removeItem('board-id');
     loadBoard();
   };
 
