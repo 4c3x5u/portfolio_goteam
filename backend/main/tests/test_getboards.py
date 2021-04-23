@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, Column
+from ..models import Board, Team, Column, User
 from ..util import create_member, create_admin
 from ..validation.val_auth import not_authenticated_response
 
@@ -11,10 +11,18 @@ class GetBoardsTests(APITestCase):
     def setUp(self):
         self.team = Team.objects.create()
         self.member = create_member(self.team)
-        self.boards = [
-            Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
-        ]
-        self.wrong_member = create_member(Team.objects.create(), '1')
+        self.wrong_team_member = create_member(Team.objects.create(), '1')
+        self.wrong_board_member = create_member(self.team, '2')
+        self.boards = []
+        member = User.objects.get(username=self.member['username'])
+        wrong_team_member = User.objects.get(
+            username=self.wrong_team_member['username']
+        )
+        for _ in range(0, 3):
+            board = Board.objects.create(team_id=self.team.id)
+            board.user.add(member)
+            board.user.add(wrong_team_member)
+            self.boards.append(board)
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -28,7 +36,7 @@ class GetBoardsTests(APITestCase):
     def test_boards_not_found_member(self):
         initial_count = Board.objects.count()
         team = Team.objects.create()
-        member = create_member(team, '2')
+        member = create_member(team, '3')
         response = self.client.get(f'{self.endpoint}{team.id}',
                                    HTTP_AUTH_USER=member['username'],
                                    HTTP_AUTH_TOKEN=member['token'])
@@ -39,8 +47,6 @@ class GetBoardsTests(APITestCase):
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
-    # if no boards are found for a team admin,
-    # a new one is created and returned
     def test_boards_not_found_admin(self):
         initial_board_count = Board.objects.count()
         initial_columns_count = Column.objects.count()
@@ -119,9 +125,23 @@ class GetBoardsTests(APITestCase):
         initial_count = Board.objects.count()
         response = self.client.get(
             f'{self.endpoint}{self.team.id}',
-            HTTP_AUTH_USER=self.wrong_member['username'],
-            HTTP_AUTH_TOKEN=self.wrong_member['token'],
+            HTTP_AUTH_USER=self.wrong_team_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_wrong_board(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(
+            f'{self.endpoint}{self.team.id}',
+            HTTP_AUTH_USER=self.wrong_board_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_board_member['token'],
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, {
+            'team_id': ErrorDetail(string='Boards not found.',
+                                   code='not_found')
+        })
         self.assertEqual(Board.objects.count(), initial_count)
