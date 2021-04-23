@@ -36,7 +36,7 @@ const App = () => {
     </>,
   );
 
-  const loadBoard = async (boardId) => {
+  const loadBoard = async () => {
     setIsLoading(true);
     try {
       // 1. set the current user
@@ -45,7 +45,7 @@ const App = () => {
       setUser({ ...userResponse.data, isAuthenticated: true });
 
       // 2. set current team (only needed for inviting members, which means
-      // only needed if the current user is the team admin)
+      //    only needed if the current user is the team admin)
       if (userResponse.data.isAdmin) {
         const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
         setTeam(teamResponse.data);
@@ -66,7 +66,7 @@ const App = () => {
 
       // 4. set the active board
       const nestedBoard = await BoardsAPI.get(
-        boardId
+        sessionStorage.getItem('board-id')
         || activeBoard.id
         || (teamBoards?.data && teamBoards?.data[0]?.id),
       );
