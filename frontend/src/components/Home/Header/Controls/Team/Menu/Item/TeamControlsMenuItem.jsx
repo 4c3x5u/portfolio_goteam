@@ -16,13 +16,23 @@ import './teamcontrolsmenuitem.sass';
 const TeamControlsMenuItem = ({
   username, isAdmin, isActive, handleDelete,
 }) => {
-  const { activeBoard, loadBoard } = useContext(AppContext);
+  const {
+    user,
+    activeBoard,
+    loadBoard,
+    notify,
+  } = useContext(AppContext);
 
   const toggleActive = () => (
     UsersAPI
       .post(username, activeBoard.id, !isActive)
       .then(() => loadBoard())
-      .catch((err) => console.error(err)) // TODO: Toast
+      .catch((err) => {
+        notify(
+          'Unable to add member to the board.',
+          `${err?.message || 'Server Error'}.`,
+        );
+      })
   );
 
   const MENU_ID = `item-${username}`;
@@ -54,6 +64,7 @@ const TeamControlsMenuItem = ({
       type="button"
       onClick={toggleActive}
       onContextMenu={(e) => (isAdmin ? e.preventDefault() : show(e))}
+      disabled={!user.isAdmin}
     >
       {getIcon()}
       {text}
