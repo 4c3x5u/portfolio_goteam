@@ -1,8 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Board, Team, Column, Task, Subtask
+from ..models import Board, Team, Column, Task, Subtask, User
 from ..util import create_member
-from ..validation.val_auth import not_authenticated_response
+from ..validation.val_auth import \
+    not_authenticated_response, not_authorized_response
 
 
 class GetNestedBoardTests(APITestCase):
@@ -11,9 +12,18 @@ class GetNestedBoardTests(APITestCase):
     def setUp(self):
         self.team = Team.objects.create()
         self.member = create_member(self.team)
-        self.boards = [
-            Board.objects.create(team_id=self.team.id) for _ in range(0, 3)
-        ]
+        self.wrong_team_member = create_member(Team.objects.create(), '1')
+        self.wrong_board_member = create_member(self.team, '2')
+        self.boards = []
+        member = User.objects.get(username=self.member['username'])
+        wrong_team_member = User.objects.get(
+            username=self.wrong_team_member['username']
+        )
+        for _ in range(0, 3):
+            board = Board.objects.create(team_id=self.team.id)
+            board.user.add(member)
+            board.user.add(wrong_team_member)
+            self.boards.append(board)
         self.columns = [
             Column.objects.create(
                 board_id=self.boards[0].id, order=i
@@ -34,7 +44,6 @@ class GetNestedBoardTests(APITestCase):
                 done=(i % 2 == 0)
             ) for i in range(0, 2)
         ]
-        self.wrong_member = create_member(Team.objects.create(), '1')
 
     def test_success(self):
         response = self.client.get(f'{self.endpoint}{self.boards[0].id}',
@@ -128,9 +137,20 @@ class GetNestedBoardTests(APITestCase):
         initial_count = Board.objects.count()
         response = self.client.get(
             f'{self.endpoint}{self.boards[0].id}',
-            HTTP_AUTH_USER=self.wrong_member['username'],
-            HTTP_AUTH_TOKEN=self.wrong_member['token'],
+            HTTP_AUTH_USER=self.wrong_team_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_team_member['token'],
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(Board.objects.count(), initial_count)
+
+    def test_wrong_board(self):
+        initial_count = Board.objects.count()
+        response = self.client.get(
+            f'{self.endpoint}{self.boards[0].id}',
+            HTTP_AUTH_USER=self.wrong_board_member['username'],
+            HTTP_AUTH_TOKEN=self.wrong_board_member['token'],
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
