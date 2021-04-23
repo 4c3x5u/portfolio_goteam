@@ -29,6 +29,7 @@ class Task(Model):
     description = TextField(null=True)
     order = IntegerField()
     column = ForeignKey(Column, on_delete=CASCADE)
+    user = ForeignKey(User, null=True, on_delete=SET_NULL)
 
 
 class Subtask(Model):
