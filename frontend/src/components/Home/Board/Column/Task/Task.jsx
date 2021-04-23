@@ -3,12 +3,13 @@ react/jsx-props-no-spreading,
 jsx-a11y/click-events-have-key-events,
 jsx-a11y/no-static-element-interactions */
 
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Menu, Item, useContextMenu } from 'react-contexify';
 import { Draggable } from 'react-beautiful-dnd';
 import _ from 'lodash/core';
 
+import AppContext from '../../../../../AppContext';
 import Subtask from './Subtask/Subtask';
 import window from '../../../../../misc/window';
 
@@ -18,6 +19,8 @@ import 'react-contexify/dist/ReactContexify.css';
 const Task = ({
   id, title, description, order, handleActivate, subtasks,
 }) => {
+  const { user } = useContext(AppContext);
+
   const MENU_ID = `edit-task-${id}`;
 
   const { show } = useContextMenu({ id: MENU_ID });
@@ -27,6 +30,7 @@ const Task = ({
       key={id}
       draggableId={`draggable-${id}`}
       index={order}
+      isDragDisabled={!user.isAdmin}
     >
       {(provided) => (
         <div
