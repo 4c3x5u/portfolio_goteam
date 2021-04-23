@@ -11,6 +11,7 @@ import './board.sass';
 
 const Board = ({ handleActivate }) => {
   const {
+    user,
     activeBoard,
     loadBoard,
     setIsLoading,
@@ -21,7 +22,13 @@ const Board = ({ handleActivate }) => {
     try {
       setIsLoading(true);
 
-      if (!result.destination) return;
+      if (!user.isAdmin) {
+        throw Error('Only the admin can do this.');
+      }
+
+      if (!result.destination) {
+        throw Error('Destination not found.');
+      }
 
       const source = activeBoard.columns.find((column) => (
         column.id.toString() === result.source.droppableId
