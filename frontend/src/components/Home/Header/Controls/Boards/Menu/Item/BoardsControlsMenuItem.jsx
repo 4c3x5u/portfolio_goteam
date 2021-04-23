@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useContextMenu, Item, Menu } from 'react-contexify';
 import { OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
 
+import AppContext from '../../../../../../../AppContext';
+
 import './boardscontrolsmenuitem.sass';
 
 const BoardsControlsMenuItem = ({
-  id, name, isActive, toggleActive, handleDelete, handleEdit,
+  id, name, isActive, handleDelete, handleEdit,
 }) => {
+  const { loadBoard } = useContext(AppContext);
+
   const MENU_ID = `item-${id}`;
 
   const { show } = useContextMenu({ id: MENU_ID });
+
+  const toggleActive = () => {
+    loadBoard(id);
+  };
 
   const viewTooltip = (children) => (
     <OverlayTrigger
@@ -68,7 +76,6 @@ BoardsControlsMenuItem.propTypes = {
   id: PropTypes.number.isRequired,
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
-  toggleActive: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleEdit: PropTypes.func.isRequired,
 };

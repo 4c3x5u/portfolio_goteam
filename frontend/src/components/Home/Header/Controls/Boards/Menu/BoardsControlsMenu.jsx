@@ -9,9 +9,7 @@ import BoardsControlsMenuItem from './Item/BoardsControlsMenuItem';
 import './boardscontrolsmenu.sass';
 
 const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
-  const {
-    user, boards, activeBoard, loadBoard,
-  } = useContext(AppContext);
+  const { user, boards, activeBoard } = useContext(AppContext);
 
   return (
     <div className="BoardsControlsMenu">
@@ -20,7 +18,6 @@ const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
           id={board.id}
           name={board.name}
           isActive={board.id === activeBoard.id}
-          toggleActive={() => loadBoard(board.id)}
           handleDelete={handleDelete}
           handleEdit={handleEdit}
         />

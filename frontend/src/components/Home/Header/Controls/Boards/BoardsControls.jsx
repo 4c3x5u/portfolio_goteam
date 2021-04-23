@@ -1,37 +1,43 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChalkboard } from '@fortawesome/free-solid-svg-icons';
 
 import BoardsControlsMenu from './Menu/BoardsControlsMenu';
+import AppContext from '../../../../../AppContext';
 
 import './boardscontrols.sass';
 
 const BoardsControls = ({
   isActive, handleActivate, handleCreate, handleEdit, handleDelete,
-}) => (
-  <Col xs={4} className="BoardsControls">
-    <button
-      className="Button"
-      onClick={handleActivate}
-      aria-label="boards controls toggler"
-      type="button"
-    >
-      <FontAwesomeIcon icon={faChalkboard} />
+}) => {
+  const { boards } = useContext(AppContext);
 
-      BOARDS
-    </button>
+  return (
+    <Col xs={4} className="BoardsControls">
+      <button
+        className="Button"
+        onClick={handleActivate}
+        aria-label="boards controls toggler"
+        type="button"
+        disabled={boards.length < 1}
+      >
+        <FontAwesomeIcon icon={faChalkboard} />
 
-    {isActive && (
-      <BoardsControlsMenu
-        handleCreate={handleCreate}
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}
-      />
-    )}
-  </Col>
-);
+        BOARDS
+      </button>
+
+      {isActive && (
+        <BoardsControlsMenu
+          handleCreate={handleCreate}
+          handleDelete={handleDelete}
+          handleEdit={handleEdit}
+        />
+      )}
+    </Col>
+  );
+};
 
 BoardsControls.propTypes = {
   isActive: PropTypes.bool.isRequired,
