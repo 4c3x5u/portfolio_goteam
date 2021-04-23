@@ -52,12 +52,23 @@ const App = () => {
       }
 
       // 3. set boards lists
-      const teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
-      setBoards(teamBoards.data);
+      let teamBoards = [];
+      try {
+        teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
+      } catch (e) {
+        notify(
+          'Unable to load board.',
+          'Please ask your team admin to add you to a board.',
+        );
+      }
+
+      setBoards(teamBoards?.data || []);
 
       // 4. set the active board
       const nestedBoard = await BoardsAPI.get(
-        boardId || activeBoard.id || teamBoards.data[0].id,
+        boardId
+        || activeBoard.id
+        || (teamBoards?.data && teamBoards?.data[0]?.id),
       );
       setActiveBoard(nestedBoard.data);
 
@@ -73,13 +84,17 @@ const App = () => {
     } catch (err) {
       setUser({ ...user, isAuthenticated: false });
 
-      // TODO: Check for cases where you want token verification failure
-      //       message to render
-      if (!err?.config?.url?.includes('verify-token')) {
-        const errMsg = err?.response?.data?.msg;
-        if (errMsg) { notify(errMsg); }
-        if (err?.message) { notify(err.message); }
+      if (err?.config?.url?.includes('verify-token')) {
+        sessionStorage.removeItem('username');
+        sessionStorage.removeItem('auth-token');
+        setIsLoading(false);
+        return;
       }
+
+      notify(
+        'Unable to load board.',
+        `${err?.message || 'Server Error'}.`,
+      );
     }
     setIsLoading(false);
   };
@@ -129,7 +144,11 @@ const App = () => {
         </Router>
       </AppContext.Provider>
 
-      <ToastContainer toastClassName="ErrorToast" position="bottom-left" />
+      <ToastContainer
+        toastClassName="ErrorToast"
+        position="bottom-left"
+        autoClose={false}
+      />
     </div>
   );
 };
