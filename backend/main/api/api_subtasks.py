@@ -1,11 +1,12 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Subtask, Task
+from ..models import Subtask
 from ..serializers.ser_subtask import SubtaskSerializer
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.val_task import validate_task_id
+from ..validation.val_subtask import validate_subtask_id
 
 
 @api_view(['GET', 'PATCH'])
@@ -45,18 +46,9 @@ def subtasks(request):
 
     if request.method == 'PATCH':
         subtask_id = request.query_params.get('id')
-        if not subtask_id:
-            return Response({
-                'id': ErrorDetail(string='Subtask ID cannot be empty.',
-                                  code='blank')
-            }, 400)
-        try:
-            subtask = Subtask.objects.get(id=subtask_id)
-        except Subtask.DoesNotExist:
-            return Response({
-                'id': ErrorDetail(string='Subtask not found.',
-                                  code='not_found')
-            })
+        subtask, validation_response = validate_subtask_id(subtask_id)
+        if validation_response:
+            return validation_response
 
         authorization_response = authorize(username)
         if authorization_response and subtask.task.user != user:
@@ -65,36 +57,34 @@ def subtasks(request):
         if subtask.task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
-        data = request.data
-
-        if not data:
+        if not request.data:
             return Response({
                 'data': ErrorDetail(string='Data cannot be empty.',
                                     code='blank')
             }, 400)
 
-        if 'title' in data.keys() and not data.get('title'):
+        if 'title' in request.data.keys() and not request.data.get('title'):
             return Response({
                 'title': ErrorDetail(string='Title cannot be empty.',
                                      code='blank')
             }, 400)
 
-        done = data.get('done')
-        if 'done' in data.keys() and (done == '' or done is None):
+        done = request.data.get('done')
+        if 'done' in request.data.keys() and (done == '' or done is None):
             return Response({
                 'done': ErrorDetail(string='Done cannot be empty.',
                                     code='blank')
             }, 400)
 
-        order = data.get('order')
-        if 'order' in data.keys() and (order == '' or order is None):
+        order = request.data.get('order')
+        if 'order' in request.data.keys() and (order == '' or order is None):
             return Response({
                 'order': ErrorDetail(string='Order cannot be empty.',
                                      code='blank')
             }, 400)
 
         serializer = SubtaskSerializer(Subtask.objects.get(id=subtask_id),
-                                       data=data,
+                                       data=request.data,
                                        partial=True)
         if not serializer.is_valid():
             return Response(serializer.errors, 400)
