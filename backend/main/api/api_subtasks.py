@@ -44,17 +44,12 @@ def subtasks(request):
         }, 200)
 
     if request.method == 'PATCH':
-        authorization_response = authorize(username)
-        if authorization_response:
-            return authorization_response
-
         subtask_id = request.query_params.get('id')
         if not subtask_id:
             return Response({
                 'id': ErrorDetail(string='Subtask ID cannot be empty.',
                                   code='blank')
             }, 400)
-
         try:
             subtask = Subtask.objects.get(id=subtask_id)
         except Subtask.DoesNotExist:
@@ -62,6 +57,10 @@ def subtasks(request):
                 'id': ErrorDetail(string='Subtask not found.',
                                   code='not_found')
             })
+
+        authorization_response = authorize(username)
+        if authorization_response and subtask.task.user != user:
+            return authorization_response
 
         if subtask.task.column.board.team.id != user.team.id:
             return not_authenticated_response
