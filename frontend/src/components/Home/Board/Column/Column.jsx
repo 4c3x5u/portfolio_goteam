@@ -46,6 +46,7 @@ const Column = ({
                     title={task.title}
                     description={task.description}
                     order={task.order}
+                    assignedUser={task.user}
                     handleActivate={handleActivate}
                     subtasks={task.subtasks}
                   />
@@ -78,6 +79,7 @@ Column.propTypes = {
     title: PropTypes.string.isRequired,
     description: PropTypes.string.isRequired,
     order: PropTypes.number.isRequired,
+    assignedUser: PropTypes.string.isRequired,
   }).isRequired,
   handleActivate: PropTypes.func,
 };

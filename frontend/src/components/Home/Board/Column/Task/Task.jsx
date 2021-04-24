@@ -20,7 +20,7 @@ import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
 
 const Task = ({
-  id, title, description, order, handleActivate, subtasks,
+  id, title, description, order, assignedUser, handleActivate, subtasks,
 }) => {
   const {
     user,
@@ -29,6 +29,8 @@ const Task = ({
     loadBoard,
     notify,
   } = useContext(AppContext);
+
+  console.log(`${title}, MEMBER: ${assignedUser}`);
 
   const MENU_ID = `edit-task-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
@@ -145,6 +147,7 @@ Task.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   order: PropTypes.number.isRequired,
+  assignedUser: PropTypes.string.isRequired,
   handleActivate: PropTypes.func.isRequired,
   subtasks: PropTypes.arrayOf({
     id: PropTypes.number.isRequired,
