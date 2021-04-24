@@ -85,6 +85,15 @@ const Task = ({
                   ))}
               </ul>
             )}
+
+            {assignedUser && (
+              <div className="AssignedUser">
+                @
+                {assignedUser.length > 20
+                  ? `${assignedUser.substring(0, 17)}...`
+                  : assignedUser}
+              </div>
+            )}
           </div>
 
           <Menu className="ContextMenu" id={MENU_ID}>
@@ -103,9 +112,11 @@ const Task = ({
               )}
               arrow={<div style={{ display: 'none' }} />}
             >
-              {members.filter((member) => member.isActive).map((member) => (
+              {members.map((member) => !member.isAdmin && member.isActive && (
                 <Item onClick={() => assignMember(member.username)}>
-                  {member.username}
+                  {member.username.length > 20
+                    ? `${member.username.substring(0, 17)}...`
+                    : member.username}
                 </Item>
               ))}
             </Submenu>
