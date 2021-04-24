@@ -46,7 +46,7 @@ def boards(request):
                             'title': task.title,
                             'description': task.description,
                             'order': task.order,
-                            'user': task.user.username,
+                            'user': task.user.username if task.user else '',
                             'subtasks': list(map(
                                 lambda subtask: {
                                     'id': subtask.id,
