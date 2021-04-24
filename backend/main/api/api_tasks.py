@@ -103,44 +103,42 @@ def tasks(request):
         if task.column.board.team.id != user.team.id:
             return not_authenticated_response
 
-        data = request.data
-
-        if 'title' in list(data.keys()) and not data.get('title'):
+        if 'title' in request.data.keys() and not request.data.get('title'):
             return Response({
                 'title': ErrorDetail(string='Task title cannot be empty.',
                                      code='blank')
             }, 400)
 
-        order = data.get('order')
-        if 'order' in list(data.keys()) and (order == '' or order is None):
+        order = request.data.get('order')
+        if 'order' in request.data.keys() and (order == '' or order is None):
             return Response({
                 'order': ErrorDetail(string='Task order cannot be empty.',
                                      code='blank')
             }, 400)
 
-        if 'column' in list(data.keys()):
-            column_id = data.get('column')
+        if 'column' in request.data.keys():
+            column_id = request.data.get('column')
             _, validation_response = validate_column_id(column_id)
             if validation_response:
                 return validation_response
 
-        subtasks = data.get('subtasks')
-        'subtask' in list(data.keys()) and data.pop('subtasks')
+        subtasks = request.data.pop('subtasks') \
+            if 'subtasks' in request.data.keys() else None
 
         task_serializer = TaskSerializer(Task.objects.get(id=task_id),
-                                         data=data,
+                                         data=request.data,
                                          partial=True)
         if not task_serializer.is_valid():
             return Response(task_serializer.errors, 400)
         task = task_serializer.save()
 
-        Subtask.objects.filter(task_id=task.id).delete()
-
         if subtasks:
-            for i, subtask in enumerate(subtasks):
+            Subtask.objects.filter(task_id=task.id).delete()
+
+            for subtask in subtasks:
                 subtask_serializer = SubtaskSerializer(
                     data={'title': subtask['title'],
-                          'order': i,
+                          'order': subtask['order'],
                           'task': task.id,
                           'done': subtask['done']}
                 )
