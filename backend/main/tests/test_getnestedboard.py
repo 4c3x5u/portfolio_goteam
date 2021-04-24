@@ -33,7 +33,8 @@ class GetNestedBoardTests(APITestCase):
             Task.objects.create(
                 title=f'Task #{i}',
                 order=i,
-                column=self.columns[0]
+                column=self.columns[0],
+                user=member
             ) for i in range(0, 5)
         ]
         self.subtasks = [
@@ -52,12 +53,14 @@ class GetNestedBoardTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.data.get('id'), self.boards[0].id)
 
+        # column assertions
         columns = response.data.get('columns')
         self.assertEqual(len(columns), 4)
         for i in range(0, 4):
             self.assertEqual(columns[i].get('id'), self.columns[i].id)
             self.assertEqual(columns[i].get('order'), self.columns[i].order)
 
+        # task assertions
         tasks = columns[0].get('tasks')
         self.assertEqual(len(tasks), 5)
         for i in range(0, 5):
@@ -66,7 +69,9 @@ class GetNestedBoardTests(APITestCase):
             self.assertEqual(tasks[i].get('description'),
                              self.tasks[i].description)
             self.assertEqual(tasks[i].get('order'), self.tasks[i].order)
+            self.assertEqual(tasks[i].get('user'), self.tasks[i].user.username)
 
+        # subtask assertions
         subtasks = tasks[0].get('subtasks')
         self.assertEqual(len(subtasks), 2)
         for i in range(0, 2):
