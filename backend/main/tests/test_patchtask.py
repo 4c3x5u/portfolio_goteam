@@ -73,21 +73,6 @@ class PatchTaskTests(APITestCase):
         self.assertEqual(Task.objects.get(id=self.task.id).user.username,
                          request_data.get('user'))
 
-    def test_assigned_member_can_patch(self):
-        request_data = {'title': 'New Title'}
-        response = self.client.patch(
-            f'{self.endpoint}{self.task.id}',
-            request_data,
-            HTTP_AUTH_USER=self.assigned_member['username'],
-            HTTP_AUTH_TOKEN=self.assigned_member['token']
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {'msg': 'Task update successful.',
-                                         'id': self.task.id})
-        self.assertEqual(self.task.id, response.data.get('id'))
-        self.assertEqual(Task.objects.get(id=self.task.id).title,
-                         request_data.get('title'))
-
     def test_title_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': ''},
@@ -155,57 +140,46 @@ class PatchTaskTests(APITestCase):
                          self.task.user)
 
     def test_auth_token_empty(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertEqual(Board.objects.count(), initial_count)
 
     def test_not_authorized(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authorized_response.data)
-        self.assertEqual(Task.objects.count(), initial_count)
 
     def test_wrong_team(self):
-        initial_count = Task.objects.count()
         response = self.client.patch(
             f'{self.endpoint}{self.task.id}',
             {'title': 'New Title'},
@@ -214,4 +188,13 @@ class PatchTaskTests(APITestCase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
-        self.assertEqual(Task.objects.count(), initial_count)
+
+    def test_assigned_member_failure(self):
+        response = self.client.patch(
+            f'{self.endpoint}{self.task.id}',
+            {'title': 'New Title'},
+            HTTP_AUTH_USER=self.assigned_member['username'],
+            HTTP_AUTH_TOKEN=self.assigned_member['token']
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data, not_authorized_response.data)
