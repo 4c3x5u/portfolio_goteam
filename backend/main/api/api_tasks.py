@@ -90,13 +90,15 @@ def tasks(request):
         }, 201)
 
     if request.method == 'PATCH':
+        task_id = request.query_params.get('id')
+        task, validation_response = validate_task_id(task_id)
+
         authorization_response = authorize(username)
-        if authorization_response:
+        # the user who is assigned to this task can edit it, regardless of
+        # them not being an admin
+        if authorization_response and task.user.username != user.username:
             return authorization_response
 
-        task_id = request.query_params.get('id')
-
-        task, validation_response = validate_task_id(task_id)
         if validation_response:
             return validation_response
 

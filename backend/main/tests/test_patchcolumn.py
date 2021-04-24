@@ -22,22 +22,24 @@ class UpdateColumns(APITestCase):
         ]
         self.admin = create_admin(team)
         self.member = create_member(team)
+        self.assigned_member = create_member(team, '1')
         self.task_data = list(map(
             lambda task: {
                 'id': task.id,
                 'title': task.title,
-                'order': 5 - task.order
+                'order': 5 - task.order,
+                'user': self.assigned_member['username']
             },
             self.tasks
         ))
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
-    def test_success(self):
+    def help_test_success(self, user):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
                                      self.task_data,
                                      format='json',
-                                     HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_USER=user['username'],
+                                     HTTP_AUTH_TOKEN=user['token'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Column and all its tasks updated successfully.',
@@ -47,6 +49,13 @@ class UpdateColumns(APITestCase):
         for i in range(0, 5):
             task = new_tasks.get(title=str(i))
             self.assertEqual(task.order, 5 - int(task.title))
+
+
+    def test_admin_success(self):
+        self.help_test_success(self.admin)
+
+    def test_assigned_member_success(self):
+        self.help_test_success(self.assigned_member)
 
     def test_column_id_empty(self):
         response = self.client.patch(self.endpoint,
