@@ -46,8 +46,6 @@ def columns(request):
 
     if request.method == 'PATCH':
         authorization_response = authorize(username)
-        if authorization_response:
-            return authorization_response
 
         column_id = request.query_params.get('id')
         column, validation_response = validate_column_id(column_id)
@@ -65,7 +63,14 @@ def columns(request):
                                            code='blank')
                 }, 400)
 
-            serializer = TaskSerializer(Task.objects.get(id=task_id),
+            existing_task = Task.objects.get(id=task_id)
+
+            if authorization_response \
+                    and task['user'] != user.username \
+                    and column.id != existing_task.column.id:
+                return authorization_response
+
+            serializer = TaskSerializer(existing_task,
                                         data={**task, 'column': column.id},
                                         partial=True)
             if not serializer.is_valid():
