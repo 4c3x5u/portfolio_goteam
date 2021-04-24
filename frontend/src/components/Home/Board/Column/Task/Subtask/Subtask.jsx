@@ -8,7 +8,9 @@ import SubtasksAPI from '../../../../../../api/SubtasksAPI';
 
 import './subtask.sass';
 
-const Subtask = ({ id, title, done }) => {
+const Subtask = ({
+  id, title, done, assignedUser,
+}) => {
   const { user, loadBoard, notify } = useContext(AppContext);
 
   const check = (subtaskId) => (
@@ -29,7 +31,7 @@ const Subtask = ({ id, title, done }) => {
         className="CheckButton"
         onClick={() => check(id)}
         type="button"
-        disabled={!user.isAdmin}
+        disabled={!user.isAdmin && user.username !== assignedUser}
       >
         {done
           ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
@@ -45,6 +47,7 @@ Subtask.propTypes = {
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   done: PropTypes.bool.isRequired,
+  assignedUser: PropTypes.string.isRequired,
 };
 
 export default Subtask;

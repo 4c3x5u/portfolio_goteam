@@ -11,7 +11,6 @@ import './board.sass';
 
 const Board = ({ handleActivate }) => {
   const {
-    user,
     activeBoard,
     loadBoard,
     setIsLoading,
@@ -21,10 +20,6 @@ const Board = ({ handleActivate }) => {
   const handleOnDragEnd = async (result) => {
     try {
       setIsLoading(true);
-
-      if (!user.isAdmin) {
-        throw Error('Only the admin can do this.');
-      }
 
       if (!result.destination) {
         throw Error('Destination not found.');
