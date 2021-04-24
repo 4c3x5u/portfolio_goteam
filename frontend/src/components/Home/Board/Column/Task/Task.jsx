@@ -30,8 +30,6 @@ const Task = ({
     notify,
   } = useContext(AppContext);
 
-  console.log(`${title}, MEMBER: ${assignedUser}`);
-
   const MENU_ID = `edit-task-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
@@ -54,7 +52,7 @@ const Task = ({
       key={id}
       draggableId={`draggable-${id}`}
       index={order}
-      isDragDisabled={!user.isAdmin}
+      isDragDisabled={!user.isAdmin && user.username !== assignedUser}
     >
       {(provided) => (
         <div
@@ -81,6 +79,7 @@ const Task = ({
                       id={subtask.id}
                       title={subtask.title}
                       done={subtask.done}
+                      assignedUser={assignedUser}
                     />
                   ))}
               </ul>
@@ -112,12 +111,15 @@ const Task = ({
               )}
               arrow={<div style={{ display: 'none' }} />}
             >
-              {members.map((member) => !member.isAdmin && member.isActive && (
-                <Item onClick={() => assignMember(member.username)}>
-                  {member.username.length > 20
-                    ? `${member.username.substring(0, 17)}...`
-                    : member.username}
-                </Item>
+              {members.map((member) => (
+                // If member is not admin or assigned, display them in list
+                !member.isAdmin && member.isActive && (
+                  <Item onClick={() => assignMember(member.username)}>
+                    {member.username.length > 20
+                      ? `${member.username.substring(0, 17)}...`
+                      : member.username}
+                  </Item>
+                )
               ))}
             </Submenu>
 
