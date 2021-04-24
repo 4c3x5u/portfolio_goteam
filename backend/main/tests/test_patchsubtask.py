@@ -1,6 +1,6 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
-from ..models import Subtask, Task, Column, Board, Team
+from ..models import Subtask, Task, Column, Board, Team, User
 from ..util import create_member, create_admin
 from ..validation.val_auth import \
     not_authenticated_response, not_authorized_response
@@ -13,12 +13,16 @@ class UpdateSubtaskTests(APITestCase):
         team = Team.objects.create()
         self.admin = create_admin(team)
         self.member = create_member(team)
+        self.assigned_member = create_member(team, '1')
         self.subtask = Subtask.objects.create(
             title='Some Task Title',
             order=0,
             task=Task.objects.create(
                 title="Some Subtask Title",
                 order=0,
+                user=User.objects.get(
+                    username=self.assigned_member['username']
+                ),
                 column=Column.objects.create(
                     order=0,
                     board=Board.objects.create(team=team)
@@ -27,11 +31,11 @@ class UpdateSubtaskTests(APITestCase):
         )
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
-    def help_test_success(self, subtask_id, request_data):
+    def help_test_success(self, user, subtask_id, request_data):
         response = self.client.patch(f'{self.endpoint}{subtask_id}',
                                      request_data,
-                                     HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_USER=user['username'],
+                                     HTTP_AUTH_TOKEN=user['token'])
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'msg': 'Subtask update successful.',
                                          'id': self.subtask.id})
@@ -44,17 +48,30 @@ class UpdateSubtaskTests(APITestCase):
 
     def test_title_success(self):
         request_data = {'title': 'New Task Title'}
-        subtask = self.help_test_success(self.subtask.id, request_data)
+        subtask = self.help_test_success(
+            self.admin, self.subtask.id, request_data
+        )
+        self.assertEqual(subtask.title, request_data.get('title'))
+
+    def test_assigned_member_success(self):
+        request_data = {'title': 'New Task Title'}
+        subtask = self.help_test_success(
+            self.assigned_member, self.subtask.id, request_data
+        )
         self.assertEqual(subtask.title, request_data.get('title'))
 
     def test_done_success(self):
         request_data = {'done': True}
-        subtask = self.help_test_success(self.subtask.id, request_data)
+        subtask = self.help_test_success(
+            self.admin, self.subtask.id, request_data
+        )
         self.assertEqual(subtask.done, request_data.get('done'))
 
     def test_order_success(self):
         request_data = {'order': 10}
-        subtask = self.help_test_success(self.subtask.id, request_data)
+        subtask = self.help_test_success(
+            self.admin, self.subtask.id, request_data
+        )
         self.assertEqual(subtask.order, request_data.get('order'))
 
     def test_id_blank(self):
