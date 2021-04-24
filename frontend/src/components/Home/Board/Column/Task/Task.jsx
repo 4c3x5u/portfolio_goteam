@@ -86,7 +86,11 @@ const Task = ({
             )}
 
             {assignedUser && (
-              <div className="AssignedUser">
+              <div
+                className={
+                  `AssignedUser ${assignedUser === user.username && 'Me'}`
+                }
+              >
                 @
                 {assignedUser.length > 20
                   ? `${assignedUser.substring(0, 17)}...`
