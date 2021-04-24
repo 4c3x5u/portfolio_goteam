@@ -6,7 +6,7 @@ from ..validation.val_auth import \
     not_authenticated_response, not_authorized_response
 
 
-class UpdateTaskTests(APITestCase):
+class PatchTaskTests(APITestCase):
     endpoint = '/tasks/?id='
 
     def setUp(self):
@@ -14,9 +14,11 @@ class UpdateTaskTests(APITestCase):
         self.member = create_member(team)
         self.admin = create_admin(team)
         self.wrong_admin = create_admin(Team.objects.create(), '1')
+        self.assigned_member = create_member(team, '2')
         self.task = Task.objects.create(
             title="Task Title",
             order=0,
+            user=User.objects.get(username=self.assigned_member['username']),
             column=Column.objects.create(
                 order=0,
                 board=Board.objects.create(
@@ -64,6 +66,27 @@ class UpdateTaskTests(APITestCase):
         self.help_test_success(self.task.id, request_data)
         self.assertEqual(Task.objects.get(id=self.task.id).column.id,
                          request_data.get('column'))
+
+    def test_assign_member_success(self):
+        request_data = {'user': self.member['username']}
+        self.help_test_success(self.task.id, request_data)
+        self.assertEqual(Task.objects.get(id=self.task.id).user.username,
+                         request_data.get('user'))
+
+    def test_assigned_member_can_patch(self):
+        request_data = {'title': 'New Title'}
+        response = self.client.patch(
+            f'{self.endpoint}{self.task.id}',
+            request_data,
+            HTTP_AUTH_USER=self.assigned_member['username'],
+            HTTP_AUTH_TOKEN=self.assigned_member['token']
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'msg': 'Task update successful.',
+                                         'id': self.task.id})
+        self.assertEqual(self.task.id, response.data.get('id'))
+        self.assertEqual(Task.objects.get(id=self.task.id).title,
+                         request_data.get('title'))
 
     def test_title_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
@@ -171,7 +194,7 @@ class UpdateTaskTests(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_not_admin(self):
+    def test_not_authorized(self):
         initial_count = Task.objects.count()
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
