@@ -66,12 +66,15 @@ const Board = ({ handleActivate }) => {
       <DragDropContext onDragEnd={handleOnDragEnd}>
         {activeBoard.columns
           && activeBoard.columns.map((column) => (
-            <Column
-              id={column.id}
-              order={column.order}
-              tasks={column.tasks}
-              handleActivate={handleActivate}
-            />
+            column.id && (
+              <Column
+                key={column.id}
+                id={column.id}
+                order={column.order}
+                tasks={column.tasks}
+                handleActivate={handleActivate}
+              />
+            )
           ))}
       </DragDropContext>
     </Row>

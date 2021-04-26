@@ -39,18 +39,18 @@ const Column = ({
               {...provided.droppableProps}
               ref={provided.innerRef}
             >
-              {_.sortBy(tasks, (task) => task.order)
-                .map((task) => (
-                  <Task
-                    id={task.id}
-                    title={task.title}
-                    description={task.description}
-                    order={task.order}
-                    assignedUser={task.user}
-                    handleActivate={handleActivate}
-                    subtasks={task.subtasks}
-                  />
-                ))}
+              {_.sortBy(tasks, (task) => task.order).map((task) => (
+                <Task
+                  id={task.id}
+                  key={task.id}
+                  title={task.title}
+                  description={task.description}
+                  order={task.order}
+                  assignedUser={task.user}
+                  handleActivate={handleActivate}
+                  subtasks={task.subtasks}
+                />
+              ))}
 
               {provided.placeholder}
 
@@ -72,20 +72,30 @@ const Column = ({
 };
 
 Column.propTypes = {
-  id: PropTypes.string.isRequired,
+  id: PropTypes.number.isRequired,
   order: PropTypes.number.isRequired,
-  tasks: PropTypes.arrayOf({
-    id: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired,
-    description: PropTypes.string.isRequired,
-    order: PropTypes.number.isRequired,
-    assignedUser: PropTypes.string.isRequired,
-  }).isRequired,
+  tasks: PropTypes.arrayOf(
+    PropTypes.exact({
+      id: PropTypes.number.isRequired,
+      title: PropTypes.string.isRequired,
+      description: PropTypes.string.isRequired,
+      order: PropTypes.number.isRequired,
+      user: PropTypes.string.isRequired,
+      subtasks: PropTypes.arrayOf(
+        PropTypes.exact({
+          id: PropTypes.number.isRequired,
+          title: PropTypes.string.isRequired,
+          order: PropTypes.number.isRequired,
+          done: PropTypes.bool.isRequired,
+        }),
+      ),
+    }),
+  ).isRequired,
   handleActivate: PropTypes.func,
 };
 
 Column.defaultProps = {
-  handleActivate: () => console.log('Cannot create task here.'),
+  handleActivate: () => {},
 };
 
 export default Column;

@@ -37,66 +37,71 @@ const App = () => {
   );
 
   const loadBoard = async () => {
-    setIsLoading(true);
-    try {
-      // 1. set the current user
-      const userResponse = await AuthAPI.verifyToken();
-      delete userResponse.data.msg;
-      setUser({ ...userResponse.data, isAuthenticated: true });
-
-      // 2. set current team (only needed for inviting members, which means
-      //    only needed if the current user is the team admin)
-      if (userResponse.data.isAdmin) {
-        const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
-        setTeam(teamResponse.data);
-      }
-
-      // 3. set boards lists
-      let teamBoards = [];
+    if (
+      sessionStorage.getItem('username')
+        && sessionStorage.getItem('auth-token')
+    ) {
+      setIsLoading(true);
       try {
-        teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
-      } catch (e) {
+        // 1. set the current user
+        const userResponse = await AuthAPI.verifyToken();
+        delete userResponse.data.msg;
+        setUser({ ...userResponse.data, isAuthenticated: true });
+
+        // 2. set current team (only needed for inviting members, which means
+        //    only needed if the current user is the team admin)
+        if (userResponse.data.isAdmin) {
+          const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
+          setTeam(teamResponse.data);
+        }
+
+        // 3. set boards lists
+        let teamBoards = [];
+        try {
+          teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
+        } catch (e) {
+          notify(
+            'Unable to load board.',
+            'Please ask your team admin to add you to a board.',
+          );
+        }
+
+        setBoards(teamBoards?.data || []);
+
+        // 4. set the active board
+        const nestedBoard = await BoardsAPI.get(
+          sessionStorage.getItem('board-id')
+          || activeBoard.id
+          || (teamBoards?.data && teamBoards?.data[0]?.id),
+        );
+        setActiveBoard(nestedBoard.data);
+
+        // 5. set members list
+        const teamMembers = await UsersAPI.get(
+          userResponse.data.teamId,
+          nestedBoard.data.id,
+        );
+
+        setMembers(
+          _.sortBy(teamMembers.data, (member) => !member.isAdmin),
+        );
+      } catch (err) {
+        setUser({ ...user, isAuthenticated: false });
+
+        if (err?.config?.url?.includes('verify-token')) {
+          sessionStorage.removeItem('username');
+          sessionStorage.removeItem('auth-token');
+          setIsLoading(false);
+          return;
+        }
+
         notify(
           'Unable to load board.',
-          'Please ask your team admin to add you to a board.',
+          `${err?.message || 'Server Error'}.`,
         );
       }
-
-      setBoards(teamBoards?.data || []);
-
-      // 4. set the active board
-      const nestedBoard = await BoardsAPI.get(
-        sessionStorage.getItem('board-id')
-        || activeBoard.id
-        || (teamBoards?.data && teamBoards?.data[0]?.id),
-      );
-      setActiveBoard(nestedBoard.data);
-
-      // 5. set members list
-      const teamMembers = await UsersAPI.get(
-        userResponse.data.teamId,
-        nestedBoard.data.id,
-      );
-
-      setMembers(
-        _.sortBy(teamMembers.data, (member) => !member.isAdmin),
-      );
-    } catch (err) {
-      setUser({ ...user, isAuthenticated: false });
-
-      if (err?.config?.url?.includes('verify-token')) {
-        sessionStorage.removeItem('username');
-        sessionStorage.removeItem('auth-token');
-        setIsLoading(false);
-        return;
-      }
-
-      notify(
-        'Unable to load board.',
-        `${err?.message || 'Server Error'}.`,
-      );
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => loadBoard(), []);
@@ -146,7 +151,7 @@ const App = () => {
 
       <ToastContainer
         toastClassName="ErrorToast"
-        position="bottom-right"
+        position="bottom-left"
         autoClose={false}
       />
     </div>
