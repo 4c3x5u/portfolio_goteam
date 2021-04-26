@@ -13,6 +13,7 @@ class UpdateColumns(APITestCase):
         team = Team.objects.create()
         board = Board.objects.create(name='My Board', team=team)
         self.column = Column.objects.create(order=0, board=board)
+        self.another_column = Column.objects.create(order=1, board=board)
         self.tasks = [
             Task.objects.create(
                 title=str(i),
@@ -143,11 +144,13 @@ class UpdateColumns(APITestCase):
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_not_authorized(self):
-        response = self.client.patch(f'{self.endpoint}{self.column.id}',
-                                     self.task_data,
-                                     format='json',
-                                     HTTP_AUTH_USER=self.member['username'],
-                                     HTTP_AUTH_TOKEN=self.member['token'])
+        response = self.client.patch(
+            f'{self.endpoint}{self.another_column.id}',
+            self.task_data,
+            format='json',
+            HTTP_AUTH_USER=self.member['username'],
+            HTTP_AUTH_TOKEN=self.member['token']
+        )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authorized_response.data)
 

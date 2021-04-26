@@ -49,7 +49,6 @@ const Task = ({
 
   return (
     <Draggable
-      key={id}
       draggableId={`draggable-${id}`}
       index={order}
       isDragDisabled={!user.isAdmin && user.username !== assignedUser}
@@ -77,6 +76,7 @@ const Task = ({
                   .map((subtask) => (
                     <Subtask
                       id={subtask.id}
+                      key={subtask.id}
                       title={subtask.title}
                       done={subtask.done}
                       assignedUser={assignedUser}
@@ -118,7 +118,10 @@ const Task = ({
               {members.map((member) => (
                 // If member is not admin or assigned, display them in list
                 !member.isAdmin && member.isActive && (
-                  <Item onClick={() => assignMember(member.username)}>
+                  <Item
+                    key={member.username}
+                    onClick={() => assignMember(member.username)}
+                  >
                     {member.username.length > 20
                       ? `${member.username.substring(0, 17)}...`
                       : member.username}
@@ -166,12 +169,14 @@ Task.propTypes = {
   order: PropTypes.number.isRequired,
   assignedUser: PropTypes.string.isRequired,
   handleActivate: PropTypes.func.isRequired,
-  subtasks: PropTypes.arrayOf({
-    id: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired,
-    order: PropTypes.number.isRequired,
-    done: PropTypes.bool.isRequired,
-  }).isRequired,
+  subtasks: PropTypes.arrayOf(
+    PropTypes.exact({
+      id: PropTypes.number.isRequired,
+      title: PropTypes.string.isRequired,
+      order: PropTypes.number.isRequired,
+      done: PropTypes.bool.isRequired,
+    }),
+  ).isRequired,
 };
 
 export default Task;

@@ -96,7 +96,7 @@ const Header = ({ activeWindow, handleActivate }) => {
 };
 
 Header.propTypes = {
-  activeWindow: PropTypes.number.isRequired,
+  activeWindow: PropTypes.string.isRequired,
   handleActivate: PropTypes.func.isRequired,
 };
 

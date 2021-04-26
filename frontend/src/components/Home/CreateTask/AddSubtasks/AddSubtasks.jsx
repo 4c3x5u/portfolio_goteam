@@ -45,7 +45,6 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
             className="Input"
             type="text"
             value={subtask}
-            onChange={() => console.log('NOT ALLOWED')}
           />
 
           <Button
