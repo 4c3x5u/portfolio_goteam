@@ -39,12 +39,12 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
       </Form.Label>
 
       {subtasks.list.map((subtask, index) => (
-        <div className="ControlWrapper">
+        <div key={subtask} className="ControlWrapper">
           <Form.Control
-            key={subtask}
             className="Input"
             type="text"
             value={subtask}
+            readOnly
           />
 
           <Button
@@ -87,11 +87,9 @@ const AddSubtasks = ({ subtasks, setSubtasks }) => {
 };
 
 AddSubtasks.propTypes = {
-  subtasks: PropTypes.objectOf({
+  subtasks: PropTypes.exact({
     value: PropTypes.string.isRequired,
-    list: PropTypes.arrayOf(
-      PropTypes.string.isRequired,
-    ).isRequired,
+    list: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
   setSubtasks: PropTypes.func.isRequired,
 };

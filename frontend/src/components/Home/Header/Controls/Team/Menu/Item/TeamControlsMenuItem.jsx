@@ -96,7 +96,7 @@ TeamControlsMenuItem.propTypes = {
   username: PropTypes.string.isRequired,
   isAdmin: PropTypes.bool.isRequired,
   isActive: PropTypes.bool.isRequired,
-  handleDelete: PropTypes.bool.isRequired,
+  handleDelete: PropTypes.func.isRequired,
 };
 
 export default TeamControlsMenuItem;
