@@ -129,9 +129,8 @@ REST_FRAMEWORK = {
 }
 
 ALLOWED_HOSTS = [
-    'localhost',
-    os.environ.get('BACKEND_URL'),
-    os.environ.get('FRONTEND_URL')
+    os.environ.get('LOCALHOST'),
+    os.environ.get('HEROKUHOST')
 ]
 
 CORS_ORIGIN_ALLOW_ALL = False
