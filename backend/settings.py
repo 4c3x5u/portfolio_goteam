@@ -128,7 +128,11 @@ REST_FRAMEWORK = {
     ]
 }
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = [
+    'localhost',
+    os.environ.get('BACKEND_URL'),
+    os.environ.get('FRONTEND_URL')
+]
 
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST = (
