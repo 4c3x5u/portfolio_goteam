@@ -50,26 +50,32 @@ class UserSerializer(serializers.ModelSerializer):
         return super().validate(data)
 
     def create(self, validated_data):
-        password_confirmation = validated_data.get('password_confirmation')
-        if not password_confirmation:
-            raise serializers.ValidationError({
-                'password_confirmation': 'Password confirmation cannot be '
-                                         'empty.'
-            }, 'blank')
+        try:
+            User.objects.get(username=validated_data.get('username'))
+        except User.DoesNotExist:
+            password_confirmation = validated_data.pop('password_confirmation')
+            if not password_confirmation:
+                raise serializers.ValidationError({
+                    'password_confirmation': 'Password confirmation cannot be '
+                                             'empty.'
+                }, 'blank')
 
-        if password_confirmation != validated_data.get('password'):
-            raise serializers.ValidationError({
-                'password_confirmation':
-                    'Confirmation must match the password.'
-            }, 'no_match')
+            if password_confirmation != validated_data.get('password'):
+                raise serializers.ValidationError({
+                    'password_confirmation':
+                        'Confirmation must match the password.'
+                }, 'no_match')
 
-        if validated_data.get('is_admin') and not validated_data.get('team'):
-            validated_data['team'] = Team.objects.create()
+            if validated_data.get('is_admin') and not validated_data.get('team'):
+                validated_data['team'] = Team.objects.create()
 
-        validated_data['password'] = bcrypt.hashpw(
-            bytes(validated_data['password'], 'utf-8'),
-            bcrypt.gensalt()
-        )
+            validated_data['password'] = bcrypt.hashpw(
+                bytes(validated_data['password'], 'utf-8'),
+                bcrypt.gensalt()
+            )
 
-        validated_data.pop('password_confirmation')
-        return User.objects.create(**validated_data)
+            return User.objects.create(**validated_data)
+
+        raise serializers.ValidationError({
+            'username': 'Username already exists.'
+        }, 'already_in_use')
