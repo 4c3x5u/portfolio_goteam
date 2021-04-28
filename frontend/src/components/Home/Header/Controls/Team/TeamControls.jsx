@@ -21,8 +21,12 @@ const TeamControls = ({
       TEAM
     </button>
 
-    {isActive
-      && <TeamControlsMenu handleCreate={handleCreate} handleDelete={handleDelete} />}
+    {isActive && (
+      <TeamControlsMenu
+        handleCreate={handleCreate}
+        handleDelete={handleDelete}
+      />
+    )}
   </Col>
 );
 

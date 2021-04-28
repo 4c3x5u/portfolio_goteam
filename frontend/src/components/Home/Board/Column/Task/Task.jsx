@@ -100,35 +100,37 @@ const Task = ({
           </div>
 
           <Menu className="ContextMenu" id={MENU_ID}>
-            <Submenu
-              className="Submenu"
-              label={(
-                <div
-                  style={{
-                    textAlign: 'center',
-                    display: 'flex',
-                    justifyContent: 'center',
-                  }}
-                >
-                  ASSIGN
-                </div>
-              )}
-              arrow={<div style={{ display: 'none' }} />}
-            >
-              {members.map((member) => (
-                // If member is not admin or assigned, display them in list
-                !member.isAdmin && member.isActive && (
-                  <Item
-                    key={member.username}
-                    onClick={() => assignMember(member.username)}
+            {members.length >= 2 && (
+              <Submenu
+                className="Submenu"
+                label={(
+                  <div
+                    style={{
+                      textAlign: 'center',
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
                   >
-                    {member.username.length > 20
-                      ? `${member.username.substring(0, 17)}...`
-                      : member.username}
-                  </Item>
-                )
-              ))}
-            </Submenu>
+                    ASSIGN
+                  </div>
+                )}
+                arrow={<div style={{ display: 'none' }} />}
+              >
+                {members.map((member) => (
+                  // If member is not admin or assigned, display them in list
+                  !member.isAdmin && member.isActive && (
+                    <Item
+                      key={member.username}
+                      onClick={() => assignMember(member.username)}
+                    >
+                      {member.username.length > 20
+                        ? `${member.username.substring(0, 17)}...`
+                        : member.username}
+                    </Item>
+                  )
+                ))}
+              </Submenu>
+            )}
 
             <Item
               className="ContextMenuItem"

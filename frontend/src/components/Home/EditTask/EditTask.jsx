@@ -122,12 +122,14 @@ EditTask.propTypes = {
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
-  subtasks: PropTypes.arrayOf({
-    id: PropTypes.number.isRequired,
-    title: PropTypes.string.isRequired,
-    order: PropTypes.number.isRequired,
-    done: PropTypes.bool.isRequired,
-  }).isRequired,
+  subtasks: PropTypes.arrayOf(
+    PropTypes.exact({
+      id: PropTypes.number.isRequired,
+      title: PropTypes.string.isRequired,
+      order: PropTypes.number.isRequired,
+      done: PropTypes.bool.isRequired,
+    }),
+  ).isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 

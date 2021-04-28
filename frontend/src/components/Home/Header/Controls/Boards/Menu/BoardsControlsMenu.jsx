@@ -15,6 +15,7 @@ const BoardsControlsMenu = ({ handleCreate, handleDelete, handleEdit }) => {
     <div className="BoardsControlsMenu">
       {boards.length > 0 && boards.map((board) => (
         <BoardsControlsMenuItem
+          key={board.id}
           id={board.id}
           name={board.name}
           isActive={board.id === activeBoard.id}
