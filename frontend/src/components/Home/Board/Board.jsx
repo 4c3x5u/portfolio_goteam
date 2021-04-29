@@ -55,7 +55,7 @@ const Board = ({ handleActivate }) => {
 
       // Update client state (to avoid server-response wait time)
       setActiveBoard({
-        id: activeBoard.id,
+        ...activeBoard,
         columns: activeBoard.columns.map((column) => {
           if (column.id === source.id) {
             return { ...column, tasks: sourceTasks };
