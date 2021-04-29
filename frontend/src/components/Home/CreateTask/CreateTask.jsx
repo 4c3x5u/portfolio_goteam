@@ -15,7 +15,9 @@ import logo from './createtask.svg';
 import './createtask.sass';
 
 const CreateTask = ({ toggleOff }) => {
-  const { activeBoard, loadBoard, notify } = useContext(AppContext);
+  const {
+    activeBoard, setActiveBoard, loadBoard, notify,
+  } = useContext(AppContext);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [subtasks, setSubtasks] = useState({ value: '', list: [] });
@@ -29,6 +31,33 @@ const CreateTask = ({ toggleOff }) => {
     if (clientTitleError) {
       setTitleError(clientTitleError);
     } else {
+      // Update client state to avoid load screen
+      setActiveBoard({
+        ...activeBoard,
+        columns: activeBoard.columns.map((column, ci) => (
+          ci === 0 ? {
+            ...column,
+            tasks: [
+              ...column.tasks,
+              {
+                id: -1,
+                title,
+                description,
+                order: -1,
+                user: '',
+                subtasks: subtasks.list.map((subtask, si) => ({
+                  id: 0 - si,
+                  title: subtask,
+                  order: -10 + si,
+                  done: false,
+                })),
+              },
+            ],
+          } : column
+        )),
+      });
+
+      // Create task in the database
       TasksAPI
         .post({
           title,
