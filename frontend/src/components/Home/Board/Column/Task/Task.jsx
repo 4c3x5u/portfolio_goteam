@@ -61,7 +61,7 @@ const Task = ({
           err?.response?.data?.user || err?.message || 'Server Error.',
         );
       })
-      .finally(() => loadBoard());
+      .finally(loadBoard);
   };
 
   return (

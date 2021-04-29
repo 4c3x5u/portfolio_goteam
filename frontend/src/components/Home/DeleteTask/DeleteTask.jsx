@@ -37,16 +37,14 @@ const DeleteTask = ({
     // Delete task in database
     TasksAPI
       .delete(id)
-      .then(() => {
-        loadBoard();
-        toggleOff();
-      })
+      .then(toggleOff)
       .catch((err) => {
         notify(
           'Unable to delete task.',
           `${err?.message || 'Server Error'}.`,
         );
-      });
+      })
+      .finally(loadBoard);
   };
 
   return (

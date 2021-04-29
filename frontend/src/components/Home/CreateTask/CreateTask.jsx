@@ -65,7 +65,7 @@ const CreateTask = ({ toggleOff }) => {
           column: activeBoard.columns[0].id,
           subtasks: subtasks.list,
         })
-        .then(() => toggleOff())
+        .then(toggleOff)
         .catch((err) => {
           const serverTitleError = err?.response?.data?.title || '';
 
@@ -78,7 +78,7 @@ const CreateTask = ({ toggleOff }) => {
             );
           }
         })
-        .finally(() => loadBoard());
+        .finally(loadBoard);
     }
   };
 

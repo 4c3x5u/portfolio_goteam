@@ -91,10 +91,12 @@ const Home = () => {
 
       case window.DELETE_MEMBER:
         return (
-          <DeleteMember
-            username={windowState.username}
-            toggleOff={handleActivate(window.NONE)}
-          />
+          windowState.username && (
+            <DeleteMember
+              username={windowState.username}
+              toggleOff={handleActivate(window.NONE)}
+            />
+          )
         );
 
       case window.HELP:
