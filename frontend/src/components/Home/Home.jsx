@@ -42,7 +42,7 @@ const Home = () => {
         return <CreateBoard toggleOff={handleActivate(window.NONE)} />;
 
       case window.DELETE_BOARD:
-        return (
+        return windowState.id && (
           <DeleteBoard
             id={windowState.id}
             name={windowState.name}

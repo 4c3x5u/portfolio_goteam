@@ -13,23 +13,27 @@ import logo from './deleteboard.svg';
 import './deleteboard.sass';
 
 const DeleteBoard = ({ id, name, toggleOff }) => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const {
+    boards, setBoards, loadBoard, notify,
+  } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Update client state to avoid load time
+    setBoards(boards.filter((board) => board.id !== id));
+
+    // Delete board in database
     BoardsAPI
       .delete(id)
-      .then(() => {
-        toggleOff();
-        loadBoard();
-      })
+      .then(toggleOff)
       .catch((err) => (
         notify(
           'Unable to delete board.',
           `${err.message || 'Server Error'}.`,
         )
-      ));
+      ))
+      .finally(loadBoard);
   };
 
   return (
