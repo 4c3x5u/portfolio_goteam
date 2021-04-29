@@ -14,7 +14,9 @@ import logo from './createboard.svg';
 import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
-  const { user, loadBoard, notify } = useContext(AppContext);
+  const {
+    boards, setBoards, user, loadBoard, notify,
+  } = useContext(AppContext);
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
 
@@ -26,12 +28,13 @@ const CreateBoard = ({ toggleOff }) => {
     if (clientNameError) {
       setNameError(clientNameError);
     } else {
+      // Update client state to avoid load time
+      setBoards([...boards, { id: Number.MAX_SAFE_INTEGER, name }]);
+
+      // Create board in database
       BoardsAPI
         .post({ name, team_id: user.teamId })
-        .then((res) => {
-          toggleOff();
-          loadBoard(res.data.id);
-        })
+        .then(toggleOff)
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
           if (serverNameError) {
@@ -42,7 +45,8 @@ const CreateBoard = ({ toggleOff }) => {
               `${err.message || 'Server Error'}.`,
             );
           }
-        });
+        })
+        .finally(loadBoard);
     }
   };
 
