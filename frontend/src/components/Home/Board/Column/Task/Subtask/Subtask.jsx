@@ -9,21 +9,45 @@ import SubtasksAPI from '../../../../../../api/SubtasksAPI';
 import './subtask.sass';
 
 const Subtask = ({
-  id, title, done, assignedUser,
+  id, title, done, assignedUser, taskId, columnId,
 }) => {
-  const { user, loadBoard, notify } = useContext(AppContext);
+  const {
+    user, activeBoard, setActiveBoard, loadBoard, notify,
+  } = useContext(AppContext);
 
-  const check = (subtaskId) => (
+  const check = (subtaskId) => {
+    // Update client state to avoid load screen.
+    setActiveBoard({
+      ...activeBoard,
+      columns: activeBoard.columns.map((column) => (
+        column.id === columnId ? {
+          ...column,
+          tasks: column.tasks.map((task) => (
+            task.id === taskId ? {
+              ...task,
+              subtasks: task.subtasks.map((subtask) => (
+                subtask.id === subtaskId ? {
+                  ...subtask,
+                  done: !subtask.done,
+                } : subtask
+              )),
+            } : task
+          )),
+        } : column
+      )),
+    });
+
+    // Update subtask in database
     SubtasksAPI
       .patch(subtaskId, { done: !done })
-      .then(() => loadBoard())
       .catch((err) => {
         notify(
           'Unable to check subtask done.',
           `${err?.message || 'Server Error'}.`,
         );
       })
-  );
+      .finally(loadBoard);
+  };
 
   return (
     <li className="Subtask">
@@ -48,6 +72,8 @@ Subtask.propTypes = {
   title: PropTypes.string.isRequired,
   done: PropTypes.bool.isRequired,
   assignedUser: PropTypes.string.isRequired,
+  columnId: PropTypes.number.isRequired,
+  taskId: PropTypes.number.isRequired,
 };
 
 export default Subtask;
