@@ -30,28 +30,38 @@ const Task = ({
   subtasks,
 }) => {
   const {
-    user,
-    members,
-    setIsLoading,
-    loadBoard,
-    notify,
+    activeBoard, setActiveBoard, user, members, loadBoard, notify,
   } = useContext(AppContext);
 
   const MENU_ID = `edit-task-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
   const assignMember = (username) => {
-    setIsLoading();
+    // Update client state to avoid load time
+    setActiveBoard({
+      ...activeBoard,
+      columns: activeBoard.columns.map((column) => (
+        column.id === columnId ? {
+          ...column,
+          tasks: column.tasks.map((task) => (
+            task.id === id
+              ? { ...task, user: username }
+              : task
+          )),
+        } : column
+      )),
+    });
+
+    // Add user to task in database
     TasksAPI
       .patch(id, { user: username })
-      .then(() => loadBoard())
       .catch((err) => {
         notify(
           'Unable to assign user.',
           err?.response?.data?.user || err?.message || 'Server Error.',
         );
-      });
-    loadBoard();
+      })
+      .finally(() => loadBoard());
   };
 
   return (

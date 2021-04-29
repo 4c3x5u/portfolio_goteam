@@ -34,6 +34,7 @@ const DeleteTask = ({
       )),
     });
 
+    // Delete task in database
     TasksAPI
       .delete(id)
       .then(() => {
