@@ -14,12 +14,26 @@ import logo from './deletetask.svg';
 import './deletetask.sass';
 
 const DeleteTask = ({
-  id, title, description, subtasks, toggleOff,
+  id, title, description, subtasks, columnId, toggleOff,
 }) => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const {
+    activeBoard, setActiveBoard, loadBoard, notify,
+  } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Update client state to avoid load time
+    setActiveBoard({
+      ...activeBoard,
+      columns: activeBoard.columns.map((column) => (
+        column.id === columnId ? {
+          ...column,
+          tasks: column.tasks.filter((task) => (task.id !== id)),
+        } : column
+      )),
+    });
+
     TasksAPI
       .delete(id)
       .then(() => {
@@ -100,6 +114,7 @@ DeleteTask.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
+  columnId: PropTypes.number.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 

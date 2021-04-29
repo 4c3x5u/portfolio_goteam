@@ -160,6 +160,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
+                columnId,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
