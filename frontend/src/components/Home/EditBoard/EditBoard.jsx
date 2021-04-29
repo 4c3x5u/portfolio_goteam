@@ -14,7 +14,9 @@ import logo from './editboard.svg';
 import './editboard.sass';
 
 const EditBoard = ({ id, name, toggleOff }) => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const {
+    boards, setBoards, loadBoard, notify,
+  } = useContext(AppContext);
   const [newName, setNewName] = useState(name);
   const [nameError, setNameError] = useState('');
 
@@ -26,12 +28,17 @@ const EditBoard = ({ id, name, toggleOff }) => {
     if (clientNameError) {
       setNameError(clientNameError);
     } else {
+      // Update client state to avoid load time
+      setBoards(boards.map((board) => (
+        board.id === id
+          ? { ...board, name: newName }
+          : board
+      )));
+
+      // Edit board in database
       BoardsAPI
         .patch(id, { name: newName })
-        .then(() => {
-          toggleOff();
-          loadBoard();
-        })
+        .then(toggleOff)
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
           if (serverNameError) {
@@ -42,7 +49,8 @@ const EditBoard = ({ id, name, toggleOff }) => {
               `${err.message || 'Server Error'}.`,
             );
           }
-        });
+        })
+        .finally(loadBoard);
     }
   };
 
