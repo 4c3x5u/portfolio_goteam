@@ -47,8 +47,9 @@ const Column = ({
                   description={task.description}
                   order={task.order}
                   assignedUser={task.user}
-                  handleActivate={handleActivate}
+                  columnId={id}
                   subtasks={task.subtasks}
+                  handleActivate={handleActivate}
                 />
               ))}
 

@@ -15,9 +15,11 @@ import logo from './edittask.svg';
 import './edittask.sass';
 
 const EditTask = ({
-  id, title, description, subtasks, toggleOff,
+  id, title, description, subtasks, columnId, toggleOff,
 }) => {
-  const { activeBoard, loadBoard, notify } = useContext(AppContext);
+  const {
+    activeBoard, setActiveBoard, loadBoard, notify,
+  } = useContext(AppContext);
   const [newTitle, setNewTitle] = useState(title);
   const [newDescription, setNewDescription] = useState(description);
   const [newSubtasks, setNewSubtasks] = useState({
@@ -34,6 +36,30 @@ const EditTask = ({
     if (clientTitleError) {
       setTitleError(clientTitleError);
     } else {
+      // Update client state to avoid load time
+      setActiveBoard({
+        ...activeBoard,
+        columns: activeBoard.columns.map((column) => (
+          column.id === columnId ? {
+            ...column,
+            tasks: column.tasks.map((task) => (
+              task.id === id ? {
+                ...task,
+                title: newTitle,
+                description: newDescription,
+                subtasks: newSubtasks.list.map((subtask, i) => ({
+                  id: -100 + i,
+                  title: subtask.title,
+                  order: -100 + i,
+                  done: false,
+                })),
+              } : task
+            )),
+          } : column
+        )),
+      });
+
+      // Update task in database
       TasksAPI
         .patch(id, {
           title: newTitle,
@@ -130,6 +156,7 @@ EditTask.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
+  columnId: PropTypes.number.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 

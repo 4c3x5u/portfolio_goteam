@@ -96,7 +96,7 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
 };
 
 EditSubtasks.propTypes = {
-  subtasks: PropTypes.objectOf({
+  subtasks: PropTypes.exact({
     value: PropTypes.string.isRequired,
     list: PropTypes.arrayOf(
       PropTypes.string.isRequired,
@@ -105,6 +105,6 @@ EditSubtasks.propTypes = {
   setSubtasks: PropTypes.func,
 };
 
-EditSubtasks.defaultProps = { setSubtasks: null };
+EditSubtasks.defaultProps = { setSubtasks: undefined };
 
 export default EditSubtasks;
