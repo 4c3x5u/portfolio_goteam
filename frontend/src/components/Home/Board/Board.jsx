@@ -15,42 +15,63 @@ const Board = ({ handleActivate }) => {
     loadBoard,
     setIsLoading,
     notify,
+    setActiveBoard,
   } = useContext(AppContext);
 
   const handleOnDragEnd = async (result) => {
     try {
-      setIsLoading(true);
-
+      // This is to solve a bug that occurs very rarely
       if (!result.destination) {
         throw Error('Destination not found.');
       }
 
+      // Find the "source" column – the one that the task is initially in
       const source = activeBoard.columns.find((column) => (
         column.id.toString() === result.source.droppableId
       ));
 
+      // Pop the tasks that's being moved out of the "source"
       const [item] = source.tasks.splice(result.source.index, 1);
 
+      // Update "source" tasks' orders
       const sourceTasks = source.tasks.map((task, index) => ({
         ...task,
         order: index,
       }));
 
-      await ColumnsAPI.patch(source.id, sourceTasks);
-
+      // Find the "destination" column – the that the task is being moved into
       const destination = activeBoard.columns.find((column) => (
         column.id.toString() === result.destination.droppableId
       ));
 
+      // Insert the task that's being moved into the "destination"
       destination.tasks.splice(result.destination.index, 0, item);
 
+      // Update "destination" tasks' orders
       const destinationTasks = destination.tasks.map((task, index) => ({
         ...task,
         order: index,
       }));
 
+      // Update client state (to avoid server-response wait time)
+      setActiveBoard({
+        id: activeBoard.id,
+        columns: activeBoard.columns.map((column) => {
+          if (column.id === source.id) {
+            return { ...column, tasks: sourceTasks };
+          }
+          if (column.id === destination.id) {
+            return { ...column, tasks: destinationTasks };
+          }
+          return column;
+        }),
+      });
+
+      // Update the "source" and the "destination" in the database
+      await ColumnsAPI.patch(source.id, sourceTasks);
       await ColumnsAPI.patch(destination.id, destinationTasks);
 
+      // Reload the board
       await loadBoard(activeBoard.id);
     } catch (err) {
       notify(
