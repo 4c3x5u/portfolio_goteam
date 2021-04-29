@@ -51,7 +51,7 @@ const Home = () => {
         );
 
       case window.EDIT_BOARD:
-        return (
+        return windowState.id && (
           <EditBoard
             id={windowState.id}
             name={windowState.name}
@@ -90,13 +90,11 @@ const Home = () => {
         return <InviteMember toggleOff={handleActivate(window.NONE)} />;
 
       case window.DELETE_MEMBER:
-        return (
-          windowState.username && (
-            <DeleteMember
-              username={windowState.username}
-              toggleOff={handleActivate(window.NONE)}
-            />
-          )
+        return windowState.username && (
+          <DeleteMember
+            username={windowState.username}
+            toggleOff={handleActivate(window.NONE)}
+          />
         );
 
       case window.HELP:
