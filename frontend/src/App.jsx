@@ -41,21 +41,19 @@ const App = () => {
       sessionStorage.getItem('username')
         && sessionStorage.getItem('auth-token')
     ) {
-      setIsLoading(true);
       try {
-        // 1. set the current user
+        // Set the current user
         const userResponse = await AuthAPI.verifyToken();
         delete userResponse.data.msg;
         setUser({ ...userResponse.data, isAuthenticated: true });
 
-        // 2. set current team (only needed for inviting members, which means
-        //    only needed if the current user is the team admin)
+        // Set current team (for invites) if the user is admin
         if (userResponse.data.isAdmin) {
           const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
           setTeam(teamResponse.data);
         }
 
-        // 3. set boards lists
+        // Set boards lists
         let teamBoards = [];
         try {
           teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
@@ -65,10 +63,9 @@ const App = () => {
             'Please ask your team admin to add you to a board.',
           );
         }
-
         setBoards(teamBoards?.data || []);
 
-        // 4. set the active board
+        // Set the active board
         const nestedBoard = await BoardsAPI.get(
           sessionStorage.getItem('board-id')
           || activeBoard.id
@@ -76,15 +73,12 @@ const App = () => {
         );
         setActiveBoard(nestedBoard.data);
 
-        // 5. set members list
+        // Set team members
         const teamMembers = await UsersAPI.get(
           userResponse.data.teamId,
           nestedBoard.data.id,
         );
-
-        setMembers(
-          _.sortBy(teamMembers.data, (member) => !member.isAdmin),
-        );
+        setMembers(_.sortBy(teamMembers.data, (member) => !member.isAdmin));
       } catch (err) {
         setUser({ ...user, isAuthenticated: false });
 
