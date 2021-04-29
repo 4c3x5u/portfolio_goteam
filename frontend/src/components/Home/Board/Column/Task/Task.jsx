@@ -20,7 +20,14 @@ import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
 
 const Task = ({
-  id, title, description, order, assignedUser, handleActivate, subtasks,
+  id,
+  title,
+  description,
+  order,
+  assignedUser,
+  handleActivate,
+  columnId,
+  subtasks,
 }) => {
   const {
     user,
@@ -139,6 +146,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
+                columnId,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
@@ -170,7 +178,7 @@ Task.propTypes = {
   description: PropTypes.string.isRequired,
   order: PropTypes.number.isRequired,
   assignedUser: PropTypes.string.isRequired,
-  handleActivate: PropTypes.func.isRequired,
+  columnId: PropTypes.number.isRequired,
   subtasks: PropTypes.arrayOf(
     PropTypes.exact({
       id: PropTypes.number.isRequired,
@@ -179,6 +187,7 @@ Task.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
+  handleActivate: PropTypes.func.isRequired,
 };
 
 export default Task;
