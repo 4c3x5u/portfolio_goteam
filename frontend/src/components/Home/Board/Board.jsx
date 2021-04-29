@@ -20,11 +20,6 @@ const Board = ({ handleActivate }) => {
 
   const handleOnDragEnd = async (result) => {
     try {
-      // This is to solve a bug that occurs very rarely
-      if (!result.destination) {
-        throw Error('Destination not found.');
-      }
-
       // Find the "source" column – the one that the task is initially in
       const source = activeBoard.columns.find((column) => (
         column.id.toString() === result.source.droppableId
@@ -57,11 +52,11 @@ const Board = ({ handleActivate }) => {
       setActiveBoard({
         ...activeBoard,
         columns: activeBoard.columns.map((column) => {
-          if (column.id === source.id) {
-            return { ...column, tasks: sourceTasks };
-          }
           if (column.id === destination.id) {
             return { ...column, tasks: destinationTasks };
+          }
+          if (column.id === source.id) {
+            return { ...column, tasks: sourceTasks };
           }
           return column;
         }),
