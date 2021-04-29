@@ -12,7 +12,7 @@ import logo from './register.svg';
 import './register.sass';
 
 const Register = () => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const { loadBoard, setIsLoading, notify } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -47,6 +47,7 @@ const Register = () => {
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
           sessionStorage.setItem('auth-token', res.data.token);
+          setIsLoading(true);
           loadBoard();
         })
         .catch((err) => {

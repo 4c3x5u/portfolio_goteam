@@ -97,6 +97,8 @@ const Task = ({
                       title={subtask.title}
                       done={subtask.done}
                       assignedUser={assignedUser}
+                      taskId={id}
+                      columnId={columnId}
                     />
                   ))}
               </ul>

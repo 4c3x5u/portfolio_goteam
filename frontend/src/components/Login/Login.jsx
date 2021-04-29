@@ -11,7 +11,7 @@ import logo from './login.svg';
 import './login.sass';
 
 const Login = () => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const { loadBoard, setIsLoading, notify } = useContext(AppContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({ username: '', password: '' });
@@ -32,6 +32,7 @@ const Login = () => {
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
           sessionStorage.setItem('auth-token', res.data.token);
+          setIsLoading(true);
           loadBoard();
         })
         .catch((err) => {
