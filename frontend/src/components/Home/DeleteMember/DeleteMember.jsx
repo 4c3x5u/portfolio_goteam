@@ -13,23 +13,27 @@ import logo from './deletemember.svg';
 import './deletemember.sass';
 
 const DeleteMember = ({ username, toggleOff }) => {
-  const { loadBoard, notify } = useContext(AppContext);
+  const {
+    members, setMembers, loadBoard, notify,
+  } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Update client state to avoid load time
+    setMembers(members.filter((member) => member.username !== username));
+
+    // Delete user in database
     UsersAPI
       .delete(username)
-      .then(() => {
-        toggleOff();
-        loadBoard();
-      })
+      .then(toggleOff)
       .catch((err) => {
         notify(
           'Unable to delete member.',
           `${err?.message || 'Server Error'}.`,
         );
-      });
+      })
+      .finally(loadBoard);
   };
 
   return (

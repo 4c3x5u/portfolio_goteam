@@ -67,7 +67,7 @@ const EditTask = ({
           column: activeBoard.columns[0].id,
           subtasks: newSubtasks.list,
         })
-        .then(() => toggleOff())
+        .then(toggleOff)
         .catch((err) => {
           const serverTitleError = err?.response?.data?.title || '';
 
@@ -80,7 +80,7 @@ const EditTask = ({
             );
           }
         })
-        .finally(() => loadBoard());
+        .finally(loadBoard);
     }
   };
 
