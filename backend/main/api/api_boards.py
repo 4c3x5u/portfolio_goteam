@@ -24,20 +24,22 @@ def boards(request):
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
 
+            validation_response = validate_board_id(board_id)
+            if validation_response:
+                return validation_response
+
             try:
-                board_raw = Board.objects.prefetch_related(
+                board, = Board.objects.prefetch_related(
                     'user',
                     'column_set',
                     'column_set__task_set',
                     'column_set__task_set__subtask_set'
                 ).get(id=board_id),
             except Board.DoesNotExist:
-                return None, Response({
+                return Response({
                     'board_id': ErrorDetail(string='Board not found.',
                                             code='not_found')
                 }, 404)
-
-            board = board_raw[0]
 
             validation_response = validate_board_id(board_id)
             if validation_response:
@@ -160,9 +162,17 @@ def boards(request):
 
         board_id = request.query_params.get('id')
 
-        board, validation_response = validate_board_id(board_id)
+        validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        try:
+            board = Board.objects.get(id=board_id)
+        except Board.DoesNotExist:
+            return Response({
+                'board_id': ErrorDetail(string='Board not found.',
+                                        code='not_found')
+            }, 404)
 
         if board.team.id != user.team.id:
             return not_authenticated_response
@@ -180,9 +190,17 @@ def boards(request):
             return authorization_response
 
         board_id = request.query_params.get('id')
-        board, validation_response = validate_board_id(board_id)
+        validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        try:
+            board = Board.objects.get(id=board_id)
+        except Board.DoesNotExist:
+            return Response({
+                'board_id': ErrorDetail(string='Board not found.',
+                                        code='not_found')
+            }, 404)
 
         if board.team.id != user.team.id:
             return not_authenticated_response

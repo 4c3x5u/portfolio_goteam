@@ -1,6 +1,5 @@
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
-from ..models import Board
 
 
 # return (board, response)
