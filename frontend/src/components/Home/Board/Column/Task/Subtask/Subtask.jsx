@@ -12,7 +12,7 @@ const Subtask = ({
   id, title, done, assignedUser, taskId, columnId,
 }) => {
   const {
-    user, activeBoard, setActiveBoard, loadBoard, notify,
+    user, activeBoard, setActiveBoard, loadBoard, setIsLoading, notify,
   } = useContext(AppContext);
 
   const check = (subtaskId) => {
@@ -45,8 +45,9 @@ const Subtask = ({
           'Unable to check subtask done.',
           `${err?.message || 'Server Error'}.`,
         );
-      })
-      .finally(loadBoard);
+        setIsLoading(true);
+        loadBoard();
+      });
   };
 
   return (
