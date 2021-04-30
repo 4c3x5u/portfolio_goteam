@@ -33,55 +33,40 @@ const App = () => {
     </>,
   );
 
-  const loadBoard = async () => {
+  const loadBoard = () => {
     if (
       sessionStorage.getItem('username')
         && sessionStorage.getItem('auth-token')
     ) {
-      try {
-        const clientState = await axios.get(
+      axios
+        .get(
           `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
             sessionStorage.getItem('board-id') || activeBoard.id || ''
           }`, getAuthHeaders(),
-        );
+        )
+        .then((res) => {
+          setUser(res.data.user);
+          if (res.data?.team) { setTeam(res.data.team); }
+          setBoards(res.data.boards);
+          setActiveBoard(res.data.activeBoard);
+          setMembers(res.data.members);
+        })
+        .catch((err) => {
+          setUser({ ...user, isAuthenticated: false });
 
-        // Set the current user
-        setUser(clientState.data.user);
+          if (err?.config?.url?.includes('verify-token')) {
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('auth-token');
+            setIsLoading(false);
+            return;
+          }
 
-        // Set current team (for invites) if the user is admin
-        if (clientState.data?.team) { setTeam(clientState.data.team); }
-
-        // Set boards lists
-        try {
-          setBoards(clientState.data.boards);
-        } catch (e) {
           notify(
             'Unable to load board.',
-            'Please ask your team admin to add you to a board.',
+            `${err?.message || 'Server Error'}.`,
           );
-        }
-
-        // Set the active board
-        setActiveBoard(clientState.data.activeBoard);
-
-        // Set team members
-        setMembers(clientState.data.members);
-      } catch (err) {
-        setUser({ ...user, isAuthenticated: false });
-
-        if (err?.config?.url?.includes('verify-token')) {
-          sessionStorage.removeItem('username');
-          sessionStorage.removeItem('auth-token');
-          setIsLoading(false);
-          return;
-        }
-
-        notify(
-          'Unable to load board.',
-          `${err?.message || 'Server Error'}.`,
-        );
-      }
-      setIsLoading(false);
+        })
+        .finally(() => setIsLoading(false));
     }
   };
 
