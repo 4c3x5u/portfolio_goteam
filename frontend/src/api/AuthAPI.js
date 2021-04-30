@@ -21,6 +21,7 @@ const AuthAPI = {
     );
   },
 
+  // not in use – maintained for demonstration purposes
   verifyToken: () => (
     axios.post(`${process.env.REACT_APP_BACKEND_URL}/verify-token/`, {
       username: sessionStorage.getItem('username'),

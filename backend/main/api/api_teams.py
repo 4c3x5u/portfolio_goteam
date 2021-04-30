@@ -5,6 +5,7 @@ from ..validation.val_auth import \
 from ..validation.val_team import validate_team_id
 
 
+# not in use – maintained for demonstration purposes
 @api_view(['GET'])
 def teams(request):
     auth_user = request.META.get('HTTP_AUTH_USER')

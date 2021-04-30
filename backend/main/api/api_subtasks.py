@@ -18,6 +18,7 @@ def subtasks(request):
     if authentication_response:
         return authentication_response
 
+    # not in use – maintained for demonstration purposes
     if request.method == 'GET':
         task_id = request.query_params.get('task_id')
 

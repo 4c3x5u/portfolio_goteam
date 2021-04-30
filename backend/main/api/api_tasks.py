@@ -19,6 +19,7 @@ def tasks(request):
     if authentication_response:
         return authentication_response
 
+    # not in use – maintained for demonstration purposes
     if request.method == 'GET':
         column_id = request.query_params.get('column_id')
 

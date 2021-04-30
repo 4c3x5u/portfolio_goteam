@@ -19,6 +19,7 @@ def columns(request):
     if authentication_response:
         return authentication_response
 
+    # not in use – maintained for demonstration purposes
     if request.method == 'GET':
         board_id = request.query_params.get('board_id')
         validation_response = validate_board_id(board_id)
