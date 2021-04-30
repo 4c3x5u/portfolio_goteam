@@ -53,8 +53,10 @@ class UserSerializer(serializers.ModelSerializer):
         try:
             User.objects.get(username=validated_data.get('username'))
         except User.DoesNotExist:
-            password_confirmation = validated_data.pop('password_confirmation')
-            if not password_confirmation:
+            try:
+                password_confirmation = \
+                    validated_data.pop('password_confirmation')
+            except KeyError:
                 raise serializers.ValidationError({
                     'password_confirmation': 'Password confirmation cannot be '
                                              'empty.'

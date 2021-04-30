@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Column, Task
+from ..models import Column, Task, Board
 from ..serializers.ser_column import ColumnSerializer
 from ..serializers.ser_task import TaskSerializer
 from ..validation.val_auth import \
@@ -21,9 +21,18 @@ def columns(request):
 
     if request.method == 'GET':
         board_id = request.query_params.get('board_id')
-        board, validation_response = validate_board_id(board_id)
+        validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        try:
+            board = Board.objects.get(id=board_id)
+        except Board.DoesNotExist:
+            return Response({
+                'board_id': ErrorDetail(string='Board not found.',
+                                        code='not_found')
+            }, 404)
+
         if board.team.id != user.team.id:
             return not_authenticated_response
 

@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import User
+from ..models import User, Board
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response, \
     not_authorized_response
@@ -31,9 +31,17 @@ def users(request):
 
         if 'board_id' in request.query_params.keys():
             board_id = request.query_params.get('board_id')
-            board, validation_response = validate_board_id(board_id)
+            validation_response = validate_board_id(board_id)
             if validation_response:
                 return validation_response
+
+            try:
+                board = Board.objects.get(id=board_id)
+            except Board.DoesNotExist:
+                return Response({
+                    'board_id': ErrorDetail(string='Board not found.',
+                                            code='not_found')
+                }, 404)
 
             board_members = User.objects.filter(board=board)
 
@@ -64,9 +72,17 @@ def users(request):
             return not_authorized_response
 
         board_id = request.data.get('board_id')
-        board, validation_response = validate_board_id(board_id)
+        validation_response = validate_board_id(board_id)
         if validation_response:
             return validation_response
+
+        try:
+            board = Board.objects.get(id=board_id)
+        except Board.DoesNotExist:
+            return Response({
+                'board_id': ErrorDetail(string='Board not found.',
+                                        code='not_found')
+            }, 404)
 
         is_active = request.data.get('is_active')
         is_active, validation_response = validate_is_active(is_active)
