@@ -23,7 +23,23 @@ def boards(request):
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')
-            board, validation_response = validate_board_id(board_id)
+
+            try:
+                board_raw = Board.objects.prefetch_related(
+                    'user',
+                    'column_set',
+                    'column_set__task_set',
+                    'column_set__task_set__subtask_set'
+                ).get(id=board_id),
+            except Board.DoesNotExist:
+                return None, Response({
+                    'board_id': ErrorDetail(string='Board not found.',
+                                            code='not_found')
+                }, 404)
+
+            board = board_raw[0]
+
+            validation_response = validate_board_id(board_id)
             if validation_response:
                 return validation_response
 
@@ -36,32 +52,32 @@ def boards(request):
                 if not user.is_admin:
                     return not_authorized_response
 
-            columns = list(map(
-                lambda column: {
+            def column_mapper(column):
+                return {
                     'id': column.id,
                     'order': column.order,
-                    'tasks': list(map(
+                    'tasks': column.task_set is not None and list(map(
                         lambda task: {
                             'id': task.id,
                             'title': task.title,
                             'description': task.description,
                             'order': task.order,
                             'user': task.user.username if task.user else '',
-                            'subtasks': list(map(
+                            'subtasks': task.subtask_set is not None and list(map(
                                 lambda subtask: {
                                     'id': subtask.id,
                                     'title': subtask.title,
                                     'order': subtask.order,
                                     'done': subtask.done
                                 },
-                                Subtask.objects.filter(task_id=task.id)
+                                task.subtask_set.all()
                             ))
                         },
-                        Task.objects.filter(column_id=column.id)
+                        column.task_set.all()
                     ))
-                },
-                Column.objects.filter(board_id=board.id)
-            ))
+                }
+
+            columns = list(map(column_mapper, board.column_set.all()))
             return Response({'id': board.id, 'columns': columns}, 200)
 
         if 'team_id' in request.query_params.keys():
