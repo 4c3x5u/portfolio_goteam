@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getAuthHeaders } from '../misc/util';
 
+// not in use – maintained for demonstration purposes
 const TeamsAPI = {
   get: (teamId) => axios.get(
     `${process.env.REACT_APP_BACKEND_URL}/teams/?team_id=${teamId}`,

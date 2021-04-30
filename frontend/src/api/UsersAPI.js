@@ -2,6 +2,7 @@ import axios from 'axios';
 import { getAuthHeaders } from '../misc/util';
 
 const UsersAPI = {
+  // not in use – maintained for demonstration purposes
   get: (teamId, boardId) => {
     // team_id is mandatory
     let queryString = `?team_id=${teamId}`;

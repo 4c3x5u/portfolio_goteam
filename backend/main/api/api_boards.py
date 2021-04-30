@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
-from ..models import Board, Column, Task, Subtask, User
+from ..models import Board, User
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response, \
     not_authorized_response
@@ -20,6 +20,7 @@ def boards(request):
     if authentication_response:
         return authentication_response
 
+    # not in use – maintained for demonstration purposes
     if request.method == 'GET':
         if 'id' in request.query_params.keys():
             board_id = request.query_params.get('id')

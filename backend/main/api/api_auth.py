@@ -66,6 +66,7 @@ def login(request):
     }, 200)
 
 
+# not in use – maintained for demonstration purposes
 @api_view(['POST'])
 def verify_token(request):
     failure_response = Response({'msg': 'Token verification failure.'}, 400)

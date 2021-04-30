@@ -19,6 +19,7 @@ def users(request):
     if authentication_response:
         return authentication_response
 
+    # not in use – maintained for demonstration purposes
     if request.method == 'GET':
         request_team_id = request.query_params.get('team_id')
         team, validation_response = validate_team_id(request_team_id)
