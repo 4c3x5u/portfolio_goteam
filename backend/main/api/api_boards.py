@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..serializers.ser_board import BoardSerializer
-from ..models import Board, User
+from ..models import Board, User, Team
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response, \
     not_authorized_response
@@ -46,7 +46,7 @@ def boards(request):
             if validation_response:
                 return validation_response
 
-            if board.team.id != user.team.id:
+            if board.team_id != user.team_id:
                 return not_authenticated_response
 
             try:
@@ -84,51 +84,59 @@ def boards(request):
             return Response({'id': board.id, 'columns': columns}, 200)
 
         if 'team_id' in request.query_params.keys():
-            request_team_id = request.query_params.get('team_id')
-            team, response = validate_team_id(request_team_id)
+            team_id = request.query_params.get('team_id')
+            response = validate_team_id(team_id)
             if response:
                 return response
 
-            if team.id != user.team.id:
+            try:
+                team = Team.objects.prefetch_related(
+                    'board_set',
+                    'user_set',
+                ).get(id=team_id)
+            except Team.DoesNotExist:
+                return Response({
+                    'team_id': ErrorDetail(string='Team not found.',
+                                           code='not_found')
+                }, 404)
+
+            if team.id != user.team_id:
                 return not_authenticated_response
 
             if user.is_admin:
-                queryset = Board.objects.filter(team=team.id)
+                board_list = team.board_set.all()
             else:
-                queryset = Board.objects.filter(team=team.id, user=user)
+                board_list = team.board_set.filter(user=user)
 
             # create a board if none exists for the team and the user is admin
-            if not queryset:
+            if not board_list:
                 if not authorize(username):
-                    board, create_response = create_board(team.id, 'New Board')
-                    if create_response:
-                        return create_response
+                    board, error_response = create_board(
+                        name='New Board',
+                        team_id=team.id,
+                        team_admin=team.user_set.get(is_admin=True)
+                    )
+                    if error_response:
+                        return error_response
 
                     # return a list containing only the new board
-                    return Response([{
-                        'id': board.id, 'name': board.name
-                    }], 201)
+                    return Response([
+                        {'id': board.id, 'name': board.name}
+                    ], 201)
 
                 return Response({
                     'team_id': ErrorDetail(string='Boards not found.',
                                            code='not_found')
                 }, 404)
 
-            return Response(list(map(
-                lambda board_data: {
-                    'id': board_data['id'],
-                    'name': board_data['name']
-                },
-                BoardSerializer(queryset, many=True).data
-            )), 200)
+            return Response([
+                {'id': board.id, 'name': board.name} for board in board_list
+            ], 200)
 
-        return Response(list(map(
-            lambda board_data: {
-                'id': board_data['id'],
-                'name': board_data['name']
-            },
-            BoardSerializer(Board.objects.all(), many=True).data
-        )), 200)
+        board_list = Board.objects.all()
+        return Response([
+            {'id': board.id, 'name': board.name} for board in board_list
+        ], 200)
 
     if request.method == 'POST':
         authorization_response = authorize(username)
@@ -136,19 +144,31 @@ def boards(request):
             return authorization_response
 
         # validate team_id
-        request_team_id = request.data.get('team_id')
-        team, validation_response = validate_team_id(request_team_id)
+        team_id = request.data.get('team_id')
+        validation_response = validate_team_id(team_id)
         if validation_response:
             return validation_response
 
-        if team.id != user.team.id:
+        try:
+            team = Team.objects.prefetch_related('user_set').get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({
+                'team_id': ErrorDetail(string='Team not found.',
+                                       code='not_found')
+            }, 404)
+
+        if team.id != user.team_id:
             return not_authenticated_response
 
         board_name = request.data.get('name')
 
-        board, create_response = create_board(team.id, board_name)
-        if create_response:
-            return create_response
+        board, error_response = create_board(
+            name=board_name,
+            team_id=team.id,
+            team_admin=team.user_set.get(is_admin=True)
+        )
+        if error_response:
+            return error_response
 
         # return success response
         return Response({
@@ -175,7 +195,7 @@ def boards(request):
                                         code='not_found')
             }, 404)
 
-        if board.team.id != user.team.id:
+        if board.team_id != user.team_id:
             return not_authenticated_response
 
         board.delete()
@@ -203,7 +223,7 @@ def boards(request):
                                         code='not_found')
             }, 404)
 
-        if board.team.id != user.team.id:
+        if board.team_id != user.team_id:
             return not_authenticated_response
 
         serializer = BoardSerializer(board, data=request.data, partial=True)

@@ -27,31 +27,39 @@ def columns(request):
             return validation_response
 
         try:
-            board = Board.objects.get(id=board_id)
+            board = Board.objects.prefetch_related(
+                'column_set'
+            ).get(id=board_id)
         except Board.DoesNotExist:
             return Response({
                 'board_id': ErrorDetail(string='Board not found.',
                                         code='not_found')
             }, 404)
 
-        if board.team.id != user.team.id:
+        if board.team_id != user.team_id:
             return not_authenticated_response
 
-        board_columns = Column.objects.filter(board_id=board_id)
+        board_columns = board.column_set.all()
         if not board_columns:
-            board_columns = [
-                Column.objects.create(
-                    order=i,
-                    board_id=board_id
-                ) for i in range(0, 4)
+            new_columns = [
+                {'order': i, 'board': board_id} for i in range(0, 4)
             ]
+            column_serializer = ColumnSerializer(data=new_columns, many=True)
+            if not column_serializer.is_valid():
+                return Response(column_serializer.errors, 400)
+            column_serializer.save()
+            return Response({
+                'columns': [
+                    {'id': column['id'], 'order': column['order']}
+                    for column in column_serializer.data
+                ]
+            }, 200)
 
-        serializer = ColumnSerializer(board_columns, many=True)
         return Response({
-            'columns': list(
-                map(lambda column: {'id': column['id'], 'order': column['order']},
-                    serializer.data)
-            )
+            'columns': [
+                {'id': column.id, 'order': column.order}
+                for column in board_columns
+            ]
         }, 200)
 
     if request.method == 'PATCH':

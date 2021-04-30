@@ -36,11 +36,11 @@ class GetColumnsTests(APITestCase):
         response = self.client.get(f'{self.endpoint}{self.empty_board.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(Column.objects.count(), initial_count + 4)
         self.assertEqual(response.status_code, 200)
         columns = response.data.get('columns')
         self.assertTrue(columns)
-        self.assertTrue(columns.count, 4)
+        self.assertEqual(len(columns), 4)
+        self.assertEqual(Column.objects.count(), initial_count + 4)
 
     def test_board_id_empty(self):
         response = self.client.get(self.endpoint,
@@ -68,7 +68,8 @@ class GetColumnsTests(APITestCase):
                                    HTTP_AUTH_TOKEN=self.member['token'])
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board not found.', code='not_found')
+            'board_id': ErrorDetail(string='Board not found.',
+                                    code='not_found')
         })
 
     def test_auth_user_empty(self):

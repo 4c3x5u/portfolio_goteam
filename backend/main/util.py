@@ -44,27 +44,26 @@ def create_member(team, username_suffix=''):
                 bcrypt.gensalt()
             ).decode('utf-8')}
 
-def create_board(team_id, name):  # -> (board, response)
+
+def create_board(name, team_id, team_admin):  # -> (board, response)
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
         return None, Response(board_serializer.errors, 400)
-
     board = board_serializer.save()
-
-    team_admin = User.objects.get(team_id=team_id, is_admin=True)
 
     board.user.add(team_admin)
 
     # create four columns for the board
-    for order in range(0, 4):
-        column_serializer = ColumnSerializer(
-            data={'board': board.id, 'order': order}
-        )
-        if not column_serializer.is_valid():
-            return board, Response(
-                column_serializer.errors, 400
-            )
-        column_serializer.save()
+    column_data = [
+        {'board': board.id, 'order': order} for order in range(0, 4)
+    ]
+
+    column_serializer = ColumnSerializer(data=column_data,
+                                         many=True)
+    if not column_serializer.is_valid():
+        return board, Response(column_serializer.errors, 400)
+
+    column_serializer.save()
 
     return board, None
 
