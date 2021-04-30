@@ -65,15 +65,13 @@ const Board = ({ handleActivate }) => {
       // Update the "source" and the "destination" in the database
       await ColumnsAPI.patch(source.id, sourceTasks);
       await ColumnsAPI.patch(destination.id, destinationTasks);
-
-      // Reload the board
-      await loadBoard(activeBoard.id);
     } catch (err) {
       notify(
         'Unable to update task.',
         `${err?.message || 'Server Error'}.`,
       );
-      setIsLoading(false);
+      setIsLoading(true);
+      loadBoard();
     }
   };
 

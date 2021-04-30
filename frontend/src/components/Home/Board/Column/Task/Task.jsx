@@ -30,7 +30,13 @@ const Task = ({
   subtasks,
 }) => {
   const {
-    activeBoard, setActiveBoard, user, members, loadBoard, notify,
+    user,
+    activeBoard,
+    setActiveBoard,
+    members,
+    loadBoard,
+    setIsLoading,
+    notify,
   } = useContext(AppContext);
 
   const MENU_ID = `edit-task-${id}`;
@@ -60,8 +66,9 @@ const Task = ({
           'Unable to assign user.',
           err?.response?.data?.user || err?.message || 'Server Error.',
         );
-      })
-      .finally(loadBoard);
+        setIsLoading(true);
+        loadBoard();
+      });
   };
 
   return (

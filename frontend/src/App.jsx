@@ -34,17 +34,16 @@ const App = () => {
   );
 
   const loadBoard = () => {
-    if (
-      sessionStorage.getItem('username')
-        && sessionStorage.getItem('auth-token')
-    ) {
+    const authHeaders = getAuthHeaders();
+    if (authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']) {
       axios
         .get(
           `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
             sessionStorage.getItem('board-id') || activeBoard.id || ''
-          }`, getAuthHeaders(),
+          }`, authHeaders,
         )
         .then((res) => {
+          // Update app state one by one
           setUser(res.data.user);
           if (res.data?.team) { setTeam(res.data.team); }
           setBoards(res.data.boards);
@@ -54,6 +53,7 @@ const App = () => {
         .catch((err) => {
           setUser({ ...user, isAuthenticated: false });
 
+          // remove username and auth token if verify-token failed
           if (err?.config?.url?.includes('verify-token')) {
             sessionStorage.removeItem('username');
             sessionStorage.removeItem('auth-token');
