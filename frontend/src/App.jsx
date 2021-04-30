@@ -5,22 +5,19 @@ import {
   Route,
   Redirect,
 } from 'react-router-dom';
-import _ from 'lodash/core';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
+import axios from 'axios';
 
 import AppContext from './AppContext';
 import InitialStates from './misc/InitialStates';
-import AuthAPI from './api/AuthAPI';
-import UsersAPI from './api/UsersAPI';
-import BoardsAPI from './api/BoardsAPI';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
+import { getAuthHeaders } from './misc/util';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
-import TeamsAPI from './api/TeamsAPI';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,43 +39,33 @@ const App = () => {
         && sessionStorage.getItem('auth-token')
     ) {
       try {
+        const clientState = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
+            sessionStorage.getItem('board-id') || activeBoard.id || ''
+          }`, getAuthHeaders(),
+        );
+
         // Set the current user
-        const userResponse = await AuthAPI.verifyToken();
-        delete userResponse.data.msg;
-        setUser({ ...userResponse.data, isAuthenticated: true });
+        setUser(clientState.data.user);
 
         // Set current team (for invites) if the user is admin
-        if (userResponse.data.isAdmin) {
-          const teamResponse = await TeamsAPI.get(userResponse.data.teamId);
-          setTeam(teamResponse.data);
-        }
+        if (clientState.data?.team) { setTeam(clientState.data.team); }
 
         // Set boards lists
-        let teamBoards = [];
         try {
-          teamBoards = await BoardsAPI.get(null, userResponse.data.teamId);
+          setBoards(clientState.data.boards);
         } catch (e) {
           notify(
             'Unable to load board.',
             'Please ask your team admin to add you to a board.',
           );
         }
-        setBoards(teamBoards?.data || []);
 
         // Set the active board
-        const nestedBoard = await BoardsAPI.get(
-          sessionStorage.getItem('board-id')
-          || activeBoard.id
-          || (teamBoards?.data && teamBoards?.data[0]?.id),
-        );
-        setActiveBoard(nestedBoard.data);
+        setActiveBoard(clientState.data.activeBoard);
 
         // Set team members
-        const teamMembers = await UsersAPI.get(
-          userResponse.data.teamId,
-          nestedBoard.data.id,
-        );
-        setMembers(_.sortBy(teamMembers.data, (member) => !member.isAdmin));
+        setMembers(clientState.data.members);
       } catch (err) {
         setUser({ ...user, isAuthenticated: false });
 

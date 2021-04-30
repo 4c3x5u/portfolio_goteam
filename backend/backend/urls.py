@@ -6,6 +6,7 @@ from main.api.api_boards import boards
 from main.api.api_columns import columns
 from main.api.api_tasks import tasks
 from main.api.api_subtasks import subtasks
+from main.api.api_clientstate import client_state
 
 urlpatterns = [
     path('verify-token/', verify_token, name='verifytoken'),
@@ -17,4 +18,5 @@ urlpatterns = [
     path('columns/', columns, name='columns'),
     path('tasks/', tasks, name='tasks'),
     path('subtasks/', subtasks, name='subtasks'),
+    path('client-state/', client_state, name='clientstate')
 ]
