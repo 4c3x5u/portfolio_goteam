@@ -2,7 +2,6 @@ from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
 
-# return (board, response)
 def validate_board_id(board_id):
     if not board_id:
         return Response({

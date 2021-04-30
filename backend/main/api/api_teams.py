@@ -1,5 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import ErrorDetail
+from ..models import Team
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.val_team import validate_team_id
@@ -21,9 +23,18 @@ def teams(request):
 
     team_id = request.query_params.get('team_id')
 
-    team, validation_response = validate_team_id(team_id)
+    validation_response = validate_team_id(team_id)
     if validation_response:
         return validation_response
+
+    try:
+        team = Team.objects.get(id=team_id)
+    except Team.DoesNotExist:
+        return Response({
+            'team_id': ErrorDetail(string='Team not found.',
+                                   code='not_found')
+        }, 404)
+
     if team.id != user.team.id:
         return not_authenticated_response
 

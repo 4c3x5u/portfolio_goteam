@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import User, Board
+from ..models import User, Board, Team
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response, \
     not_authorized_response
@@ -21,14 +21,26 @@ def users(request):
 
     # not in use – maintained for demonstration purposes
     if request.method == 'GET':
-        request_team_id = request.query_params.get('team_id')
-        team, validation_response = validate_team_id(request_team_id)
+        team_id = request.query_params.get('team_id')
+        validation_response = validate_team_id(team_id)
         if validation_response:
             return validation_response
+
+        try:
+            team = Team.objects.prefetch_related(
+                'user_set',
+                'board_set'
+            ).get(id=team_id)
+        except Team.DoesNotExist:
+            return Response({
+                'team_id': ErrorDetail(string='Team not found.',
+                                       code='not_found')
+            }, 404)
+
         if team.id != auth_user.team.id:
             return not_authenticated_response
 
-        members = User.objects.filter(team_id=team.id)
+        members = team.user_set.all()
 
         if 'board_id' in request.query_params.keys():
             board_id = request.query_params.get('board_id')
@@ -37,7 +49,7 @@ def users(request):
                 return validation_response
 
             try:
-                board = Board.objects.get(id=board_id)
+                board = team.board_set.get(id=board_id)
             except Board.DoesNotExist:
                 return Response({
                     'board_id': ErrorDetail(string='Board not found.',
