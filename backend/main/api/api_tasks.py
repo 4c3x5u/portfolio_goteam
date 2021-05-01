@@ -101,8 +101,7 @@ def tasks(request):
                 'title': subtask,
                 'order': i,
                 'task': task.id
-            }
-            for i, subtask in enumerate(subtasks)
+            } for i, subtask in enumerate(subtasks)
         ] if subtasks else []
         subtask_serializer = SubtaskSerializer(data=subtasks_data, many=True)
         if not subtask_serializer.is_valid():

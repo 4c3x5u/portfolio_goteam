@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.exceptions import ErrorDetail
 from ..models import User
 from ..validation.val_auth import not_authenticated_response
 from ..util import create_board
@@ -12,16 +13,21 @@ def client_state(request):
     token = request.META.get('HTTP_AUTH_TOKEN')
     board_id = request.query_params.get('boardId')
 
-    # TODO: Handle exceptions
-    user = User.objects.prefetch_related(
-        'team',
-        'team__user_set',
-        'team__board_set',
-        'team__board_set__user',
-        'team__board_set__column_set',
-        'team__board_set__column_set__task_set',
-        'team__board_set__column_set__task_set__subtask_set'
-    ).get(username=username)
+    try:
+        user = User.objects.prefetch_related(
+            'team',
+            'team__user_set',
+            'team__board_set',
+            'team__board_set__user',
+            'team__board_set__column_set',
+            'team__board_set__column_set__task_set',
+            'team__board_set__column_set__task_set__subtask_set'
+        ).get(username=username)
+    except User.DoesNotExist:
+        return Response({
+            'username': ErrorDetail(string='User not found.',
+                                    code='not_found')
+        }, 404)
 
     # Authenticate
     valid_token = bytes(user.username, 'utf-8') + user.password
@@ -32,7 +38,7 @@ def client_state(request):
     boards = user.team.board_set.all()
     if not boards and user.is_admin:
         board, error_response = create_board(name='New Board',
-                                             team_id=user.team.id,
+                                             team_id=user.team_id,
                                              team_admin=user)
         if error_response:
             return error_response

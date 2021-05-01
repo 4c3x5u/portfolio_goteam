@@ -29,7 +29,8 @@ def users(request):
         try:
             team = Team.objects.prefetch_related(
                 'user_set',
-                'board_set'
+                'board_set',
+                'board_set__user'
             ).get(id=team_id)
         except Team.DoesNotExist:
             return Response({
@@ -56,21 +57,21 @@ def users(request):
                                             code='not_found')
                 }, 404)
 
-            board_members = User.objects.filter(board=board)
+            return Response([
+                {
+                    'username': member.username,
+                    'isActive': member in board.user.all(),
+                    'isAdmin': member.is_admin
+                } for member in members
+            ], 200)
 
-            return Response(list(map(
-                lambda member: {'username': member.username,
-                                'isActive': member in board_members,
-                                'isAdmin': member.is_admin},
-                members
-            )), 200)
-
-        return Response(list(map(
-            lambda member: {'username': member.username,
-                            'isActive': None,
-                            'isAdmin': member.is_admin},
-            members
-        )), 200)
+        return Response([
+            {
+                'username': member.username,
+                'isActive': None,
+                'isAdmin': member.is_admin
+            } for member in members
+        ], 200)
 
     if request.method == 'POST':
         authorization_response = authorize(auth_user.username)
@@ -81,7 +82,7 @@ def users(request):
         user, validation_response = validate_username(username)
         if validation_response:
             return validation_response
-        if user.team.id != auth_user.team.id:
+        if user.team_id != auth_user.team_id:
             return not_authorized_response
 
         board_id = request.data.get('board_id')
@@ -90,7 +91,7 @@ def users(request):
             return validation_response
 
         try:
-            board = Board.objects.get(id=board_id)
+            board = Board.objects.prefetch_related('user').get(id=board_id)
         except Board.DoesNotExist:
             return Response({
                 'board_id': ErrorDetail(string='Board not found.',
@@ -107,10 +108,9 @@ def users(request):
         else:
             board.user.remove(user)
 
-        return Response(
-            {'msg': f'{user.username} is removed from {board.name}.'},
-            200
-        )
+        return Response({
+            'msg': f'{user.username} is removed from {board.name}.'
+        }, 200)
 
     if request.method == 'DELETE':
         authorization_response = authorize(auth_user.username)
@@ -121,7 +121,7 @@ def users(request):
         user, validation_response = validate_username(username)
         if validation_response:
             return validation_response
-        if user.team.id != auth_user.team.id:
+        if user.team_id != auth_user.team_id:
             return not_authorized_response
 
         # this is not authorization. it checks whether the user that is up for

@@ -55,33 +55,32 @@ def boards(request):
                 if not user.is_admin:
                     return not_authorized_response
 
-            def column_mapper(column):
-                return {
-                    'id': column.id,
-                    'order': column.order,
-                    'tasks': column.task_set is not None and list(map(
-                        lambda task: {
-                            'id': task.id,
-                            'title': task.title,
-                            'description': task.description,
-                            'order': task.order,
-                            'user': task.user.username if task.user else '',
-                            'subtasks': task.subtask_set is not None and list(map(
-                                lambda subtask: {
-                                    'id': subtask.id,
-                                    'title': subtask.title,
-                                    'order': subtask.order,
-                                    'done': subtask.done
-                                },
-                                task.subtask_set.all()
-                            ))
-                        },
-                        column.task_set.all()
-                    ))
-                }
-
-            columns = list(map(column_mapper, board.column_set.all()))
-            return Response({'id': board.id, 'columns': columns}, 200)
+            return Response({
+                'id': board.id,
+                'columns': [
+                    {
+                        'id': column.id,
+                        'order': column.order,
+                        'tasks': column.task_set is not None and [
+                            {
+                                'id': task.id,
+                                'title': task.title,
+                                'description': task.description,
+                                'order': task.order,
+                                'user': task.user.username or '',
+                                'subtasks': task.subtask_set is not None and [
+                                    {
+                                        'id': subtask.id,
+                                        'title': subtask.title,
+                                        'order': subtask.order,
+                                        'done': subtask.done
+                                    } for subtask in task.subtask_set.all()
+                                ]
+                            } for task in column.task_set.all()
+                        ]
+                    } for column in board.column_set.all()
+                ]
+            }, 200)
 
         if 'team_id' in request.query_params.keys():
             team_id = request.query_params.get('team_id')

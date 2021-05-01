@@ -6,7 +6,6 @@ from ..serializers.ser_subtask import SubtaskSerializer
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.val_task import validate_task_id
-from ..validation.val_subtask import validate_subtask_id
 
 
 @api_view(['GET', 'PATCH'])
@@ -55,15 +54,31 @@ def subtasks(request):
 
     if request.method == 'PATCH':
         subtask_id = request.query_params.get('id')
-        subtask, validation_response = validate_subtask_id(subtask_id)
-        if validation_response:
-            return validation_response
+        if not subtask_id:
+            return Response({
+                'id': ErrorDetail(string='Subtask ID cannot be empty.',
+                                  code='blank')
+            }, 400)
+
+        try:
+            subtask = Subtask.objects.select_related(
+                'task',
+                'task__user',
+                'task__column__board'
+            ).get(id=subtask_id)
+        except Subtask.DoesNotExist:
+            return Response({
+                'id': ErrorDetail(string='Subtask not found.',
+                                  code='not_found')
+            })
 
         authorization_response = authorize(username)
+
+        # if the user is NOT admin and is NOT assigned to this task...
         if authorization_response and subtask.task.user != user:
             return authorization_response
 
-        if subtask.task.column.board.team.id != user.team.id:
+        if subtask.task.column.board.team_id != user.team_id:
             return not_authenticated_response
 
         if not request.data:
@@ -92,7 +107,7 @@ def subtasks(request):
                                      code='blank')
             }, 400)
 
-        serializer = SubtaskSerializer(Subtask.objects.get(id=subtask_id),
+        serializer = SubtaskSerializer(subtask,
                                        data=request.data,
                                        partial=True)
         if not serializer.is_valid():
