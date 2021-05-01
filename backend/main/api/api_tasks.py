@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Task, Subtask
+from ..models import Task, Subtask, Column
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.ser_subtask import SubtaskSerializer
 from ..validation.val_auth import \
@@ -23,23 +23,34 @@ def tasks(request):
     if request.method == 'GET':
         column_id = request.query_params.get('column_id')
 
-        column, validation_response = validate_column_id(column_id)
+        validation_response = validate_column_id(column_id)
         if validation_response:
             return validation_response
+
+        try:
+            column = Column.objects.select_related(
+                'board'
+            ).prefetch_related(
+                'task_set'
+            ).get(id=column_id)
+        except Column.DoesNotExist:
+            return None, Response({
+                'column_id': ErrorDetail(string='Column not found.',
+                                         code='not_found')
+            }, 404)
 
         if column.board.team_id != user.team.id:
             return not_authenticated_response
 
-        column_tasks = Task.objects.filter(column_id=column_id)
-        serializer = TaskSerializer(column_tasks, many=True)
         return Response({
-            'tasks': list(map(
-                lambda t: {'id': t['id'],
-                           'order': t['order'],
-                           'title': t['title'],
-                           'description': t['description']}
-                , serializer.data
-            ))
+            'tasks': [
+                {
+                    'id': t['id'],
+                    'order': t['order'],
+                    'title': t['title'],
+                    'description': t['description']
+                } for t in column.task_set.all()
+            ]
         }, 200)
 
     if request.method == 'POST':
@@ -48,18 +59,31 @@ def tasks(request):
             return authorization_response
 
         column_id = request.data.get('column')
-        column, validation_response = validate_column_id(column_id)
+        validation_response = validate_column_id(column_id)
         if validation_response:
             return validation_response
 
-        if column.board.team.id != user.team.id:
+        try:
+            column = Column.objects.select_related(
+                'board'
+            ).prefetch_related(
+                'task_set'
+            ).get(id=column_id)
+        except Column.DoesNotExist:
+            return None, Response({
+                'column_id': ErrorDetail(string='Column not found.',
+                                         code='not_found')
+            }, 404)
+
+        if column.board.team_id != user.team_id:
             return not_authenticated_response
 
-        column_tasks = Task.objects.filter(column_id=column_id)
-        for task in column_tasks:
+        for task in column.task_set.all():
             task.order += 1
-            task.save()
 
+        Task.objects.bulk_update(column.task_set.all(), ['order'])
+
+        # save task
         task_serializer = TaskSerializer(
             data={'title': request.data.get('title'),
                   'description': request.data.get('description'),
@@ -70,20 +94,21 @@ def tasks(request):
             return Response(task_serializer.errors, 400)
         task = task_serializer.save()
 
-        subtasks = request.data.get('subtasks')
-        if subtasks:
-            for i, subtask in enumerate(subtasks):
-                subtask_serializer = SubtaskSerializer(
-                    data={'title': subtask,
-                          'order': i,
-                          'task': task.id}
-                )
-                if not subtask_serializer.is_valid():
-                    task.delete()
-                    return Response({
-                        'subtask': subtask_serializer.errors
-                    }, 400)
-                subtask_serializer.save()
+        # save subtasks
+        subtasks_data = [
+            {
+                'title': subtask,
+                'order': i,
+                'task': task.id
+            } for i, subtask in enumerate(request.data.get('subtasks'))
+        ]
+        subtasks_serializer = SubtaskSerializer(data=subtasks_data, many=True)
+        if not subtasks_serializer.is_valid():
+            task.delete()
+            return Response({
+                'subtask': subtasks_serializer.errors
+            }, 400)
+        subtasks_serializer.save()
 
         return Response({
             'msg': 'Task creation successful.',

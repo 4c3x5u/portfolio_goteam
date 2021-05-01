@@ -165,12 +165,11 @@ def boards(request):
         board, error_response = create_board(
             name=board_name,
             team_id=team.id,
-            team_admin=team.user_set.get(is_admin=True)
+            team_admin=team.user_set.get(username=username)
         )
         if error_response:
             return error_response
 
-        # return success response
         return Response({
             'msg': 'Board creation successful.',
             'id': board.id,
@@ -229,8 +228,8 @@ def boards(request):
         serializer = BoardSerializer(board, data=request.data, partial=True)
         if not serializer.is_valid():
             return Response(serializer.errors, 400)
-
         serializer.save()
+
         return Response({
             'msg': 'Board updated successfuly.',
             'id': serializer.data['id'],

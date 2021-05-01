@@ -66,11 +66,23 @@ def columns(request):
         authorization_response = authorize(username)
 
         column_id = request.query_params.get('id')
-        column, validation_response = validate_column_id(column_id)
+        validation_response = validate_column_id(column_id)
         if validation_response:
             return validation_response
-        if column.board.team.id != user.team.id:
+
+        try:
+            column = Column.objects.select_related('board').get(id=column_id)
+        except Column.DoesNotExist:
+            return None, Response({
+                'column_id': ErrorDetail(string='Column not found.',
+                                         code='not_found')
+            }, 404)
+
+        if column.board.team_id != user.team_id:
             return not_authenticated_response
+
+        # retrieve tasks to avoid a call to the DB for each task
+        tasks = Task.objects.filter(column__board_id=column.board_id)
 
         for task in request.data:
             try:
@@ -81,11 +93,11 @@ def columns(request):
                                            code='blank')
                 }, 400)
 
-            existing_task = Task.objects.get(id=task_id)
+            existing_task = tasks.get(id=task_id)
 
             if authorization_response \
                     and task['user'] != user.username \
-                    and column.id != existing_task.column.id:
+                    and column.id != existing_task.column_id:
                 return authorization_response
 
             serializer = TaskSerializer(existing_task,
