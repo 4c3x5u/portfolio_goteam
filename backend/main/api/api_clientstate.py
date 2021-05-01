@@ -10,7 +10,7 @@ import bcrypt
 def client_state(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
-    board_id = request.query_params.get('board_id')
+    board_id = request.query_params.get('boardId')
 
     # TODO: Handle exceptions
     user = User.objects.prefetch_related(

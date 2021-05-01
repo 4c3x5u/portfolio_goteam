@@ -12,13 +12,14 @@ import './boardscontrolsmenuitem.sass';
 const BoardsControlsMenuItem = ({
   id, name, isActive, handleDelete, handleEdit,
 }) => {
-  const { user, loadBoard } = useContext(AppContext);
+  const { user, loadBoard, setIsLoading } = useContext(AppContext);
 
   const MENU_ID = `item-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
   const toggleActive = () => {
     sessionStorage.setItem('board-id', id);
+    setIsLoading(true);
     loadBoard();
   };
 
