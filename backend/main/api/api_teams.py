@@ -35,7 +35,7 @@ def teams(request):
                                    code='not_found')
         }, 404)
 
-    if team.id != user.team.id:
+    if team.id != user.team_id:
         return not_authenticated_response
 
     return Response({
