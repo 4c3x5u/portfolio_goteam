@@ -19,6 +19,9 @@ const Board = ({ handleActivate }) => {
   } = useContext(AppContext);
 
   const handleOnDragEnd = async (result) => {
+    if (!result?.source?.droppableId || !result?.destination?.droppableId) {
+      return;
+    }
     try {
       // Find the "source" column – the one that the task is initially in
       const source = activeBoard.columns.find((column) => (
