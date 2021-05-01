@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Subtask
+from ..models import Subtask, Task
 from ..serializers.ser_subtask import SubtaskSerializer
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
@@ -22,27 +22,35 @@ def subtasks(request):
     if request.method == 'GET':
         task_id = request.query_params.get('task_id')
 
-        task, validation_response = validate_task_id(task_id)
+        validation_response = validate_task_id(task_id)
         if validation_response:
             return validation_response
 
-        if task.column.board.team.id != user.team.id:
+        try:
+            task = Task.objects.select_related(
+                'column',
+                'column__board',
+            ).prefetch_related(
+                'subtask_set'
+            ).get(id=task_id)
+        except Task.DoesNotExist:
+            return Response({
+                'task_id': ErrorDetail(string='Task not found.',
+                                       code='not_found')
+            }, 404)
+
+        if task.column.board.team_id != user.team_id:
             return not_authenticated_response
 
-        task_subtasks = Subtask.objects.filter(task_id=task_id)
-        serializer = SubtaskSerializer(task_subtasks, many=True)
         return Response({
-            'subtasks': list(
-                map(
-                    lambda st: {
-                        'id': st['id'],
-                        'order': st['order'],
-                        'title': st['title'],
-                        'done': st['done']
-                    },
-                    serializer.data
-                )
-            )
+            'subtasks': [
+                {
+                    'id': subtask.id,
+                    'order': subtask.order,
+                    'title': subtask.title,
+                    'done': subtask.done
+                } for subtask in task.subtask_set.all()
+            ]
         }, 200)
 
     if request.method == 'PATCH':

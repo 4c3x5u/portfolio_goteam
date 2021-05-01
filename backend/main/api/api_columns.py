@@ -73,7 +73,7 @@ def columns(request):
         try:
             column = Column.objects.select_related('board').get(id=column_id)
         except Column.DoesNotExist:
-            return None, Response({
+            return Response({
                 'column_id': ErrorDetail(string='Column not found.',
                                          code='not_found')
             }, 404)

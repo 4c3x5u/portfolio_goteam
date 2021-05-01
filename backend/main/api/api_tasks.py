@@ -34,7 +34,7 @@ def tasks(request):
                 'task_set'
             ).get(id=column_id)
         except Column.DoesNotExist:
-            return None, Response({
+            return Response({
                 'column_id': ErrorDetail(string='Column not found.',
                                          code='not_found')
             }, 404)
@@ -45,11 +45,11 @@ def tasks(request):
         return Response({
             'tasks': [
                 {
-                    'id': t['id'],
-                    'order': t['order'],
-                    'title': t['title'],
-                    'description': t['description']
-                } for t in column.task_set.all()
+                    'id': task.id,
+                    'order': task.order,
+                    'title': task.title,
+                    'description': task.description
+                } for task in column.task_set.all()
             ]
         }, 200)
 
@@ -70,7 +70,7 @@ def tasks(request):
                 'task_set'
             ).get(id=column_id)
         except Column.DoesNotExist:
-            return None, Response({
+            return Response({
                 'column_id': ErrorDetail(string='Column not found.',
                                          code='not_found')
             }, 404)
@@ -95,20 +95,22 @@ def tasks(request):
         task = task_serializer.save()
 
         # save subtasks
+        subtasks = request.data.get('subtasks')
         subtasks_data = [
             {
                 'title': subtask,
                 'order': i,
                 'task': task.id
-            } for i, subtask in enumerate(request.data.get('subtasks'))
-        ]
-        subtasks_serializer = SubtaskSerializer(data=subtasks_data, many=True)
-        if not subtasks_serializer.is_valid():
+            }
+            for i, subtask in enumerate(subtasks)
+        ] if subtasks else []
+        subtask_serializer = SubtaskSerializer(data=subtasks_data, many=True)
+        if not subtask_serializer.is_valid():
             task.delete()
             return Response({
-                'subtask': subtasks_serializer.errors
+                'subtask': subtask_serializer.errors
             }, 400)
-        subtasks_serializer.save()
+        subtask_serializer.save()
 
         return Response({
             'msg': 'Task creation successful.',
@@ -121,12 +123,18 @@ def tasks(request):
             return authorization_response
 
         task_id = request.query_params.get('id')
-        task, validation_response = validate_task_id(task_id)
-
+        validation_response = validate_task_id(task_id)
         if validation_response:
             return validation_response
 
-        if task.column.board.team.id != user.team.id:
+        task = Task.objects.select_related(
+            'column',
+            'column__board'
+        ).prefetch_related(
+            'subtask_set'
+        ).get(id=task_id)
+
+        if task.column.board.team_id != user.team_id:
             return not_authenticated_response
 
         if 'title' in request.data.keys() and not request.data.get('title'):
@@ -144,35 +152,36 @@ def tasks(request):
 
         if 'column' in request.data.keys():
             column_id = request.data.get('column')
-            _, validation_response = validate_column_id(column_id)
+            validation_response = validate_column_id(column_id)
             if validation_response:
                 return validation_response
 
-        subtasks = request.data.pop('subtasks') \
-            if 'subtasks' in request.data.keys() else None
+        subtasks = request.data.pop(
+            'subtasks'
+        ) if 'subtasks' in request.data.keys() else None
 
-        task_serializer = TaskSerializer(Task.objects.get(id=task_id),
-                                         data=request.data,
-                                         partial=True)
+        # update tasks
+        task_serializer = TaskSerializer(task, data=request.data, partial=True)
         if not task_serializer.is_valid():
             return Response(task_serializer.errors, 400)
         task = task_serializer.save()
 
+        # update subtasks
         if subtasks:
-            Subtask.objects.filter(task_id=task.id).delete()
-
-            for subtask in subtasks:
-                subtask_serializer = SubtaskSerializer(
-                    data={'title': subtask['title'],
-                          'order': subtask['order'],
-                          'task': task.id,
-                          'done': subtask['done']}
-                )
-                if not subtask_serializer.is_valid():
-                    return Response({
-                        'subtasks': subtask_serializer.errors
-                    }, 400)
-                subtask_serializer.save()
+            task.subtask_set.all().delete()
+            subtasks_data = [
+                {
+                    'title': subtask['title'],
+                    'order': subtask['order'],
+                    'task': task.id,
+                    'done': subtask['done']
+                } for subtask in subtasks
+            ]
+            subtask_serializer = SubtaskSerializer(data=subtasks_data,
+                                                   many=True)
+            if not subtask_serializer.is_valid():
+                return Response({'subtasks': subtask_serializer.errors}, 400)
+            subtask_serializer.save()
 
         return Response({
             'msg': 'Task update successful.',
@@ -186,11 +195,22 @@ def tasks(request):
 
         task_id = request.query_params.get('id')
 
-        task, validation_response = validate_task_id(task_id)
+        validation_response = validate_task_id(task_id)
         if validation_response:
             return validation_response
 
-        if task.column.board.team.id != user.team.id:
+        try:
+            task = Task.objects.select_related(
+                'column',
+                'column__board',
+            ).get(id=task_id)
+        except Task.DoesNotExist:
+            return Response({
+                'task_id': ErrorDetail(string='Task not found.',
+                                       code='not_found')
+            }, 404)
+
+        if task.column.board.team_id != user.team_id:
             return not_authenticated_response
 
         task.delete()
