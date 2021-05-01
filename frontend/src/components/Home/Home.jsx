@@ -2,10 +2,8 @@
 jsx-a11y/no-static-element-interactions,
 jsx-a11y/click-events-have-key-events */
 
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 
-import AppContext from '../../AppContext';
-import Spinner from './Spinner/Spinner';
 import Header from './Header/Header';
 import Board from './Board/Board';
 import CreateBoard from './CreateBoard/CreateBoard';
@@ -23,7 +21,6 @@ import window from '../../misc/window';
 import './home.sass';
 
 const Home = () => {
-  const { isLoading } = useContext(AppContext);
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
 
@@ -110,7 +107,6 @@ const Home = () => {
       id="Home"
       onKeyDown={(e) => e.key === 'Escape' && setActiveWindow(window.NONE)}
     >
-      {isLoading && <Spinner />}
       <Header activeWindow={activeWindow} handleActivate={handleActivate} />
       <Board handleActivate={handleActivate} />
       {viewActiveWindow()}

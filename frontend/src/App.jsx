@@ -18,6 +18,7 @@ import { getAuthHeaders } from './misc/util';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
+import Spinner from './components/Home/Spinner/Spinner';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +94,7 @@ const App = () => {
         }}
       >
         <Router>
+          {isLoading && <Spinner />}
           <Switch>
             <Route exact path="/">
               {user.isAuthenticated
