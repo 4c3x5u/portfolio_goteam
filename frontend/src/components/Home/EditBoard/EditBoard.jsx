@@ -14,9 +14,7 @@ import logo from './editboard.svg';
 import './editboard.sass';
 
 const EditBoard = ({ id, name, toggleOff }) => {
-  const {
-    boards, setBoards, loadBoard, notify,
-  } = useContext(AppContext);
+  const { boards, setBoards, notify } = useContext(AppContext);
   const [newName, setNewName] = useState(name);
   const [nameError, setNameError] = useState('');
 
@@ -28,6 +26,9 @@ const EditBoard = ({ id, name, toggleOff }) => {
     if (clientNameError) {
       setNameError(clientNameError);
     } else {
+      // Keep an initial state to avoid loadBoard() on API error
+      const initialBoards = boards;
+
       // Update client state to avoid load time
       setBoards(boards.map((board) => (
         board.id === id
@@ -49,8 +50,8 @@ const EditBoard = ({ id, name, toggleOff }) => {
               `${err.message || 'Server Error'}.`,
             );
           }
-        })
-        .finally(loadBoard);
+          setBoards(initialBoards);
+        });
     }
   };
 

@@ -36,6 +36,9 @@ const EditTask = ({
     if (clientTitleError) {
       setTitleError(clientTitleError);
     } else {
+      // Keep an initial state to avoid loadBoard() on API error
+      const initialActiveBoard = activeBoard;
+
       // Update client state to avoid load time
       setActiveBoard({
         ...activeBoard,
@@ -48,7 +51,7 @@ const EditTask = ({
                 title: newTitle,
                 description: newDescription,
                 subtasks: newSubtasks.list.map((subtask, i) => ({
-                  id: -100 + i,
+                  id: -100 + i, // TEMP
                   title: subtask.title,
                   order: -100 + i,
                   done: false,
@@ -67,10 +70,13 @@ const EditTask = ({
           column: activeBoard.columns[0].id,
           subtasks: newSubtasks.list,
         })
-        .then(toggleOff)
+        .then(() => {
+          // Load board to retrieve the "actual" subtask IDs
+          loadBoard();
+          toggleOff();
+        })
         .catch((err) => {
           const serverTitleError = err?.response?.data?.title || '';
-
           if (serverTitleError) {
             setTitleError(serverTitleError);
           } else {
@@ -79,8 +85,8 @@ const EditTask = ({
               `${err?.message || 'Server Error'}.`,
             );
           }
-        })
-        .finally(loadBoard);
+          setActiveBoard(initialActiveBoard);
+        });
     }
   };
 

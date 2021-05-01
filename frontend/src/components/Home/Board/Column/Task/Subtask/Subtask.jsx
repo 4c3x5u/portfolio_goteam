@@ -12,10 +12,13 @@ const Subtask = ({
   id, title, done, assignedUser, taskId, columnId,
 }) => {
   const {
-    user, activeBoard, setActiveBoard, loadBoard, setIsLoading, notify,
+    user, activeBoard, setActiveBoard, notify,
   } = useContext(AppContext);
 
   const check = (subtaskId) => {
+    // Keep an initial state to avoid loadBoard() on API error
+    const initialActiveBoard = activeBoard;
+
     // Update client state to avoid load screen.
     setActiveBoard({
       ...activeBoard,
@@ -45,8 +48,7 @@ const Subtask = ({
           'Unable to check subtask done.',
           `${err?.message || 'Server Error'}.`,
         );
-        setIsLoading(true);
-        loadBoard();
+        setActiveBoard(initialActiveBoard);
       });
   };
 

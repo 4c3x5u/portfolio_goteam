@@ -16,12 +16,13 @@ import './deletetask.sass';
 const DeleteTask = ({
   id, title, description, subtasks, columnId, toggleOff,
 }) => {
-  const {
-    activeBoard, setActiveBoard, loadBoard, notify,
-  } = useContext(AppContext);
+  const { activeBoard, setActiveBoard, notify } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Keep an initial state to avoid loadBoard() on API error
+    const initialActiveBoard = activeBoard;
 
     // Update client state to avoid load time
     setActiveBoard({
@@ -43,8 +44,8 @@ const DeleteTask = ({
           'Unable to delete task.',
           `${err?.message || 'Server Error'}.`,
         );
-      })
-      .finally(loadBoard);
+        setActiveBoard(initialActiveBoard);
+      });
   };
 
   return (

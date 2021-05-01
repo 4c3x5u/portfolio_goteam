@@ -31,6 +31,9 @@ const CreateTask = ({ toggleOff }) => {
     if (clientTitleError) {
       setTitleError(clientTitleError);
     } else {
+      // Keep an initial state to avoid loadBoard() on API error
+      const initialActiveBoard = activeBoard;
+
       // Update client state to avoid load screen
       setActiveBoard({
         ...activeBoard,
@@ -65,10 +68,13 @@ const CreateTask = ({ toggleOff }) => {
           column: activeBoard.columns[0].id,
           subtasks: subtasks.list,
         })
-        .then(toggleOff)
+        .then(() => {
+          // Load board to retrieve the "actual" ID of the created task
+          loadBoard();
+          toggleOff();
+        })
         .catch((err) => {
           const serverTitleError = err?.response?.data?.title || '';
-
           if (serverTitleError) {
             setTitleError(serverTitleError);
           } else {
@@ -77,8 +83,8 @@ const CreateTask = ({ toggleOff }) => {
               `${err?.message || 'Server Error'}.`,
             );
           }
-        })
-        .finally(loadBoard);
+          setActiveBoard(initialActiveBoard);
+        });
     }
   };
 

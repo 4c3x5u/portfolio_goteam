@@ -13,12 +13,13 @@ import logo from './deletemember.svg';
 import './deletemember.sass';
 
 const DeleteMember = ({ username, toggleOff }) => {
-  const {
-    members, setMembers, loadBoard, notify,
-  } = useContext(AppContext);
+  const { members, setMembers, notify } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Keep an initial state to avoid loadBoard() on API error
+    const initialMembers = members;
 
     // Update client state to avoid load time
     setMembers(members.filter((member) => member.username !== username));
@@ -32,8 +33,8 @@ const DeleteMember = ({ username, toggleOff }) => {
           'Unable to delete member.',
           `${err?.message || 'Server Error'}.`,
         );
-      })
-      .finally(loadBoard);
+        setMembers(initialMembers);
+      });
   };
 
   return (
