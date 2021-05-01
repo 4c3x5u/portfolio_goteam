@@ -34,13 +34,13 @@ const App = () => {
     </>,
   );
 
-  const loadBoard = () => {
+  const loadBoard = (boardId) => {
     const authHeaders = getAuthHeaders();
     if (authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']) {
       axios
         .get(
           `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
-            sessionStorage.getItem('board-id') || activeBoard.id || ''
+            boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
           }`, authHeaders,
         )
         .then((res) => {

@@ -24,14 +24,16 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
     const initialBoards = boards;
 
     // Update client state to avoid load time
-    setBoards(boards.filter((board) => board.id !== id));
+    const newBoards = boards.filter((board) => board.id !== id);
+    setBoards(newBoards);
 
     // Delete board in database
     BoardsAPI
       .delete(id)
       .then(() => {
         toggleOff();
-        return (activeBoard.id === id && loadBoard());
+        sessionStorage.removeItem('board-id');
+        return (activeBoard.id === id && loadBoard(newBoards[0].id));
       })
       .catch((err) => {
         notify(
