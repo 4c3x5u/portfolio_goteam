@@ -42,12 +42,12 @@ const Register = () => {
     ) {
       setErrors(clientErrors);
     } else {
+      setIsLoading(true);
       AuthAPI
         .register(username, password, passwordConfirmation, inviteCode)
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
           sessionStorage.setItem('auth-token', res.data.token);
-          setIsLoading(true);
           loadBoard();
         })
         .catch((err) => {
@@ -73,6 +73,8 @@ const Register = () => {
               `${err.message || 'Server Error'}.`,
             );
           }
+
+          setIsLoading(false);
         });
     }
   };

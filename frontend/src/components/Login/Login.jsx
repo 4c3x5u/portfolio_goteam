@@ -27,12 +27,13 @@ const Login = () => {
     if (clientErrors.username || clientErrors.password) {
       setErrors(clientErrors);
     } else {
+      setIsLoading(true);
+
       AuthAPI
         .login(username, password)
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
           sessionStorage.setItem('auth-token', res.data.token);
-          setIsLoading(true);
           loadBoard();
         })
         .catch((err) => {
@@ -49,6 +50,8 @@ const Login = () => {
               `${err?.message || 'Server Error'}.`,
             );
           }
+
+          setIsLoading(false);
         });
     }
   };
