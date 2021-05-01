@@ -15,7 +15,7 @@ import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
   const {
-    boards, setBoards, user, loadBoard, setIsLoading, notify,
+    boards, setBoards, user, loadBoard, notify,
   } = useContext(AppContext);
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
@@ -28,13 +28,20 @@ const CreateBoard = ({ toggleOff }) => {
     if (clientNameError) {
       setNameError(clientNameError);
     } else {
+      // Keep an initial state to avoid loadBoard() on API error
+      const initialBoards = boards;
+
       // Update client state to avoid load time
       setBoards([...boards, { id: Number.MAX_SAFE_INTEGER, name }]);
 
       // Create board in database
       BoardsAPI
         .post({ name, team_id: user.teamId })
-        .then(() => { setIsLoading(true); toggleOff(); loadBoard(); })
+        .then(() => {
+          // Load board to retrieve the "actual" ID of the created board
+          loadBoard();
+          toggleOff();
+        })
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
           if (serverNameError) {
@@ -45,6 +52,7 @@ const CreateBoard = ({ toggleOff }) => {
               `${err.message || 'Server Error'}.`,
             );
           }
+          setBoards(initialBoards);
         });
     }
   };

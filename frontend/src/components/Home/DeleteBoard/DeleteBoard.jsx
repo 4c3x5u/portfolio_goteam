@@ -14,11 +14,14 @@ import './deleteboard.sass';
 
 const DeleteBoard = ({ id, name, toggleOff }) => {
   const {
-    activeBoard, boards, setBoards, loadBoard, notify, setIsLoading,
+    activeBoard, boards, setBoards, loadBoard, notify,
   } = useContext(AppContext);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Keep an initial state to avoid loadBoard() on API error
+    const initialBoards = boards;
 
     // Update client state to avoid load time
     setBoards(boards.filter((board) => board.id !== id));
@@ -28,17 +31,14 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
       .delete(id)
       .then(() => {
         toggleOff();
-        if (activeBoard.id === id) {
-          setIsLoading(true);
-          loadBoard();
-        }
+        return (activeBoard.id === id && loadBoard());
       })
       .catch((err) => {
         notify(
           'Unable to delete board.',
           `${err.message || 'Server Error'}.`,
         );
-        loadBoard();
+        setBoards(initialBoards);
       });
   };
 

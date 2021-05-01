@@ -30,19 +30,16 @@ const Task = ({
   subtasks,
 }) => {
   const {
-    user,
-    activeBoard,
-    setActiveBoard,
-    members,
-    loadBoard,
-    setIsLoading,
-    notify,
+    user, activeBoard, setActiveBoard, members, notify,
   } = useContext(AppContext);
 
   const MENU_ID = `edit-task-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
   const assignMember = (username) => {
+    // Keep an initial state to avoid loadBoard() on API error
+    const initialActiveBoard = activeBoard;
+
     // Update client state to avoid load time
     setActiveBoard({
       ...activeBoard,
@@ -66,8 +63,7 @@ const Task = ({
           'Unable to assign user.',
           err?.response?.data?.user || err?.message || 'Server Error.',
         );
-        setIsLoading(true);
-        loadBoard();
+        setActiveBoard(initialActiveBoard);
       });
   };
 
