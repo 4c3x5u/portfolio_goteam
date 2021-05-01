@@ -14,7 +14,7 @@ import './deleteboard.sass';
 
 const DeleteBoard = ({ id, name, toggleOff }) => {
   const {
-    boards, setBoards, loadBoard, notify,
+    activeBoard, boards, setBoards, loadBoard, notify, setIsLoading,
   } = useContext(AppContext);
 
   const handleSubmit = (e) => {
@@ -26,14 +26,20 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
     // Delete board in database
     BoardsAPI
       .delete(id)
-      .then(toggleOff)
-      .catch((err) => (
+      .then(() => {
+        toggleOff();
+        if (activeBoard.id === id) {
+          setIsLoading(true);
+          loadBoard();
+        }
+      })
+      .catch((err) => {
         notify(
           'Unable to delete board.',
           `${err.message || 'Server Error'}.`,
-        )
-      ))
-      .finally(loadBoard);
+        );
+        loadBoard();
+      });
   };
 
   return (

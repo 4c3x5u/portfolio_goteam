@@ -15,7 +15,7 @@ import './createboard.sass';
 
 const CreateBoard = ({ toggleOff }) => {
   const {
-    boards, setBoards, user, loadBoard, notify,
+    boards, setBoards, user, loadBoard, setIsLoading, notify,
   } = useContext(AppContext);
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState('');
@@ -34,7 +34,7 @@ const CreateBoard = ({ toggleOff }) => {
       // Create board in database
       BoardsAPI
         .post({ name, team_id: user.teamId })
-        .then(toggleOff)
+        .then(() => { setIsLoading(true); toggleOff(); loadBoard(); })
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
           if (serverNameError) {
@@ -45,8 +45,7 @@ const CreateBoard = ({ toggleOff }) => {
               `${err.message || 'Server Error'}.`,
             );
           }
-        })
-        .finally(loadBoard);
+        });
     }
   };
 
