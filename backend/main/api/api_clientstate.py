@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from ..models import User
 from ..validation.val_auth import not_authenticated_response
+from ..util import create_board
 import bcrypt
 
 
@@ -28,14 +29,29 @@ def client_state(request):
     if not match:
         return not_authenticated_response
 
+    boards = user.team.board_set.all()
+    if not boards and user.is_admin:
+        board, error_response = create_board(name='New Board',
+                                             team_id=user.team.id,
+                                             team_admin=user)
+        if error_response:
+            return error_response
+
+        # return a list containing only the new board
+        boards = [board]
+
     if board_id:
         board = user.team.board_set.get(id=board_id)
     else:
         board = user.team.board_set.all().first()
 
+    if board.team_id != user.team_id:
+        return not_authenticated_response
+
     team_members = user.team.user_set.all()
     board_members = board.user.all()
 
+    print('RETURNING RESPONSE 200')
     return Response({
         'user': {
             'username': user.username,
@@ -48,8 +64,7 @@ def client_state(request):
             'inviteCode': user.team.invite_code
         },
         'boards': [
-            {'id': board.id, 'name': board.name}
-            for board in user.team.board_set.all()
+            {'id': board.id, 'name': board.name} for board in boards
         ],
         'activeBoard': {
             'id': board.id,
