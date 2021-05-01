@@ -130,11 +130,13 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'subtask': {'title': [ErrorDetail(
-                string='Subtask titles cannot be longer than 50 '
-                       'characters.',
-                code='max_length'
-            )]}
+            'subtask': [
+                {'title': [
+                    ErrorDetail(string='Subtask titles cannot be longer than '
+                                       '50 characters.',
+                                code='max_length')
+                ]}
+            ]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 

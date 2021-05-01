@@ -17,5 +17,10 @@ class TaskSerializer(serializers.ModelSerializer):
                     'blank': 'Title cannot be empty.',
                     'max_length': 'Title cannot be longer than 50 characters.'
                 }
+            },
+            'column': {
+                'error_messages': {
+                    'does_not_exist': 'Task column does not exist.'
+                }
             }
         }

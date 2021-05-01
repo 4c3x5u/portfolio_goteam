@@ -117,10 +117,10 @@ class PatchTaskTests(APITestCase):
                                      {'column': '123123'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Column not found.',
-                                     code='not_found')
+            'column': [ErrorDetail(string='Task column does not exist.',
+                                   code='does_not_exist')]
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)

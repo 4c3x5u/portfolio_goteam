@@ -11,10 +11,13 @@ from ..models import User
 def register(request):
     invite_code = request.query_params.get('invite_code')
 
-    if invite_code:
-        request.data['invite_code'] = invite_code
-
-    serializer = UserSerializer(data=request.data)
+    serializer = UserSerializer(data={
+        'username': request.data.get('username'),
+        'password': request.data.get('password'),
+        'password_confirmation': request.data.get('password_confirmation'),
+        'invite_code': invite_code
+    } if invite_code else request.data)
+    
     if not serializer.is_valid():
         return Response(serializer.errors, 400)
     user = serializer.save()

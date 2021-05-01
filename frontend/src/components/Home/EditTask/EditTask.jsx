@@ -51,10 +51,10 @@ const EditTask = ({
                 title: newTitle,
                 description: newDescription,
                 subtasks: newSubtasks.list.map((subtask, i) => ({
-                  id: -100 + i, // TEMP
+                  id: subtask.id || -100 + i,
                   title: subtask.title,
-                  order: -100 + i,
-                  done: false,
+                  order: subtask.order || -100 + i,
+                  done: !!subtask.done,
                 })),
               } : task
             )),
