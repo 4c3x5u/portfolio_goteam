@@ -57,7 +57,6 @@ def client_state(request):
     team_members = user.team.user_set.all()
     board_members = board.user.all()
 
-    print('RETURNING RESPONSE 200')
     return Response({
         'user': {
             'username': user.username,

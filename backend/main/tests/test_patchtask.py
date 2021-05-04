@@ -131,7 +131,6 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
-        print(f'RESPONSEDATA: {response.data}')
         self.assertEqual(response.data, {
             'user': [ErrorDetail(string='User does not exist.',
                                  code='does_not_exist')]
