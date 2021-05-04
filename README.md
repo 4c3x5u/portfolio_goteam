@@ -2,14 +2,9 @@
 ![GoTeam! App UI Screenshot](https://i.ibb.co/nCty58P/Screenshot-2021-04-29-at-19-20-34.png)
 
 ## The Purpose
-The purpose of my having developed this application is to demonstrate **my competency in creating Python Web APIs using Django-REST**,
-as well as **the exploration of some React libraries** that I haven't previously used, such as *react-beautiful-dnd* for drag and drop
-controls, *toastify* for displaying server-side errors to the user, and several others.
+The purpose of my having developed this application is to demonstrate **my competency in creating Python Web APIs using Django-REST**,as well as **the exploration of some React libraries** that I haven't previously used, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
 
-> Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to 
-time restrictions imposed by not being actively employed and to custom logic being required in almost every piece that 
-makes up the app. The chances are, by the time you're reading this, I have already started working on refactoring the app 
-to move over to class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
+> Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to time restrictions imposed by not being actively employed and to custom logic being required in almost every piece that makes up the app. The chances are, by the time you're reading this, I have already started working on refactoring the app to move over to class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
 
 ## Running the App
 ### Requirements
@@ -18,13 +13,10 @@ to move over to class-based views by migrating the custom logic into new seriali
 4. [Node.js](https://nodejs.org/en/)
 5. [Yarn](https://yarnpkg.com/getting-started/install) or [NPM](https://www.npmjs.com/get-npm)
 6. [PostgreSQL 13](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
-7. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
-on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment
-variables within them. For a list of required environment variables, please see the *.env-sample* file in each folder.
+7. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment variables within them. For a list of required environment variables, please see the *.env-sample* file in each folder.
 
 ### The Backend
-> I prefer using [pipenv](https://pypi.org/project/pipenv/) for virtual environments and a *Pipfile* for dependencies.
-However, I have included a *requirements.txt* file just so you can use the instructions below to quickly run the app.
+> I prefer using [pipenv](https://pypi.org/project/pipenv/) for virtual environments and a *Pipfile* for dependencies. However, I have included a *requirements.txt* file inside the *backend* folder, so you can just use the instructions below to simply and quickly run the app.
 
 1. Inside a terminal, navigate into the backend folder. 
     - `cd backend`
@@ -47,9 +39,7 @@ However, I have included a *requirements.txt* file just so you can use the instr
 4. Run the app.
     - `yarn start` or `npm start`
     
-That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be
-running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
+That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
 
 ## Running the Tests
-There are 200+ tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the
-*backend* directory while the virtual environment is active.
+There are 200+ tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the *backend* directory while the virtual environment is active.
