@@ -46,7 +46,7 @@ However, I have included a *requirements.txt* file just so you can use the instr
 3. Install dependencies.
     - `yarn install` or `npm install`
 4. Run the app.
-    - `yarn start` or `npm run start`
+    - `yarn start` or `npm start`
     
 That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be
 running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
