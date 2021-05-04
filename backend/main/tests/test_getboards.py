@@ -55,7 +55,6 @@ class GetBoardsTests(APITestCase):
         response = self.client.get(self.endpoint + str(team.id),
                                    HTTP_AUTH_USER=admin['username'],
                                    HTTP_AUTH_TOKEN=admin['token'])
-        print(response.data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0].get('name'), 'New Board')

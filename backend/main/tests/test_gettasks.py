@@ -36,7 +36,6 @@ class GetTasksTests(APITestCase):
         response = self.client.get(f'{self.endpoint}{self.column.id}',
                                    HTTP_AUTH_USER=self.member['username'],
                                    HTTP_AUTH_TOKEN=self.member['token'])
-        print(f'§response: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('tasks'), self.tasks)
 
