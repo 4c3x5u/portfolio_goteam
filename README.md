@@ -1,15 +1,15 @@
 # GoTeam! – Kanban Boards
 ![GoTeam! App UI Screenshot](https://i.ibb.co/nCty58P/Screenshot-2021-04-29-at-19-20-34.png)
 
-## Aim and Purpose
-I have developed this application in an effort to demonstrate my competency in creating Python Web APIs using Django-REST.
+## The Purpose
+The purpose of my having developed this application is to demonstrate **my competency in creating Python Web APIs using Django-REST**,
+as well as **the exploration of some React libraries** that I haven't previously used, such as *react-beautiful-dnd* for drag and drop
+controls, *toastify* for displaying server-side errors to the user, and several others.
 
-Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to 
+> Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to 
 time restrictions imposed by not being actively employed and to custom logic being required in almost every piece that 
-makes up the app.
-
-The chances are, by the time you're reading this, I have already started working on refactoring the app to move over to 
-class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
+makes up the app. The chances are, by the time you're reading this, I have already started working on refactoring the app 
+to move over to class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
 
 ## Running the App
 ### Requirements
