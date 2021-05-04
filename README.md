@@ -49,7 +49,7 @@ However, I have included a *requirements.txt* file just so you can use the instr
     - `yarn start` or `npm run start`
     
 That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be
-running at *localhost:3000*, and the backend app at *localhost:8000*.
+running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
 
 ## Running the Tests
 There are 212 tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the
