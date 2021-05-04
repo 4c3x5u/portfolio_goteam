@@ -29,7 +29,7 @@ However, I have included a *requirements.txt* file just so you can use the instr
 1. Inside a terminal, navigate into the backend folder. 
     - `cd backend`
 2. Create a new virtual environment. 
-    - `python -m venv env` on Windows, or `python3 -m venv env` on Mac.
+    - `python3 -m venv env` on Mac, or `python -m venv env` on Windows.
 3. Activate the virtual environment.
     - `source env/bin/activate`
 4. Install dependencies from the requirements file.
