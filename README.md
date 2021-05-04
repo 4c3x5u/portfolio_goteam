@@ -52,5 +52,5 @@ That's it! If all your environment variables checks out and you have followed th
 running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
 
 ## Running the Tests
-There are 212 tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the
+There are 200+ tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the
 *backend* directory while the virtual environment is active.
