@@ -13,10 +13,12 @@ class-based views by migrating the custom logic into new serializers that inheri
 
 ## Running the App
 ### Requirements
-1. [Python](https://www.python.org/downloads/release/python-390/), as well as *pip* which comes with it.
-2. [Node](https://nodejs.org/en/), as well as *npm* which comes with it.
-3. [PostgreSQL](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
-4. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
+1. [Python 3.5+](https://www.python.org/downloads/release/python-390/)
+2. [PIP](https://pypi.org/project/pip/) (Comes with Python.)
+3. [Node](https://nodejs.org/en/), 
+4. [NPM](https://www.npmjs.com/get-npm) (Comes with Node.)
+5. [PostgreSQL](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
+6. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
 on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment
 variables within them. For a list of required environment variables, please see the *.env-sample* file in each folder.
 
@@ -47,4 +49,4 @@ However, I have included a *requirements.txt* file just so you can use the instr
     - `yarn start`, or `npm run start`
     
 That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be
-running at *localhost:3000*, and the backend app at *localhost:8000*. 
+running at *localhost:3000*, and the backend app at *localhost:8000*.
