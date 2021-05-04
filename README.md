@@ -16,7 +16,7 @@ to move over to class-based views by migrating the custom logic into new seriali
 1. [Python 3.5+](https://www.python.org/downloads/release/python-390/)
 2. [PIP](https://pypi.org/project/pip/) – comes with Python.
 3. [Node.js](https://nodejs.org/en/)
-4. [NPM](https://www.npmjs.com/get-npm) – comes with Node.
+4. [NPM](https://www.npmjs.com/get-npm) – comes with Node, or [Yarn](https://yarnpkg.com/getting-started/install)
 5. [PostgreSQL 13](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
 6. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
 on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment
