@@ -4,6 +4,8 @@
 ## The Purpose
 The purpose of my having developed this application is to demonstrate **my competency in creating Python Web APIs using Django-REST**,as well as **the exploration of some React libraries** that I haven't previously used, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
 
+The result is a Django-REST/React.js app that simulates a kanban boards experience for small teams by creating a team for the user upon registration, and then allowing them to invite other users to their team by sharing an invite link with them, which the other users click on and register. After this process, the original user (a.k.a. admin) controls what boards the invited users (a.k.a. members) can access, and what task they move across the board and mark as done therein.
+
 > Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to time restrictions imposed by not being actively employed and to custom logic being required in almost every piece that makes up the app. The chances are, by the time you're reading this, I have already started working on refactoring the app to move over to class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
 
 ## Running the App
