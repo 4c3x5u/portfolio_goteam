@@ -44,9 +44,13 @@ However, I have included a *requirements.txt* file just so you can use the instr
 2. Navigate to the *frontend* folder.
     - `cd frontend` from the root, or `cd ../frontend` from the *backend* folder
 3. Install dependencies.
-    - `yarn install`, or `npm install`
+    - `yarn install` or `npm install`
 4. Run the app.
-    - `yarn start`, or `npm run start`
+    - `yarn start` or `npm run start`
     
 That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be
 running at *localhost:3000*, and the backend app at *localhost:8000*.
+
+## Running the Tests
+There are 212 tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the
+*backend* directory while the virtual environment is active.
