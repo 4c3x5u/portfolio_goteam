@@ -14,11 +14,11 @@ to move over to class-based views by migrating the custom logic into new seriali
 ## Running the App
 ### Requirements
 1. [Python 3.5+](https://www.python.org/downloads/release/python-390/)
-2. [PIP](https://pypi.org/project/pip/) – comes with Python.
-3. [Node.js](https://nodejs.org/en/)
-4. [NPM](https://www.npmjs.com/get-npm) – comes with Node, or [Yarn](https://yarnpkg.com/getting-started/install)
-5. [PostgreSQL 13](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
-6. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
+2. [PIP](https://pypi.org/project/pip/)
+4. [Node.js](https://nodejs.org/en/)
+5. [Yarn](https://yarnpkg.com/getting-started/install) or [NPM](https://www.npmjs.com/get-npm)
+6. [PostgreSQL 13](https://www.postgresql.org/) – It must be running prior to following the *backend* instructions below.
+7. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed
 on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment
 variables within them. For a list of required environment variables, please see the *.env-sample* file in each folder.
 
@@ -38,7 +38,6 @@ However, I have included a *requirements.txt* file just so you can use the instr
     - `python manage.py runserver`
     
 ### The Frontend
-> I prefer to use [yarn](https://yarnpkg.com) as my JavaScript package manager, but you can use npm for convenience sake.
 1. Keep the backend running, and create a new tab inside your terminal.
     - Usually **[CMD + T]** on Mac, or **[CTRL + T]** on Windows.
 2. Navigate to the *frontend* folder.
