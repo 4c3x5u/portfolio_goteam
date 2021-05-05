@@ -37,12 +37,11 @@ const App = () => {
   const loadBoard = (boardId) => {
     const authHeaders = getAuthHeaders();
     if (authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']) {
+      const uri = `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
+        boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
+      }`;
       axios
-        .get(
-          `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
-            boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
-          }`, authHeaders,
-        )
+        .get(uri, authHeaders)
         .then((res) => {
           // Update app state one by one
           setUser(res.data.user);
@@ -62,9 +61,22 @@ const App = () => {
             return;
           }
 
+          let errMsg;
+
+          // eslint-disable-next-line camelcase
+          if (err?.response.data?.board) {
+            notify(
+              'Inactive Credentials',
+              err?.response.data?.board,
+            );
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('auth-token');
+            return;
+          }
+
           notify(
             'Unable to load board.',
-            `${err?.message || 'Server Error'}.`,
+            `${errMsg || err?.message || 'Server Error'}.`,
           );
         })
         .finally(() => setIsLoading(false));

@@ -1,8 +1,9 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import User
-from ..validation.val_auth import not_authenticated_response
+from ..models import User, Board
+from ..validation.val_auth import not_authenticated_response, \
+    not_authorized_response
 from ..util import create_board
 import bcrypt
 
@@ -16,8 +17,8 @@ def client_state(request):
     try:
         user = User.objects.prefetch_related(
             'team',
+            'board_set',
             'team__user_set',
-            'team__board_set',
             'team__board_set__user',
             'team__board_set__column_set',
             'team__board_set__column_set__task_set',
@@ -35,7 +36,8 @@ def client_state(request):
     if not match:
         return not_authenticated_response
 
-    boards = user.team.board_set.all()
+    boards = user.board_set.all()
+
     if not boards and user.is_admin:
         board, error_response = create_board(name='New Board',
                                              team_id=user.team_id,
@@ -47,9 +49,21 @@ def client_state(request):
         boards = [board]
 
     if board_id:
-        board = user.team.board_set.get(id=board_id)
+        try:
+            board = user.board_set.get(id=board_id)
+        except Board.DoesNotExist:
+            return not_authorized_response
     else:
-        board = user.team.board_set.all().first()
+        board = user.board_set.all().first()
+
+    if not board:
+        return Response({
+            'board': ErrorDetail(
+                string='Please ask your team admin to add you to a board '
+                       'and try again.',
+                code='inactive'
+            )
+        }, 400)
 
     if board.team_id != user.team_id:
         return not_authenticated_response
