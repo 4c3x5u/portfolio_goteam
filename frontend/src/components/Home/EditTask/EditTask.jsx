@@ -67,7 +67,7 @@ const EditTask = ({
         .patch(id, {
           title: newTitle,
           description: newDescription,
-          column: activeBoard.columns[0].id,
+          column: columnId,
           subtasks: newSubtasks.list,
         })
         .then(() => {
