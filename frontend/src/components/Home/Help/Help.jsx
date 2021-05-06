@@ -18,35 +18,36 @@ const Help = ({ toggleOff }) => (
 
       <h1>Summary</h1>
       <p>
-        In both the control menus and the columns, you can click the
+        In both the control menus and the inbox column, you can click on the
         plus icon to add a new item.
         <br />
-        Also, right click on any item to view additional controls for it.
-        Finally, you can toggle this modal off
+        You can also right click on any item to view additional controls for it.
+        However, unless you are an admin,
         <br />
-        by clicking anywhere outside its body.
+        you will be prohibited from accessing all CRUD controls except checking
+        subtasks and dragging tasks.
       </p>
 
       <h1>Team Controls</h1>
       <ol>
         <li>
           Click the TEAM button located on the control bar to toggle the
-          Team controls menu.
+          team controls menu.
         </li>
         <li>
-          The team members that are included in the currently displayed
-          board and therefore can see
+          The team members that are added to the current board and therefore
+          can view all its tasks will
           <br />
-          and interact with its items will have a yellow tick on both
-          sides of their name.
+          have a yellow arrow to the left of their name, and the team admin
+          will have an admin icon.
         </li>
         <li>
-          Click a member to include or exclude them from the current
-          board.
+          Admins can click on a member to include or exclude them from
+          the current board.
         </li>
         <li>
-          You can click the plus icon at the bottom of the menu to invite
-          new members to your team.
+          Admins can view and click on the plus icon at the bottom of the menu
+          to invite new members to their team.
         </li>
       </ol>
 
@@ -57,12 +58,11 @@ const Help = ({ toggleOff }) => (
           the Boards controls menu.
         </li>
         <li>
-          The currently displayed board will have arrows pointing to its
-          name on both of its name.
+          The currently board will have a yellow arrow to the left of its name.
         </li>
         <li>Click a board to load it on page.</li>
         <li>
-          You can click the plus icon at the bottom of the list to create
+          Admins can click the plus icon at the bottom of the list to create
           a new board.
         </li>
       </ol>
@@ -70,20 +70,18 @@ const Help = ({ toggleOff }) => (
       <h1>Task Controls</h1>
       <ol>
         <li>
-          Click the plus icon inside the INBOX column to create a new
-          task.
-        </li>
-        <li>
-          Give the task a name. You can optionally give it a description
-          and/or associated subtasks.
+          Admins can view and click on the plus icon inside the INBOX column to
+          create a new task.
         </li>
         <li>
           Drag and drop tasks from one column to another in order to move
-          them around.
+          them around. Members
+          <br />
+          can only move the the tasks that are assigned to them.
         </li>
         <li>
-          Right click tasks to edit or delete it, or assign a teammate
-          to it.
+          Admins can right click on tasks to edit or delete them, or to assign
+          them to a team member.
         </li>
       </ol>
       <Button
