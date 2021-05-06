@@ -2,7 +2,7 @@
 ![GoTeam! App UI Screenshot](https://i.ibb.co/nCty58P/Screenshot-2021-04-29-at-19-20-34.png)
 
 ## The Purpose
-The purpose of this application is to demonstrate **my skills and knowledge in creating Python web APIs using Django-REST**,as well as **the exploration of some React libraries that I haven't previously used**, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
+The purpose of this application is to demonstrate **my skills and knowledge in creating Python web APIs using Django-REST**, as well as **the exploration of some React libraries that I haven't previously used**, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
 
 The result is a Django-REST/React.js app that simulates a kanban boards experience for small teams by creating a team for the user upon registration, and then allowing them to invite other users to their team by sharing an invite link with them, which the other users click on and register. After this process, the original user (a.k.a. admin) controls what boards the invited users (a.k.a. members) can access, and what task they can move across the board and mark its subtasks done therein.
 
@@ -42,7 +42,7 @@ I am happy with the extent to which this app serves to demonstrate my Django and
 4. Run the app.
     - `yarn start` or `npm start`
     
-That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
+That's it! If all your environment variables check out and you have followed the instructions, the frontend app must now be running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
 
 ## Running the Tests
 There are 200+ tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the *backend* directory while the virtual environment is active.
