@@ -2,11 +2,12 @@
 ![GoTeam! App UI Screenshot](https://i.ibb.co/nCty58P/Screenshot-2021-04-29-at-19-20-34.png)
 
 ## The Purpose
-The purpose of my having developed this application is to demonstrate **my competency in creating Python Web APIs using Django-REST**,as well as **the exploration of some React libraries** that I haven't previously used, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
+The purpose of this application is to demonstrate **my skills and knowledge in creating Python web APIs using Django-REST**, as well as **the exploration of some React libraries that I haven't previously used**, such as *react-beautiful-dnd* for drag and drop controls, *toastify* for displaying server-side errors to the user, and several others.
 
-The result is a Django-REST/React.js app that simulates a kanban boards experience for small teams by creating a team for the user upon registration, and then allowing them to invite other users to their team by sharing an invite link with them, which the other users click on and register. After this process, the original user (a.k.a. admin) controls what boards the invited users (a.k.a. members) can access, and what task they can move across the board and mark as done therein.
+The result is a Django-REST/React.js app that simulates a kanban boards experience for small teams by creating a team for the user upon registration, and then allowing them to invite other users to their team by sharing an invite link with them, which the other users click on and register. After this process, the original user (a.k.a. admin) controls what boards the invited users (a.k.a. members) can access, and what task they can move across the board and mark its subtasks done therein.
 
-> Please note that I am aware I have gone about things the less idiomatic way by using function-based views. This is due to time restrictions imposed by not being actively employed and to custom logic being required in almost every piece that makes up the app. The chances are, by the time you're reading this, I have already started working on refactoring the app to move over to class-based views by migrating the custom logic into new serializers that inherit the pre-existing ones.
+## The State of the App
+I am happy with the extent to which this app serves to demonstrate my Django and React knowledge, as well as my full-stack web application development capablities. However, there are some features that I think could be implemented, which would make the app serve this purpose to an even greater degree. Please visit the [issues](https://github.com/alicandev/portfolio_goteam/issues) section to see what more I plan on doing with this app.
 
 ## Running the App
 ### Requirements
@@ -41,7 +42,7 @@ The result is a Django-REST/React.js app that simulates a kanban boards experien
 4. Run the app.
     - `yarn start` or `npm start`
     
-That's it! If all your environment variables checks out and you have followed the instructions, the frontend app must now be running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
+That's it! If all your environment variables check out and you have followed the instructions, the frontend app must now be running at *http://localhost:3000*, and the backend app at *http://localhost:8000*.
 
 ## Running the Tests
 There are 200+ tests inside the backend project, which you can run by executing `python manage.py test main.tests` from the *backend* directory while the virtual environment is active.
