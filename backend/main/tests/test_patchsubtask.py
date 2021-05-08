@@ -174,13 +174,13 @@ class UpdateSubtaskTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, not_authorized_response.data)
 
     def test_unauthorized(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
