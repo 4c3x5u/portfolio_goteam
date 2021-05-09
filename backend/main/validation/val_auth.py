@@ -49,7 +49,7 @@ def authorize(username):
 
 
 authentication_error = CustomAPIException('auth',
-                                        'Authentication failure.',
+                                          'Authentication failure.',
                                           status.HTTP_403_FORBIDDEN)
 
 
@@ -71,11 +71,9 @@ def authenticate_custom(username, token):
     return user, None
 
 
-authorization_error = CustomAPIException(
-    'auth',
-    'Authorization failure.',
-    status.HTTP_401_UNAUTHORIZED
-)
+authorization_error = CustomAPIException('auth',
+                                         'Authorization failure.',
+                                         status.HTTP_401_UNAUTHORIZED)
 
 
 # TODO: rename as authorize once you moved on to the customvalidation approach

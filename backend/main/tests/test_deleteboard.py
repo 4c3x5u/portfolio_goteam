@@ -21,7 +21,6 @@ class DeleteBoardTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}{self.board.id}',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
-        print(f'SUCCESS: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Board deleted successfully.',

@@ -10,14 +10,14 @@ class BoardSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'name': {
                 'error_messages': {
-                    'blank': 'Name cannot be blank.',
-                    'null': 'Name cannot be null.'
+                    'blank': 'Board name cannot be blank.',
+                    'null': 'Board name cannot be null.'
                 }
             },
             'team': {
                 'error_messages': {
-                    'blank': 'Team cannot be blank.',
-                    'null': 'Team cannot be null.',
+                    'blank': 'Board team cannot be blank.',
+                    'null': 'Board team cannot be null.',
                     'does_not_exist': 'Team does not exist.'
                 }
             }
