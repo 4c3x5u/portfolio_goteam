@@ -22,18 +22,9 @@ class Register(APIView):
 
         if not serializer.is_valid():
             return Response(serializer.errors, 400)
-        user = serializer.save()
+        register_res = serializer.save()
 
-        return Response({
-            'msg': 'Registration successful.',
-            'username': user.username,
-            'token': bcrypt.hashpw(
-                bytes(user.username, 'utf-8') + user.password,
-                bcrypt.gensalt()
-            ).decode('utf-8'),
-            'teamId': user.team_id,
-            'isAdmin': user.is_admin
-        }, 201)
+        return Response(register_res, 201)
 
 
 @api_view(['POST'])
