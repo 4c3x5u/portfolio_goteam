@@ -1,81 +1,29 @@
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ErrorDetail
-import bcrypt
-
-from ..serializers.ser_user import UserSerializer, RegisterSerializer
-from ..models import User
+from ..serializers.ser_auth import RegisterSerializer, LoginSerializer
+import status
 
 
 class Register(APIView):
     @staticmethod
     def post(request):
         invite_code = request.query_params.get('invite_code')
-
         serializer = RegisterSerializer(data={
             'username': request.data.get('username'),
             'password': request.data.get('password'),
             'password_confirmation': request.data.get('password_confirmation'),
             'invite_code': invite_code
         } if invite_code else request.data)
-
         if not serializer.is_valid():
-            return Response(serializer.errors, 400)
-        register_res = serializer.save()
-
-        return Response(register_res, 201)
-
-
-@api_view(['POST'])
-def login(request):
-    serializer = UserSerializer(data=request.data)
-    if not serializer.is_valid():
-        return Response(serializer.errors, 400)
-
-    try:
-        user = User.objects.get(username=request.data.get('username'))
-    except User.DoesNotExist:
-        return Response({
-            'username': ErrorDetail(string='Invalid username.', code='invalid')
-        }, 400)
-
-    pw_bytes = bytes(request.data.get('password'), 'utf-8')
-    if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
-        return Response({
-            'password': ErrorDetail(string='Invalid password.', code='invalid')
-        }, 400)
-
-    return Response({
-        'msg': 'Login successful.',
-        'username': user.username,
-        'token': bcrypt.hashpw(
-            bytes(user.username, 'utf-8') + user.password,
-            bcrypt.gensalt()
-        ).decode('utf-8'),
-        'teamId': user.team_id,
-        'isAdmin': user.is_admin,
-    }, 200)
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
 
-# not in use – maintained for demonstration purposes
-@api_view(['POST'])
-def verify_token(request):
-    failure_response = Response({'msg': 'Token verification failure.'}, 400)
-    try:
-        user = User.objects.get(username=request.data.get('username'))
-        valid_token = bytes(user.username, 'utf-8') + user.password
-        request_token_raw = request.data.get('token')
-        request_token = bytes(request_token_raw, 'utf-8')
-        match = bcrypt.checkpw(valid_token, request_token)
-        if not match:
-            return failure_response
-    except (ValueError, User.DoesNotExist):
-        return failure_response
-
-    return Response({
-        'msg': 'Token verification success.',
-        'username': user.username,
-        'teamId': user.team_id,
-        'isAdmin': user.is_admin,
-    }, 200)
+class Login(APIView):
+    @staticmethod
+    def post(request):
+        serializer = LoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status.HTTP_200_OK)
