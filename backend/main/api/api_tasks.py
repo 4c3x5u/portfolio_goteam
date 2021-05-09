@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Subtask, Column
 from ..serializers.ser_task import TaskSerializer
-from ..serializers.ser_subtask import SubtaskSerializer
+from ..serializers.subtaskserializer import SubtaskSerializer
 from ..validation.val_auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.val_column import validate_column_id

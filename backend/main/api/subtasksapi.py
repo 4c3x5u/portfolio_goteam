@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from ..serializers.ser_subtask import SubtaskUpdateSerializer
+from ..serializers.subtaskserializer import SubtaskUpdateSerializer
 
 
 class Subtasks(APIView):
