@@ -2,12 +2,6 @@ import axios from 'axios';
 import { getAuthHeaders } from '../misc/util';
 
 const TasksAPI = {
-  // not in use – maintained for demonstration purposes
-  get: (columnId) => axios.get(
-    `${process.env.REACT_APP_BACKEND_URL}/tasks/?column_id=${columnId}`,
-    getAuthHeaders(),
-  ),
-
   post: (task) => axios.post(
     `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
     task,

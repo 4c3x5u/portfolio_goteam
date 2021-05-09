@@ -1,14 +1,8 @@
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ErrorDetail
-from ..serializers.clientstateserializer import ClientStateSerializer
-from ..models import User, Board
-from ..validation.val_auth import not_authenticated_response, \
-    not_authorized_response
-from ..util import create_board
-import bcrypt
 import status
+
+from ..serializers.clientstateserializer import ClientStateSerializer
 
 
 class ClientState(APIView):

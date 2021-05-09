@@ -10,7 +10,7 @@ from ..validation.val_board import validate_board_id
 from ..validation.val_user import validate_username, validate_is_active
 
 
-@api_view(['GET', 'POST', 'DELETE'])
+@api_view(['POST', 'DELETE'])
 def users(request):
     auth_user = request.META.get('HTTP_AUTH_USER')
     auth_token = request.META.get('HTTP_AUTH_TOKEN')
@@ -18,60 +18,6 @@ def users(request):
     auth_user, authentication_response = authenticate(auth_user, auth_token)
     if authentication_response:
         return authentication_response
-
-    # not in use – maintained for demonstration purposes
-    if request.method == 'GET':
-        team_id = request.query_params.get('team_id')
-        validation_response = validate_team_id(team_id)
-        if validation_response:
-            return validation_response
-
-        try:
-            team = Team.objects.prefetch_related(
-                'user_set',
-                'board_set',
-                'board_set__user'
-            ).get(id=team_id)
-        except Team.DoesNotExist:
-            return Response({
-                'team_id': ErrorDetail(string='Team not found.',
-                                       code='not_found')
-            }, 404)
-
-        if team.id != auth_user.team.id:
-            return not_authenticated_response
-
-        members = team.user_set.all()
-
-        if 'board_id' in request.query_params.keys():
-            board_id = request.query_params.get('board_id')
-            validation_response = validate_board_id(board_id)
-            if validation_response:
-                return validation_response
-
-            try:
-                board = team.board_set.get(id=board_id)
-            except Board.DoesNotExist:
-                return Response({
-                    'board_id': ErrorDetail(string='Board not found.',
-                                            code='not_found')
-                }, 404)
-
-            return Response([
-                {
-                    'username': member.username,
-                    'isActive': member in board.user.all(),
-                    'isAdmin': member.is_admin
-                } for member in members
-            ], 200)
-
-        return Response([
-            {
-                'username': member.username,
-                'isActive': None,
-                'isAdmin': member.is_admin
-            } for member in members
-        ], 200)
 
     if request.method == 'POST':
         authorization_response = authorize(auth_user.username)
