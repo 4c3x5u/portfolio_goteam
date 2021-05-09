@@ -1,6 +1,5 @@
 from main.models import User
-from rest_framework.response import Response
-from .serializers.ser_board import BoardSerializer
+from .serializers.boardserializer import BoardSerializer
 from .serializers.ser_column import ColumnSerializer
 import bcrypt
 
@@ -48,7 +47,7 @@ def create_member(team, username_suffix=''):
 def create_board(name, team_id, team_admin):  # -> (board, response)
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
-        return None, Response(board_serializer.errors, 400)
+        return None, board_serializer.errors
     board = board_serializer.save()
 
     board.user.add(team_admin)
@@ -58,10 +57,9 @@ def create_board(name, team_id, team_admin):  # -> (board, response)
         {'board': board.id, 'order': order} for order in range(0, 4)
     ]
 
-    column_serializer = ColumnSerializer(data=column_data,
-                                         many=True)
+    column_serializer = ColumnSerializer(data=column_data, many=True)
     if not column_serializer.is_valid():
-        return board, Response(column_serializer.errors, 400)
+        return board, column_serializer.errors
 
     column_serializer.save()
 

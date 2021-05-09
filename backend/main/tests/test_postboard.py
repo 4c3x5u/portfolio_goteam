@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
 from ..util import create_member, create_admin
 from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response
+    not_authenticated_response, not_authorized_response, authorization_error
 
 
 class PostBoardTests(APITestCase):
@@ -23,6 +23,7 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.admin['username'],
             HTTP_AUTH_TOKEN=self.admin['token']
         )
+        print(f'SUCCESS: {response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
                          'Board creation successful.')
@@ -40,7 +41,7 @@ class PostBoardTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'name': [ErrorDetail(string='Board name cannot be empty.',
+            'name': [ErrorDetail(string='Name cannot be blank.',
                                  code='blank')]
         })
         self.assertEqual(Board.objects.count(), initial_boards_count)
@@ -54,11 +55,11 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.member['username'],
             HTTP_AUTH_TOKEN=self.member['token']
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
-    def test_team_id_blank(self):
+    def test_team_null(self):
         initial_count = Board.objects.count()
         response = self.client.post(self.endpoint,
                                     {'team_id': '', 'name': 'New Board'},
@@ -66,8 +67,8 @@ class PostBoardTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'team_id': ErrorDetail(string='Team ID cannot be empty.',
-                                   code='blank')
+            'team': [ErrorDetail(string='Team cannot be null.',
+                                 code='null')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -77,9 +78,10 @@ class PostBoardTests(APITestCase):
                                     {'team_id': 124123, 'name': 'New Board'},
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'team_id': ErrorDetail(string='Team not found.', code='not_found')
+            'team': [ErrorDetail(string='Team does not exist.',
+                                 code='does_not_exist')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -139,6 +141,8 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, {
+            'auth': 'Authorization failure.'
+        })
         self.assertEqual(Board.objects.count(), initial_count)
