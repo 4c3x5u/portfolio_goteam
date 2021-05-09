@@ -22,68 +22,70 @@ class UserSerializer(serializers.ModelSerializer):
             'max_length': 'Password cannot be longer than 255 characters.'
         }
     )
-    password_confirmation = serializers.CharField(required=False)
     team = serializers.IntegerField(required=False)
-    invite_code = serializers.UUIDField(
-        required=False,
-        error_messages={'invalid': 'Invalid invite code.'}
-    )
 
     class Meta:
         model = User
         fields = '__all__'
 
-    def validate(self, data):
-        invite_code = data.get('invite_code')
+
+class RegisterSerializer(UserSerializer):
+    password_confirmation = serializers.CharField(
+        error_messages={
+            'blank': 'Password confirmation cannot be empty.'
+        }
+    )
+    invite_code = serializers.UUIDField(
+        required=False,
+        error_messages={'invalid': 'Invalid invite code.'}
+    )
+
+    @staticmethod
+    def validate_username(value):
+        try:
+            User.objects.get(username=value)
+        except User.DoesNotExist:
+            return value
+        else:
+            raise CustomAPIException('username',
+                                     'Username already exists.',
+                                     status.HTTP_400_BAD_REQUEST)
+
+    def validate(self, attrs):
+        password_confirmation = attrs.pop('password_confirmation')
+
+        if password_confirmation != attrs.get('password'):
+            raise CustomAPIException(
+                'password_confirmation',
+                'Confirmation must match the password.',
+                status.HTTP_400_BAD_REQUEST
+            )
+
+        invite_code = attrs.get('invite_code')
         if invite_code:
             try:
-                data['team'] = Team.objects.get(invite_code=invite_code)
+                attrs['team'] = Team.objects.get(invite_code=invite_code)
             except Team.DoesNotExist:
                 raise CustomAPIException('invite_code',
                                          'Team not found.',
                                          status.HTTP_400_BAD_REQUEST)
-            data['is_admin'] = False
-            data.pop('invite_code')
+            attrs['is_admin'] = False
+            attrs.pop('invite_code')
         else:
-            data['is_admin'] = True
-        return super().validate(data)
+            attrs['is_admin'] = True
 
+        return super().validate(attrs)
 
-class RegisterSerializer(UserSerializer):
     def create(self, validated_data):
-        try:
-            User.objects.get(username=validated_data.get('username'))
-        except User.DoesNotExist:
-            try:
-                password_confirmation = \
-                    validated_data.pop('password_confirmation')
-            except KeyError:
-                raise CustomAPIException(
-                    'password_confirmation',
-                    'Password confirmation cannot be empty.',
-                    status.HTTP_400_BAD_REQUEST
-                )
+        if validated_data.get('is_admin') and not validated_data.get('team'):
+            validated_data['team'] = Team.objects.create()
 
-            if password_confirmation != validated_data.get('password'):
-                raise CustomAPIException(
-                    'password_confirmation',
-                    'Confirmation must match the password.',
-                    status.HTTP_400_BAD_REQUEST
-                )
+        validated_data['password'] = bcrypt.hashpw(
+            bytes(validated_data['password'], 'utf-8'),
+            bcrypt.gensalt()
+        )
 
-            if validated_data.get('is_admin') and not validated_data.get('team'):
-                validated_data['team'] = Team.objects.create()
-
-            validated_data['password'] = bcrypt.hashpw(
-                bytes(validated_data['password'], 'utf-8'),
-                bcrypt.gensalt()
-            )
-
-            return User.objects.create(**validated_data)
-
-        raise CustomAPIException('username',
-                                 'Username already exists.',
-                                 status.HTTP_400_BAD_REQUEST)
+        return User.objects.create(**validated_data)
 
     def to_representation(self, instance):
         return {
