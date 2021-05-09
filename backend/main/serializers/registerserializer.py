@@ -1,32 +1,10 @@
 from rest_framework import serializers
-from main.models import Team, User
-from ..validation.val_custom import CustomAPIException
 import bcrypt
 import status
 
-
-class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        min_length=5,
-        max_length=35,
-        error_messages={
-            'blank': 'Username cannot be empty.',
-            'max_length': 'Username cannot be longer than 35 characters.'
-        }
-    )
-    password = serializers.CharField(
-        min_length=8,
-        max_length=255,
-        error_messages={
-            'blank': 'Password cannot be empty.',
-            'max_length': 'Password cannot be longer than 255 characters.'
-        }
-    )
-    team = serializers.IntegerField(required=False)
-
-    class Meta:
-        model = User
-        fields = '__all__'
+from main.models import User, Team
+from .userserializer import UserSerializer
+from ..validation.val_custom import CustomAPIException
 
 
 class RegisterSerializer(UserSerializer):
@@ -97,34 +75,4 @@ class RegisterSerializer(UserSerializer):
             ).decode('utf-8'),
             'teamId': instance.team_id,
             'isAdmin': instance.is_admin
-        }
-
-
-class LoginSerializer(UserSerializer):
-    def validate(self, attrs):
-        try:
-            user = User.objects.get(username=attrs.get('username'))
-        except User.DoesNotExist:
-            raise CustomAPIException('username',
-                                     'Invalid username.',
-                                     status.HTTP_400_BAD_REQUEST)
-
-        pw_bytes = bytes(attrs.get('password'), 'utf-8')
-        if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
-            raise CustomAPIException('password',
-                                     'Invalid password.',
-                                     status.HTTP_400_BAD_REQUEST)
-
-        return user
-
-    def to_representation(self, instance):
-        return {
-            'msg': 'Login successful.',
-            'username': instance.username,
-            'token': bcrypt.hashpw(
-                bytes(instance.username, 'utf-8') + instance.password,
-                bcrypt.gensalt()
-            ).decode('utf-8'),
-            'teamId': instance.team_id,
-            'isAdmin': instance.is_admin,
         }

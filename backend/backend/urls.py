@@ -1,11 +1,12 @@
 from django.urls import path
-from main.api.api_auth import Register, Login
+from main.api.registerapi import Register
+from main.api.loginapi import Login
 from main.api.api_users import users
 from main.api.api_teams import teams
 from main.api.api_boards import boards
 from main.api.api_columns import columns
 from main.api.api_tasks import tasks
-from main.api.api_subtasks import Subtasks
+from main.api.subtasksapi import Subtasks
 from main.api.api_clientstate import client_state
 
 urlpatterns = [
