@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..models import Task, Subtask, Column
+from ..models import Task, Column
 from ..serializers.ser_task import TaskSerializer
 from ..serializers.subtaskserializer import SubtaskSerializer
 from ..validation.val_auth import \
