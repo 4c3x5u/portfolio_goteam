@@ -1,10 +1,8 @@
 from rest_framework import serializers
-import status
 
 from .boardserializer import BoardSerializer
 from ..validation.val_auth import authenticate_custom, authorization_error, \
     authorize_custom
-from ..validation.val_custom import CustomAPIException
 from ..util import create_board
 
 
@@ -15,23 +13,9 @@ class CreateBoardSerializer(BoardSerializer):
     class Meta(BoardSerializer.Meta):
         fields = 'auth_user', 'auth_token', 'team', 'name'
 
-    @staticmethod
-    def validate_team_id(value):
-        if not value:
-            raise CustomAPIException('team_id',
-                                     'Team ID cannot be empty.',
-                                     status.HTTP_400_BAD_REQUEST)
-        try:
-            int(value)
-        except ValueError:
-            raise CustomAPIException('team_id',
-                                     'Team ID must be a number.',
-                                     status.HTTP_400_BAD_REQUEST)
-        return value
-
     def validate(self, attrs):
-        auth_user = attrs.pop('auth_user')
-        auth_token = attrs.pop('auth_token')
+        auth_user = attrs.get('auth_user')
+        auth_token = attrs.get('auth_token')
         user, authentication_error = authenticate_custom(auth_user, auth_token)
         if authentication_error:
             raise authentication_error
