@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from ..serializers.subtaskserializer import SubtaskUpdateSerializer
+from ..serializers.subtaskserializer_update import UpdateSubtaskSerializer
 
 
 class Subtasks(APIView):
@@ -9,7 +9,7 @@ class Subtasks(APIView):
     """
     @staticmethod
     def patch(request):
-        serializer = SubtaskUpdateSerializer()
+        serializer = UpdateSubtaskSerializer()
         validated_data = serializer.validate({
             'id': request.query_params.get('id'),
             'data': request.data,

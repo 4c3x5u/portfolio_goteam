@@ -7,7 +7,7 @@ from main.api.api_boards import boards
 from main.api.api_columns import columns
 from main.api.api_tasks import tasks
 from main.api.subtasksapi import Subtasks
-from main.api.api_clientstate import client_state
+from main.api.api_clientstate import ClientState
 
 urlpatterns = [
     path('register/', Register.as_view(), name='register'),
@@ -18,5 +18,5 @@ urlpatterns = [
     path('columns/', columns, name='columns'),
     path('tasks/', tasks, name='tasks'),
     path('subtasks/', Subtasks.as_view(), name='subtasks'),
-    path('client-state/', client_state, name='clientstate')
+    path('client-state/', ClientState.as_view(), name='clientstate')
 ]
