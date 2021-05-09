@@ -3,7 +3,8 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task, Column, Board, Team, User
 from ..util import create_member, create_admin
 from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response
+    not_authenticated_response, not_authorized_response, authorization_error, \
+    authentication_error
 
 
 class UpdateSubtaskTests(APITestCase):
@@ -35,7 +36,8 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{subtask_id}',
                                      request_data,
                                      HTTP_AUTH_USER=user['username'],
-                                     HTTP_AUTH_TOKEN=user['token'])
+                                     HTTP_AUTH_TOKEN=user['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'msg': 'Subtask update successful.',
                                          'id': self.subtask.id})
@@ -79,11 +81,12 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(self.endpoint,
                                      request_data,
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'id': ErrorDetail(string='Subtask ID cannot be empty.',
-                              code='blank')
+            'id': [ErrorDetail(string='Subtask ID must be a number.',
+                               code='invalid')]
         })
         self.help_test_failure()
 
@@ -91,10 +94,12 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      None,
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'data': ErrorDetail(string='Data cannot be empty.', code='blank')
+            'data': [ErrorDetail(string='Subtask data cannot be empty.',
+                                 code='empty')]
         })
         self.help_test_failure()
 
@@ -102,11 +107,12 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': ''},
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'title': ErrorDetail(string='Title cannot be empty.',
-                                code='blank')
+                                 code='blank')
         })
         self.help_test_failure()
 
@@ -115,7 +121,8 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      request_data,
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'done': ErrorDetail(string='Done cannot be empty.',
@@ -127,7 +134,8 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'order': ''},
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'order': ErrorDetail(string='Order cannot be empty.',
@@ -139,23 +147,28 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN='')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                                     HTTP_AUTH_TOKEN='',
+                                     format='json')
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
-                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                                     HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos',
+                                     format='json')
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER='',
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
@@ -163,7 +176,8 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER='invalidio',
-                                     HTTP_AUTH_TOKEN=self.admin['token'])
+                                     HTTP_AUTH_TOKEN=self.admin['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
@@ -172,7 +186,8 @@ class UpdateSubtaskTests(APITestCase):
             f'{self.endpoint}{self.subtask.id}',
             {'title': 'New Task Title'},
             HTTP_AUTH_USER=self.wrong_admin['username'],
-            HTTP_AUTH_TOKEN=self.wrong_admin['token']
+            HTTP_AUTH_TOKEN=self.wrong_admin['token'],
+            format='json'
         )
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
@@ -181,6 +196,7 @@ class UpdateSubtaskTests(APITestCase):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
                                      {'title': 'New Task Title'},
                                      HTTP_AUTH_USER=self.member['username'],
-                                     HTTP_AUTH_TOKEN=self.member['token'])
+                                     HTTP_AUTH_TOKEN=self.member['token'],
+                                     format='json')
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
