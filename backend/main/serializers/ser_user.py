@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from main.models import Team, User
+from ..validation.val_custom import CustomAPIException
 import bcrypt
+import status
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -42,9 +44,9 @@ class RegisterSerializer(UserSerializer):
             try:
                 data['team'] = Team.objects.get(invite_code=invite_code)
             except Team.DoesNotExist:
-                raise serializers.ValidationError({
-                    'invite_code': 'Team not found.'
-                })
+                raise CustomAPIException('invite_code',
+                                         'Team not found.',
+                                         status.HTTP_400_BAD_REQUEST)
             data['is_admin'] = False
             data.pop('invite_code')
         else:
@@ -59,16 +61,18 @@ class RegisterSerializer(UserSerializer):
                 password_confirmation = \
                     validated_data.pop('password_confirmation')
             except KeyError:
-                raise serializers.ValidationError({
-                    'password_confirmation': 'Password confirmation cannot be '
-                                             'empty.'
-                }, 'blank')
+                raise CustomAPIException(
+                    'password_confirmation',
+                    'Password confirmation cannot be empty.',
+                    status.HTTP_400_BAD_REQUEST
+                )
 
             if password_confirmation != validated_data.get('password'):
-                raise serializers.ValidationError({
-                    'password_confirmation':
-                        'Confirmation must match the password.'
-                }, 'no_match')
+                raise CustomAPIException(
+                    'password_confirmation',
+                    'Confirmation must match the password.',
+                    status.HTTP_400_BAD_REQUEST
+                )
 
             if validated_data.get('is_admin') and not validated_data.get('team'):
                 validated_data['team'] = Team.objects.create()
@@ -78,8 +82,18 @@ class RegisterSerializer(UserSerializer):
                 bcrypt.gensalt()
             )
 
-            return User.objects.create(**validated_data)
+            user = User.objects.create(**validated_data)
+            return {
+                'msg': 'Registration successful.',
+                'username': user.username,
+                'token': bcrypt.hashpw(
+                    bytes(user.username, 'utf-8') + user.password,
+                    bcrypt.gensalt()
+                ).decode('utf-8'),
+                'teamId': user.team_id,
+                'isAdmin': user.is_admin
+            }
 
-        raise serializers.ValidationError({
-            'username': 'Username already exists.'
-        }, 'already_in_use')
+        raise CustomAPIException('username',
+                                 'Username already exists.',
+                                 status.HTTP_400_BAD_REQUEST)

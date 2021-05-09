@@ -28,7 +28,7 @@ class SubtaskUpdateSerializer(SubtaskSerializer):
     def validate_id(value):
         if not value:
             raise CustomAPIException('id',
-                                   'Subtask ID cannot be empty.',
+                                     'Subtask ID cannot be empty.',
                                      status.HTTP_400_BAD_REQUEST)
         try:
             subtask = Subtask.objects.select_related(
@@ -38,7 +38,7 @@ class SubtaskUpdateSerializer(SubtaskSerializer):
             ).get(id=value)
         except Subtask.DoesNotExist:
             raise CustomAPIException('id',
-                                   'Subtask not found.',
+                                     'Subtask not found.',
                                      status.HTTP_404_NOT_FOUND)
         return subtask
 
@@ -46,7 +46,7 @@ class SubtaskUpdateSerializer(SubtaskSerializer):
     def validate_data(value):
         if not value:
             raise CustomAPIException('data',
-                                   'Data cannot be empty.',
+                                     'Data cannot be empty.',
                                      status.HTTP_400_BAD_REQUEST)
         return value
 
@@ -54,21 +54,21 @@ class SubtaskUpdateSerializer(SubtaskSerializer):
     def validate_title(value):
         if not value:
             raise CustomAPIException('title',
-                                   'Title cannot be empty.',
+                                     'Title cannot be empty.',
                                      status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def validate_done(value):
         if value == '' or value is None or not value:
             raise CustomAPIException('done',
-                                   'Done cannot be empty.',
+                                     'Done cannot be empty.',
                                      status.HTTP_400_BAD_REQUEST)
 
     @staticmethod
     def validate_order(value):
         if value == '' or value is None or not value:
             raise CustomAPIException('order',
-                                   'Order cannot be empty.',
+                                     'Order cannot be empty.',
                                      status.HTTP_400_BAD_REQUEST)
 
     def validate(self, attrs):
