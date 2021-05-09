@@ -22,9 +22,6 @@ class UserSerializer(serializers.ModelSerializer):
             'max_length': 'Password cannot be longer than 255 characters.'
         }
     )
-    # Doesn't need min/max-length since we only care whether it matches the
-    # password or not. If it does, min/max-length is validated since the
-    # password will already be validated.
     password_confirmation = serializers.CharField(required=False)
     team = serializers.IntegerField(required=False)
     invite_code = serializers.UUIDField(
@@ -36,8 +33,6 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
-
-class RegisterSerializer(UserSerializer):
     def validate(self, data):
         invite_code = data.get('invite_code')
         if invite_code:
@@ -53,6 +48,8 @@ class RegisterSerializer(UserSerializer):
             data['is_admin'] = True
         return super().validate(data)
 
+
+class RegisterSerializer(UserSerializer):
     def create(self, validated_data):
         try:
             User.objects.get(username=validated_data.get('username'))
@@ -82,18 +79,50 @@ class RegisterSerializer(UserSerializer):
                 bcrypt.gensalt()
             )
 
-            user = User.objects.create(**validated_data)
-            return {
-                'msg': 'Registration successful.',
-                'username': user.username,
-                'token': bcrypt.hashpw(
-                    bytes(user.username, 'utf-8') + user.password,
-                    bcrypt.gensalt()
-                ).decode('utf-8'),
-                'teamId': user.team_id,
-                'isAdmin': user.is_admin
-            }
+            return User.objects.create(**validated_data)
 
         raise CustomAPIException('username',
                                  'Username already exists.',
                                  status.HTTP_400_BAD_REQUEST)
+
+    def to_representation(self, instance):
+        return {
+            'msg': 'Registration successful.',
+            'username': instance.username,
+            'token': bcrypt.hashpw(
+                bytes(instance.username, 'utf-8') + instance.password,
+                bcrypt.gensalt()
+            ).decode('utf-8'),
+            'teamId': instance.team_id,
+            'isAdmin': instance.is_admin
+        }
+
+
+class LoginSerializer(UserSerializer):
+    def validate(self, attrs):
+        try:
+            user = User.objects.get(username=attrs.get('username'))
+        except User.DoesNotExist:
+            raise CustomAPIException('username',
+                                     'Invalid username.',
+                                     status.HTTP_400_BAD_REQUEST)
+
+        pw_bytes = bytes(attrs.get('password'), 'utf-8')
+        if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
+            raise CustomAPIException('password',
+                                     'Invalid password.',
+                                     status.HTTP_400_BAD_REQUEST)
+
+        return user
+
+    def to_representation(self, instance):
+        return {
+            'msg': 'Login successful.',
+            'username': instance.username,
+            'token': bcrypt.hashpw(
+                bytes(instance.username, 'utf-8') + instance.password,
+                bcrypt.gensalt()
+            ).decode('utf-8'),
+            'teamId': instance.team_id,
+            'isAdmin': instance.is_admin,
+        }
