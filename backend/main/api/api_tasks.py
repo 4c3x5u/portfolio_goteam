@@ -10,7 +10,7 @@ from ..validation.val_column import validate_column_id
 from ..validation.val_task import validate_task_id
 
 
-@api_view(['GET', 'POST', 'PATCH', 'DELETE'])
+@api_view(['POST', 'PATCH', 'DELETE'])
 def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -18,40 +18,6 @@ def tasks(request):
     user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
-
-    # not in use – maintained for demonstration purposes
-    if request.method == 'GET':
-        column_id = request.query_params.get('column_id')
-
-        validation_response = validate_column_id(column_id)
-        if validation_response:
-            return validation_response
-
-        try:
-            column = Column.objects.select_related(
-                'board'
-            ).prefetch_related(
-                'task_set'
-            ).get(id=column_id)
-        except Column.DoesNotExist:
-            return Response({
-                'column_id': ErrorDetail(string='Column not found.',
-                                         code='not_found')
-            }, 404)
-
-        if column.board.team_id != user.team.id:
-            return not_authenticated_response
-
-        return Response({
-            'tasks': [
-                {
-                    'id': task.id,
-                    'order': task.order,
-                    'title': task.title,
-                    'description': task.description
-                } for task in column.task_set.all()
-            ]
-        }, 200)
 
     if request.method == 'POST':
         authorization_response = authorize(username)

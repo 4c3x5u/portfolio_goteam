@@ -1,3 +1,4 @@
+from rest_framework import serializers
 import status
 
 from .subtaskserializer import SubtaskSerializer
@@ -87,6 +88,8 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
                                        data=validated_data,
                                        partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        return serializer.save()
+
+    def to_representation(self, instance):
         return {'msg': 'Subtask update successful.',
-                'id': serializer.data.get('id')}
+                'id': instance.get('id')}

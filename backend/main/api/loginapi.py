@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.userserializer_login import LoginSerializer
+from ..serializers.loginserializer import LoginSerializer
 
 
 class Login(APIView):
