@@ -111,10 +111,7 @@ class RegisterTests(APITestCase):
                         'invite_code': uuid4()}
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data, {
-            'invite_code': [ErrorDetail(string='Team not found.',
-                                        code='invalid')]
-        })
+        self.assertEqual(response.data, {'invite_code': 'Team not found.'})
         self.assertEqual(User.objects.count(), initial_user_count)
         self.assertEqual(Team.objects.count(), initial_team_count)
 

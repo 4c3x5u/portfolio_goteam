@@ -10,8 +10,7 @@ class Subtasks(APIView):
     @staticmethod
     def patch(request):
         serializer = SubtaskUpdateSerializer()
-
-        validation_result = serializer.validate({
+        validated_data = serializer.validate({
             'id': request.query_params.get('id'),
             'data': request.data,
             'user': {
@@ -19,10 +18,6 @@ class Subtasks(APIView):
                 'token': request.META.get('HTTP_AUTH_TOKEN')
             }
         })
-
-        update_res = serializer.update(
-            validation_result.get('instance'),
-            validation_result.get('data')
-        )
-
+        update_res = serializer.update(validated_data.get('instance'),
+                                       validated_data.get('data'))
         return Response(update_res, 200)

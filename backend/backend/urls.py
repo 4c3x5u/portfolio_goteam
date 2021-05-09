@@ -1,5 +1,5 @@
 from django.urls import path
-from main.api.api_auth import register, login, verify_token
+from main.api.api_auth import Register, login, verify_token
 from main.api.api_users import users
 from main.api.api_teams import teams
 from main.api.api_boards import boards
@@ -10,7 +10,7 @@ from main.api.api_clientstate import client_state
 
 urlpatterns = [
     path('verify-token/', verify_token, name='verifytoken'),
-    path('register/', register, name='register'),
+    path('register/', Register.as_view(), name='register'),
     path('login/', login, name='login'),
     path('users/', users, name='users'),
     path('teams/', teams, name='teams'),
