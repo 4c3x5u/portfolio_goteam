@@ -1,13 +1,32 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
-from ..serializers.ser_board import BoardSerializer
+import status
+
+from ..serializers.boardserializer import BoardSerializer
+from ..serializers.createboardserializer import CreateBoardSerializer
 from ..models import Board, Team
 from ..validation.val_auth import authenticate, authorize, \
     not_authenticated_response
 from ..validation.val_team import validate_team_id
 from ..validation.val_board import validate_board_id
 from ..util import create_board
+
+
+class Boards(APIView):
+    @staticmethod
+    def post(request):
+        serializer = CreateBoardSerializer(data={
+            'auth_user': request.META.get('HTTP_AUTH_USER'),
+            'auth_token': request.META.get('HTTP_AUTH_TOKEN'),
+            'team': request.data.get('team_id'),
+            'name': request.data.get('name')
+        })
+        if not serializer.is_valid():
+            return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data, status.HTTP_201_CREATED)
 
 
 @api_view(['POST', 'DELETE', 'PATCH'])
