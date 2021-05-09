@@ -8,13 +8,13 @@ from ..models import Board
 
 
 class UpdateBoardSerializer(serializers.ModelSerializer):
-    auth_user = serializers.CharField(allow_blank=True)
-    auth_token = serializers.CharField(allow_blank=True)
     id = serializers.IntegerField(error_messages={
         'null': 'Board ID cannot be null.',
         'invalid': 'Board ID must be a number.'
     })
     payload = serializers.DictField(allow_empty=False)
+    auth_user = serializers.CharField(allow_blank=True)
+    auth_token = serializers.CharField(allow_blank=True)
 
     class Meta:
         model = BoardSerializer.Meta.model

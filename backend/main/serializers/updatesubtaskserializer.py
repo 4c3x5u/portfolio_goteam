@@ -9,31 +9,20 @@ from ..validation.val_custom import CustomAPIException
 
 
 class UpdateSubtaskSerializer(SubtaskSerializer):
-    @staticmethod
-    def validate_id(value):
-        if not value:
-            raise CustomAPIException('id',
-                                     'Subtask ID cannot be empty.',
-                                     status.HTTP_400_BAD_REQUEST)
-        try:
-            subtask = Subtask.objects.select_related(
-                'task',
-                'task__user',
-                'task__column__board'
-            ).get(id=value)
-        except Subtask.DoesNotExist:
-            raise CustomAPIException('id',
-                                     'Subtask not found.',
-                                     status.HTTP_404_NOT_FOUND)
-        return subtask
+    id = serializers.IntegerField(error_messages={
+        'invalid': 'Subtask ID must be a number.'
+    })
+    data = serializers.DictField(
+        allow_empty=False,
+        error_messages={
+            'empty': 'Subtask data cannot be empty.'
+        }
+    )
+    auth_user = serializers.CharField(allow_blank=True)
+    auth_token = serializers.CharField(allow_blank=True)
 
-    @staticmethod
-    def validate_data(value):
-        if not value:
-            raise CustomAPIException('data',
-                                     'Data cannot be empty.',
-                                     status.HTTP_400_BAD_REQUEST)
-        return value
+    class Meta(SubtaskSerializer.Meta):
+        fields = 'id', 'data', 'auth_user', 'auth_token'
 
     @staticmethod
     def validate_title(value):
@@ -57,23 +46,26 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
                                      status.HTTP_400_BAD_REQUEST)
 
     def validate(self, attrs):
-        auth_user = attrs.get('user')
+        auth_user = attrs.get('auth_user')
+        auth_token = attrs.get('auth_token')
 
-        user, authentication_error = authenticate_custom(
-            auth_user.get('username'),
-            auth_user.get('token')
-        )
+        user, authentication_error = authenticate_custom(auth_user,
+                                                         auth_token)
         if authentication_error:
             raise authentication_error
 
-        subtask = self.validate_id(attrs.get('id'))
+        subtask = Subtask.objects.select_related(
+            'task',
+            'task__user',
+            'task__column__board'
+        ).get(id=attrs.get('id'))
 
-        authorization_res = authorize_custom(auth_user.get('username'))
+        authorization_res = authorize_custom(auth_user)
         if authorization_res and subtask.task.user != user \
                 or subtask.task.column.board.team_id != user.team.id:
             raise authorization_error
 
-        data = self.validate_data(attrs.get('data'))
+        data = attrs.get('data')
         if 'title' in data.keys():
             self.validate_title(data.get('title'))
         if 'done' in data.keys():
@@ -81,15 +73,11 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
         if 'order' in data.keys():
             self.validate_order(data.get('order'))
 
-        return {'instance': subtask, 'data': data}
-
-    def update(self, instance, validated_data):
-        serializer = SubtaskSerializer(instance,
-                                       data=validated_data,
-                                       partial=True)
-        serializer.is_valid(raise_exception=True)
-        return serializer.save()
+        serializer = SubtaskSerializer(subtask, data=data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            self.instance = subtask
+            return data
 
     def to_representation(self, instance):
         return {'msg': 'Subtask update successful.',
-                'id': instance.get('id')}
+                'id': instance.id}
