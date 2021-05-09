@@ -21,10 +21,11 @@ class DeleteBoardTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}{self.board.id}',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
+        print(f'SUCCESS: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Board deleted successfully.',
-            'id': str(self.board.id),
+            'id': self.board.id,
         })
         self.assertEqual(Board.objects.count(), initial_count - 1)
 
@@ -35,8 +36,7 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board ID cannot be empty.',
-                                    code='blank')
+            'id': [ErrorDetail(string='Board ID cannot be null.', code='null')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -47,8 +47,8 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board ID must be a number.',
-                                    code='invalid')
+            'id': [ErrorDetail(string='Board ID must be a number.',
+                               code='invalid')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -107,8 +107,8 @@ class DeleteBoardTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token'],
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -116,7 +116,7 @@ class DeleteBoardTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}{self.board.id}',
                                       HTTP_AUTH_USER=self.member['username'],
                                       HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
         self.assertEqual(Board.objects.count(), initial_count)
 
