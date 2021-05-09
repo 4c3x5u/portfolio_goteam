@@ -41,7 +41,7 @@ class PostBoardTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'name': [ErrorDetail(string='Name cannot be blank.',
+            'name': [ErrorDetail(string='Board name cannot be blank.',
                                  code='blank')]
         })
         self.assertEqual(Board.objects.count(), initial_boards_count)
@@ -67,7 +67,7 @@ class PostBoardTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'team': [ErrorDetail(string='Team cannot be null.',
+            'team': [ErrorDetail(string='Board team cannot be null.',
                                  code='null')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
