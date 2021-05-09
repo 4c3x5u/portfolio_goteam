@@ -1,37 +1,39 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 import bcrypt
 
-from ..serializers.ser_user import UserSerializer
+from ..serializers.ser_user import UserSerializer, RegisterSerializer
 from ..models import User
 
 
-@api_view(['POST'])
-def register(request):
-    invite_code = request.query_params.get('invite_code')
+class Register(APIView):
+    @staticmethod
+    def post(request):
+        invite_code = request.query_params.get('invite_code')
 
-    serializer = UserSerializer(data={
-        'username': request.data.get('username'),
-        'password': request.data.get('password'),
-        'password_confirmation': request.data.get('password_confirmation'),
-        'invite_code': invite_code
-    } if invite_code else request.data)
-    
-    if not serializer.is_valid():
-        return Response(serializer.errors, 400)
-    user = serializer.save()
+        serializer = RegisterSerializer(data={
+            'username': request.data.get('username'),
+            'password': request.data.get('password'),
+            'password_confirmation': request.data.get('password_confirmation'),
+            'invite_code': invite_code
+        } if invite_code else request.data)
 
-    return Response({
-        'msg': 'Registration successful.',
-        'username': user.username,
-        'token': bcrypt.hashpw(
-            bytes(user.username, 'utf-8') + user.password,
-            bcrypt.gensalt()
-        ).decode('utf-8'),
-        'teamId': user.team_id,
-        'isAdmin': user.is_admin
-    }, 201)
+        if not serializer.is_valid():
+            return Response(serializer.errors, 400)
+        user = serializer.save()
+
+        return Response({
+            'msg': 'Registration successful.',
+            'username': user.username,
+            'token': bcrypt.hashpw(
+                bytes(user.username, 'utf-8') + user.password,
+                bcrypt.gensalt()
+            ).decode('utf-8'),
+            'teamId': user.team_id,
+            'isAdmin': user.is_admin
+        }, 201)
 
 
 @api_view(['POST'])

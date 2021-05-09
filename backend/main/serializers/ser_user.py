@@ -34,6 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
 
+
+class RegisterSerializer(UserSerializer):
     def validate(self, data):
         invite_code = data.get('invite_code')
         if invite_code:
