@@ -1,6 +1,6 @@
 from main.models import User
-from main.serializers.board.boardserializer import BoardSerializer
-from main.serializers.column.columnserializer import ColumnSerializer
+from main.serializers.board.ser_board import BoardSerializer
+from main.serializers.column.ser_column import ColumnSerializer
 import bcrypt
 
 
