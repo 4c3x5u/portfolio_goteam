@@ -19,5 +19,3 @@ class RegisterApiView(APIView):
             return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return Response(serializer.data, status.HTTP_201_CREATED)
-
-
