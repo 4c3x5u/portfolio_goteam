@@ -2,8 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team, User
 from ..util import create_member, create_admin
-from ..validation.auth import \
-    not_authenticated_response, not_authorized_response
+from ..validation.auth import authorization_error, authentication_error
 
 
 class PatchTaskTests(APITestCase):
@@ -30,8 +29,10 @@ class PatchTaskTests(APITestCase):
     def help_test_success(self, task_id, request_data):
         response = self.client.patch(f'{self.endpoint}{task_id}',
                                      request_data,
+                                     format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'])
+        print(f'successresponsedata: §{response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {'msg': 'Task update successful.',
                                          'id': self.task.id})
@@ -80,8 +81,8 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'title': ErrorDetail(string='Task title cannot be empty.',
-                                 code='blank')
+            'title': [ErrorDetail(string='Task title cannot be blank.',
+                                  code='blank')]
         })
         self.assertEqual(Task.objects.get(id=self.task.id).title,
                          self.task.title)
@@ -93,8 +94,8 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'order': ErrorDetail(string='Task order cannot be empty.',
-                                 code='blank')
+            'order': [ErrorDetail(string='Task order must be a number.',
+                                  code='invalid')]
         })
         self.assertEqual(Task.objects.get(id=self.task.id).order,
                          self.task.order)
@@ -106,8 +107,8 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Column ID cannot be empty.',
-                                     code='blank')
+            'column': [ErrorDetail(string='Column ID must be a number.',
+                                   code='invalid')]
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
@@ -119,8 +120,10 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column': [ErrorDetail(string='Task column does not exist.',
-                                   code='does_not_exist')]
+            'task': {
+                'column': [ErrorDetail(string='Task column does not exist.',
+                                       code='does_not_exist')]
+            }
         })
         self.assertEqual(Task.objects.get(id=self.task.id).column,
                          self.task.column)
@@ -132,8 +135,10 @@ class PatchTaskTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'user': [ErrorDetail(string='User does not exist.',
-                                 code='does_not_exist')]
+            'task': {
+                'user': [ErrorDetail(string='User does not exist.',
+                                     code='does_not_exist')]
+            }
         })
         self.assertEqual(Task.objects.get(id=self.task.id).user,
                          self.task.user)
@@ -143,40 +148,43 @@ class PatchTaskTests(APITestCase):
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_blank(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_not_authorized(self):
         response = self.client.patch(f'{self.endpoint}{self.task.id}',
                                      {'title': 'New Title'},
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
 
     def test_wrong_team(self):
         response = self.client.patch(
@@ -185,8 +193,8 @@ class PatchTaskTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
 
     def test_assigned_member_failure(self):
         response = self.client.patch(
@@ -195,5 +203,5 @@ class PatchTaskTests(APITestCase):
             HTTP_AUTH_USER=self.assigned_member['username'],
             HTTP_AUTH_TOKEN=self.assigned_member['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
