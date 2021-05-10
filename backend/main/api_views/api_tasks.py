@@ -1,6 +1,8 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
+import status
 from ..models import Task, Column
 from main.serializers.task.base import TaskSerializer
 from main.serializers.subtask.base import SubtaskSerializer
@@ -8,9 +10,27 @@ from ..validation.auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.column import validate_column_id
 from ..validation.task import validate_task_id
+from ..serializers.task.create import CreateTaskSerializer
 
 
-@api_view(['POST', 'PATCH', 'DELETE'])
+class TasksAPIView(APIView):
+    @staticmethod
+    def post(request):
+        serializer = CreateTaskSerializer(
+            data={'column': request.data.get('column'),
+                  'title': request.data.get('title'),
+                  'description': request.data.get('description'),
+                  'subtasks': request.data.get('subtasks'),
+                  'auth_user': request.META.get('HTTP_AUTH_USER'),
+                  'auth_token': request.META.get('HTTP_AUTH_TOKEN')}
+        )
+        if serializer.is_valid():
+            serializer.create(serializer.validated_data)
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['PATCH', 'DELETE'])
 def tasks(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
@@ -18,69 +38,6 @@ def tasks(request):
     user, authentication_response = authenticate(username, token)
     if authentication_response:
         return authentication_response
-
-    if request.method == 'POST':
-        authorization_response = authorize(username)
-        if authorization_response:
-            return authorization_response
-
-        column_id = request.data.get('column')
-        validation_response = validate_column_id(column_id)
-        if validation_response:
-            return validation_response
-
-        try:
-            column = Column.objects.select_related(
-                'board'
-            ).prefetch_related(
-                'task_set'
-            ).get(id=column_id)
-        except Column.DoesNotExist:
-            return Response({
-                'column_id': ErrorDetail(string='Column not found.',
-                                         code='not_found')
-            }, 404)
-
-        if column.board.team_id != user.team_id:
-            return not_authenticated_response
-
-        for task in column.task_set.all():
-            task.order += 1
-
-        Task.objects.bulk_update(column.task_set.all(), ['order'])
-
-        # save task
-        task_serializer = TaskSerializer(
-            data={'title': request.data.get('title'),
-                  'description': request.data.get('description'),
-                  'order': 0,
-                  'column': request.data.get('column')}
-        )
-        if not task_serializer.is_valid():
-            return Response(task_serializer.errors, 400)
-        task = task_serializer.save()
-
-        # save subtasks
-        subtasks = request.data.get('subtasks')
-        subtasks_data = [
-            {
-                'title': subtask,
-                'order': i,
-                'task': task.id
-            } for i, subtask in enumerate(subtasks)
-        ] if subtasks else []
-        subtask_serializer = SubtaskSerializer(data=subtasks_data, many=True)
-        if not subtask_serializer.is_valid():
-            task.delete()
-            return Response({
-                'subtask': subtask_serializer.errors
-            }, 400)
-        subtask_serializer.save()
-
-        return Response({
-            'msg': 'Task creation successful.',
-            'task_id': task.id
-        }, 201)
 
     if request.method == 'PATCH':
         authorization_response = authorize(username)
