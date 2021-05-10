@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import status
 
-from main.serializers.board.default import BoardSerializer
+from main.serializers.board.base import BoardSerializer
 from main.validation.auth import authenticate_custom, authorization_error, \
     authorize_custom
 from main.validation.custom import CustomAPIException

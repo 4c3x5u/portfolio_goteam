@@ -2,8 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column
-from main.serializers.task.task import TaskSerializer
-from main.serializers.subtask.default import SubtaskSerializer
+from main.serializers.task.base import TaskSerializer
+from main.serializers.subtask.base import SubtaskSerializer
 from ..validation.auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.column import validate_column_id

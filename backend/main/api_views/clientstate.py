@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from main.serializers.clientstate.default import ClientStateSerializer
+from main.serializers.clientstate.base import ClientStateSerializer
 
 
 class ClientStateAPIView(APIView):
