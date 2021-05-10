@@ -5,7 +5,7 @@ import status
 from ..serializers.column.ser_column_update import UpdateColumnSerializer
 
 
-class ColumnsApi(APIView):
+class ColumnsApiView(APIView):
     @staticmethod
     def patch(request):
         serializer = UpdateColumnSerializer(data={

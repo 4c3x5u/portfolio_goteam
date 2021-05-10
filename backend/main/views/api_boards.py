@@ -7,7 +7,7 @@ from main.serializers.board.ser_board_update import UpdateBoardSerializer
 from main.serializers.board.ser_board_delete import DeleteBoardSerializer
 
 
-class BoardsApi(APIView):
+class BoardsApiView(APIView):
     @staticmethod
     def post(request):
         serializer = CreateBoardSerializer(data={

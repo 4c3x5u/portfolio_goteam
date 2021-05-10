@@ -6,7 +6,7 @@ from main.serializers.user.ser_user_update import UpdateUserSerializer
 from main.serializers.user.ser_user_delete import DeleteUserSerializer
 
 
-class UsersApi(APIView):
+class UsersApiView(APIView):
     @staticmethod
     def patch(request):
         """

@@ -5,7 +5,7 @@ import status
 from main.serializers.clientstate.ser_client_state import ClientStateSerializer
 
 
-class ClientStateApi(APIView):
+class ClientStateApiView(APIView):
     @staticmethod
     def get(request):
         serializer = ClientStateSerializer(data={

@@ -5,7 +5,7 @@ import status
 from main.serializers.auth.ser_register import RegisterSerializer
 
 
-class RegisterApi(APIView):
+class RegisterApiView(APIView):
     @staticmethod
     def post(request):
         invite_code = request.query_params.get('invite_code')
