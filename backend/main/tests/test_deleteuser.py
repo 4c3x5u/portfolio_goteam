@@ -22,9 +22,11 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user(self.member['username'],
                                     self.admin['username'],
                                     self.admin['token'])
+        print(f'§{response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Member has been deleted successfully.',
+            'username': self.member['username']
         })
         self.assertFalse(User.objects.filter(username=self.member['username']))
 
@@ -35,7 +37,7 @@ class DeleteUserTests(APITestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, {
             'username': ErrorDetail(
-                string='Team leaders cannot be deleted from their teams.',
+                string='Admins cannot be deleted from their teams.',
                 code='forbidden'
             )
         })
@@ -47,8 +49,8 @@ class DeleteUserTests(APITestCase):
                                     self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Username cannot be empty.',
-                                    code='blank')
+            'user': [ErrorDetail(string='Username cannot be null.',
+                                 code='null')]
         })
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
@@ -56,10 +58,10 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user('piquelitta',
                                     self.admin['username'],
                                     self.admin['token'])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='User not found.',
-                                    code='not_found')
+            'user': [ErrorDetail(string='User does not exist.',
+                                 code='does_not_exist')]
         })
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
@@ -99,7 +101,7 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user(self.member['username'],
                                     self.wrong_admin['username'],
                                     self.wrong_admin['token'])
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
@@ -107,7 +109,7 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user(self.member['username'],
                                     self.member['username'],
                                     self.member['token'])
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
