@@ -2,8 +2,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from main.serializers.user.update import UpdateUserSerializer
-from main.serializers.user.delete import DeleteUserSerializer
+from main.serializers.user.updateuserserializer import UpdateUserSerializer
+from main.serializers.user.deleteuserserializer import DeleteUserSerializer
 
 
 class UsersAPIView(APIView):

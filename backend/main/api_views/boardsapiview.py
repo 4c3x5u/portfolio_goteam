@@ -2,9 +2,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from main.serializers.board.create import CreateBoardSerializer
-from main.serializers.board.update import UpdateBoardSerializer
-from main.serializers.board.delete import DeleteBoardSerializer
+from main.serializers.board.createboardserializer import CreateBoardSerializer
+from main.serializers.board.updateboardserializer import UpdateBoardSerializer
+from main.serializers.board.deleteboardserializer import DeleteBoardSerializer
 
 
 class BoardsAPIView(APIView):
