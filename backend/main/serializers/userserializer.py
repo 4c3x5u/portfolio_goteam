@@ -8,7 +8,9 @@ class UserSerializer(serializers.ModelSerializer):
         max_length=35,
         error_messages={
             'blank': 'Username cannot be empty.',
-            'max_length': 'Username cannot be longer than 35 characters.'
+            'null': 'Username cannot be null.',
+            'max_length': 'Username cannot be longer than 35 characters.',
+            'does_not_exist': 'User not found'
         }
     )
     password = serializers.CharField(

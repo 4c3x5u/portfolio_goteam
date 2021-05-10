@@ -25,7 +25,7 @@ const TeamControlsMenuItem = ({
 
   const toggleActive = () => (
     UsersAPI
-      .post(username, activeBoard.id, !isActive)
+      .patch(username, activeBoard.id, !isActive)
       .then(() => loadBoard())
       .catch((err) => {
         notify(
