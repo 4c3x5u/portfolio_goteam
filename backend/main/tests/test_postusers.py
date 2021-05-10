@@ -6,7 +6,7 @@ from ..validation.val_auth import \
     not_authenticated_response, not_authorized_response
 
 
-class PostUsersTests(APITestCase):
+class PatchUserTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
         self.admin = create_admin(team)
@@ -24,19 +24,21 @@ class PostUsersTests(APITestCase):
                      'mhbykO'
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
-    def postUser(self, user_data, auth_user, auth_token):
-        return self.client.post(f'/users/',
-                                user_data,
-                                format='json',
-                                HTTP_AUTH_USER=auth_user,
-                                HTTP_AUTH_TOKEN=auth_token)
+    def patchUser(self, username, user_data, auth_user, auth_token):
+        return self.client.patch(f'/users/?username={username}',
+                                 user_data,
+                                 format='json',
+                                 HTTP_AUTH_USER=auth_user,
+                                 HTTP_AUTH_TOKEN=auth_token)
 
     def test_success(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            self.admin['username'],
+            self.admin['token']
+        )
+        print(f'SUCCESSRESPONSE: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': f'{self.user.username} is removed from {self.board.name}.'
@@ -47,23 +49,23 @@ class PostUsersTests(APITestCase):
         )
 
     def test_username_blank(self):
-        response = self.postUser({
-            'username': '',
+        response = self.patchUser('', {
             'board_id': self.board.id,
             'is_active': False
         }, self.admin['username'], self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Username cannot be empty.',
-                                    code='blank')
+            'username': [ErrorDetail(string='Username cannot be empty.',
+                                     code='blank')]
         })
 
     def test_user_not_found(self):
-        response = self.postUser({
-            'username': 'adksjhdsak',
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            'adksjhdsak',
+            {'board_id': self.board.id, 'is_active': False},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'username': ErrorDetail(string='User not found.',
@@ -71,35 +73,38 @@ class PostUsersTests(APITestCase):
         })
 
     def test_board_id_blank(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': '',
-            'is_active': False
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': '', 'is_active': False},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board ID cannot be empty.',
-                                    code='blank')
+            'board_id': [ErrorDetail(string='Board ID cannot be null.',
+                                     code='null')]
         })
 
     def test_board_id_invalid(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': 'sakdjas',
-            'is_active': False
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': 'sakdjas', 'is_active': False},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board ID must be a number.',
-                                    code='invalid')
+            'board_id': [ErrorDetail(string='Board ID must be a number.',
+                                     code='invalid')]
         })
 
     def test_board_not_found(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': '12301024',
-            'is_active': False
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': '12301024', 'is_active': False},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data, {
             'board_id': ErrorDetail(string='Board not found.',
@@ -107,80 +112,88 @@ class PostUsersTests(APITestCase):
         })
 
     def test_is_active_blank(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': ''
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': ''},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 400)
+        print(f'isactiveblank {response.data}')
         self.assertEqual(response.data, {
-            'is_active': ErrorDetail(string='Is Active cannot be empty.',
-                                     code='blank')
+            'is_active': [ErrorDetail(string='Is Active must be a boolean.',
+                                      code='invalid')]
         })
 
     def test_is_active_invalid(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': 'sdaa'
-        }, self.admin['username'], self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': 'sdaa'},
+            self.admin['username'],
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'is_active': ErrorDetail(string='Is Active must be a boolean.',
-                                     code='invalid')
+            'is_active': [ErrorDetail(string='Is Active must be a boolean.',
+                                      code='invalid')]
         })
 
-
     def test_auth_token_empty(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.admin['username'], '')
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            self.admin['username'],
+            ''
+        )
+        print(f'AUTHTOKENEMPTYRESPONSEDATA: {response.data}')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_token_invalid(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.admin['username'], 'kasjdaksdjalsdkjasd')
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            self.admin['username'],
+            'kasjdaksdjalsdkjasd'
+        )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_user_blank(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, '', self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            '',
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_auth_user_invalid(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, 'invaliditto', self.admin['token'])
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            'invaliditto',
+            self.admin['token']
+        )
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data, not_authenticated_response.data)
 
     def test_wrong_team(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.wrong_admin['username'], self.wrong_admin['token'])
-        self.assertEqual(response.status_code, 403)
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            self.wrong_admin['username'],
+            self.wrong_admin['token'])
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)
 
     def test_unauthorized(self):
-        response = self.postUser({
-            'username': self.user.username,
-            'board_id': self.board.id,
-            'is_active': False
-        }, self.username, self.token)
-        self.assertEqual(response.status_code, 403)
+        response = self.patchUser(
+            self.user.username,
+            {'board_id': self.board.id, 'is_active': False},
+            self.username,
+            self.token
+        )
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(response.data, not_authorized_response.data)

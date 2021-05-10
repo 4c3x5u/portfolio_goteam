@@ -8,7 +8,7 @@ from ..validation.val_auth import authenticate, authorize, \
 from ..validation.val_column import validate_column_id
 
 
-@api_view(['GET', 'PATCH'])
+@api_view(['PATCH'])
 def columns(request):
     username = request.META.get('HTTP_AUTH_USER')
     token = request.META.get('HTTP_AUTH_TOKEN')
