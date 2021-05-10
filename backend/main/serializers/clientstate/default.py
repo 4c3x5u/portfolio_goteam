@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from ..models import User, Board
-from ..validation.val_auth import authentication_error, authorization_error
-from ..validation.val_custom import CustomAPIException
-from ..util import create_board
+from main.models import User, Board
+from main.validation.auth import authentication_error, authorization_error
+from main.validation.custom import CustomAPIException
+from main.util import create_board
 import bcrypt
 import status
 

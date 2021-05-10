@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
 from ..util import create_member
-from ..validation.val_auth import not_authenticated_response
+from ..validation.auth import not_authenticated_response
 
 
 class GetColumnsTests(APITestCase):

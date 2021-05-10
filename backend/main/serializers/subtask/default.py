@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Subtask
+from main.models import Subtask
 
 
 class SubtaskSerializer(serializers.ModelSerializer):

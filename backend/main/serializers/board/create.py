@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from .boardserializer import BoardSerializer
-from ..validation.val_auth import authenticate_custom, authorization_error, \
+from main.serializers.board.default import BoardSerializer
+from main.validation.auth import authenticate_custom, authorization_error, \
     authorize_custom
-from ..util import create_board
+from main.util import create_board
 
 
 class CreateBoardSerializer(BoardSerializer):

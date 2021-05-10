@@ -1,11 +1,11 @@
 from rest_framework import serializers
 import status
 
-from .subtaskserializer import SubtaskSerializer
-from ..models import Subtask
-from ..validation.val_auth import authenticate_custom, authorize_custom, \
+from main.serializers.subtask.default import SubtaskSerializer
+from main.models import Subtask
+from main.validation.auth import authenticate_custom, authorize_custom, \
     authorization_error
-from ..validation.val_custom import CustomAPIException
+from main.validation.custom import CustomAPIException
 
 
 class UpdateSubtaskSerializer(SubtaskSerializer):

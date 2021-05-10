@@ -2,12 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.createboardserializer import CreateBoardSerializer
-from ..serializers.updateboardserializer import UpdateBoardSerializer
-from ..serializers.deleteboardserializer import DeleteBoardSerializer
+from main.serializers.board.create import CreateBoardSerializer
+from main.serializers.board.update import UpdateBoardSerializer
+from main.serializers.board.delete import DeleteBoardSerializer
 
 
-class Boards(APIView):
+class BoardsAPIView(APIView):
     @staticmethod
     def post(request):
         serializer = CreateBoardSerializer(data={

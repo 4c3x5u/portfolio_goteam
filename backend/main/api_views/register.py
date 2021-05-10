@@ -2,10 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.registerserializer import RegisterSerializer
+from main.serializers.auth.register import RegisterSerializer
 
 
-class Register(APIView):
+class RegisterAPIView(APIView):
     @staticmethod
     def post(request):
         invite_code = request.query_params.get('invite_code')

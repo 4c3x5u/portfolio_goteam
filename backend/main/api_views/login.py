@@ -2,10 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.loginserializer import LoginSerializer
+from main.serializers.auth.login import LoginSerializer
 
 
-class Login(APIView):
+class LoginAPIView(APIView):
     @staticmethod
     def post(request):
         serializer = LoginSerializer(data=request.data)

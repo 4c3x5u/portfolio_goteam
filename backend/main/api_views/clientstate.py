@@ -2,10 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.clientstateserializer import ClientStateSerializer
+from main.serializers.clientstate.default import ClientStateSerializer
 
 
-class ClientState(APIView):
+class ClientStateAPIView(APIView):
     @staticmethod
     def get(request):
         serializer = ClientStateSerializer(data={

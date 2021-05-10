@@ -1,24 +1,24 @@
 from rest_framework import serializers
 import status
 
-from .boardserializer import BoardSerializer
-from ..validation.val_auth import authenticate_custom, authorization_error, \
-    authorize_custom
-from ..validation.val_custom import CustomAPIException
-from ..models import Board
+from main.serializers.board.default import BoardSerializer
+from main.validation.auth import authenticate_custom, authorization_error
+from main.validation.custom import CustomAPIException
+from main.models import Board
 
 
-class DeleteBoardSerializer(serializers.ModelSerializer):
-    auth_user = serializers.CharField(allow_blank=True)
-    auth_token = serializers.CharField(allow_blank=True)
+class UpdateBoardSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(error_messages={
         'null': 'Board ID cannot be null.',
         'invalid': 'Board ID must be a number.'
     })
+    payload = serializers.DictField(allow_empty=False)
+    auth_user = serializers.CharField(allow_blank=True)
+    auth_token = serializers.CharField(allow_blank=True)
 
     class Meta:
         model = BoardSerializer.Meta.model
-        fields = 'id', 'auth_user', 'auth_token',
+        fields = 'id', 'payload', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
         # authenticate
@@ -28,10 +28,8 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
         if authentication_error:
             raise authentication_error
 
-        # authorize
-        authorize_error = authorize_custom(user.username)
-        if authorize_error:
-            raise authorize_error
+        if not user.is_admin:
+            raise authorization_error
 
         try:
             board = Board.objects.get(id=attrs.get('id'))
@@ -43,17 +41,12 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
         if board.team_id != user.team_id:
             raise authorization_error
 
-        return board
-
-    def delete(self):
-        self.instance = {'id': self.validated_data.id}
-        return self.validated_data.delete()
+        payload = attrs.get('payload')
+        board_serializer = BoardSerializer(board, data=payload, partial=True)
+        if board_serializer.is_valid(raise_exception=True):
+            self.instance = board
+            return payload
 
     def to_representation(self, instance):
-        return {
-            'msg': 'Board deleted successfully.',
-            'id': instance.get('id'),
-        }
-
-
-
+        return {'msg': 'Board updated successfuly.',
+                'id': instance.id}
