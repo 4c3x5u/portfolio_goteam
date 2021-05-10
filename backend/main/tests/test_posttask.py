@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
 from ..util import create_member, create_admin
 from ..validation.auth import \
-    not_authenticated_response, not_authorized_response
+    not_authenticated_response, authorization_error
 
 
 class CreateTaskTests(APITestCase):
@@ -18,6 +18,7 @@ class CreateTaskTests(APITestCase):
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def help_test_success(self, response_data, status_code, request_data):
+        print(f'§responsedata: {response_data}')
         self.assertEqual(status_code, 201)
         self.assertEqual(response_data.get('msg'), 'Task creation successful.')
         task_id = response_data.get('task_id')
@@ -35,6 +36,7 @@ class CreateTaskTests(APITestCase):
                         'column': self.column.id}
         response = self.client.post(self.endpoint,
                                     request_data,
+                                    format='json',
                                     HTTP_AUTH_USER=self.admin['username'],
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.help_test_success(response.data,
@@ -86,7 +88,7 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'title': [ErrorDetail(string='Title cannot be empty.',
+            'title': [ErrorDetail(string='Title cannot be blank.',
                                   code='blank')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
@@ -130,13 +132,13 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'subtask': [
-                {'title': [
-                    ErrorDetail(string='Subtask titles cannot be longer than '
-                                       '50 characters.',
-                                code='max_length')
-                ]}
-            ]
+            'subtask': [{
+                'title': [ErrorDetail(
+                    string='Subtask titles cannot be longer than 50 '
+                           'characters.',
+                    code='max_length'
+                )],
+            }]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -151,8 +153,8 @@ class CreateTaskTests(APITestCase):
                                     HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Column ID cannot be empty.',
-                                     code='blank')
+            'column': [ErrorDetail(string='Column cannot be null.',
+                                   code='null')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -217,8 +219,8 @@ class CreateTaskTests(APITestCase):
                                     request_data,
                                     HTTP_AUTH_USER=self.wrong_admin['username'],
                                     HTTP_AUTH_TOKEN=self.wrong_admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, authorization_error.detail)
         self.assertEqual(Task.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -230,6 +232,6 @@ class CreateTaskTests(APITestCase):
                                     request_data,
                                     HTTP_AUTH_USER=self.member['username'],
                                     HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, authorization_error.detail)
         self.assertEqual(Task.objects.count(), initial_count)
