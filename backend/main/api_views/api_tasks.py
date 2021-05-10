@@ -4,13 +4,13 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ErrorDetail
 import status
 from ..models import Task, Column
-from main.serializers.task.base import TaskSerializer
-from main.serializers.subtask.base import SubtaskSerializer
+from main.serializers.task.taskserializer import TaskSerializer
+from main.serializers.subtask.subtaskserializer import SubtaskSerializer
 from ..validation.auth import \
     authenticate, authorize, not_authenticated_response
 from ..validation.column import validate_column_id
 from ..validation.task import validate_task_id
-from ..serializers.task.create import CreateTaskSerializer
+from ..serializers.task.createtaskserializer import CreateTaskSerializer
 
 
 class TasksAPIView(APIView):

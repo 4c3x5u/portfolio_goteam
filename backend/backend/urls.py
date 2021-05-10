@@ -1,12 +1,12 @@
 from django.urls import path
-from main.api_views.register import RegisterAPIView
-from main.api_views.login import LoginAPIView
-from main.api_views.users import UsersAPIView
-from main.api_views.boards import BoardsAPIView
-from main.api_views.columns import ColumnsAPIView
+from main.api_views.registerapiview import RegisterAPIView
+from main.api_views.loginapiview import LoginAPIView
+from main.api_views.usersapiview import UsersAPIView
+from main.api_views.boardsapiview import BoardsAPIView
+from main.api_views.columnsapiview import ColumnsAPIView
 from main.api_views.api_tasks import TasksAPIView
-from main.api_views.subtasks import SubtasksAPIView
-from main.api_views.clientstate import ClientStateAPIView
+from main.api_views.subtasksapiview import SubtasksAPIView
+from main.api_views.clientstateapiview import ClientStateAPIView
 
 urlpatterns = [
     path('register/', RegisterAPIView.as_view(), name='register'),

@@ -2,15 +2,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from main.serializers.subtask.update import UpdateSubtaskSerializer
+from ..serializers.column.updatecolumnserializer import UpdateColumnSerializer
 
 
-class SubtasksAPIView(APIView):
+class ColumnsAPIView(APIView):
     @staticmethod
     def patch(request):
-        serializer = UpdateSubtaskSerializer(data={
-            'id': request.query_params.get('id'),
-            'data': request.data,
+        serializer = UpdateColumnSerializer(data={
+            'column': request.query_params.get('id'),
+            'tasks': request.data,
             'auth_user': request.META.get('HTTP_AUTH_USER'),
             'auth_token': request.META.get('HTTP_AUTH_TOKEN')
         })

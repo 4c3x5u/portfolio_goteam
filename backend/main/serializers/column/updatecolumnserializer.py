@@ -1,8 +1,8 @@
 from rest_framework import serializers
 import status
 
-from .base import ColumnSerializer
-from ..task.base import TaskSerializer
+from .columnserializer import ColumnSerializer
+from ..task.taskserializer import TaskSerializer
 from ...models import Column, Task
 from ...validation.auth import \
     authenticate_custom, authorize_custom, authorization_error

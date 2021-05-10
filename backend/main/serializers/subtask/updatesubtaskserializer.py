@@ -1,7 +1,7 @@
 from rest_framework import serializers
 import status
 
-from main.serializers.subtask.base import SubtaskSerializer
+from main.serializers.subtask.subtaskserializer import SubtaskSerializer
 from main.models import Subtask
 from main.validation.auth import authenticate_custom, authorize_custom, \
     authorization_error

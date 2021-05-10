@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from main.serializers.auth.register import RegisterSerializer
+from main.serializers.auth.registerserializer import RegisterSerializer
 
 
 class RegisterAPIView(APIView):
