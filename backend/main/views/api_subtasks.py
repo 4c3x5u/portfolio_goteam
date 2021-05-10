@@ -5,7 +5,7 @@ import status
 from main.serializers.subtask.ser_subtask_update import UpdateSubtaskSerializer
 
 
-class SubtasksApi(APIView):
+class SubtasksApiView(APIView):
     @staticmethod
     def patch(request):
         serializer = UpdateSubtaskSerializer(data={

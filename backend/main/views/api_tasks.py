@@ -12,7 +12,7 @@ from ..validation.val_task import validate_task_id
 from ..serializers.task.ser_task_create import CreateTaskSerializer
 
 
-class TasksApi(APIView):
+class TasksApiView(APIView):
     @staticmethod
     def post(request):
         serializer = CreateTaskSerializer(

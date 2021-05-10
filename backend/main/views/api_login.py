@@ -5,7 +5,7 @@ import status
 from main.serializers.auth.ser_login import LoginSerializer
 
 
-class LoginApi(APIView):
+class LoginApiView(APIView):
     @staticmethod
     def post(request):
         serializer = LoginSerializer(data=request.data)
