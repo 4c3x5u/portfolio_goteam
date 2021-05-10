@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from ..models import Column
+from main.models import Column
 
 
 class ColumnSerializer(ModelSerializer):

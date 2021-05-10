@@ -1,10 +1,10 @@
 from rest_framework import serializers
 import status
 
-from .userserializer import UserSerializer
-from ..validation.val_auth import authenticate_custom, authorization_error
-from ..validation.val_custom import CustomAPIException
-from ..models import User, Board
+from main.serializers.user.default import UserSerializer
+from main.validation.auth import authenticate_custom, authorization_error
+from main.validation.custom import CustomAPIException
+from main.models import User, Board
 
 
 class UpdateUserSerializer(UserSerializer):

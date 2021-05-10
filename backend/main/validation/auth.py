@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 import bcrypt
 import status
-from .val_custom import CustomAPIException
+from .custom import CustomAPIException
 
 
 # TODO: delete once you moved on to the customvalidation approach

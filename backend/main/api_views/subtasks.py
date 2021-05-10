@@ -2,10 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import status
 
-from ..serializers.updatesubtaskserializer import UpdateSubtaskSerializer
+from main.serializers.subtask.update import UpdateSubtaskSerializer
 
 
-class Subtasks(APIView):
+class SubtasksAPIView(APIView):
     @staticmethod
     def patch(request):
         serializer = UpdateSubtaskSerializer(data={

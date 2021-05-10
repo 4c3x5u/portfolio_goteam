@@ -4,7 +4,7 @@ import status
 
 from ..models import Board, Team
 from ..util import create_admin, create_member
-from ..validation.val_auth import \
+from ..validation.auth import \
     not_authenticated_response, authorization_error
 
 

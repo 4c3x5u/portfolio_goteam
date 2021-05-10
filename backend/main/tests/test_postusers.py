@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
 from ..util import create_admin
-from ..validation.val_auth import \
+from ..validation.auth import \
     not_authenticated_response, not_authorized_response
 
 
