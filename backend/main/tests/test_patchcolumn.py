@@ -3,7 +3,8 @@ from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
 from ..util import create_admin, create_member
 from ..validation.auth import \
-    not_authenticated_response, not_authorized_response
+    not_authenticated_response, not_authorized_response, authorization_error, \
+    authentication_error
 
 
 class UpdateColumns(APITestCase):
@@ -14,25 +15,18 @@ class UpdateColumns(APITestCase):
         board = Board.objects.create(name='My Board', team=team)
         self.column = Column.objects.create(order=0, board=board)
         self.another_column = Column.objects.create(order=1, board=board)
-        self.tasks = [
-            Task.objects.create(
-                title=str(i),
-                order=i,
-                column=self.column
-            ) for i in range(0, 5)
-        ]
+        self.tasks = [Task.objects.create(
+            title=str(i), order=i, column=self.column
+        ) for i in range(0, 5)]
         self.admin = create_admin(team)
         self.member = create_member(team)
         self.assigned_member = create_member(team, '1')
-        self.task_data = list(map(
-            lambda task: {
-                'id': task.id,
-                'title': task.title,
-                'order': 5 - task.order,
-                'user': self.assigned_member['username']
-            },
-            self.tasks
-        ))
+        self.task_data = [{
+            'id': task.id,
+            'title': task.title,
+            'order': 5 - task.order,
+            'user': self.assigned_member['username']
+        } for task in self.tasks]
         self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def help_test_success(self, user):
@@ -41,6 +35,7 @@ class UpdateColumns(APITestCase):
                                      format='json',
                                      HTTP_AUTH_USER=user['username'],
                                      HTTP_AUTH_TOKEN=user['token'])
+        print(f'§responsedata {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Column and all its tasks updated successfully.',
@@ -66,8 +61,8 @@ class UpdateColumns(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'column_id': ErrorDetail(string='Column ID cannot be empty.',
-                                     code='blank')
+            'column': [ErrorDetail(string='Column ID cannot be null.',
+                                   code='null')]
         })
         new_tasks = Task.objects.filter(column_id=self.column.id)
         for i in range(0, 5):
@@ -140,8 +135,8 @@ class UpdateColumns(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, authorization_error.detail)
 
     def test_not_authorized(self):
         response = self.client.patch(
@@ -151,6 +146,6 @@ class UpdateColumns(APITestCase):
             HTTP_AUTH_USER=self.member['username'],
             HTTP_AUTH_TOKEN=self.member['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.data, authorization_error.detail)
 

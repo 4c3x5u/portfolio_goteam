@@ -3,7 +3,7 @@ import bcrypt
 import status
 
 from main.models import User, Team
-from main.serializers.user.default import UserSerializer
+from main.serializers.user.base import UserSerializer
 from main.validation.custom import CustomAPIException
 
 
