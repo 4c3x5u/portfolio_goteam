@@ -2,8 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task
 from ..util import create_admin, create_member
-from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response
+from ..validation.val_auth import authentication_error, authorization_error
 
 
 class DeleteTaskTests(APITestCase):
@@ -28,7 +27,7 @@ class DeleteTaskTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Task deleted successfully.',
-            'id': str(self.task.id),
+            'id': self.task.id
         })
         self.assertEqual(Task.objects.count(), initial_count - 1)
 
@@ -39,8 +38,8 @@ class DeleteTaskTests(APITestCase):
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'task_id': ErrorDetail(string='Task ID cannot be empty.',
-                                   code='blank')
+            'task': [ErrorDetail(string='Task ID cannot be null.',
+                                 code='null')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -50,9 +49,10 @@ class DeleteTaskTests(APITestCase):
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
+        print(f'id invalid response data {response.data}')
         self.assertEqual(response.data, {
-            'task_id': ErrorDetail(string='Task ID must be a number.',
-                                   code='invalid')
+            'task': [ErrorDetail(string='Task ID must be a number.',
+                                 code='incorrect_type')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -61,10 +61,10 @@ class DeleteTaskTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}123141',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'task_id': ErrorDetail(string='Task not found.',
-                                   code='not_found')
+            'task': [ErrorDetail(string='Task does not exist.',
+                                 code='does_not_exist')]
         })
         self.assertEqual(Task.objects.count(), initial_count)
 
@@ -72,8 +72,9 @@ class DeleteTaskTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}{self.task.id}',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN='')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.delete(
@@ -81,22 +82,25 @@ class DeleteTaskTests(APITestCase):
             HTTP_AUTH_USER=self.admin['username'],
             HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos'
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_blank(self):
         response = self.client.delete(f'{self.endpoint}{self.task.id}',
                                       HTTP_AUTH_USER='',
                                       HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.delete(f'{self.endpoint}{self.task.id}',
                                       HTTP_AUTH_USER='invalidio',
                                       HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_wrong_team(self):
         initial_count = Board.objects.count()
@@ -105,14 +109,15 @@ class DeleteTaskTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_unauthorized(self):
         response = self.client.delete(f'{self.endpoint}{self.task.id}',
                                       HTTP_AUTH_USER=self.member['username'],
                                       HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
 
