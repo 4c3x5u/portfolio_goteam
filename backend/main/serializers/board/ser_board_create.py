@@ -32,14 +32,9 @@ class CreateBoardSerializer(BoardSerializer):
                 'team_admin': team.user_set.get(username=user.username)}
 
     def create(self, validated_data):
-        board, create_error = create_board(
-            name=validated_data.get('board_name'),
-            team_id=validated_data.get('team_id'),
-            team_admin=validated_data.get('team_admin')
-        )
-        if create_error:
-            raise create_error
-        return board
+        return create_board(name=validated_data.get('board_name'),
+                            team_id=validated_data.get('team_id'),
+                            team_admin=validated_data.get('team_admin'))
 
     def to_representation(self, instance):
         return {'msg': 'Board creation successful.',

@@ -55,8 +55,10 @@ class RegisterSerializer(UserSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
-        if validated_data.get('is_admin') and not validated_data.get('team'):
-            validated_data['team'] = Team.objects.create()
+        if validated_data.get('is_admin'):
+            if not validated_data.get('team'):
+                validated_data['team'] = Team.objects.create()
+
 
         validated_data['password'] = bcrypt.hashpw(
             bytes(validated_data['password'], 'utf-8'),
