@@ -1,5 +1,5 @@
 from rest_framework.serializers import ValidationError
-from main.models import User
+from main.models import User, Task, Subtask
 from main.serializers.board.ser_board import BoardSerializer
 from main.serializers.column.ser_column import ColumnSerializer
 import bcrypt
@@ -65,4 +65,27 @@ def create_board(name, team_id, team_admin):  # -> (board, response)
     column_serializer.save()
 
     return board
+
+
+def create_tutorial_tasks(user, column):
+    tasks = [
+        Task(title='Drag and Drop Controls',
+             description='Complete this task to gain familiarity with the '
+                         'drag and drop controls.',
+             order=0,
+             column=column,
+             user=user)
+    ]
+    Task.objects.bulk_create(tasks)
+
+    subtasks = [
+        Subtask(title='Drag and drop this task to the GO column.',
+                order=0,
+                task=tasks[0]),
+        Subtask(title='Drag and drop this task to the DONE column.',
+                order=1,
+                task=tasks[0])
+    ]
+    Subtask.objects.bulk_create(subtasks)
+
 
