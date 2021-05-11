@@ -29,7 +29,7 @@ class Column(Model):
 
 class Task(Model):
     id = AutoField(primary_key=True, db_index=True)
-    title = CharField(max_length=50)
+    title = CharField(max_length=100)
     description = TextField(blank=True, null=True)
     order = IntegerField()
     column = ForeignKey(Column, on_delete=CASCADE, db_index=True)
@@ -38,7 +38,7 @@ class Task(Model):
 
 class Subtask(Model):
     id = AutoField(primary_key=True, db_index=True)
-    title = CharField(max_length=50)
+    title = CharField(max_length=100)
     order = IntegerField()
     task = ForeignKey(Task, on_delete=CASCADE, db_index=True)
     done = BooleanField(default=False)

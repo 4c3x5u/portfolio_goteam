@@ -74,17 +74,42 @@ def create_tutorial_tasks(user, column):
                          'drag and drop controls.',
              order=0,
              column=column,
-             user=user)
+             user=user),
+        Task(title='Creating Tasks',
+             description='Complete this task to gain familiarity with the '
+                         'task creation process.',
+             order=1,
+             column=column,
+             user=user),
     ]
     Task.objects.bulk_create(tasks)
 
     subtasks = [
+        # 'Drag and Drop Controls' subtasks
         Subtask(title='Drag and drop this task to the GO column.',
                 order=0,
                 task=tasks[0]),
         Subtask(title='Drag and drop this task to the DONE column.',
                 order=1,
-                task=tasks[0])
+                task=tasks[0]),
+
+        # 'Creating Tasks' subtasks
+        Subtask(title='Move this task to the GO column.',
+                order=0,
+                task=tasks[1]),
+        Subtask(title='Activate task creation dialogue by clicking the plus '
+                      'button inside the INBOX column.',
+                order=1,
+                task=tasks[1]),
+        Subtask(title='Give the task a title.', order=2, task=tasks[1]),
+        Subtask(title='Give the task a description.', order=3, task=tasks[1]),
+        Subtask(title='Add a couple of subtasks to the task.',
+                order=4,
+                task=tasks[1]),
+        Subtask(title='Click the CREATE button.', order=5, task=tasks[1]),
+        Subtask(title='Move this task to the done column.',
+                order=6,
+                task=tasks[1]),
     ]
     Subtask.objects.bulk_create(subtasks)
 
