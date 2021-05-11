@@ -2,7 +2,7 @@ from rest_framework import serializers
 import status
 
 from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_auth import authenticate, authorization_error
+from main.validation.val_auth import authenticate, authorize
 from main.validation.val_custom import CustomAPIException
 from main.models import User
 
@@ -26,27 +26,16 @@ class DeleteUserSerializer(UserSerializer):
         fields = 'user', 'auth_user', 'auth_token',
 
     def validate(self, attrs):
-        auth_user = attrs.pop('auth_user')
-        auth_token = attrs.pop('auth_token')
-        authenticated_user, authentication_error = \
-            authenticate(auth_user, auth_token)
-
-        if authentication_error:
-            raise authentication_error
-
-        if not authenticated_user.is_admin:
-            raise authorization_error
-
+        authenticated_user = authenticate(attrs.pop('auth_user'),
+                                          attrs.pop('auth_token'))
         user = attrs.get('user')
-        if user.team_id != authenticated_user.team_id:
-            raise authorization_error
+        authorize(authenticated_user, user.team_id)
         if user.is_admin:
             raise CustomAPIException(
                 'username',
                 'Admins cannot be deleted from their teams.',
                 status.HTTP_403_FORBIDDEN
             )
-
         return user
 
     def delete(self):

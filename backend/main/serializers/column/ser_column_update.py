@@ -27,21 +27,11 @@ class UpdateColumnSerializer(ColumnSerializer):
         fields = 'column', 'tasks', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
-        username = attrs.pop('auth_user')
-        token = attrs.pop('auth_token')
-
-        user, authentication_error = authenticate(username, token)
-        if authentication_error:
-            raise authentication_error
+        user = authenticate(attrs.pop('auth_user'), attrs.pop('auth_token'))
         attrs['user'] = user
 
-        local_authorization_error = authorize(user.username)
-        if local_authorization_error:
-            # save it for later, as some non-admin users can also use this
-            attrs['local_authorization_error'] = local_authorization_error
-
         column = attrs.pop('column')
-        if column.board.team_id != user.team_id:
+        if user.team_id != column.board.team_id:
             raise authorization_error
 
         self.instance = column
@@ -60,13 +50,10 @@ class UpdateColumnSerializer(ColumnSerializer):
             existing_task = board_tasks.get(id=task_id)
 
             user = validated_data.get('user')
-            local_authorization_error = validated_data.get(
-                'local_authorization_error'
-            )
-            if local_authorization_error \
+            if not user.is_admin \
                     and task.get('user') != user.username \
                     and instance.id != existing_task.column_id:
-                raise local_authorization_error
+                raise authorization_error
 
             serializer = TaskSerializer(existing_task,
                                         data={**task, 'column': instance.id},
