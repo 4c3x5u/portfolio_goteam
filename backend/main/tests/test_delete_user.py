@@ -2,8 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
 from ..util import create_admin, create_member
-from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response
+from ..validation.val_auth import authentication_error, authorization_error
 
 
 class DeleteUserTests(APITestCase):
@@ -69,47 +68,51 @@ class DeleteUserTests(APITestCase):
         response = self.delete_user(self.member['username'],
                                     self.admin['username'],
                                     '')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_auth_token_invalid(self):
         response = self.delete_user(self.member['username'],
                                     self.admin['username'],
                                     'kasjdaksdjalsdkjasd')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_auth_user_blank(self):
         response = self.delete_user(self.member['username'],
                                     '',
                                     self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_auth_user_invalid(self):
         response = self.delete_user(self.member['username'],
                                     'invaliditto',
                                     self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_wrong_team(self):
         response = self.delete_user(self.member['username'],
                                     self.wrong_admin['username'],
                                     self.wrong_admin['token'])
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 
     def test_unauthorized(self):
         response = self.delete_user(self.member['username'],
                                     self.member['username'],
                                     self.member['token'])
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))
 

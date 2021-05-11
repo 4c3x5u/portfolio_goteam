@@ -4,8 +4,7 @@ import status
 
 from ..models import Board, Team
 from ..util import create_admin, create_member
-from ..validation.val_auth import \
-    not_authenticated_response, authorization_error
+from ..validation.val_auth import authentication_error, authorization_error
 
 
 class PatchBoardTests(APITestCase):
@@ -96,8 +95,8 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
         self.assertEqual(response.status_code,
-                         not_authenticated_response.status_code)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -106,8 +105,8 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
         self.assertEqual(response.status_code,
-                         not_authenticated_response.status_code)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_empty(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -116,8 +115,8 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN='',
                                      format='json')
         self.assertEqual(response.status_code,
-                         not_authenticated_response.status_code)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -126,8 +125,8 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpajfosia',
                                      format='json')
         self.assertEqual(response.status_code,
-                         not_authenticated_response.status_code)
-        self.assertEqual(response.data, not_authenticated_response.data)
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_wrong_team(self):
         initial_count = Board.objects.count()
@@ -138,7 +137,7 @@ class PatchBoardTests(APITestCase):
             HTTP_AUTH_TOKEN=self.wrong_admin['token'],
             format='json'
         )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, authorization_error.status_code)
         self.assertEqual(response.data, authorization_error.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -148,5 +147,5 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'],
                                      format='json')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, authorization_error.status_code)
         self.assertEqual(response.data, authorization_error.detail)

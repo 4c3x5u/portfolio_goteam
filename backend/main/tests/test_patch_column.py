@@ -2,9 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
 from ..util import create_admin, create_member
-from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response, authorization_error, \
-    authentication_error
+from ..validation.val_auth import authentication_error, authorization_error
 
 
 class UpdateColumns(APITestCase):
@@ -95,8 +93,9 @@ class UpdateColumns(APITestCase):
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
@@ -104,8 +103,9 @@ class UpdateColumns(APITestCase):
                                      format='json',
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_blank(self):
         response = self.client.patch(
@@ -115,8 +115,9 @@ class UpdateColumns(APITestCase):
             HTTP_AUTH_USER='',
             HTTP_AUTH_TOKEN=self.admin['token']
         )
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
@@ -124,8 +125,9 @@ class UpdateColumns(APITestCase):
                                      format='json',
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_wrong_team(self):
         response = self.client.patch(
@@ -135,7 +137,7 @@ class UpdateColumns(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, authorization_error.status_code)
         self.assertEqual(response.data, authorization_error.detail)
 
     def test_not_authorized(self):
@@ -146,6 +148,5 @@ class UpdateColumns(APITestCase):
             HTTP_AUTH_USER=self.member['username'],
             HTTP_AUTH_TOKEN=self.member['token']
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, authorization_error.status_code)
         self.assertEqual(response.data, authorization_error.detail)
-
