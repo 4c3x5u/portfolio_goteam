@@ -11,11 +11,13 @@ class UpdateUserSerializer(UserSerializer):
     """
     Used only for adding/removing a user to/from a board
     """
-    board_id = serializers.IntegerField(error_messages={
-        'blank': 'Board ID cannot be blank.',
-        'null': 'Board ID cannot be null.',
-        'invalid': 'Board ID must be a number.'
-    })
+    board = serializers.PrimaryKeyRelatedField(
+        queryset=Board.objects.prefetch_related('user', 'team__user_set')
+                              .all(),
+        error_messages={'blank': 'Board ID cannot be blank.',
+                        'null': 'Board ID cannot be null.',
+                        'invalid': 'Board ID must be a number.'}
+    )
     is_active = serializers.BooleanField(error_messages={
         'blank': 'Is Active cannot be blank.',
         'null': 'Is Active cannot be null.',
@@ -26,20 +28,14 @@ class UpdateUserSerializer(UserSerializer):
 
     class Meta:
         model = UserSerializer.Meta.model
-        fields = 'username', 'board_id', 'is_active', 'auth_user', \
+        fields = 'username', 'board', 'is_active', 'auth_user', \
                  'auth_token',
 
     def validate(self, attrs):
         authenticated_user = authenticate(attrs.pop('auth_user'),
                                           attrs.pop('auth_token'))
 
-        try:
-            board = Board.objects.prefetch_related('user', 'team__user_set') \
-                                 .get(id=attrs.get('board_id'))
-        except Board.DoesNotExist:
-            raise CustomAPIException('board_id',
-                                     'Board not found.',
-                                     status.HTTP_404_NOT_FOUND)
+        board = attrs.get('board')
 
         try:
             user = board.team.user_set.get(username=attrs.get('username'))
@@ -53,7 +49,6 @@ class UpdateUserSerializer(UserSerializer):
         self.instance = {'user': user,
                          'board': board,
                          'is_active': attrs.get('is_active')}
-
         return attrs
 
     def update(self, instance, validated_data):

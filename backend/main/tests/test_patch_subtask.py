@@ -83,8 +83,8 @@ class UpdateSubtaskTests(APITestCase):
                                      format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'id': [ErrorDetail(string='Subtask ID must be a number.',
-                               code='invalid')]
+            'subtask': [ErrorDetail(string='Subtask ID cannot be null.',
+                                    code='null')]
         })
         self.help_test_failure()
 
@@ -121,7 +121,6 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
-        print(f'doneblank: {response.data}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'done': ErrorDetail(string='Done cannot be empty.',

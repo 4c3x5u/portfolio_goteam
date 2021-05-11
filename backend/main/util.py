@@ -1,3 +1,4 @@
+from rest_framework.serializers import ValidationError
 from main.models import User
 from main.serializers.board.ser_board import BoardSerializer
 from main.serializers.column.ser_column import ColumnSerializer
@@ -47,7 +48,7 @@ def create_member(team, username_suffix=''):
 def create_board(name, team_id, team_admin):  # -> (board, response)
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
-        return None, board_serializer.errors
+        raise ValidationError({'boards': board_serializer.errors})
     board = board_serializer.save()
 
     board.user.add(team_admin)
@@ -59,9 +60,9 @@ def create_board(name, team_id, team_admin):  # -> (board, response)
 
     column_serializer = ColumnSerializer(data=column_data, many=True)
     if not column_serializer.is_valid():
-        return board, column_serializer.errors
+        raise ValidationError({'columns': column_serializer.errors})
 
     column_serializer.save()
 
-    return board, None
+    return board
 

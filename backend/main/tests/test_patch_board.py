@@ -40,8 +40,8 @@ class PatchBoardTests(APITestCase):
                                      format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {
-            'id': [ErrorDetail(string='Board ID cannot be null.',
-                               code='null')]
+            'board': [ErrorDetail(string='Board ID cannot be null.',
+                                  code='null')]
         })
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')
@@ -54,8 +54,8 @@ class PatchBoardTests(APITestCase):
                                      format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {
-            'id': [ErrorDetail(string='Board ID must be a number.',
-                               code='invalid')]
+            'board': [ErrorDetail(string='Board ID must be a number.',
+                                  code='incorrect_type')]
         })
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')
@@ -66,10 +66,10 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board not found.',
-                                    code='not_found')
+            'board': [ErrorDetail(string='Board does not exist.',
+                                  code='does_not_exist')]
         })
         self.assertEqual(Board.objects.get(id=self.board.id).name,
                          'Some Board')

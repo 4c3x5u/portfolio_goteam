@@ -34,7 +34,8 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'id': [ErrorDetail(string='Board ID cannot be null.', code='null')]
+            'board': [ErrorDetail(string='Board ID cannot be null.',
+                                  code='null')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -44,9 +45,10 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
+        print(f'idinvalid: {response.data}')
         self.assertEqual(response.data, {
-            'id': [ErrorDetail(string='Board ID must be a number.',
-                               code='invalid')]
+            'board': [ErrorDetail(string='Board ID must be a number.',
+                                  code='incorrect_type')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 
@@ -55,10 +57,10 @@ class DeleteBoardTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}123141',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board not found.',
-                                    code='not_found')
+            'board': [ErrorDetail(string='Board does not exist.',
+                                  code='does_not_exist')]
         })
         self.assertEqual(Board.objects.count(), initial_count)
 

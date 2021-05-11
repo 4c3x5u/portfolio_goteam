@@ -9,7 +9,7 @@ class SubtasksApiView(APIView):
     @staticmethod
     def patch(request):
         serializer = UpdateSubtaskSerializer(data={
-            'id': request.query_params.get('id'),
+            'subtask': request.query_params.get('id'),
             'data': request.data,
             'auth_user': request.META.get('HTTP_AUTH_USER'),
             'auth_token': request.META.get('HTTP_AUTH_TOKEN')
