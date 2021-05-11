@@ -1,9 +1,9 @@
 import bcrypt
 import status
 
-from main.models import User
-from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_custom import CustomAPIException
+from ...models import User
+from ..user.ser_user import UserSerializer
+from ...validation.val_custom import CustomAPIException
 
 
 class LoginSerializer(UserSerializer):

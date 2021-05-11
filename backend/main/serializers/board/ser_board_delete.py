@@ -21,17 +21,7 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
         fields = 'id', 'auth_user', 'auth_token',
 
     def validate(self, attrs):
-        # authenticate
-        auth_user = attrs.get('auth_user')
-        auth_token = attrs.get('auth_token')
-        user, authentication_error = authenticate(auth_user, auth_token)
-        if authentication_error:
-            raise authentication_error
-
-        # authorize
-        authorize_error = authorize(user.username)
-        if authorize_error:
-            raise authorize_error
+        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
 
         try:
             board = Board.objects.get(id=attrs.get('id'))
@@ -40,8 +30,7 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
                                      'Board not found.',
                                      status.HTTP_404_NOT_FOUND)
 
-        if board.team_id != user.team_id:
-            raise authorization_error
+        authorize(user, board.team_id)
 
         return board
 

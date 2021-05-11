@@ -2,7 +2,7 @@ from rest_framework import serializers
 import status
 
 from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_auth import authenticate, authorization_error
+from main.validation.val_auth import authenticate, authorize
 from main.validation.val_custom import CustomAPIException
 from main.models import User, Board
 
@@ -30,41 +30,29 @@ class UpdateUserSerializer(UserSerializer):
                  'auth_token',
 
     def validate(self, attrs):
-        auth_user = attrs.pop('auth_user')
-        auth_token = attrs.pop('auth_token')
-        authenticated_user, authentication_error = \
-            authenticate(auth_user, auth_token)
-
-        if authentication_error:
-            raise authentication_error
-
-        if not authenticated_user.is_admin:
-            raise authorization_error
+        authenticated_user = authenticate(attrs.pop('auth_user'),
+                                          attrs.pop('auth_token'))
 
         try:
-            board = Board.objects.prefetch_related(
-                'user'
-            ).get(id=attrs.get('board_id'))
+            board = Board.objects.prefetch_related('user', 'team__user_set') \
+                                 .get(id=attrs.get('board_id'))
         except Board.DoesNotExist:
             raise CustomAPIException('board_id',
                                      'Board not found.',
                                      status.HTTP_404_NOT_FOUND)
 
         try:
-            user = User.objects.get(username=attrs.get('username'))
+            user = board.team.user_set.get(username=attrs.get('username'))
         except User.DoesNotExist:
             raise CustomAPIException('username',
                                      'User not found.',
                                      status.HTTP_404_NOT_FOUND)
 
-        if user.team_id != authenticated_user.team_id:
-            raise authorization_error
+        authorize(authenticated_user, user.team_id)
 
-        self.instance = {
-            'user': user,
-            'board': board,
-            'is_active': attrs.get('is_active')
-        }
+        self.instance = {'user': user,
+                         'board': board,
+                         'is_active': attrs.get('is_active')}
 
         return attrs
 

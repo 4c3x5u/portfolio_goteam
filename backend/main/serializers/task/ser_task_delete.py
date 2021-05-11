@@ -22,22 +22,9 @@ class DeleteTaskSerializer(TaskSerializer):
         fields = 'task', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
-        auth_user = attrs.get('auth_user')
-        auth_token = attrs.get('auth_token')
-
-        user, authentication_error = authenticate(auth_user, auth_token)
-        if authentication_error:
-            raise authentication_error
-
-        local_authorization_error = authorize(auth_user)
-        if local_authorization_error:
-            raise local_authorization_error
-
+        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
         task = attrs.get('task')
-
-        if task.column.board.team_id != user.team_id:
-            raise authorization_error
-
+        authorize(user, task.column.board.team_id)
         self.instance = task.id
         return task
 
@@ -45,7 +32,5 @@ class DeleteTaskSerializer(TaskSerializer):
         return self.validated_data.delete()
 
     def to_representation(self, instance):
-        return {
-            'msg': 'Task deleted successfully.',
-            'id': instance,
-        }
+        return {'msg': 'Task deleted successfully.',
+                'id': instance}

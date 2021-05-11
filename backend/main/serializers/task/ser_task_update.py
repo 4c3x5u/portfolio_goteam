@@ -35,21 +35,10 @@ class UpdateTaskSerializer(TaskSerializer):
     auth_token = serializers.CharField(allow_blank=True)
 
     def validate(self, attrs):
-        auth_user = attrs.pop('auth_user')
-        auth_token = attrs.pop('auth_token')
-
-        authenticated_user, authentication_error = \
-            authenticate(auth_user, auth_token)
-        if authentication_error:
-            raise authentication_error
-
-        local_authorization_error = authorize(auth_user)
-        if local_authorization_error:
-            raise local_authorization_error
+        user = authenticate(attrs.pop('auth_user'), attrs.pop('auth_token'))
 
         task = attrs.pop('task')
-        if task.column.board.team_id != authenticated_user.team_id:
-            raise authorization_error
+        authorize(user, task.column.board.team_id)
 
         if 'title' in attrs.keys() and not attrs.get('title'):
             raise CustomAPIException('title',

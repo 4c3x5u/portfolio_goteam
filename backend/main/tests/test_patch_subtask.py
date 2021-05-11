@@ -121,6 +121,7 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
+        print(f'doneblank: {response.data}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'done': ErrorDetail(string='Done cannot be empty.',

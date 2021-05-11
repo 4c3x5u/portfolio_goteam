@@ -14,19 +14,10 @@ class CreateBoardSerializer(BoardSerializer):
         fields = 'auth_user', 'auth_token', 'team', 'name'
 
     def validate(self, attrs):
-        auth_user = attrs.get('auth_user')
-        auth_token = attrs.get('auth_token')
-        user, authentication_error = authenticate(auth_user, auth_token)
-        if authentication_error:
-            raise authentication_error
-
-        authorize_error = authorize(user.username)
-        if authorize_error:
-            raise authorize_error
+        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
 
         team = attrs.get('team')
-        if team.id != user.team_id:
-            raise authorization_error
+        authorize(user, team.id)
 
         board_name = attrs.get('name')
         board_serializer = BoardSerializer(data={

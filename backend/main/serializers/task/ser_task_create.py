@@ -34,21 +34,9 @@ class CreateTaskSerializer(TaskSerializer):
         }
 
     def validate(self, attrs):
-        username = attrs.get('auth_user')
-        token = attrs.get('auth_token')
-
-        user, authentication_error = authenticate(username, token)
-        if authentication_error:
-            raise authentication_error
-
-        local_authorization_error = authorize(username)
-        if local_authorization_error:
-            raise local_authorization_error
-
+        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
         column = attrs.get('column')
-        if column.board.team_id != user.team_id:
-            raise authorization_error
-
+        authorize(user, column.board.team_id)
         return attrs
 
     def create(self, validated_data):

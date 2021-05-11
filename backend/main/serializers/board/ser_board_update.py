@@ -2,7 +2,7 @@ from rest_framework import serializers
 import status
 
 from main.serializers.board.ser_board import BoardSerializer
-from main.validation.val_auth import authenticate, authorization_error
+from main.validation.val_auth import authenticate, authorize
 from main.validation.val_custom import CustomAPIException
 from main.models import Board
 
@@ -21,15 +21,7 @@ class UpdateBoardSerializer(serializers.ModelSerializer):
         fields = 'id', 'payload', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
-        # authenticate
-        auth_user = attrs.get('auth_user')
-        auth_token = attrs.get('auth_token')
-        user, authentication_error = authenticate(auth_user, auth_token)
-        if authentication_error:
-            raise authentication_error
-
-        if not user.is_admin:
-            raise authorization_error
+        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
 
         try:
             board = Board.objects.get(id=attrs.get('id'))
@@ -38,14 +30,14 @@ class UpdateBoardSerializer(serializers.ModelSerializer):
                                      'Board not found.',
                                      status.HTTP_404_NOT_FOUND)
 
-        if board.team_id != user.team_id:
-            raise authorization_error
+        authorize(user, board.team_id)
 
         payload = attrs.get('payload')
         board_serializer = BoardSerializer(board, data=payload, partial=True)
-        if board_serializer.is_valid(raise_exception=True):
-            self.instance = board
-            return payload
+        board_serializer.is_valid(raise_exception=True)
+
+        self.instance = board
+        return payload
 
     def to_representation(self, instance):
         return {'msg': 'Board updated successfuly.',
