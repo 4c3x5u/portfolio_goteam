@@ -1,8 +1,11 @@
-from rest_framework.serializers import ValidationError
-from main.models import User, Task, Subtask
-from main.serializers.board.ser_board import BoardSerializer
-from main.serializers.column.ser_column import ColumnSerializer
 import bcrypt
+import json
+import os
+from rest_framework.serializers import ValidationError
+
+from .models import User, Task, Subtask
+from .serializers.board.ser_board import BoardSerializer
+from .serializers.column.ser_column import ColumnSerializer
 
 
 def create_admin(team, username_suffix=''):
@@ -45,7 +48,10 @@ def create_member(team, username_suffix=''):
             ).decode('utf-8')}
 
 
-def create_board(name, team_id, team_admin):  # -> (board, response)
+def create_board(name, team_id, team_admin):
+    """
+    Creates a board, and four columns for it.
+    """
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
         raise ValidationError({'boards': board_serializer.errors})
@@ -68,74 +74,27 @@ def create_board(name, team_id, team_admin):  # -> (board, response)
 
 
 def create_tutorial_tasks(user, column):
+    path = os.path.abspath('main/data/tutorial_tasks.json')
+    with open(path, 'r') as read_file:
+        tutorial_tasks = json.load(read_file)
+
+    # Subtasks cannot be created before the tasks are created, so two
+    # iterations are needed. Otherwise, it would mean too many DB calls.
     tasks = [
-        Task(title='Drag and Drop Controls',
-             description='Complete this task to gain familiarity with the '
-                         'drag and drop controls.',
-             order=0,
-             column=column,
-             user=user),
-        Task(title='Creating Tasks',
-             description='Complete this task to gain familiarity with the '
-                         'task creation process.',
-             order=1,
-             column=column,
-             user=user),
-        Task(title='Editing Tasks',
-             description='Complete this task to gain familiarity with the '
-                         'edit task process.',
-             order=2,
-             column=column,
-             user=user),
+        Task(
+            title=task['title'],
+            description=task['description'],
+            order=i,
+            column=column,
+            user=user
+        )
+        for i, task in enumerate(tutorial_tasks)
     ]
     Task.objects.bulk_create(tasks)
 
     subtasks = [
-        # 'Drag and Drop Controls' subtasks
-        Subtask(title='Drag and drop this task to the GO column.',
-                order=0,
-                task=tasks[0]),
-        Subtask(title='Drag and drop this task to the DONE column.',
-                order=1,
-                task=tasks[0]),
-
-        # 'Creating Tasks' subtasks
-        Subtask(title='Move this task to the GO column.',
-                order=0,
-                task=tasks[1]),
-        Subtask(title='Activate the task creation dialogue by clicking the '
-                      'plus button inside the INBOX column.',
-                order=1,
-                task=tasks[1]),
-        Subtask(title='Give the task a title.', order=2, task=tasks[1]),
-        Subtask(title='Give the task a description.', order=3, task=tasks[1]),
-        Subtask(title='Add a couple of subtasks to the task.',
-                order=4,
-                task=tasks[1]),
-        Subtask(title='Click the CREATE button.', order=5, task=tasks[1]),
-        Subtask(title='Move this task to the DONE column.',
-                order=6,
-                task=tasks[1]),
-
-        # 'Editing Tasks' subtasks
-        Subtask(title='Move this task to the GO column.',
-                order=0,
-                task=tasks[2]),
-        Subtask(title='Activate the edit task dialogue by right-clicking the '
-                      'task you just created, and then clicking EDIT.',
-                order=1,
-                task=tasks[2]),
-        Subtask(title='Edit the details of the task — edit its title and '
-                      'description. Add and remove subtasks from it.',
-                order=2,
-                task=tasks[2]),
-        Subtask(title='Click the SUBMIT button.',
-                order=3,
-                task=tasks[2]),
-        Subtask(title='You know what to do with this task. :)',
-                order=4,
-                task=tasks[2]),
+        Subtask(title=title, task=tasks[ti], order=si)
+        for ti, task in enumerate(tutorial_tasks)
+        for si, title in enumerate(task['subtasks'])
     ]
     Subtask.objects.bulk_create(subtasks)
-
-
