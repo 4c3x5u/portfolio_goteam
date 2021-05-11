@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from main.models import Team
-from ..util import create_member
+from ..utilities import create_member
 
 
 class LoginTests(APITestCase):
