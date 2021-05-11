@@ -7,7 +7,6 @@ authentication_error = CustomAPIException('auth',
                                           'Authentication failure.',
                                           status.HTTP_403_FORBIDDEN)
 
-
 authorization_error = CustomAPIException('auth',
                                          'Authorization failure.',
                                          status.HTTP_401_UNAUTHORIZED)

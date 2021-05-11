@@ -8,9 +8,13 @@ from main.validation.val_custom import CustomAPIException
 
 
 class UpdateSubtaskSerializer(SubtaskSerializer):
-    id = serializers.IntegerField(error_messages={
-        'invalid': 'Subtask ID must be a number.'
-    })
+    subtask = serializers.PrimaryKeyRelatedField(
+        queryset=Subtask.objects.select_related('task',
+                                                'task__user',
+                                                'task__column__board').all(),
+        error_messages={'invalid': 'Subtask ID must be a number.',
+                        'null': 'Subtask ID cannot be null.'}
+    )
     data = serializers.DictField(
         allow_empty=False,
         error_messages={
@@ -21,7 +25,7 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
     auth_token = serializers.CharField(allow_blank=True)
 
     class Meta(SubtaskSerializer.Meta):
-        fields = 'id', 'data', 'auth_user', 'auth_token'
+        fields = 'subtask', 'data', 'auth_user', 'auth_token'
 
     @staticmethod
     def validate_title(value):
@@ -47,11 +51,7 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
     def validate(self, attrs):
         user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
 
-        subtask = Subtask.objects.select_related(
-            'task',
-            'task__user',
-            'task__column__board'
-        ).get(id=attrs.get('id'))
+        subtask = attrs.get('subtask')
 
         if not user.is_admin and subtask.task.user != user \
                 or subtask.task.column.board.team_id != user.team.id:

@@ -8,7 +8,17 @@ import status
 
 
 class ClientStateSerializer(serializers.Serializer):
-    auth_user = serializers.CharField()
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.prefetch_related(
+            'team',
+            'board_set',
+            'team__user_set',
+            'team__board_set__user',
+            'team__board_set__column_set',
+            'team__board_set__column_set__task_set',
+            'team__board_set__column_set__task_set__subtask_set'
+        ).all(),
+    )
     auth_token = serializers.CharField()
     board_id = serializers.IntegerField(default=-1)
 
@@ -19,20 +29,7 @@ class ClientStateSerializer(serializers.Serializer):
         pass
 
     def validate(self, attrs):
-        try:
-            user = User.objects.prefetch_related(
-                'team',
-                'board_set',
-                'team__user_set',
-                'team__board_set__user',
-                'team__board_set__column_set',
-                'team__board_set__column_set__task_set',
-                'team__board_set__column_set__task_set__subtask_set'
-            ).get(username=attrs.get('auth_user'))
-        except User.DoesNotExist:
-            raise CustomAPIException('username',
-                                     'User not found.',
-                                     status.HTTP_400_BAD_REQUEST)
+        user = attrs.get('user')
 
         valid_token = bytes(user.username, 'utf-8') + user.password
         match = bcrypt.checkpw(

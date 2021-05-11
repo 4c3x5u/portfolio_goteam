@@ -14,7 +14,7 @@ class UsersApiView(APIView):
         """
         serializer = UpdateUserSerializer(data={
             'username': request.query_params.get('username'),
-            'board_id': request.data.get('board_id') or None,
+            'board': request.data.get('board_id') or None,
             'is_active': request.data.get('is_active'),
             'auth_user': request.META.get('HTTP_AUTH_USER'),
             'auth_token': request.META.get('HTTP_AUTH_TOKEN')

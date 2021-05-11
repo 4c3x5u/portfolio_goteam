@@ -9,7 +9,7 @@ class ClientStateApiView(APIView):
     @staticmethod
     def get(request):
         serializer = ClientStateSerializer(data={
-            'auth_user': request.META.get('HTTP_AUTH_USER'),
+            'user': request.META.get('HTTP_AUTH_USER'),
             'auth_token': request.META.get('HTTP_AUTH_TOKEN'),
             'board_id': request.query_params.get('boardId') or 0
         })
