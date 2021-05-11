@@ -81,6 +81,12 @@ def create_tutorial_tasks(user, column):
              order=1,
              column=column,
              user=user),
+        Task(title='Editing Tasks',
+             description='Complete this task to gain familiarity with the '
+                         'edit task process.',
+             order=2,
+             column=column,
+             user=user),
     ]
     Task.objects.bulk_create(tasks)
 
@@ -97,8 +103,8 @@ def create_tutorial_tasks(user, column):
         Subtask(title='Move this task to the GO column.',
                 order=0,
                 task=tasks[1]),
-        Subtask(title='Activate task creation dialogue by clicking the plus '
-                      'button inside the INBOX column.',
+        Subtask(title='Activate the task creation dialogue by clicking the '
+                      'plus button inside the INBOX column.',
                 order=1,
                 task=tasks[1]),
         Subtask(title='Give the task a title.', order=2, task=tasks[1]),
@@ -107,9 +113,28 @@ def create_tutorial_tasks(user, column):
                 order=4,
                 task=tasks[1]),
         Subtask(title='Click the CREATE button.', order=5, task=tasks[1]),
-        Subtask(title='Move this task to the done column.',
+        Subtask(title='Move this task to the DONE column.',
                 order=6,
                 task=tasks[1]),
+
+        # 'Editing Tasks' subtasks
+        Subtask(title='Move this task to the GO column.',
+                order=0,
+                task=tasks[2]),
+        Subtask(title='Activate the edit task dialogue by right-clicking the '
+                      'task you just created, and then clicking EDIT.',
+                order=1,
+                task=tasks[2]),
+        Subtask(title='Edit the details of the task — edit its title and '
+                      'description. Add and remove subtasks from it.',
+                order=2,
+                task=tasks[2]),
+        Subtask(title='Click the SUBMIT button.',
+                order=3,
+                task=tasks[2]),
+        Subtask(title='You know what to do with this task. :)',
+                order=4,
+                task=tasks[2]),
     ]
     Subtask.objects.bulk_create(subtasks)
 
