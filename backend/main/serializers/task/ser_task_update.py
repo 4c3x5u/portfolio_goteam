@@ -83,8 +83,8 @@ class UpdateTaskSerializer(TaskSerializer):
         task = task_serializer.save()
 
         # update subtasks
+        task.subtask_set.all().delete()
         if subtasks:
-            task.subtask_set.all().delete()
             subtasks_data = [
                 {
                     'title': subtask['title'],
