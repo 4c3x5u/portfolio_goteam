@@ -83,8 +83,7 @@ def create_tutorial_tasks(user, column):
     """
     Creates tutorial tasks for a newly registered admin to go through.
     """
-    path = os.path.abspath('data/tutorial_tasks.json')
-    with open(path, 'r') as read_file:
+    with open('main/data/tutorial_tasks.json', 'r') as read_file:
         tutorial_tasks = json.load(read_file)
 
     # Subtasks cannot be created before the tasks are created, so two
