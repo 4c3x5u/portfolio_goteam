@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .ser_task import TaskSerializer
 from ...models import Task
-from ...validation.val_auth import authenticate_custom, authorize_custom, \
+from ...validation.val_auth import authenticate, authorize, \
     authorization_error
 
 
@@ -25,11 +25,11 @@ class DeleteTaskSerializer(TaskSerializer):
         auth_user = attrs.get('auth_user')
         auth_token = attrs.get('auth_token')
 
-        user, authentication_error = authenticate_custom(auth_user, auth_token)
+        user, authentication_error = authenticate(auth_user, auth_token)
         if authentication_error:
             raise authentication_error
 
-        local_authorization_error = authorize_custom(auth_user)
+        local_authorization_error = authorize(auth_user)
         if local_authorization_error:
             raise local_authorization_error
 

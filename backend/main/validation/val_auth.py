@@ -1,23 +1,7 @@
 from main.models import User
-from rest_framework.exceptions import ErrorDetail
-from rest_framework.response import Response
 import bcrypt
 import status
 from .val_custom import CustomAPIException
-
-
-# TODO: delete once you moved on to the customvalidation approach
-not_authenticated_response = Response({
-    'auth': ErrorDetail(string="Authentication failure.",
-                        code='not_authenticated')
-}, 403)
-
-
-# TODO: delete once you moved on to the customvalidation approach
-not_authorized_response = Response({
-    'auth': ErrorDetail(string='Authorization failure.',
-                        code='not_authorized')
-}, 403)
 
 
 authentication_error = CustomAPIException('auth',
@@ -25,7 +9,7 @@ authentication_error = CustomAPIException('auth',
                                           status.HTTP_403_FORBIDDEN)
 
 
-def authenticate_custom(username, token):
+def authenticate(username, token):
     try:
         user = User.objects.get(username=username)
     except (User.DoesNotExist, ValueError):
@@ -48,8 +32,7 @@ authorization_error = CustomAPIException('auth',
                                          status.HTTP_401_UNAUTHORIZED)
 
 
-# TODO: rename as authorize once you moved on to the customvalidation approach
-def authorize_custom(username):
+def authorize(username):
     try:
         user = User.objects.get(username=username)
         if not user.is_admin:

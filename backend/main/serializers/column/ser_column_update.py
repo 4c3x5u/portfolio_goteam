@@ -5,7 +5,7 @@ from .ser_column import ColumnSerializer
 from ..task.ser_task import TaskSerializer
 from ...models import Column, Task
 from ...validation.val_auth import \
-    authenticate_custom, authorize_custom, authorization_error
+    authenticate, authorize, authorization_error
 from ...validation.val_custom import CustomAPIException
 
 
@@ -30,12 +30,12 @@ class UpdateColumnSerializer(ColumnSerializer):
         username = attrs.pop('auth_user')
         token = attrs.pop('auth_token')
 
-        user, authentication_error = authenticate_custom(username, token)
+        user, authentication_error = authenticate(username, token)
         if authentication_error:
             raise authentication_error
         attrs['user'] = user
 
-        local_authorization_error = authorize_custom(user.username)
+        local_authorization_error = authorize(user.username)
         if local_authorization_error:
             # save it for later, as some non-admin users can also use this
             attrs['local_authorization_error'] = local_authorization_error
