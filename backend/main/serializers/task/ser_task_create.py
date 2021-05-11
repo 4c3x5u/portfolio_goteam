@@ -86,5 +86,3 @@ class CreateTaskSerializer(TaskSerializer):
 
     def to_representation(self, instance):
         return {'msg': 'Task creation successful.', 'task_id': instance.id}
-
-
