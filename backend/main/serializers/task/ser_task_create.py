@@ -4,7 +4,7 @@ from .ser_task import TaskSerializer
 from ..subtask.ser_subtask import SubtaskSerializer
 from ...models import Column, Task
 from ...validation.val_auth import \
-    authenticate_custom, authorize_custom, authorization_error
+    authenticate, authorize, authorization_error
 
 
 class CreateTaskSerializer(TaskSerializer):
@@ -37,11 +37,11 @@ class CreateTaskSerializer(TaskSerializer):
         username = attrs.get('auth_user')
         token = attrs.get('auth_token')
 
-        user, authentication_error = authenticate_custom(username, token)
+        user, authentication_error = authenticate(username, token)
         if authentication_error:
             raise authentication_error
 
-        local_authorization_error = authorize_custom(username)
+        local_authorization_error = authorize(username)
         if local_authorization_error:
             raise local_authorization_error
 

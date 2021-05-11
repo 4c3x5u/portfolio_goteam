@@ -3,11 +3,11 @@ import status
 
 from .ser_task import TaskSerializer
 from ..subtask.ser_subtask import SubtaskSerializer
-from ...models import Task, User
-from ...validation.val_auth import authenticate_custom, authorize_custom, \
+from ...models import Task
+from ...validation.val_auth import authenticate, authorize, \
     authorization_error
 from ...validation.val_custom import CustomAPIException
-from ...validation.val_column import validate_column_id_custom
+from ...validation.val_column import validate_column_id
 
 
 class UpdateTaskSerializer(TaskSerializer):
@@ -39,11 +39,11 @@ class UpdateTaskSerializer(TaskSerializer):
         auth_token = attrs.pop('auth_token')
 
         authenticated_user, authentication_error = \
-            authenticate_custom(auth_user, auth_token)
+            authenticate(auth_user, auth_token)
         if authentication_error:
             raise authentication_error
 
-        local_authorization_error = authorize_custom(auth_user)
+        local_authorization_error = authorize(auth_user)
         if local_authorization_error:
             raise local_authorization_error
 
@@ -64,7 +64,7 @@ class UpdateTaskSerializer(TaskSerializer):
 
         if 'column' in attrs.keys():
             column_id = attrs.get('column')
-            validate_column_id_custom(column_id)
+            validate_column_id(column_id)
 
         self.instance = task
         return attrs

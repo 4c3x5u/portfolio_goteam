@@ -2,7 +2,7 @@ from rest_framework import serializers
 import status
 
 from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_auth import authenticate_custom, authorization_error
+from main.validation.val_auth import authenticate, authorization_error
 from main.validation.val_custom import CustomAPIException
 from main.models import User, Board
 
@@ -33,7 +33,7 @@ class UpdateUserSerializer(UserSerializer):
         auth_user = attrs.pop('auth_user')
         auth_token = attrs.pop('auth_token')
         authenticated_user, authentication_error = \
-            authenticate_custom(auth_user, auth_token)
+            authenticate(auth_user, auth_token)
 
         if authentication_error:
             raise authentication_error

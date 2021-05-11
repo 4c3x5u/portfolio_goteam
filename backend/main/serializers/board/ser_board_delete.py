@@ -2,8 +2,8 @@ from rest_framework import serializers
 import status
 
 from main.serializers.board.ser_board import BoardSerializer
-from main.validation.val_auth import authenticate_custom, authorization_error, \
-    authorize_custom
+from main.validation.val_auth import authenticate, authorization_error, \
+    authorize
 from main.validation.val_custom import CustomAPIException
 from main.models import Board
 
@@ -24,12 +24,12 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
         # authenticate
         auth_user = attrs.get('auth_user')
         auth_token = attrs.get('auth_token')
-        user, authentication_error = authenticate_custom(auth_user, auth_token)
+        user, authentication_error = authenticate(auth_user, auth_token)
         if authentication_error:
             raise authentication_error
 
         # authorize
-        authorize_error = authorize_custom(user.username)
+        authorize_error = authorize(user.username)
         if authorize_error:
             raise authorize_error
 
