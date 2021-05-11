@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
-from ..util import create_admin, create_member
+from ..utilities import create_admin, create_member
 from ..validation.val_auth import authentication_error, authorization_error
 
 

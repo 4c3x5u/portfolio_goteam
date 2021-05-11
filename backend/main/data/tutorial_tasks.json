@@ -1,0 +1,45 @@
+[
+  {
+    "title": "Drag and Drop Controls",
+    "description": "Complete this task to gain familiarity with the drag and drop controls.",
+    "subtasks": [
+      "Drag and drop this task to the GO column.",
+      "Drag and drop this task to the DONE column."
+    ]
+  },
+  {
+    "title": "Creating Tasks",
+    "description": "Complete this task to gain familiarity with the task creation process.",
+    "subtasks": [
+        "Move this task to the GO column.",
+        "Activate the task creation dialogue by clicking the plus button inside the INBOX column.",
+        "Give the task a title.",
+        "Give the task a description.",
+        "Add a couple of subtasks to the task.",
+        "Click the CREATE button.",
+        "Move this task to the DONE column."
+    ]
+  },
+  {
+    "title": "Editing Tasks",
+    "description": "Complete this task to gain familiarity with the edit task process.",
+    "subtasks": [
+        "Move this task to the GO column.",
+        "Activate the edit task dialogue by right-clicking the task you just created, and then clicking EDIT.",
+        "Edit the details of the task — edit its title and description. Add and remove subtasks from it.",
+        "Click the SUBMIT button.",
+        "You know what to do with this task. :)"
+    ]
+  },
+  {
+    "title": "Assigning Members",
+    "description": "Complete this task to gain familiarity with the edit task process.",
+    "subtasks": [
+        "Move this task to the GO column.",
+        "Activate the edit task dialogue by right-clicking the task you just created, and then clicking EDIT.",
+        "Edit the details of the task — edit its title and description. Add and remove subtasks from it.",
+        "Click the SUBMIT button.",
+        "You know what to do with this task. :)"
+    ]
+  }
+]

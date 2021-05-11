@@ -5,7 +5,7 @@ import status
 from main.models import User, Team
 from main.serializers.user.ser_user import UserSerializer
 from main.validation.val_custom import CustomAPIException
-from ...util import create_board, create_tutorial_tasks
+from ...utilities import create_board, create_tutorial_tasks
 
 
 class RegisterSerializer(UserSerializer):
