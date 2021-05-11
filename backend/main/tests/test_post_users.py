@@ -80,8 +80,8 @@ class PatchUserTests(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': [ErrorDetail(string='Board ID cannot be null.',
-                                     code='null')]
+            'board': [ErrorDetail(string='Board ID cannot be null.',
+                                  code='null')]
         })
 
     def test_board_id_invalid(self):
@@ -93,8 +93,8 @@ class PatchUserTests(APITestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': [ErrorDetail(string='Board ID must be a number.',
-                                     code='invalid')]
+            'board': [ErrorDetail(string='Board ID must be a number.',
+                                  code='incorrect_type')]
         })
 
     def test_board_not_found(self):
@@ -104,10 +104,10 @@ class PatchUserTests(APITestCase):
             self.admin['username'],
             self.admin['token']
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'board_id': ErrorDetail(string='Board not found.',
-                                    code='not_found')
+            'board': [ErrorDetail(string='Board does not exist.',
+                                  code='does_not_exist')]
         })
 
     def test_is_active_blank(self):
