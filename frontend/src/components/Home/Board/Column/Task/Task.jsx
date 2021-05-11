@@ -122,7 +122,7 @@ const Task = ({
           </div>
 
           <Menu className="ContextMenu" id={MENU_ID}>
-            {members.length >= 2 && (
+            {members.filter((m) => m.isActive && !m.isAdmin).length >= 1 && (
               <Submenu
                 className="Submenu"
                 label={(
