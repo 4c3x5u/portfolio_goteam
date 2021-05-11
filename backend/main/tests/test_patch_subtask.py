@@ -2,9 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Subtask, Task, Column, Board, Team, User
 from ..util import create_member, create_admin
-from ..validation.val_auth import \
-    not_authenticated_response, not_authorized_response, authorization_error, \
-    authentication_error
+from ..validation.val_auth import authentication_error, authorization_error
 
 
 class UpdateSubtaskTests(APITestCase):
@@ -169,8 +167,9 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_USER='',
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
@@ -178,8 +177,9 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_USER='invalidio',
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data, not_authenticated_response.data)
+        self.assertEqual(response.status_code,
+                         authentication_error.status_code)
+        self.assertEqual(response.data, authentication_error.detail)
 
     def test_wrong_team(self):
         response = self.client.patch(
@@ -189,8 +189,8 @@ class UpdateSubtaskTests(APITestCase):
             HTTP_AUTH_TOKEN=self.wrong_admin['token'],
             format='json'
         )
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)
 
     def test_unauthorized(self):
         response = self.client.patch(f'{self.endpoint}{self.subtask.id}',
@@ -198,5 +198,5 @@ class UpdateSubtaskTests(APITestCase):
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'],
                                      format='json')
-        self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.data, not_authorized_response.data)
+        self.assertEqual(response.status_code, authorization_error.status_code)
+        self.assertEqual(response.data, authorization_error.detail)

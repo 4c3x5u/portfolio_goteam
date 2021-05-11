@@ -1,16 +1,10 @@
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ErrorDetail
 import status
 
-from ..models import Task
 from ..serializers.task.ser_task_create import CreateTaskSerializer
 from ..serializers.task.ser_task_update import UpdateTaskSerializer
 from ..serializers.task.ser_task_delete import DeleteTaskSerializer
-from ..validation.val_auth import \
-    authenticate, authorize, not_authenticated_response
-from ..validation.val_task import validate_task_id
 
 
 class TasksApiView(APIView):
