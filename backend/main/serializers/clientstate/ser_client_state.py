@@ -39,11 +39,6 @@ class ClientStateSerializer(serializers.Serializer):
         if not match:
             raise authentication_error
 
-        if not user.board_set.all() and user.is_admin:
-            create_board(name='New Board',
-                         team_id=user.team_id,
-                         team_admin=user)
-
         board_id = attrs.get('board_id')
         if board_id:
             try:

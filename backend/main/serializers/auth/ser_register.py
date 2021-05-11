@@ -5,6 +5,7 @@ import status
 from main.models import User, Team
 from main.serializers.user.ser_user import UserSerializer
 from main.validation.val_custom import CustomAPIException
+from ...util import create_board, create_tutorial_tasks
 
 
 class RegisterSerializer(UserSerializer):
@@ -55,17 +56,25 @@ class RegisterSerializer(UserSerializer):
         return super().validate(attrs)
 
     def create(self, validated_data):
-        if validated_data.get('is_admin'):
-            if not validated_data.get('team'):
-                validated_data['team'] = Team.objects.create()
-
-
         validated_data['password'] = bcrypt.hashpw(
             bytes(validated_data['password'], 'utf-8'),
             bcrypt.gensalt()
         )
 
-        return User.objects.create(**validated_data)
+        is_admin = validated_data.get('is_admin')
+        if is_admin and not validated_data.get('team'):
+            validated_data['team'] = Team.objects.create()
+
+        user = User.objects.create(**validated_data)
+
+        if is_admin:
+            board = create_board(name='New Board',
+                                 team_id=user.team_id,
+                                 team_admin=user)
+            inbox = board.column_set.all()[1]
+            create_tutorial_tasks(user=user, column=inbox)
+
+        return user
 
     def to_representation(self, instance):
         return {
