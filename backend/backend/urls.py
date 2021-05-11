@@ -1,22 +1,20 @@
 from django.urls import path
-from main.api.api_auth import register, login, verify_token
-from main.api.api_users import users
-from main.api.api_teams import teams
-from main.api.api_boards import boards
-from main.api.api_columns import columns
-from main.api.api_tasks import tasks
-from main.api.api_subtasks import subtasks
-from main.api.api_clientstate import client_state
+from main.views.api_register import RegisterApiView
+from main.views.api_login import LoginApiView
+from main.views.api_users import UsersApiView
+from main.views.api_boards import BoardsApiView
+from main.views.api_columns import ColumnsApiView
+from main.views.api_tasks import TasksApiView
+from main.views.api_subtasks import SubtasksApiView
+from main.views.api_client_state import ClientStateApiView
 
 urlpatterns = [
-    path('verify-token/', verify_token, name='verifytoken'),
-    path('register/', register, name='register'),
-    path('login/', login, name='login'),
-    path('users/', users, name='users'),
-    path('teams/', teams, name='teams'),
-    path('boards/', boards, name='boards'),
-    path('columns/', columns, name='columns'),
-    path('tasks/', tasks, name='tasks'),
-    path('subtasks/', subtasks, name='subtasks'),
-    path('client-state/', client_state, name='clientstate')
+    path('register/', RegisterApiView.as_view(), name='register'),
+    path('login/', LoginApiView.as_view(), name='login'),
+    path('users/', UsersApiView.as_view(), name='users'),
+    path('boards/', BoardsApiView.as_view(), name='boards'),
+    path('columns/', ColumnsApiView.as_view(), name='columns'),
+    path('tasks/', TasksApiView.as_view(), name='tasks'),
+    path('subtasks/', SubtasksApiView.as_view(), name='subtasks'),
+    path('client-state/', ClientStateApiView.as_view(), name='client-state')
 ]
