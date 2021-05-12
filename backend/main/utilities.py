@@ -1,6 +1,5 @@
 import bcrypt
 import json
-import os
 from rest_framework.serializers import ValidationError
 
 from .models import User, Task, Subtask
@@ -79,10 +78,17 @@ def create_board(name, team_id, team_admin):
     return board
 
 
-def create_tutorial_tasks(user, column):
+def initiate_tutorial(user, ready_column):
     """
-    Creates tutorial tasks for a newly registered admin to go through.
+    Creates tutorial objects for a newly registered admin to go through.
     """
+
+    # CREATE A TEAM MEMBER
+    User.objects.create(username=f'demo-member-{user.team_id}',
+                        password=b'securepassword',
+                        team_id=user.team_id)
+
+    # CREATE TASKS
     with open('main/data/tutorial_tasks.json', 'r') as read_file:
         tutorial_tasks = json.load(read_file)
 
@@ -93,7 +99,7 @@ def create_tutorial_tasks(user, column):
             title=task['title'],
             description=task['description'],
             order=i,
-            column=column,
+            column=ready_column,
             user=user
         )
         for i, task in enumerate(tutorial_tasks)
