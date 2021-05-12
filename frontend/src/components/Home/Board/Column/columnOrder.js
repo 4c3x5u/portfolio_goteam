@@ -1,7 +1,7 @@
 const columnOrder = {
   INBOX: 'inbox',
   READY: 'ready',
-  GO: 'go',
+  GO: 'go!',
   DONE: 'done',
   parseInt: (order) => {
     switch (order) {

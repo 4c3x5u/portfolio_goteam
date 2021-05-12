@@ -36,8 +36,12 @@ const App = () => {
 
   const loadBoard = (boardId) => {
     const authHeaders = getAuthHeaders();
-    if (authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']) {
-      const uri = `${process.env.REACT_APP_BACKEND_URL}/client-state/?boardId=${
+    if (
+      authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']
+    ) {
+      const uri = `${
+        process.env.REACT_APP_BACKEND_URL
+      }/client-state/?boardId=${
         boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
       }`;
       axios
@@ -64,10 +68,10 @@ const App = () => {
           let errMsg;
 
           // eslint-disable-next-line camelcase
-          if (err?.response.data?.board) {
+          if (err?.response?.data?.board) {
             notify(
               'Inactive Credentials',
-              err?.response.data?.board,
+              err?.response?.data?.board,
             );
             sessionStorage.removeItem('username');
             sessionStorage.removeItem('auth-token');

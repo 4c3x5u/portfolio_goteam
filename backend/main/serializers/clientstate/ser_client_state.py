@@ -2,7 +2,7 @@ from rest_framework import serializers
 from main.models import User, Board
 from main.validation.val_auth import authentication_error, authorization_error
 from main.validation.val_custom import CustomAPIException
-from main.util import create_board
+from main.utilities import create_board
 import bcrypt
 import status
 
@@ -38,11 +38,6 @@ class ClientStateSerializer(serializers.Serializer):
         )
         if not match:
             raise authentication_error
-
-        if not user.board_set.all() and user.is_admin:
-            create_board(name='New Board',
-                         team_id=user.team_id,
-                         team_admin=user)
 
         board_id = attrs.get('board_id')
         if board_id:

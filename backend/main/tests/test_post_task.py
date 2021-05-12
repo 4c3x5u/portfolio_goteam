@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
-from ..util import create_member, create_admin
+from ..utilities import create_member, create_admin
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -95,7 +95,8 @@ class CreateTaskTests(APITestCase):
     def test_title_max_length(self):
         initial_count = Task.objects.count()
         request_data = {
-            'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooo',
+            'title': 'foooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+                     'ooooooooooooooooooooooooooooooooooooooooooooooooooooooo',
             'description': 'Lorem ipsum dolor sit amet',
             'column': self.column.id
         }
@@ -121,7 +122,8 @@ class CreateTaskTests(APITestCase):
             'description': 'Lorem ipsum dolor sit amet',
             'column': self.column.id,
             'subtasks': [
-                'foooooooooooooooooooooooooooooooooooooooooooooooooo'
+                'foooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
+                'ooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo'
             ]
         }
         response = self.client.post(self.endpoint,

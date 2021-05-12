@@ -3,7 +3,7 @@ from rest_framework import serializers
 from main.serializers.board.ser_board import BoardSerializer
 from main.validation.val_auth import authenticate, authorization_error, \
     authorize
-from main.util import create_board
+from main.utilities import create_board
 
 
 class CreateBoardSerializer(BoardSerializer):
