@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 import status
 
 from ..models import Board, Team
-from ..util import create_admin, create_member
+from ..utilities import create_admin, create_member
 from ..validation.val_auth import authentication_error, authorization_error
 
 

@@ -1,11 +1,16 @@
-from rest_framework.serializers import ValidationError
-from main.models import User
-from main.serializers.board.ser_board import BoardSerializer
-from main.serializers.column.ser_column import ColumnSerializer
 import bcrypt
+import json
+from rest_framework.serializers import ValidationError
+
+from .models import User, Task, Subtask
+from .serializers.board.ser_board import BoardSerializer
+from .serializers.column.ser_column import ColumnSerializer
 
 
 def create_admin(team, username_suffix=''):
+    """
+    Creates a new admin for the given team for testing purposes.
+    """
     user = User.objects.create(
         username=f'teamadmin{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
@@ -26,6 +31,9 @@ def create_admin(team, username_suffix=''):
 
 
 def create_member(team, username_suffix=''):
+    """
+    Creates a new member for the given team for testing purposes.
+    """
     user = User.objects.create(
         username=f'teammember{username_suffix}',
         password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJpC6m'
@@ -45,7 +53,10 @@ def create_member(team, username_suffix=''):
             ).decode('utf-8')}
 
 
-def create_board(name, team_id, team_admin):  # -> (board, response)
+def create_board(name, team_id, team_admin):
+    """
+    Creates a board, and four columns for it.
+    """
     board_serializer = BoardSerializer(data={'team': team_id, 'name': name})
     if not board_serializer.is_valid():
         raise ValidationError({'boards': board_serializer.errors})
@@ -66,3 +77,38 @@ def create_board(name, team_id, team_admin):  # -> (board, response)
 
     return board
 
+
+def initiate_tutorial(user, ready_column):
+    """
+    Creates tutorial objects for a newly registered admin to go through.
+    """
+
+    # CREATE A TEAM MEMBER
+    User.objects.create(username=f'demo-member-{user.team_id}',
+                        password=b'securepassword',
+                        team_id=user.team_id)
+
+    # CREATE TASKS
+    with open('main/data/tutorial_tasks.json', 'r') as read_file:
+        tutorial_tasks = json.load(read_file)
+
+    # Subtasks cannot be created before the tasks are created, so two
+    # iterations are needed. Otherwise, it would mean too many DB calls.
+    tasks = [
+        Task(
+            title=task['title'],
+            description=task['description'],
+            order=i,
+            column=ready_column,
+            user=user
+        )
+        for i, task in enumerate(tutorial_tasks)
+    ]
+    Task.objects.bulk_create(tasks)
+
+    subtasks = [
+        Subtask(title=title, task=tasks[ti], order=si)
+        for ti, task in enumerate(tutorial_tasks)
+        for si, title in enumerate(task['subtasks'])
+    ]
+    Subtask.objects.bulk_create(subtasks)

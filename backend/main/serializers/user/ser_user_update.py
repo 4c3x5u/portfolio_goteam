@@ -16,7 +16,8 @@ class UpdateUserSerializer(UserSerializer):
                               .all(),
         error_messages={'blank': 'Board ID cannot be blank.',
                         'null': 'Board ID cannot be null.',
-                        'invalid': 'Board ID must be a number.'}
+                        'incorrect_type': 'Board ID must be a number.',
+                        'does_not_exist': 'Board does not exist.'}
     )
     is_active = serializers.BooleanField(error_messages={
         'blank': 'Is Active cannot be blank.',

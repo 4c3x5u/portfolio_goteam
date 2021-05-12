@@ -27,7 +27,11 @@ const Column = ({
 
   return (
     <Col className="ColumnWrapper" xs={3}>
-      <div className={`Column ${name && capFirstLetterOf(name)}Column`}>
+      <div
+        className={
+          `Column ${name && capFirstLetterOf(name.replace('!', ''))}Column`
+        }
+      >
         <div className="Header">
           {name && name.toUpperCase()}
         </div>

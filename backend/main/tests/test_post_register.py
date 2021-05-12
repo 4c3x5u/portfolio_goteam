@@ -39,7 +39,7 @@ class RegisterTests(APITestCase):
             'password_confirmation': 'barbarbar'
         })
         self.assertEqual(Team.objects.count(), initial_team_count + 1)
-        self.assertEqual(Board.objects.count(), initial_board_count)
+        self.assertEqual(Board.objects.count(), initial_board_count + 1)
 
     def test_success_with_invite_code(self):
         initial_user_count = User.objects.count()
