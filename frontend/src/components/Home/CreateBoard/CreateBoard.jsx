@@ -37,9 +37,8 @@ const CreateBoard = ({ toggleOff }) => {
       // Create board in database
       BoardsAPI
         .post({ name, team_id: user.teamId })
-        .then((res) => {
-          // Load board to retrieve the "actual" ID of the created board
-          loadBoard(res.data?.id);
+        .then(() => {
+          loadBoard();
           toggleOff();
         })
         .catch((err) => {
