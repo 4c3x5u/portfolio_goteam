@@ -25,10 +25,9 @@ class RegisterSerializer(UserSerializer):
             User.objects.get(username=value)
         except User.DoesNotExist:
             return value
-        else:
-            raise CustomAPIException('username',
-                                     'Username already exists.',
-                                     status.HTTP_400_BAD_REQUEST)
+        raise CustomAPIException('username',
+                                 'Username already exists.',
+                                 status.HTTP_400_BAD_REQUEST)
 
     def validate(self, attrs):
         password_confirmation = attrs.pop('password_confirmation')
