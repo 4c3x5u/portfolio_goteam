@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from main.serializers.board.ser_board import BoardSerializer
 from main.validation.val_auth import authenticate, authorization_error, \
@@ -11,7 +12,7 @@ class CreateBoardSerializer(BoardSerializer):
     auth_token = serializers.CharField(allow_blank=True)
 
     class Meta(BoardSerializer.Meta):
-        fields = 'auth_user', 'auth_token', 'team', 'name'
+        fields = 'name', 'team', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
         user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
@@ -25,7 +26,7 @@ class CreateBoardSerializer(BoardSerializer):
             'name': board_name,
         })
         if not board_serializer.is_valid():
-            raise board_serializer.errors
+            raise ValidationError({'board': board_serializer.errors})
 
         return {'board_name': board_name,
                 'team_id': team.id,

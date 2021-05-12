@@ -21,7 +21,8 @@ def authenticate(username, token):
     try:
         tokens_match = bcrypt.checkpw(
             bytes(user.username, 'utf-8') + user.password,
-            bytes(token, 'utf-8'))
+            bytes(token, 'utf-8')
+        )
         if not tokens_match:
             raise authentication_error
     except ValueError:
