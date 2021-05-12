@@ -10,7 +10,7 @@ class Team(Model):
 class User(Model):
     username = CharField(primary_key=True, max_length=35, db_index=True)
     password = BinaryField()
-    is_admin = BooleanField(default=False)
+    is_admin = BooleanField(default=False, db_index=True)
     team = ForeignKey(Team, on_delete=CASCADE)
 
 
