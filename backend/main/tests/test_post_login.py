@@ -27,8 +27,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [ErrorDetail(string='Username cannot be empty.',
-                                     code='blank')]
+            'username': [ErrorDetail(string='Username cannot be null.',
+                                     code='null')]
         })
 
     def test_username_max_length(self):
@@ -37,12 +37,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': [
-                ErrorDetail(
-                    string='Username cannot be longer than 35 characters.',
-                    code='max_length'
-                )
-            ]
+            'username': [ErrorDetail(string='Invalid username.',
+                                     code='does_not_exist')]
         })
 
     # noinspection DuplicatedCode
@@ -80,7 +76,8 @@ class LoginTests(APITestCase):
         response = self.client.post(self.endpoint, request_data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
-            'username': ErrorDetail(string='Invalid username.', code='invalid')
+            'username': [ErrorDetail(string='Invalid username.',
+                                     code='does_not_exist')]
         })
 
     def test_password_invalid(self):
