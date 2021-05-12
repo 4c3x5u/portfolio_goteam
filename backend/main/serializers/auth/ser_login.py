@@ -1,3 +1,4 @@
+from rest_framework import serializers
 import bcrypt
 import status
 
@@ -7,20 +8,19 @@ from ...validation.val_custom import CustomAPIException
 
 
 class LoginSerializer(UserSerializer):
-    def validate(self, attrs):
-        try:
-            user = User.objects.get(username=attrs.get('username'))
-        except User.DoesNotExist:
-            raise CustomAPIException('username',
-                                     'Invalid username.',
-                                     status.HTTP_400_BAD_REQUEST)
+    username = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        error_messages={'does_not_exist': 'Invalid username.',
+                        'null': 'Username cannot be null.'}
+    )
 
+    def validate(self, attrs):
+        user = attrs.get('username')
         pw_bytes = bytes(attrs.get('password'), 'utf-8')
         if not bcrypt.checkpw(pw_bytes, bytes(user.password)):
             raise CustomAPIException('password',
                                      'Invalid password.',
                                      status.HTTP_400_BAD_REQUEST)
-
         return user
 
     def to_representation(self, instance):
