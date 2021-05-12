@@ -19,7 +19,7 @@ I am happy with the extent to which this app serves to demonstrate my Django and
 7. In order to run either the frontend or the backend, you must provide some environment variables. *dotenv* is installed on both projects, so you can just create a *.env* file in both the *frontend* and the backend folders, and declare the environment variables within them. For a list of required environment variables, please see the *.env-sample* file in each folder.
 
 ### The Backend
-> I prefer using [pipenv](https://pypi.org/project/pipenv/) for virtual environments and a *Pipfile* for dependencies. However, I have included a *requirements.txt* file inside the *backend* folder, so you can just use the instructions below to simply and quickly run the app.
+> I prefer using [Poetry](https://python-poetry.org/) for managing virtual environments and dependencies. However, I included a *requirements.txt* file inside the *backend* folder, so you can just use the instructions below to simply and quickly run the app.
 
 1. Inside a terminal, navigate into the backend folder. 
     - `cd backend`
