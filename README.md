@@ -7,7 +7,7 @@ The purpose of this application is to demonstrate **my skills and knowledge in c
 The result is a Django-REST/React.js app that simulates a kanban boards experience for small teams by creating a team for the user upon registration, and then allowing them to invite other users to their team by sharing an invite link with them, which the other users click on and register. After this process, the original user (a.k.a. admin) controls what boards the invited users (a.k.a. members) can access, and what task they can move across the board and mark its subtasks done therein.
 
 ## The State of the App
-I am happy with the extent to which this app serves to demonstrate my Django and React knowledge, as well as my full-stack web application development capablities. However, there are some features that I think could be implemented, which would make the app serve this purpose to an even greater degree. Please visit the [issues](https://github.com/alicandev/portfolio_goteam/issues) section to see what more I plan on doing with this app.
+GoTeam! is now largely functional and is written in idiomatic Python/Django code for the most part. Although there are some issues that I might consider taking on soon — visit the [issues](https://github.com/alicandev/portfolio_goteam/issues) section to review them.
 
 ## Running the App
 ### Requirements
