@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..utilities import create_member, create_admin
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -10,9 +10,13 @@ class PostBoardTests(APITestCase):
 
     def setUp(self):
         self.team = Team.objects.create()
-        self.member = create_member(self.team)
-        self.admin = create_admin(self.team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(self.team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
 
     def test_success(self):
         initial_count = Board.objects.count()

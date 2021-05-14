@@ -5,7 +5,7 @@ import status
 from main.models import User, Team
 from main.serializers.user.ser_user import UserSerializer
 from main.validation.val_custom import CustomAPIException
-from ...utilities import create_board, initiate_tutorial
+from ...helpers import BoardHelper, TutorialHelper
 
 
 class RegisterSerializer(UserSerializer):
@@ -67,11 +67,11 @@ class RegisterSerializer(UserSerializer):
         user = User.objects.create(**validated_data)
 
         if is_admin:
-            board = create_board(name='New Board',
-                                 team_id=user.team_id,
-                                 team_admin=user)
+            board = BoardHelper.create(name='New Board',
+                                       team_id=user.team_id,
+                                       team_admin=user)
             ready_column = board.column_set.all()[1]
-            initiate_tutorial(user=user, ready_column=ready_column)
+            TutorialHelper.initiate(user=user, ready_column=ready_column)
 
         return user
 

@@ -1,16 +1,20 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, User
-from ..utilities import create_admin, create_member
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
 class DeleteUserTests(APITestCase):
     def setUp(self):
         self.team = Team.objects.create()
-        self.admin = create_admin(self.team)
-        self.member = create_member(self.team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(self.team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrongadmin = wrong_user_helper.create(is_admin=True)
 
     def delete_user(self, username, auth_user, auth_token):
         return self.client.delete(f'/users/?username={username}',
@@ -102,8 +106,8 @@ class DeleteUserTests(APITestCase):
 
     def test_wrong_team(self):
         response = self.delete_user(self.member['username'],
-                                    self.wrong_admin['username'],
-                                    self.wrong_admin['token'])
+                                    self.wrongadmin['username'],
+                                    self.wrongadmin['token'])
         self.assertEqual(response.status_code, authorization_error.status_code)
         self.assertEqual(response.data, authorization_error.detail)
         self.assertTrue(User.objects.filter(username=self.member['username']))

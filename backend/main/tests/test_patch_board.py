@@ -3,7 +3,7 @@ from rest_framework.exceptions import ErrorDetail
 import status
 
 from ..models import Board, Team
-from ..utilities import create_admin, create_member
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -12,10 +12,14 @@ class PatchBoardTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.admin = create_admin(team)
-        self.member = create_member(team)
         self.board = Board.objects.create(name='Some Board', team=team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
 
     def test_success(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',

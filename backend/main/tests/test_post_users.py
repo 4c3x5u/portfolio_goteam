@@ -1,14 +1,13 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
-from ..utilities import create_admin
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
 class PatchUserTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
-        self.admin = create_admin(team)
         self.user = User.objects.create(
             username='Some User',
             password=b'$2b$12$DKVJHUAQNZqIvoi.OMN6v.x1ZhscKhbzSxpOBMykHgTIMeeJ'
@@ -21,7 +20,12 @@ class PatchUserTests(APITestCase):
         self.username = self.user.username
         self.token = '$2b$12$l3pvxK.Ig.RYsPvR6gpE1eaxpzAlqkFFznQ1uBGgHnFA8Ui' \
                      'mhbykO'
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(team)
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create()
 
     def patchUser(self, username, user_data, auth_user, auth_token):
         return self.client.patch(f'/users/?username={username}',

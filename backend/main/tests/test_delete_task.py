@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task
-from ..utilities import create_admin, create_member
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -15,9 +15,13 @@ class DeleteTaskTests(APITestCase):
         self.task = Task.objects.create(title='Do Something!',
                                         order=0,
                                         column=column)
-        self.admin = create_admin(team)
-        self.member = create_member(team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
 
     def test_success(self):
         initial_count = Task.objects.count()

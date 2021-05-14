@@ -1,14 +1,15 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from main.models import Team
-from ..utilities import create_member
+from ..helpers import UserHelper
 
 
 class LoginTests(APITestCase):
     endpoint = '/login/'
 
     def setUp(self):
-        self.user = create_member(Team.objects.create())
+        user_helper = UserHelper(Team.objects.create())
+        self.user = user_helper.create()
 
     def test_success(self):
         request_data = {'username': self.user['username'],

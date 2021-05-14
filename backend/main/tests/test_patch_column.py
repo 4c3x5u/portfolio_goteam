@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Column, Board, Team, Task
-from ..utilities import create_admin, create_member
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -16,16 +16,21 @@ class UpdateColumns(APITestCase):
         self.tasks = [Task.objects.create(
             title=str(i), order=i, column=self.column
         ) for i in range(0, 5)]
-        self.admin = create_admin(team)
-        self.member = create_member(team)
-        self.assigned_member = create_member(team, '1')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+        self.assigned_member = user_helper.create()
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+
         self.task_data = [{
             'id': task.id,
             'title': task.title,
             'order': 5 - task.order,
             'user': self.assigned_member['username']
         } for task in self.tasks]
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
 
     def help_test_success(self, user):
         response = self.client.patch(f'{self.endpoint}{self.column.id}',
