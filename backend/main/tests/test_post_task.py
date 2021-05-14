@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board, Column, Task, Subtask
-from ..utilities import create_member, create_admin
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -10,11 +10,16 @@ class CreateTaskTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.member = create_member(team)
-        self.admin = create_admin(team)
         board = Board.objects.create(team=team)
         self.column = Column.objects.create(board=board, order=0)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+
 
     def help_test_success(self, response_data, status_code, request_data):
         print(f'§responsedata: {response_data}')

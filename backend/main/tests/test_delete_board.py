@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board
-from ..utilities import create_admin, create_member
+from ..helpers import UserHelper
 from ..validation.val_auth import authentication_error, authorization_error
 
 
@@ -11,9 +11,13 @@ class DeleteBoardTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
         self.board = Board.objects.create(team=team)
-        self.admin = create_admin(team)
-        self.member = create_member(team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
 
     def test_success(self):
         initial_count = Board.objects.count()

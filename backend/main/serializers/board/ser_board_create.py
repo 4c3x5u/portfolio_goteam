@@ -2,9 +2,8 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from main.serializers.board.ser_board import BoardSerializer
-from main.validation.val_auth import authenticate, authorization_error, \
-    authorize
-from main.utilities import create_board
+from main.validation.val_auth import authenticate, authorize
+from main.helpers import BoardHelper
 
 
 class CreateBoardSerializer(BoardSerializer):
@@ -33,9 +32,9 @@ class CreateBoardSerializer(BoardSerializer):
                 'team_admin': team.user_set.get(username=user.username)}
 
     def create(self, validated_data):
-        return create_board(name=validated_data.get('board_name'),
-                            team_id=validated_data.get('team_id'),
-                            team_admin=validated_data.get('team_admin'))
+        return BoardHelper.create(name=validated_data.get('board_name'),
+                                  team_id=validated_data.get('team_id'),
+                                  team_admin=validated_data.get('team_admin'))
 
     def to_representation(self, instance):
         return {'msg': 'Board creation successful.',

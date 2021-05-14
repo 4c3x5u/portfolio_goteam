@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Task, Column, Board, Team, User
-from ..utilities import create_member, create_admin
+from ..helpers import UserHelper
 from ..validation.val_auth import authorization_error, authentication_error
 
 
@@ -10,10 +10,15 @@ class PatchTaskTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.member = create_member(team)
-        self.admin = create_admin(team)
-        self.wrong_admin = create_admin(Team.objects.create(), '1')
-        self.assigned_member = create_member(team, '2')
+
+        user_helper = UserHelper(team)
+        self.member = user_helper.create()
+        self.admin = user_helper.create(is_admin=True)
+        self.assigned_member = user_helper.create()
+
+        wrong_user_helper = UserHelper(Team.objects.create())
+        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+
         self.task = Task.objects.create(
             title="Task Title",
             order=0,
