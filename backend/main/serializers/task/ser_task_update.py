@@ -18,6 +18,7 @@ class UpdateTaskSerializer(TaskSerializer):
         error_messages={'blank': 'Task ID cannot be empty.',
                         'invalid': 'Task ID must be a number.'}
     )
+    subtasks = serializers.ListField()
     user = serializers.CharField(required=False)
     title = serializers.CharField(
         required=False,
@@ -33,6 +34,9 @@ class UpdateTaskSerializer(TaskSerializer):
     )
     auth_user = serializers.CharField(allow_blank=True)
     auth_token = serializers.CharField(allow_blank=True)
+
+    class Meta(TaskSerializer.Meta):
+        pass
 
     def validate(self, attrs):
         user = authenticate(attrs.pop('auth_user'), attrs.pop('auth_token'))
