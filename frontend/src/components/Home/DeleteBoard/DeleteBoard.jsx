@@ -38,7 +38,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
       .catch((err) => {
         notify(
           'Unable to delete board.',
-          `${err.message || 'Server Error'}.`,
+          `${err?.response?.data?.board || err?.message || 'Server Error'}`,
         );
         setBoards(initialBoards);
       });
