@@ -26,6 +26,7 @@ class TasksApiView(APIView):
     @staticmethod
     def patch(request):
         data = {'task': request.query_params.get('id'),
+                'subtasks': request.query_params.get('subtasks'),
                 'auth_user': request.META.get('HTTP_AUTH_USER'),
                 'auth_token': request.META.get('HTTP_AUTH_TOKEN')}
         for key, value in request.data.items():
