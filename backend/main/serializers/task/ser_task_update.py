@@ -1,13 +1,9 @@
 from rest_framework import serializers
-import status
 
 from .ser_task import TaskSerializer
 from ..subtask.ser_subtask import SubtaskSerializer
 from ...models import Task
-from ...validation.val_auth import authenticate, authorize, \
-    authorization_error
-from ...validation.val_custom import CustomAPIException
-from ...validation.val_column import validate_column_id
+from ...helpers.auth_helper import AuthHelper
 
 
 class UpdateTaskSerializer(TaskSerializer):
@@ -18,7 +14,7 @@ class UpdateTaskSerializer(TaskSerializer):
         error_messages={'blank': 'Task ID cannot be empty.',
                         'invalid': 'Task ID must be a number.'}
     )
-    subtasks = serializers.ListField()
+    subtasks = serializers.ListField(allow_null=True)
     user = serializers.CharField(required=False)
     title = serializers.CharField(
         required=False,
@@ -39,25 +35,11 @@ class UpdateTaskSerializer(TaskSerializer):
         pass
 
     def validate(self, attrs):
-        user = authenticate(attrs.pop('auth_user'), attrs.pop('auth_token'))
+        user = AuthHelper.authenticate(attrs.pop('auth_user'),
+                                       attrs.pop('auth_token'))
 
         task = attrs.pop('task')
-        authorize(user, task.column.board.team_id)
-
-        if 'title' in attrs.keys() and not attrs.get('title'):
-            raise CustomAPIException('title',
-                                     'Task title cannot be empty.',
-                                     status.HTTP_400_BAD_REQUEST)
-
-        order = attrs.get('order')
-        if 'order' in attrs.keys() and (order == '' or order is None):
-            raise CustomAPIException('order',
-                                     'Task order cannot be empty.',
-                                     status.HTTP_400_BAD_REQUEST)
-
-        if 'column' in attrs.keys():
-            column_id = attrs.get('column')
-            validate_column_id(column_id)
+        AuthHelper.authorize(user, task.column.board.team_id)
 
         self.instance = task
         return attrs

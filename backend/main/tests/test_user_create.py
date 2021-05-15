@@ -1,11 +1,11 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import User, Board, Team
-from ..helpers import UserHelper
-from ..validation.val_auth import authentication_error, authorization_error
+from main.helpers.user_helper import UserHelper
+from main.helpers.auth_helper import AuthHelper
 
 
-class PatchUserTests(APITestCase):
+class UpdateUserTests(APITestCase):
     def setUp(self):
         team = Team.objects.create()
         self.user = User.objects.create(
@@ -22,10 +22,10 @@ class PatchUserTests(APITestCase):
                      'mhbykO'
 
         user_helper = UserHelper(team)
-        self.admin = user_helper.create(is_admin=True)
+        self.admin = user_helper.create_user(is_admin=True)
 
         wrong_user_helper = UserHelper(Team.objects.create())
-        self.wrong_admin = wrong_user_helper.create()
+        self.wrong_admin = wrong_user_helper.create_user()
 
     def patchUser(self, username, user_data, auth_user, auth_token):
         return self.client.patch(f'/users/?username={username}',
@@ -41,7 +41,6 @@ class PatchUserTests(APITestCase):
             self.admin['username'],
             self.admin['token']
         )
-        print(f'SUCCESSRESPONSE: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': f'{self.user.username} is removed from {self.board.name}.'
@@ -122,7 +121,6 @@ class PatchUserTests(APITestCase):
             self.admin['token']
         )
         self.assertEqual(response.status_code, 400)
-        print(f'isactiveblank {response.data}')
         self.assertEqual(response.data, {
             'is_active': [ErrorDetail(string='Is Active must be a boolean.',
                                       code='invalid')]
@@ -148,10 +146,10 @@ class PatchUserTests(APITestCase):
             self.admin['username'],
             ''
         )
-        print(f'AUTHTOKENEMPTYRESPONSEDATA: {response.data}')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_token_invalid(self):
         response = self.patchUser(
@@ -161,8 +159,9 @@ class PatchUserTests(APITestCase):
             'kasjdaksdjalsdkjasd'
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_user_blank(self):
         response = self.patchUser(
@@ -172,8 +171,9 @@ class PatchUserTests(APITestCase):
             self.admin['token']
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_user_invalid(self):
         response = self.patchUser(
@@ -183,8 +183,9 @@ class PatchUserTests(APITestCase):
             self.admin['token']
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_wrong_team(self):
         response = self.patchUser(
@@ -192,8 +193,10 @@ class PatchUserTests(APITestCase):
             {'board_id': self.board.id, 'is_active': False},
             self.wrong_admin['username'],
             self.wrong_admin['token'])
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
 
     def test_unauthorized(self):
         response = self.patchUser(
@@ -202,5 +205,7 @@ class PatchUserTests(APITestCase):
             self.username,
             self.token
         )
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)

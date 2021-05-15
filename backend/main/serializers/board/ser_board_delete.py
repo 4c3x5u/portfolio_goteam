@@ -2,8 +2,8 @@ from rest_framework import serializers
 import status
 
 from main.serializers.board.ser_board import BoardSerializer
-from main.validation.val_auth import authenticate, authorize
-from main.validation.val_custom import CustomAPIException
+from main.helpers.auth_helper import AuthHelper
+from main.helpers.custom_api_exception import CustomAPIException
 from main.models import Board
 
 
@@ -22,14 +22,15 @@ class DeleteBoardSerializer(serializers.ModelSerializer):
         fields = 'board', 'auth_user', 'auth_token',
 
     def validate(self, attrs):
-        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
+        user = AuthHelper.authenticate(attrs.get('auth_user'),
+                                       attrs.get('auth_token'))
         board = attrs.get('board')
         if len(board.team.board_set.all()) <= 1:
             raise CustomAPIException(
                 'board',
                 'You cannot delete the last remaining board.',
                 status.HTTP_400_BAD_REQUEST)
-        authorize(user, board.team_id)
+        AuthHelper.authorize(user, board.team_id)
         return board
 
     def delete(self):

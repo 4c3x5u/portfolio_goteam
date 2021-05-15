@@ -4,9 +4,8 @@ import status
 from .ser_column import ColumnSerializer
 from ..task.ser_task import TaskSerializer
 from ...models import Column, Task
-from ...validation.val_auth import \
-    authenticate, authorize, authorization_error
-from ...validation.val_custom import CustomAPIException
+from main.helpers.auth_helper import AuthHelper
+from main.helpers.custom_api_exception import CustomAPIException
 
 
 class UpdateColumnSerializer(ColumnSerializer):
@@ -27,12 +26,13 @@ class UpdateColumnSerializer(ColumnSerializer):
         fields = 'column', 'tasks', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
-        user = authenticate(attrs.pop('auth_user'), attrs.pop('auth_token'))
+        user = AuthHelper.authenticate(attrs.pop('auth_user'),
+                                       attrs.pop('auth_token'))
         attrs['user'] = user
 
         column = attrs.pop('column')
         if user.team_id != column.board.team_id:
-            raise authorization_error
+            raise AuthHelper.AUTHORIZATION_ERROR
 
         self.instance = column
         return attrs
@@ -53,7 +53,7 @@ class UpdateColumnSerializer(ColumnSerializer):
             if not user.is_admin \
                     and task.get('user') != user.username \
                     and instance.id != existing_task.column_id:
-                raise authorization_error
+                raise AuthHelper.AUTHORIZATION_ERROR
 
             serializer = TaskSerializer(existing_task,
                                         data={**task, 'column': instance.id},

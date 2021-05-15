@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from main.models import User, Board
-from main.validation.val_auth import authentication_error, authorization_error
-from main.validation.val_custom import CustomAPIException
+from main.helpers.auth_helper import AuthHelper
+from main.helpers.custom_api_exception import CustomAPIException
 import bcrypt
 import status
 
@@ -36,14 +36,14 @@ class ClientStateSerializer(serializers.Serializer):
             bytes(attrs.get('auth_token'), 'utf-8')
         )
         if not match:
-            raise authentication_error
+            raise AuthHelper.AUTHENTICATION_ERROR
 
         board_id = attrs.get('board_id')
         if board_id:
             try:
                 board = user.board_set.get(id=board_id)
             except Board.DoesNotExist:
-                raise authorization_error
+                raise AuthHelper.AUTHORIZATION_ERROR
         else:
             board = user.board_set.all().first()
 
@@ -55,7 +55,7 @@ class ClientStateSerializer(serializers.Serializer):
                                      status.HTTP_400_BAD_REQUEST)
 
         if board.team_id != user.team_id:
-            raise authorization_error
+            raise AuthHelper.AUTHORIZATION_ERROR
 
         return {'user': user, 'board': board}
 

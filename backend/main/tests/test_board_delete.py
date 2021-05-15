@@ -1,8 +1,8 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Team, Board
-from ..helpers import UserHelper
-from ..validation.val_auth import authentication_error, authorization_error
+from main.helpers.user_helper import UserHelper
+from main.helpers.auth_helper import AuthHelper
 
 
 class DeleteBoardTests(APITestCase):
@@ -10,20 +10,22 @@ class DeleteBoardTests(APITestCase):
 
     def setUp(self):
         team = Team.objects.create()
-        self.board = Board.objects.create(team=team)
-
+        boards = Board.objects.bulk_create([Board(team=team)
+                                            for _ in range(0, 4)])
+        self.board = boards[0]
         user_helper = UserHelper(team)
-        self.member = user_helper.create()
-        self.admin = user_helper.create(is_admin=True)
+        self.member = user_helper.create_user()
+        self.admin = user_helper.create_user(is_admin=True)
 
         wrong_user_helper = UserHelper(Team.objects.create())
-        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+        self.wrong_admin = wrong_user_helper.create_user(is_admin=True)
 
     def test_success(self):
         initial_count = Board.objects.count()
         response = self.client.delete(f'{self.endpoint}{self.board.id}',
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
+        print(f'success: {response.data}')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, {
             'msg': 'Board deleted successfully.',
@@ -49,7 +51,6 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code, 400)
-        print(f'idinvalid: {response.data}')
         self.assertEqual(response.data, {
             'board': [ErrorDetail(string='Board ID must be a number.',
                                   code='incorrect_type')]
@@ -74,8 +75,9 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN='')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -84,8 +86,9 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER=self.admin['username'],
                                       HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfos')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -94,8 +97,9 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER='',
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -104,8 +108,9 @@ class DeleteBoardTests(APITestCase):
                                       HTTP_AUTH_USER='invalidio',
                                       HTTP_AUTH_TOKEN=self.admin['token'])
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_wrong_team(self):
@@ -115,8 +120,10 @@ class DeleteBoardTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token'],
         )
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -124,7 +131,8 @@ class DeleteBoardTests(APITestCase):
         response = self.client.delete(f'{self.endpoint}{self.board.id}',
                                       HTTP_AUTH_USER=self.member['username'],
                                       HTTP_AUTH_TOKEN=self.member['token'])
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
-

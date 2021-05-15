@@ -3,8 +3,7 @@ from rest_framework import serializers
 from .ser_task import TaskSerializer
 from ..subtask.ser_subtask import SubtaskSerializer
 from ...models import Column, Task
-from ...validation.val_auth import \
-    authenticate, authorize, authorization_error
+from main.helpers.auth_helper import AuthHelper
 
 
 class CreateTaskSerializer(TaskSerializer):
@@ -34,9 +33,10 @@ class CreateTaskSerializer(TaskSerializer):
         }
 
     def validate(self, attrs):
-        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
+        user = AuthHelper.authenticate(attrs.get('auth_user'),
+                                       attrs.get('auth_token'))
         column = attrs.get('column')
-        authorize(user, column.board.team_id)
+        AuthHelper.authorize(user, column.board.team_id)
         return attrs
 
     def create(self, validated_data):

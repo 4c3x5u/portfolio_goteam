@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from main.models import Team
-from ..helpers import UserHelper
+from main.helpers.user_helper import UserHelper
 
 
 class LoginTests(APITestCase):
@@ -9,13 +9,12 @@ class LoginTests(APITestCase):
 
     def setUp(self):
         user_helper = UserHelper(Team.objects.create())
-        self.user = user_helper.create()
+        self.user = user_helper.create_user()
 
     def test_success(self):
         request_data = {'username': self.user['username'],
                         'password': self.user['password_raw']}
         response = self.client.post(self.endpoint, request_data)
-        # TODO: password comes back invalid
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data.get('msg'), 'Login successful.')
         self.assertEqual(response.data.get('username'), self.user['username'])

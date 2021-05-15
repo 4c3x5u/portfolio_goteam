@@ -4,7 +4,7 @@ import status
 
 from ...models import User
 from ..user.ser_user import UserSerializer
-from ...validation.val_custom import CustomAPIException
+from main.helpers.custom_api_exception import CustomAPIException
 
 
 class LoginSerializer(UserSerializer):
