@@ -65,7 +65,9 @@ class RegisterSerializer(UserSerializer):
         if is_admin and not validated_data.get('team'):
             validated_data['team'] = Team.objects.create()
 
-        user = User.objects.create(**validated_data)
+        user = User.objects.prefetch_related(
+            'team__board_set__user'
+        ).create(**validated_data)
 
         if is_admin:
             board_helper = BoardHelper('New Board', user)

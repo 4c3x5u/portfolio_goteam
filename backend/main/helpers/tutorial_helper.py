@@ -1,4 +1,5 @@
 import json
+import bcrypt
 
 from main.models import User, Task, Subtask
 
@@ -14,7 +15,8 @@ class TutorialHelper:
     def start(self):
         # CREATE A TEAM MEMBER
         User.objects.create(username=f'demo-member-{self.user.team_id}',
-                            password=b'securepassword',
+                            password=bcrypt.hashpw(b'securepassword',
+                                                   bcrypt.gensalt()),
                             team_id=self.user.team_id)
 
         # CREATE TASKS

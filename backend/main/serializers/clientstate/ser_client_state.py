@@ -48,8 +48,8 @@ class ClientStateSerializer(serializers.Serializer):
             board = user.board_set.all().first()
 
         if not board:
-            err_detail = 'Please ask your team admin to add you to a board ' \
-                         'and try again.',
+            err_detail = ('Please ask your team admin to add you to a board '
+                          'and try again.')
             raise CustomAPIException('board',
                                      err_detail,
                                      status.HTTP_400_BAD_REQUEST)
