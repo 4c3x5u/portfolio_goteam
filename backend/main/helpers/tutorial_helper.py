@@ -12,10 +12,6 @@ class TutorialHelper:
         self.column = column
 
     def start(self):
-        """
-        Creates tutorial objects for a newly registered admin to go through.
-        """
-
         # CREATE A TEAM MEMBER
         User.objects.create(username=f'demo-member-{self.user.team_id}',
                             password=b'securepassword',
@@ -27,21 +23,15 @@ class TutorialHelper:
 
         # Subtasks cannot be created before the tasks are created, so two
         # iterations are needed. Otherwise, it would mean too many DB calls.
-        tasks = [
-            Task(
-                title=task['title'],
-                description=task['description'],
-                order=i,
-                column=self.column,
-                user=self.user
-            )
-            for i, task in enumerate(tutorial_tasks)
-        ]
+        tasks = [Task(title=task['title'],
+                      description=task['description'],
+                      order=i,
+                      column=self.column,
+                      user=self.user)
+                 for i, task in enumerate(tutorial_tasks)]
         Task.objects.bulk_create(tasks)
 
-        subtasks = [
-            Subtask(title=title, task=tasks[ti], order=si)
-            for ti, task in enumerate(tutorial_tasks)
-            for si, title in enumerate(task['subtasks'])
-        ]
+        subtasks = [Subtask(title=title, task=tasks[ti], order=si)
+                    for ti, task in enumerate(tutorial_tasks)
+                    for si, title in enumerate(task['subtasks'])]
         Subtask.objects.bulk_create(subtasks)
