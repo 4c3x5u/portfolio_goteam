@@ -4,7 +4,7 @@ from main.models import Subtask
 
 class SubtaskSerializer(serializers.ModelSerializer):
     title = serializers.CharField(
-        max_length=50,
+        max_length=100,
         error_messages={
             'max_length':
                 'Subtask titles cannot be longer than 50 characters.',
