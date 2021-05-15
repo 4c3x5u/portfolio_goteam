@@ -3,8 +3,8 @@ import status
 
 from main.serializers.subtask.ser_subtask import SubtaskSerializer
 from main.models import Subtask
-from main.validation.val_auth import authenticate, authorization_error
-from main.validation.val_custom import CustomAPIException
+from main.helpers.auth_helper import AuthHelper
+from main.helpers.custom_api_exception import CustomAPIException
 
 
 class UpdateSubtaskSerializer(SubtaskSerializer):
@@ -49,13 +49,14 @@ class UpdateSubtaskSerializer(SubtaskSerializer):
                                      status.HTTP_400_BAD_REQUEST)
 
     def validate(self, attrs):
-        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
+        user = AuthHelper.authenticate(attrs.get('auth_user'),
+                                       attrs.get('auth_token'))
 
         subtask = attrs.get('subtask')
 
         if not user.is_admin and subtask.task.user != user \
                 or subtask.task.column.board.team_id != user.team.id:
-            raise authorization_error
+            raise AuthHelper.AUTHORIZATION_ERROR
 
         data = attrs.get('data')
         if 'title' in data.keys():

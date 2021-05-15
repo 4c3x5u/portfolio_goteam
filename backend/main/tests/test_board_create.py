@@ -1,22 +1,22 @@
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ErrorDetail
 from ..models import Board, Team, Column
-from ..helpers import UserHelper
-from ..validation.val_auth import authentication_error, authorization_error
+from main.helpers.user_helper import UserHelper
+from main.helpers.auth_helper import AuthHelper
 
 
-class PostBoardTests(APITestCase):
+class CreateBoardTests(APITestCase):
     endpoint = '/boards/'
 
     def setUp(self):
         self.team = Team.objects.create()
 
         user_helper = UserHelper(self.team)
-        self.member = user_helper.create()
-        self.admin = user_helper.create(is_admin=True)
+        self.member = user_helper.create_user()
+        self.admin = user_helper.create_user(is_admin=True)
 
         wrong_user_helper = UserHelper(Team.objects.create())
-        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+        self.wrong_admin = wrong_user_helper.create_user(is_admin=True)
 
     def test_success(self):
         initial_count = Board.objects.count()
@@ -26,7 +26,6 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.admin['username'],
             HTTP_AUTH_TOKEN=self.admin['token']
         )
-        print(f'SUCCESS: {response.data}')
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data.get('msg'),
                          'Board creation successful.')
@@ -85,8 +84,9 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_TOKEN=''
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_token_invalid(self):
@@ -98,8 +98,9 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpiwajfosi'
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_blank(self):
@@ -111,8 +112,9 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_TOKEN=self.admin['token']
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_auth_user_invalid(self):
@@ -124,8 +126,9 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_TOKEN=self.admin['token']
         )
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_wrong_team(self):
@@ -136,8 +139,10 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.wrong_admin['username'],
             HTTP_AUTH_TOKEN=self.wrong_admin['token']
         )
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -148,6 +153,8 @@ class PostBoardTests(APITestCase):
             HTTP_AUTH_USER=self.member['username'],
             HTTP_AUTH_TOKEN=self.member['token']
         )
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)

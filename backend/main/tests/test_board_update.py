@@ -3,11 +3,11 @@ from rest_framework.exceptions import ErrorDetail
 import status
 
 from ..models import Board, Team
-from ..helpers import UserHelper
-from ..validation.val_auth import authentication_error, authorization_error
+from main.helpers.user_helper import UserHelper
+from main.helpers.auth_helper import AuthHelper
 
 
-class PatchBoardTests(APITestCase):
+class UpdateBoardTests(APITestCase):
     endpoint = '/boards/?id='
 
     def setUp(self):
@@ -15,11 +15,11 @@ class PatchBoardTests(APITestCase):
         self.board = Board.objects.create(name='Some Board', team=team)
 
         user_helper = UserHelper(team)
-        self.member = user_helper.create()
-        self.admin = user_helper.create(is_admin=True)
+        self.member = user_helper.create_user()
+        self.admin = user_helper.create_user(is_admin=True)
 
         wrong_user_helper = UserHelper(Team.objects.create())
-        self.wrong_admin = wrong_user_helper.create(is_admin=True)
+        self.wrong_admin = wrong_user_helper.create_user(is_admin=True)
 
     def test_success(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -27,7 +27,6 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_USER=self.admin['username'],
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
-        print(f'successresponse: {response.data}')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {
             'msg': 'Board updated successfuly.',
@@ -99,8 +98,9 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_user_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -109,8 +109,9 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN=self.admin['token'],
                                      format='json')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_token_empty(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -119,8 +120,9 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN='',
                                      format='json')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_auth_token_invalid(self):
         response = self.client.patch(f'{self.endpoint}{self.board.id}',
@@ -129,8 +131,9 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_TOKEN='ASDKFJ!FJ_012rjpajfosia',
                                      format='json')
         self.assertEqual(response.status_code,
-                         authentication_error.status_code)
-        self.assertEqual(response.data, authentication_error.detail)
+                         AuthHelper.AUTHENTICATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHENTICATION_ERROR.detail)
 
     def test_wrong_team(self):
         initial_count = Board.objects.count()
@@ -141,8 +144,10 @@ class PatchBoardTests(APITestCase):
             HTTP_AUTH_TOKEN=self.wrong_admin['token'],
             format='json'
         )
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)
         self.assertEqual(Board.objects.count(), initial_count)
 
     def test_unauthorized(self):
@@ -151,5 +156,7 @@ class PatchBoardTests(APITestCase):
                                      HTTP_AUTH_USER=self.member['username'],
                                      HTTP_AUTH_TOKEN=self.member['token'],
                                      format='json')
-        self.assertEqual(response.status_code, authorization_error.status_code)
-        self.assertEqual(response.data, authorization_error.detail)
+        self.assertEqual(response.status_code,
+                         AuthHelper.AUTHORIZATION_ERROR.status_code)
+        self.assertEqual(response.data,
+                         AuthHelper.AUTHORIZATION_ERROR.detail)

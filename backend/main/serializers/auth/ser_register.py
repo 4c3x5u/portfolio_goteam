@@ -2,10 +2,11 @@ from rest_framework import serializers
 import bcrypt
 import status
 
-from main.models import User, Team
-from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_custom import CustomAPIException
-from ...helpers import BoardHelper, TutorialHelper
+from ...models import User, Team
+from ...serializers.user.ser_user import UserSerializer
+from main.helpers.custom_api_exception import CustomAPIException
+from ...helpers.board_helper import BoardHelper
+from ...helpers.tutorial_helper import TutorialHelper
 
 
 class RegisterSerializer(UserSerializer):
@@ -67,11 +68,12 @@ class RegisterSerializer(UserSerializer):
         user = User.objects.create(**validated_data)
 
         if is_admin:
-            board = BoardHelper.create(name='New Board',
-                                       team_id=user.team_id,
-                                       team_admin=user)
+            board_helper = BoardHelper('New Board', user)
+            board = board_helper.create_board()
             ready_column = board.column_set.all()[1]
-            TutorialHelper.initiate(user=user, ready_column=ready_column)
+
+            tutorial_helper = TutorialHelper(user, ready_column)
+            tutorial_helper.start()
 
         return user
 

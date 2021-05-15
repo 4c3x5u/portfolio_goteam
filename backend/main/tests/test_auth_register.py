@@ -11,10 +11,7 @@ class RegisterTests(APITestCase):
         self.team = Team.objects.create()
         Board.objects.create(team=self.team)
 
-    def help_test_success(self,
-                          initial_user_count,
-                          request_data,
-                          url_suffix=''):
+    def help_test_success(self, request_data, url_suffix=''):
         response = self.client.post(f'{self.endpoint}{url_suffix}',
                                     request_data)
         self.assertEqual(response.status_code, 201)
@@ -32,7 +29,7 @@ class RegisterTests(APITestCase):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
         initial_board_count = Board.objects.count()
-        self.help_test_success(initial_user_count, {
+        self.help_test_success({
             'username': 'fooooooooo',
             'password': 'barbarbar',
             'password_confirmation': 'barbarbar'
@@ -44,10 +41,10 @@ class RegisterTests(APITestCase):
     def test_success_with_invite_code(self):
         initial_user_count = User.objects.count()
         initial_team_count = Team.objects.count()
-        user = self.help_test_success(initial_user_count, {
+        user = self.help_test_success({
             'username': 'foooo',
             'password': 'barbarbar',
-            'password_confirmation': 'barbarbar',
+            'password_confirmation': 'barbarbar'
         }, f'?invite_code={self.team.invite_code}')
         self.assertEqual(Team.objects.count(), initial_team_count)
         self.assertEqual(user.team, self.team)
@@ -171,7 +168,6 @@ class RegisterTests(APITestCase):
                         'password': 'barbarbar',
                         'password_confirmation': ''}
         response = self.client.post(self.endpoint, request_data)
-        print(f'RESPONSEDATA: {response.data}')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data, {
             'password_confirmation': [ErrorDetail(

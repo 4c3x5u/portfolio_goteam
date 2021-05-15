@@ -2,8 +2,8 @@ from rest_framework import serializers
 import status
 
 from main.serializers.user.ser_user import UserSerializer
-from main.validation.val_auth import authenticate, authorize
-from main.validation.val_custom import CustomAPIException
+from main.helpers.auth_helper import AuthHelper
+from main.helpers.custom_api_exception import CustomAPIException
 from main.models import User, Board
 
 
@@ -33,8 +33,8 @@ class UpdateUserSerializer(UserSerializer):
                  'auth_token',
 
     def validate(self, attrs):
-        authenticated_user = authenticate(attrs.pop('auth_user'),
-                                          attrs.pop('auth_token'))
+        authenticated_user = AuthHelper.authenticate(attrs.pop('auth_user'),
+                                                     attrs.pop('auth_token'))
 
         board = attrs.get('board')
 
@@ -45,7 +45,7 @@ class UpdateUserSerializer(UserSerializer):
                                      'User not found.',
                                      status.HTTP_404_NOT_FOUND)
 
-        authorize(authenticated_user, user.team_id)
+        AuthHelper.authorize(authenticated_user, user.team_id)
 
         self.instance = {'user': user,
                          'board': board,

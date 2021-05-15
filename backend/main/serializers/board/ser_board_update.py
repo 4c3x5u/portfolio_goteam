@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .ser_board import BoardSerializer
-from ...validation.val_auth import authenticate, authorize
+from main.helpers.auth_helper import AuthHelper
 from ...models import Board
 
 
@@ -21,9 +21,10 @@ class UpdateBoardSerializer(serializers.ModelSerializer):
         fields = 'board', 'payload', 'auth_user', 'auth_token'
 
     def validate(self, attrs):
-        user = authenticate(attrs.get('auth_user'), attrs.get('auth_token'))
+        user = AuthHelper.authenticate(attrs.get('auth_user'),
+                                       attrs.get('auth_token'))
         board = attrs.get('board')
-        authorize(user, board.team_id)
+        AuthHelper.authorize(user, board.team_id)
 
         payload = attrs.get('payload')
         board_serializer = BoardSerializer(board, data=payload, partial=True)
