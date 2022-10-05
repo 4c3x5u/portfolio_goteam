@@ -1,27 +1,25 @@
-package main
+package api
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kxplxn/goteam/server/v2/log"
 	"net/http"
 )
 
-type RegisterHandler struct {
-}
-
-func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	relay := NewLogger(w)
+func ServeRegister(w http.ResponseWriter, r *http.Request) {
+	relay := log.NewAPILogger(w)
 	relay.Msg("register endpoint is hit")
 
 	switch r.Method {
 	case "POST":
-		h.POST(relay, r)
+		post(relay, r)
 	default:
 		relay.Err("Method Not Allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (h *RegisterHandler) POST(relay *Logger, request *http.Request) {
+func post(relay *log.APILogger, request *http.Request) {
 	body := make(map[string]string)
 	if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 		statusCode := http.StatusInternalServerError

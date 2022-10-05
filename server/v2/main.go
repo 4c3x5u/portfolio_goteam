@@ -1,29 +1,27 @@
 package main
 
 import (
-	"log"
 	"net/http"
+
+	"github.com/kxplxn/goteam/server/v2/api"
+	"github.com/kxplxn/goteam/server/v2/log"
 )
 
 func main() {
-	if err := runWebAPI(); err != nil {
-		log.Fatal(err)
-	}
+	log.ErrToConsole(runWebAPI())
 }
 
 func runWebAPI() error {
+	return serveRoutes(map[string]http.HandlerFunc{
+		"/":         api.ServeRoot,
+		"/register": api.ServeRegister,
+	}, ":1337")
+}
+
+func serveRoutes(routes map[string]http.HandlerFunc, port string) error {
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		relay := NewLogger(w)
-		relay.Msg(
-			"health check status: OK\n" +
-				"available endpoints:\n" +
-				"/register",
-		)
-	})
-
-	mux.Handle("/register", &RegisterHandler{})
-
-	return http.ListenAndServe(":1337", mux)
+	for route, handleFunc := range routes {
+		mux.HandleFunc(route, handleFunc)
+	}
+	return http.ListenAndServe(port, mux)
 }
