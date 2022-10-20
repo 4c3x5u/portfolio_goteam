@@ -1,15 +1,11 @@
 package api
 
 import (
-	"github.com/kxplxn/goteam/server/v2/log"
 	"net/http"
+
+	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
-func ServeRoot(w http.ResponseWriter, _ *http.Request) {
-	relay := log.NewAPILogger(w)
-	relay.Msg(
-		"app status: OK\n" +
-			"available endpoints:\n" +
-			"/register",
-	)
+func HandleRoot(w http.ResponseWriter, _ *http.Request) {
+	relay.APIMsg(w, "app status: OK\navailable endpoints: `/register`")
 }

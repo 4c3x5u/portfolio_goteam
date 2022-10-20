@@ -1,20 +1,22 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/kxplxn/goteam/server/v2/api"
-	"github.com/kxplxn/goteam/server/v2/log"
 )
 
 func main() {
-	log.ErrToConsole(runWebAPI())
+	if err := runWebAPI(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func runWebAPI() error {
 	return serveRoutes(map[string]http.HandlerFunc{
-		"/":         api.ServeRoot,
-		"/register": api.ServeRegister,
+		"/":         api.HandleRoot,
+		"/register": api.HandleRegister,
 	}, ":1337")
 }
 
