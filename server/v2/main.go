@@ -1,11 +1,10 @@
 package main
 
 import (
+	handlers2 "github.com/kxplxn/goteam/server/v2/handlers"
+	"github.com/kxplxn/goteam/server/v2/relay"
 	"log"
 	"net/http"
-
-	"github.com/kxplxn/goteam/server/v2/api/handlers"
-	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 func main() {
@@ -15,11 +14,11 @@ func main() {
 }
 
 func runWebAPI() error {
-	apiLogger := relay.NewAPILogger()
+	logger := relay.NewAPILogger()
 
 	return handleRoutes(map[string]http.Handler{
-		"/":         handlers.NewRoot(apiLogger),
-		"/register": handlers.NewRegister(apiLogger),
+		"/":         handlers2.NewRoot(logger),
+		"/register": handlers2.NewRegister(logger),
 	}, ":1337")
 }
 

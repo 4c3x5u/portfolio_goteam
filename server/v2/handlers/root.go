@@ -10,11 +10,11 @@ import (
 
 // Root is a HTTP handler for the root endpoint.
 type Root struct {
-	log relay.ErrMsger
+	log relay.APIErrMsger
 }
 
 // NewRoot is the constructor for Root handler.
-func NewRoot(log relay.ErrMsger) *Root {
+func NewRoot(log relay.APIErrMsger) *Root {
 	return &Root{log: log}
 }
 

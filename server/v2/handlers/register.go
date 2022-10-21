@@ -3,19 +3,19 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kxplxn/goteam/server/v2/requests"
 	"net/http"
 
-	"github.com/kxplxn/goteam/server/v2/api/requests"
 	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 // Register is a HTTP handler for the register endpoint.
 type Register struct {
-	log relay.ErrMsger
+	log relay.APIErrMsger
 }
 
 // NewRegister is the constructor for Register handler.
-func NewRegister(log relay.ErrMsger) *Register {
+func NewRegister(log relay.APIErrMsger) *Register {
 	return &Register{log: log}
 }
 
