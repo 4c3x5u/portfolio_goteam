@@ -14,24 +14,24 @@ type ErrMsger interface {
 	Msg(w http.ResponseWriter, msg string)
 }
 
-// Logger is a means for the API endpoints to log messages.
-type Logger struct {
+// APILogger is a means for the APILogger endpoints to log messages.
+type APILogger struct {
 }
 
-// NewLogger is the constructor for Logger. Logger has no dependencies
+// NewAPILogger is the constructor for APILogger. APILogger has no dependencies
 // and this is written to emphasize the fact.
-func NewLogger() *Logger {
-	return &Logger{}
+func NewAPILogger() *APILogger {
+	return &APILogger{}
 }
 
-// Err relays an API error.
-func (a *Logger) Err(w http.ResponseWriter, errMsg string, status int) {
+// Err relays an APILogger error.
+func (a *APILogger) Err(w http.ResponseWriter, errMsg string, status int) {
 	http.Error(w, errMsg, status)
 	log.Fatal(http.StatusText(status), "\n    ", errMsg, "\n")
 }
 
-// Msg relays an API message.
-func (a *Logger) Msg(w http.ResponseWriter, msg string) {
+// Msg relays an APILogger message.
+func (a *APILogger) Msg(w http.ResponseWriter, msg string) {
 	log.Println(msg)
 	if _, err := w.Write([]byte(msg)); err != nil {
 		a.Err(w, err.Error(), http.StatusInternalServerError)

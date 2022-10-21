@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/kxplxn/goteam/server/v2/api"
+	"github.com/kxplxn/goteam/server/v2/handlers"
 	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
@@ -15,17 +15,17 @@ func main() {
 }
 
 func runWebAPI() error {
-	apiLogger := relay.NewLogger()
+	apiLogger := relay.NewAPILogger()
 
-	return serveRoutes(map[string]http.Handler{
-		"/":         api.NewHandlerRoot(apiLogger),
-		"/register": api.NewHandlerRegister(apiLogger),
+	return handleRoutes(map[string]http.Handler{
+		"/":         handlers.NewRoot(apiLogger),
+		"/register": handlers.NewRegister(apiLogger),
 	}, ":1337")
 }
 
-func serveRoutes(routes map[string]http.Handler, port string) error {
+func handleRoutes(routeHandlers map[string]http.Handler, port string) error {
 	mux := http.NewServeMux()
-	for route, handler := range routes {
+	for route, handler := range routeHandlers {
 		mux.Handle(route, handler)
 	}
 	return http.ListenAndServe(port, mux)

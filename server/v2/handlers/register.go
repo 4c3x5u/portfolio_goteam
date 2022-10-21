@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
@@ -8,18 +8,18 @@ import (
 	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
-// HandlerRegister is a HTTP handler for the "/register" endpoint.
-type HandlerRegister struct {
+// Register is a HTTP handler for the register endpoint.
+type Register struct {
 	log relay.ErrMsger
 }
 
-// NewHandlerRegister is the constructor for HandlerRegister.
-func NewHandlerRegister(log relay.ErrMsger) *HandlerRegister {
-	return &HandlerRegister{log: log}
+// NewRegister is the constructor for Register handler.
+func NewRegister(log relay.ErrMsger) *Register {
+	return &Register{log: log}
 }
 
-// ServeHTTP responds to requests made to the "/register" endpoint.
-func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP responds to requests made to the to the register endpoint.
+func (h *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// accept only POST
 	if r.Method != "POST" {
 		status := http.StatusMethodNotAllowed
