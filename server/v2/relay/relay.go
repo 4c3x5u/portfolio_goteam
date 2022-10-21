@@ -18,6 +18,12 @@ type APIErrMsger interface {
 type APILogger struct {
 }
 
+// NewAPILogger is the constructor for APILogger. APILogger has no dependencies
+// and this is written to emphasize the fact.
+func NewAPILogger() *APILogger {
+	return &APILogger{}
+}
+
 // Err relays an API error.
 func (a *APILogger) Err(w http.ResponseWriter, errMsg string, status int) {
 	http.Error(w, errMsg, status)
