@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/kxplxn/goteam/server/v2/db"
 	"github.com/kxplxn/goteam/server/v2/relay"
 	"net/http"
 )
@@ -28,19 +29,23 @@ func NewHandlerRegister(errMsger relay.APIErrMsger) *HandlerRegister {
 func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// accept only POST
 	if r.Method != "POST" {
-		status := http.StatusMethodNotAllowed
-		h.log.Err(w, http.StatusText(status), status)
+		h.log.ErrCode(w, http.StatusMethodNotAllowed)
 		return
 	}
 
 	// decode body into request type
 	req := &ReqRegister{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		status := http.StatusInternalServerError
-		h.log.Err(w, http.StatusText(status), status)
+		h.log.ErrCode(w, http.StatusInternalServerError)
 	}
 
 	// todo: check if user exists in he database
+	client, ctx, cancel, err := db.Connect("")
+	if err != nil {
+		h.log.ErrCode(w, http.StatusInternalServerError)
+	}
+
+	defer db.Close(client, ctx, cancel)
 
 	// relay request fields
 	h.log.Msg(w, fmt.Sprintf(
