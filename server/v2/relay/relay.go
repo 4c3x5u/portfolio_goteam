@@ -1,5 +1,5 @@
-// Package relay (verb) contains functions used by the web api to communicate
-// with the various parts of the system.
+// Package relay contains functions used by the web api to communicate with the
+// various parts of the system.
 package relay
 
 import (
@@ -7,28 +7,27 @@ import (
 	"net/http"
 )
 
+// APIErrMsger defines a type that can be initialised with a http response
+// writer and relay messages and errors.
 type APIErrMsger interface {
-	APIErr(w http.ResponseWriter, errMsg string, status int)
-	APIMsg(w http.ResponseWriter, msg string)
+	Err(w http.ResponseWriter, errMsg string, status int)
+	Msg(w http.ResponseWriter, msg string)
 }
 
-type Relay struct {
-	w http.ResponseWriter
+// APILogger is a means for the API endpoints to log messages.
+type APILogger struct {
 }
 
-func New(w http.ResponseWriter) *Relay {
-	return &Relay{w}
-}
-
-func (r *Relay) APIMsg(msg string) {
-	log.Println(msg)
-	if _, err := r.w.Write([]byte(msg)); err != nil {
-		r.APIErr(err.Error(), http.StatusInternalServerError)
-	}
-}
-
-// APIErr relays an error.
-func (r *Relay) APIErr(errMsg string, status int) {
-	http.Error(r.w, errMsg, status)
+// Err relays an API error.
+func (a *APILogger) Err(w http.ResponseWriter, errMsg string, status int) {
+	http.Error(w, errMsg, status)
 	log.Fatal(http.StatusText(status), "\n    ", errMsg, "\n")
+}
+
+// Msg relays an API message.
+func (a *APILogger) Msg(w http.ResponseWriter, msg string) {
+	log.Println(msg)
+	if _, err := w.Write([]byte(msg)); err != nil {
+		a.Err(w, err.Error(), http.StatusInternalServerError)
+	}
 }

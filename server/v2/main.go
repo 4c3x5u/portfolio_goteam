@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/server/v2/api"
+	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 func main() {
@@ -14,9 +15,11 @@ func main() {
 }
 
 func runWebAPI() error {
+	apiLogger := &relay.APILogger{}
+
 	return serveRoutes(map[string]http.Handler{
-		"/":         &api.HandlerRoot{},
-		"/register": &api.HandlerRegister{},
+		"/":         api.NewHandlerRoot(apiLogger),
+		"/register": api.NewHandlerRegister(apiLogger),
 	}, ":1337")
 }
 

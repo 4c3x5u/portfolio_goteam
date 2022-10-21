@@ -1,18 +1,21 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/kxplxn/goteam/server/v2/relay"
+	"net/http"
 )
 
+// HandlerRoot is a HTTP handler for the "/" (root) endpoint.
 type HandlerRoot struct {
+	log relay.APIErrMsger
 }
 
+// NewHandlerRoot is the constructor for HandlerRoot.
+func NewHandlerRoot(log relay.APIErrMsger) *HandlerRoot {
+	return &HandlerRoot{log: log}
+}
+
+// ServeHTTP responds to requests made to the "/" (root) endpoint.
 func (h *HandlerRoot) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	relay.New(w).APIMsg(
-		"app status: OK\n" +
-			"   available endpoints: " +
-			"/register",
-	)
+	h.log.Msg(w, "app status: OK\navailable endpoints: \n  /register")
 }
