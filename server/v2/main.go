@@ -14,16 +14,16 @@ func main() {
 }
 
 func runWebAPI() error {
-	return serveRoutes(map[string]http.HandlerFunc{
-		"/":         api.HandleRoot,
-		"/register": api.HandleRegister,
+	return serveRoutes(map[string]http.Handler{
+		"/":         &api.HandlerRoot{},
+		"/register": &api.HandlerRegister{},
 	}, ":1337")
 }
 
-func serveRoutes(routes map[string]http.HandlerFunc, port string) error {
+func serveRoutes(routes map[string]http.Handler, port string) error {
 	mux := http.NewServeMux()
-	for route, handleFunc := range routes {
-		mux.HandleFunc(route, handleFunc)
+	for route, handler := range routes {
+		mux.Handle(route, handler)
 	}
 	return http.ListenAndServe(port, mux)
 }

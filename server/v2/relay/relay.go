@@ -7,16 +7,28 @@ import (
 	"net/http"
 )
 
-// APIMsg relays an API message.
-func APIMsg(w http.ResponseWriter, msg string) {
+type APIErrMsger interface {
+	APIErr(w http.ResponseWriter, errMsg string, status int)
+	APIMsg(w http.ResponseWriter, msg string)
+}
+
+type Relay struct {
+	w http.ResponseWriter
+}
+
+func New(w http.ResponseWriter) *Relay {
+	return &Relay{w}
+}
+
+func (r *Relay) APIMsg(msg string) {
 	log.Println(msg)
-	if _, err := w.Write([]byte(msg)); err != nil {
-		APIErr(w, err.Error(), http.StatusInternalServerError)
+	if _, err := r.w.Write([]byte(msg)); err != nil {
+		r.APIErr(err.Error(), http.StatusInternalServerError)
 	}
 }
 
 // APIErr relays an error.
-func APIErr(w http.ResponseWriter, errMsg string, status int) {
-	http.Error(w, errMsg, status)
+func (r *Relay) APIErr(errMsg string, status int) {
+	http.Error(r.w, errMsg, status)
 	log.Fatal(http.StatusText(status), "\n    ", errMsg, "\n")
 }
