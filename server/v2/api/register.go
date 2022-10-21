@@ -3,8 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kxplxn/goteam/server/v2/relay"
 	"net/http"
+
+	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 // HandlerRegister is a HTTP handler for the "/register" endpoint.
