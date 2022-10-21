@@ -29,20 +29,20 @@ func NewHandlerRegister(errMsger relay.APIErrMsger) *HandlerRegister {
 func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// accept only POST
 	if r.Method != "POST" {
-		h.log.ErrCode(w, http.StatusMethodNotAllowed)
+		h.log.Err(w, http.StatusMethodNotAllowed)
 		return
 	}
 
 	// decode body into request type
 	req := &ReqRegister{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.ErrCode(w, http.StatusInternalServerError)
+		h.log.Err(w, http.StatusInternalServerError)
 	}
 
 	// todo: check if user exists in he database
 	client, ctx, cancel, err := db.Connect("")
 	if err != nil {
-		h.log.ErrCode(w, http.StatusInternalServerError)
+		h.log.Err(w, http.StatusInternalServerError)
 	}
 
 	defer db.Close(client, ctx, cancel)
