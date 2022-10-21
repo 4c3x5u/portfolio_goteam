@@ -10,15 +10,15 @@ import (
 
 // HandlerRoot is a HTTP handler for the root endpoint.
 type HandlerRoot struct {
-	msger relay.APIMsger
+	log relay.APIMsger
 }
 
 // NewHandlerRoot is the constructor for HandlerRoot handler.
 func NewHandlerRoot(msger relay.APIMsger) *HandlerRoot {
-	return &HandlerRoot{msger: msger}
+	return &HandlerRoot{log: msger}
 }
 
 // ServeHTTP responds to requests made to the root endpoint.
 func (h *HandlerRoot) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
-	h.msger.Msg(w, "app status: OK\navailable endpoints: \n  /register")
+	h.log.Msg(w, "app status: OK\navailable endpoints: \n  /register")
 }

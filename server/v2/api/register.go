@@ -9,19 +9,19 @@ import (
 
 // ReqRegister is the request contract for the register endpoint.
 type ReqRegister struct {
-	Usn string `json:"username"`
-	Pwd string `json:"password"`
-	Ref string `json:"referrer"`
+	Usn string `json:"usn"` // username
+	Pwd string `json:"pwd"` // password
+	Ref string `json:"ref"` // referrer
 }
 
 // HandlerRegister is a HTTP handler for the register endpoint.
 type HandlerRegister struct {
-	errMsger relay.APIErrMsger
+	log relay.APIErrMsger
 }
 
 // NewHandlerRegister is the constructor for HandlerRegister handler.
 func NewHandlerRegister(errMsger relay.APIErrMsger) *HandlerRegister {
-	return &HandlerRegister{errMsger: errMsger}
+	return &HandlerRegister{log: errMsger}
 }
 
 // ServeHTTP responds to requests made to the to the register endpoint.
@@ -29,19 +29,21 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// accept only POST
 	if r.Method != "POST" {
 		status := http.StatusMethodNotAllowed
-		h.errMsger.Err(w, http.StatusText(status), status)
+		h.log.Err(w, http.StatusText(status), status)
 		return
 	}
 
-	// read body into map
+	// decode body into request type
 	req := &ReqRegister{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		status := http.StatusInternalServerError
-		h.errMsger.Err(w, http.StatusText(status), status)
+		h.log.Err(w, http.StatusText(status), status)
 	}
 
-	// rly decoded body
-	h.errMsger.Msg(w, fmt.Sprintf(
+	// todo: check if user exists in he database
+
+	// relay request fields
+	h.log.Msg(w, fmt.Sprintf(
 		"usn: %s\npwd: %s\nref: %s\n",
 		req.Usn, req.Pwd, req.Ref,
 	))
