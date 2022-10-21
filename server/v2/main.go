@@ -15,7 +15,7 @@ func main() {
 }
 
 func runWebAPI() error {
-	apiLogger := relay.NewAPILogger()
+	apiLogger := relay.NewLogger()
 
 	return serveRoutes(map[string]http.Handler{
 		"/":         api.NewHandlerRoot(apiLogger),

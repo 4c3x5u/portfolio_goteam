@@ -1,17 +1,18 @@
 package api
 
 import (
-	"github.com/kxplxn/goteam/server/v2/relay"
 	"net/http"
+
+	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 // HandlerRoot is a HTTP handler for the "/" (root) endpoint.
 type HandlerRoot struct {
-	log relay.APIErrMsger
+	log relay.ErrMsger
 }
 
 // NewHandlerRoot is the constructor for HandlerRoot.
-func NewHandlerRoot(log relay.APIErrMsger) *HandlerRoot {
+func NewHandlerRoot(log relay.ErrMsger) *HandlerRoot {
 	return &HandlerRoot{log: log}
 }
 

@@ -9,11 +9,11 @@ import (
 
 // HandlerRegister is a HTTP handler for the "/register" endpoint.
 type HandlerRegister struct {
-	log relay.APIErrMsger
+	log relay.ErrMsger
 }
 
 // NewHandlerRegister is the constructor for HandlerRegister.
-func NewHandlerRegister(log relay.APIErrMsger) *HandlerRegister {
+func NewHandlerRegister(log relay.ErrMsger) *HandlerRegister {
 	return &HandlerRegister{log: log}
 }
 
