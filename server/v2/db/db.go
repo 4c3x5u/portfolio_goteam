@@ -9,6 +9,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+const (
+	ConnStr = "DBCONNSTR"
+)
+
 func Close(
 	client *mongo.Client,
 	ctx context.Context,

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/kxplxn/goteam/server/v2/relay"
 	"log"
 	"net/http"
 
 	"github.com/kxplxn/goteam/server/v2/api"
+	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
 func main() {
