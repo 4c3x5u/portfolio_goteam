@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/kxplxn/goteam/server/v2/api/requests"
 	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
@@ -28,8 +29,8 @@ func (h *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// read body into map
-	dec := make(map[string]string, 3)
-	if err := json.NewDecoder(r.Body).Decode(&dec); err != nil {
+	req := &requests.Register{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		status := http.StatusInternalServerError
 		h.log.Err(w, http.StatusText(status), status)
 	}
@@ -37,6 +38,6 @@ func (h *Register) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// rly decoded body
 	h.log.Msg(w, fmt.Sprintf(
 		"usn: %s\npwd: %s\nref: %s\n",
-		dec["usn"], dec["pwd"], dec["ref"],
+		req.Usn, req.Pwd, req.Ref,
 	))
 }

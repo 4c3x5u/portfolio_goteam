@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/kxplxn/goteam/server/v2/handlers"
+	"github.com/kxplxn/goteam/server/v2/api/handlers"
 	"github.com/kxplxn/goteam/server/v2/relay"
 )
 
