@@ -1,5 +1,3 @@
-// Package relay contains functions used by the server to communicate with the
-// various other parts of the system (terminal, devtools, etc).
 package relay
 
 import (
@@ -7,14 +5,20 @@ import (
 	"net/http"
 )
 
+// APIMsger defines a type that uses a http response writer to relay messages.
+type APIMsger interface {
+	Msg(w http.ResponseWriter, msg string)
+}
+
 // APIErrMsger defines a type that uses a http response writer to relay messages
 // and errors.
 type APIErrMsger interface {
 	Err(w http.ResponseWriter, errMsg string, status int)
-	Msg(w http.ResponseWriter, msg string)
+	APIMsger
 }
 
-// APILogger is a means for the APILogger endpoints to log messages.
+// APILogger is a means for the APILogger endpoints to log messages. It
+// implements the APIErrMsger interface.
 type APILogger struct {
 }
 
