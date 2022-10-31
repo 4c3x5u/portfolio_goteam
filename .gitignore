@@ -1,4 +1,5 @@
 .idea/
+*.iml
 backend/env
 *.env
 __pycache__
