@@ -24,10 +24,13 @@ type ReqRegister struct {
 // an error if any fails.
 func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
 	errs = &ErrsRegister{}
+
+	// username too short
 	if len(r.Username) < 5 {
 		errs.Username = append(errs.Username, "Username cannot be shorter than 5 characters.")
 		return true, errs
 	}
+
 	return false, nil
 }
 
@@ -63,16 +66,19 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// decode body into request type
+	// decode body into request object
 	req := &ReqRegister{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Err(err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// create response object
+	res := &ResRegister{}
+
 	// validate the request
 	if isErr, errs := req.Validate(); isErr {
-		res := &ResRegister{Errs: errs}
+		res.Errs = errs
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(res); err != nil {
@@ -99,8 +105,6 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.log.Err(err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	res := &ResRegister{}
 
 	// check whether username is unique
 	err = client.
