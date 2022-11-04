@@ -1,3 +1,4 @@
+// Package db contains types and function to work with the GoTeam! database.
 package db
 
 import (
