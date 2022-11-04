@@ -2,7 +2,7 @@ package register
 
 import (
 	"encoding/json"
-	"log"
+	"github.com/kxplxn/goteam/server-v2/relay"
 	"net/http"
 	"os"
 
@@ -31,7 +31,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// decode body into request object
 	req := &ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		relay.ErrAPIInternal(w, err.Error())
 		return
 	}
 
@@ -44,8 +44,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			log.Printf("ERROR: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			relay.ErrAPIInternal(w, err.Error())
 		}
 		return
 	}
@@ -53,44 +52,35 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// connect to database
 	connStr := os.Getenv(db.ConnStr)
 	if connStr == "" {
-		log.Print("ERROR: db connection string is empty")
-		w.WriteHeader(http.StatusInternalServerError)
+		relay.ErrAPIInternal(w, "db connection string is empty")
 		return
 	}
 	client, ctx, cancel, err := db.Connect(connStr)
 	if err != nil {
-		log.Printf("ERROR: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		relay.ErrAPIInternal(w, err.Error())
 		return
 	}
 	defer db.Close(client, ctx, cancel)
 
 	// ping database to ensure success
 	if err := db.Ping(client, ctx); err != nil {
-		log.Printf("ERROR: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		relay.ErrAPIInternal(w, err.Error())
 		return
 	}
 
 	// check whether username is unique
-	err = client.
-		Database("goteamdb").
-		Collection("users").
-		FindOne(ctx, bson.M{"usn": req.Username}).
-		Err()
+	err = client.Database("goteam").Collection("users").FindOne(ctx, bson.M{"usn": req.Username}).Err()
 	if err == nil {
 		res.Errs.Username = "Username is already taken."
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			log.Printf("ERROR: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			relay.ErrAPIInternal(w, err.Error())
 		}
 		return
 	}
 	if err != mongo.ErrNoDocuments {
-		log.Printf("ERROR: %s", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		relay.ErrAPIInternal(w, err.Error())
 		return
 	}
 }
