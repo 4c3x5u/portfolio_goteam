@@ -8,21 +8,11 @@ import (
 )
 
 func main() {
-	if err := runWebAPI(); err != nil {
+	mux := http.NewServeMux()
+
+	mux.Handle("/register", apiRegister.NewHandler())
+
+	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func runWebAPI() error {
-	return handleRoutes(map[string]http.Handler{
-		"/register": apiRegister.NewHandler(),
-	}, ":8080")
-}
-
-func handleRoutes(routeHandlers map[string]http.Handler, port string) error {
-	mux := http.NewServeMux()
-	for route, handler := range routeHandlers {
-		mux.Handle(route, handler)
-	}
-	return http.ListenAndServe(port, mux)
 }

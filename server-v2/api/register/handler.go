@@ -2,7 +2,6 @@ package register
 
 import (
 	"encoding/json"
-	"github.com/kxplxn/goteam/server-v2/relay"
 	"net/http"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/kxplxn/goteam/server-v2/db"
+	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
 // Handler is a HTTP handler for the register endpoint.
