@@ -23,7 +23,7 @@ func NewHandler(errMsger relay.ErrMsger) *Handler {
 	return &Handler{log: errMsger}
 }
 
-// ServeHTTP responds to requests made to the to the register endpoint.
+// ServeHTTP responds to requests made to the register endpoint.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// init logger with writer
 	h.log.Init(w)
@@ -35,14 +35,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// decode body into request object
-	req := &Req{}
+	req := &ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Err(err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// create response object
-	res := &Res{}
+	res := &ResBody{}
 
 	// validate the request
 	if isValid, errs := req.IsValid(); !isValid {
@@ -82,7 +82,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Err()
 	if err == nil {
 		h.log.Err("username taken", http.StatusBadRequest)
-		res.Errs.Username = append(res.Errs.Username, "This username is taken.")
+		res.Errs.Username = "This username is taken."
 		return
 	}
 	if err != mongo.ErrNoDocuments {

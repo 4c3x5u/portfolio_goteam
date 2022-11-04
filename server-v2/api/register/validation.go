@@ -5,7 +5,7 @@ import "regexp"
 // Username defines the username field of a register request.
 type Username string
 
-// IsValid applies username validation rules to the username string.
+// IsValid applies username validation rules to the Username string.
 func (u *Username) IsValid() (bool, string) {
 	// username too short
 	if len(*u) < 5 {

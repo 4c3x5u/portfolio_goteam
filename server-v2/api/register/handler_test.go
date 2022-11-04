@@ -18,27 +18,27 @@ func TestRegister(t *testing.T) {
 		for _, c := range []struct {
 			caseName string
 			username string
-			wantErrs []string
+			wantErr  string
 		}{
 			{
 				caseName: "TooShort",
 				username: "bob",
-				wantErrs: []string{"Username cannot be shorter than 5 characters."},
+				wantErr:  "Username cannot be shorter than 5 characters.",
 			},
 			{
 				caseName: "TooLong",
 				username: "bobobobobobobobob",
-				wantErrs: []string{"Username cannot be longer than 15 characters."},
+				wantErr:  "Username cannot be longer than 15 characters.",
 			},
 			{
 				caseName: "InvalidCharacter",
 				username: "bobob!",
-				wantErrs: []string{"Username can contain only letters and digits."},
+				wantErr:  "Username can contain only letters and digits.",
 			},
 			{
 				caseName: "DigitStart",
 				username: "1bobob",
-				wantErrs: []string{"Username can start only with a letter."},
+				wantErr:  "Username can start only with a letter.",
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
@@ -64,12 +64,12 @@ func TestRegister(t *testing.T) {
 					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
 					t.Fail()
 				}
-				resBody := &Res{}
+				resBody := &ResBody{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-				if !cmp.Equal(resBody.Errs.Username, c.wantErrs) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, resBody.Errs.Username)
+				if !cmp.Equal(resBody.Errs.Username, c.wantErr) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, resBody.Errs.Username)
 					t.Fail()
 				}
 			})
