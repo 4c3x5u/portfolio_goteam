@@ -78,6 +78,12 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close(client, ctx, cancel)
 
+	// ping database to ensure success
+	if err := db.Ping(client, ctx); err != nil {
+		h.log.Err(err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	res := &ResRegister{}
 
 	// check whether username is unique
