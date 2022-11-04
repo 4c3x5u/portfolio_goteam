@@ -2,11 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/google/go-cmp/cmp"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/kxplxn/goteam/server-v2/relay"
 )
@@ -14,6 +15,7 @@ import (
 func TestRegister(t *testing.T) {
 	t.Run("Username Validation", func(t *testing.T) {
 		t.Run("Too Short", func(t *testing.T) {
+			// arrange
 			req, err := http.NewRequest("POST", "/register", strings.NewReader(`{
 				"username": "bob", 
 				"password": "securepass1!", 
@@ -25,25 +27,23 @@ func TestRegister(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 			handler := NewHandlerRegister(relay.NewAPILogger())
-			wantRes := &ResRegister{
-				Errs: &ErrsRegister{
-					Username: []string{"Username cannot be shorter than 5 characters."},
-				},
-			}
+			wantErrs := []string{"Username cannot be shorter than 5 characters."}
 
+			// act
 			handler.ServeHTTP(w, req)
 
-			httpResponse := w.Result()
-			if httpResponse.StatusCode != http.StatusBadRequest {
-				t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, httpResponse.StatusCode)
+			// assert
+			res := w.Result()
+			if res.StatusCode != http.StatusBadRequest {
+				t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
 				t.Fail()
 			}
-			gotRes := &ResRegister{Errs: &ErrsRegister{}}
-			if err := json.NewDecoder(httpResponse.Body).Decode(&gotRes); err != nil {
+			resBody := &ResRegister{}
+			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}
-			if cmp.Equal(gotRes, wantRes) == false {
-				t.Logf("\nwant: %v\ngot: %v", wantRes, gotRes)
+			if !cmp.Equal(resBody.Errs.Username, wantErrs) {
+				t.Logf("\nwant: %+v\ngot: %+v", wantErrs, resBody.Errs.Username)
 				t.Fail()
 			}
 		})
