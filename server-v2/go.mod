@@ -2,7 +2,10 @@ module github.com/kxplxn/goteam/server-v2
 
 go 1.19
 
-require go.mongodb.org/mongo-driver v1.11.0
+require (
+	github.com/google/go-cmp v0.5.2
+	go.mongodb.org/mongo-driver v1.11.0
+)
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect

@@ -2,6 +2,7 @@ package relay
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -21,28 +22,28 @@ type ErrMsger interface {
 	ResErr(resBody any, msg string, statusCode int)
 }
 
-// APILog is a means for the API endpoints to log messages. It implements
+// APILogger is a means for the API endpoints to log messages. It implements
 // ErrMsger.
-type APILog struct {
+type APILogger struct {
 	w http.ResponseWriter
 }
 
-// New is the constructor for APILog.
-func New() *APILog {
-	return &APILog{}
+// NewAPILogger is the constructor for APILogger.
+func NewAPILogger() *APILogger {
+	return &APILogger{}
 }
 
 // Init initialises the http.ResponseWriter instance on the API(Err)Msger (eg.
-// APILog). This must be called before any other method of the logger. The
-// ResponseWriter is initialised after New is called because we only have access
+// APILogger). This must be called before any other method of the logger. The
+// ResponseWriter is initialised after NewAPILogger is called because we only have access
 // to it inside the ServeHTTP methods of the HTTP handlers after we already
 // initialised their dependencies.
-func (l *APILog) Init(w http.ResponseWriter) {
+func (l *APILogger) Init(w http.ResponseWriter) {
 	l.w = w
 }
 
 // Msg relays an API message.
-func (l *APILog) Msg(msg string) {
+func (l *APILogger) Msg(msg string) {
 	if _, err := l.w.Write([]byte(msg)); err != nil {
 		l.Err(err.Error(), http.StatusInternalServerError)
 	}
@@ -50,21 +51,22 @@ func (l *APILog) Msg(msg string) {
 }
 
 // Err logs an API error using a message text and HTTP status code.
-func (l *APILog) Err(msg string, statusCode int) {
+func (l *APILogger) Err(msg string, statusCode int) {
 	http.Error(l.w, msg, statusCode)
 	log.Println(msg)
 }
 
 // StatusErr relays an API error based on a HTTP status code.
-func (l *APILog) StatusErr(statusCode int) {
+func (l *APILogger) StatusErr(statusCode int) {
 	l.Err(http.StatusText(statusCode), statusCode)
 }
 
-// ClientErr relays an API error based on an error response body.
-func (l *APILog) ResErr(resBody any, msg string, statusCode int) {
+// ResErr relays an API error based on an error response body.
+func (l *APILogger) ResErr(resBody any, msg string, statusCode int) {
 	l.w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(l.w).Encode(resBody); err != nil {
-		l.Err(err.Error(), statusCode)
+		msg := fmt.Sprintf("ERR: %s", err.Error())
+		l.Err(msg, statusCode)
 	}
 	http.Error(l.w, msg, statusCode)
 }

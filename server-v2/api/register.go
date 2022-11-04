@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/kxplxn/goteam/server-v2/db"
 	"github.com/kxplxn/goteam/server-v2/relay"
@@ -14,27 +15,31 @@ import (
 
 // ReqRegister is the request contract for the register endpoint.
 type ReqRegister struct {
-	Usn string `json:"username"`
-	Pwd string `json:"password"`
-	Ref string `json:"referrer"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Referrer string `json:"referrer"`
 }
 
-// ResRegister defines the resposne type for the register endpoint.
-type ResRegister struct {
-	Errs *ErrsRegister `json:"errors"`
+// Validate performs input validation checks on the register request and returns
+// an error if any fails.
+func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
+	errs = &ErrsRegister{}
+	if len(r.Username) < 5 {
+		errs.Username = append(errs.Username, "Username cannot be shorter than 5 characters.")
+		return true, errs
+	}
+	return false, nil
 }
 
 // ErrsRegister defines the structure of error object that can be encoded in the
 // register endpoint in the case of an error.
 type ErrsRegister struct {
-	Usn []string `json:"username"`
+	Username []string `json:"username"`
 }
 
-// Validate checks whether all the error fields are empty on the ErrsRegister
-// object — returns true if so and false otherwise. If more error fields are
-// added to ErrsRegister, they should also
-func (e *ErrsRegister) Validate() bool {
-	return len(e.Usn) == 0
+// ResRegister defines the resposne type for the register endpoint.
+type ResRegister struct {
+	Errs *ErrsRegister `json:"errors"`
 }
 
 // HandlerRegister is a HTTP handler for the register endpoint.
@@ -61,11 +66,22 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// decode body into request type
 	req := &ReqRegister{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Err(err.Error(), http.StatusInternalServerError)
+		h.log.Err(err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// set up database
+	// validate the request
+	if isErr, errs := req.Validate(); isErr {
+		res := &ResRegister{Errs: errs}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			h.log.Err(err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// connect to database
 	connStr := os.Getenv(db.ConnStr)
 	if connStr == "" {
 		h.log.Err("db connection string empty", http.StatusInternalServerError)
@@ -90,11 +106,11 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = client.
 		Database("goteamdb").
 		Collection("users").
-		FindOne(ctx, bson.M{"usn": req.Usn}).
+		FindOne(ctx, bson.M{"usn": req.Username}).
 		Err()
 	if err == nil {
 		h.log.Err("username taken", http.StatusBadRequest)
-		res.Errs.Usn = append(res.Errs.Usn, "This username is taken.")
+		res.Errs.Username = append(res.Errs.Username, "This username is taken.")
 		return
 	}
 	if err != mongo.ErrNoDocuments {
@@ -102,15 +118,10 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// return errors if exist
-	if res.Errs.Validate() != true {
-		h.log.ResErr(res, "errors on register", http.StatusBadRequest)
-		return
-	}
-
+	// todo: remove
 	// relay request fields – for testing purposes
 	h.log.Msg(fmt.Sprintf(
 		"usn: %s\npwd: %s\nref: %s\n",
-		req.Usn, req.Pwd, req.Ref,
+		req.Username, req.Password, req.Referrer,
 	))
 }

@@ -15,12 +15,12 @@ func main() {
 }
 
 func runWebAPI() error {
-	logger := relay.New()
+	logger := relay.NewAPILogger()
 
 	return handleRoutes(map[string]http.Handler{
 		"/":         api.NewHandlerRoot(logger),
 		"/register": api.NewHandlerRegister(logger),
-	}, ":1337")
+	}, ":8080")
 }
 
 func handleRoutes(routeHandlers map[string]http.Handler, port string) error {
