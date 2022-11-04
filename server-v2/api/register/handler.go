@@ -1,11 +1,10 @@
-package api
+package register
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"regexp"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,68 +13,18 @@ import (
 	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
-// ReqRegister is the request contract for the register endpoint.
-type ReqRegister struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Referrer string `json:"referrer"`
-}
-
-// Validate performs input validation checks on the register request and returns
-// an error if any fails.
-func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
-	errs = &ErrsRegister{}
-
-	// username too short
-	if len(r.Username) < 5 {
-		errs.Username = append(errs.Username, "Username cannot be shorter than 5 characters.")
-		return true, errs
-	}
-
-	// username too long
-	if len(r.Username) > 15 {
-		errs.Username = append(errs.Username, "Username cannot be longer than 15 characters.")
-		return true, errs
-	}
-
-	// username contains invalid characters
-	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", r.Username); match {
-		errs.Username = append(errs.Username, "Username can contain only letters and digits.")
-		return true, errs
-	}
-
-	// username contains invalid characters
-	if match, _ := regexp.MatchString("(^\\d)", r.Username); match {
-		errs.Username = append(errs.Username, "Username can start only with a letter.")
-		return true, errs
-	}
-
-	return false, nil
-}
-
-// ErrsRegister defines the structure of error object that can be encoded in the
-// register endpoint in the case of an error.
-type ErrsRegister struct {
-	Username []string `json:"username"`
-}
-
-// ResRegister defines the resposne type for the register endpoint.
-type ResRegister struct {
-	Errs *ErrsRegister `json:"errors"`
-}
-
-// HandlerRegister is a HTTP handler for the register endpoint.
-type HandlerRegister struct {
+// Handler is a HTTP handler for the register endpoint.
+type Handler struct {
 	log relay.ErrMsger
 }
 
-// NewHandlerRegister is the constructor for HandlerRegister handler.
-func NewHandlerRegister(errMsger relay.ErrMsger) *HandlerRegister {
-	return &HandlerRegister{log: errMsger}
+// NewHandler is the constructor for Handler handler.
+func NewHandler(errMsger relay.ErrMsger) *Handler {
+	return &Handler{log: errMsger}
 }
 
 // ServeHTTP responds to requests made to the to the register endpoint.
-func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// init logger with writer
 	h.log.Init(w)
 
@@ -86,17 +35,17 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// decode body into request object
-	req := &ReqRegister{}
+	req := &Req{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Err(err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// create response object
-	res := &ResRegister{}
+	res := &Res{}
 
 	// validate the request
-	if isErr, errs := req.Validate(); isErr {
+	if isValid, errs := req.IsValid(); !isValid {
 		res.Errs = errs
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)

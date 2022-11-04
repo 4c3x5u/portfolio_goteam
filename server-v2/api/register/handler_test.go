@@ -1,4 +1,4 @@
-package api
+package register
 
 import (
 	"encoding/json"
@@ -53,7 +53,7 @@ func TestRegister(t *testing.T) {
 				}
 				req.Header.Set("Content-Type", "application/json")
 				w := httptest.NewRecorder()
-				handler := NewHandlerRegister(relay.NewAPILogger())
+				handler := NewHandler(relay.NewAPILogger())
 
 				// act
 				handler.ServeHTTP(w, req)
@@ -64,7 +64,7 @@ func TestRegister(t *testing.T) {
 					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
 					t.Fail()
 				}
-				resBody := &ResRegister{}
+				resBody := &Res{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
