@@ -19,6 +19,11 @@ func TestRegister(t *testing.T) {
 			wantErr  string
 		}{
 			{
+				caseName: "Empty",
+				username: "",
+				wantErr:  "Username cannot be empty.",
+			},
+			{
 				caseName: "TooShort",
 				username: "bob",
 				wantErr:  "Username cannot be shorter than 5 characters.",
