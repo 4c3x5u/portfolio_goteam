@@ -40,7 +40,13 @@ func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
 
 	// username contains invalid characters
 	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", r.Username); match {
-		errs.Username = append(errs.Username, "Username can only contain letters and digits.")
+		errs.Username = append(errs.Username, "Username can contain only letters and digits.")
+		return true, errs
+	}
+
+	// username contains invalid characters
+	if match, _ := regexp.MatchString("(^\\d)", r.Username); match {
+		errs.Username = append(errs.Username, "Username can start only with a letter.")
 		return true, errs
 	}
 

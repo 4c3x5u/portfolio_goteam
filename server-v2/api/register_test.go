@@ -33,7 +33,12 @@ func TestRegister(t *testing.T) {
 			{
 				caseName: "InvalidCharacter",
 				username: "bobob!",
-				wantErrs: []string{"Username can only contain letters and digits."},
+				wantErrs: []string{"Username can contain only letters and digits."},
+			},
+			{
+				caseName: "DigitStart",
+				username: "1bobob",
+				wantErrs: []string{"Username can start only with a letter."},
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
