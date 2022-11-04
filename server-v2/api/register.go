@@ -3,11 +3,13 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/kxplxn/goteam/server-v2/db"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 	"os"
+
+	"github.com/kxplxn/goteam/server-v2/db"
+	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
 // ReqRegister is the request contract for the register endpoint.
@@ -96,7 +98,7 @@ func (h *HandlerRegister) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// return errors if exist
 	if res.Errs.Validate() != true {
-		h.log.ClientErr(res, "errors on register", http.StatusBadRequest)
+		h.log.ResErr(res, "errors on register", http.StatusBadRequest)
 		return
 	}
 

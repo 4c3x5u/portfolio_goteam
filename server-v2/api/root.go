@@ -1,9 +1,11 @@
-// Package handlers contains HTTP handlers that are used to response to HTTP
+// Package api contains HTTP handlers that are used to response to HTTP
 // requests made to server.
 package api
 
 import (
 	"net/http"
+
+	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
 // HandlerRoot is a HTTP handler for the root endpoint.

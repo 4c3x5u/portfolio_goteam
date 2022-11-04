@@ -18,7 +18,7 @@ type ErrMsger interface {
 	Msger
 	Err(msg string, statusCode int)
 	StatusErr(statusCode int)
-	ClientErr(resBody any, msg string, statusCode int)
+	ResErr(resBody any, msg string, statusCode int)
 }
 
 // APILog is a means for the API endpoints to log messages. It implements
@@ -61,7 +61,7 @@ func (l *APILog) StatusErr(statusCode int) {
 }
 
 // ClientErr relays an API error based on an error response body.
-func (l *APILog) ClientErr(resBody any, msg string, statusCode int) {
+func (l *APILog) ResErr(resBody any, msg string, statusCode int) {
 	l.w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(l.w).Encode(resBody); err != nil {
 		l.Err(err.Error(), statusCode)
