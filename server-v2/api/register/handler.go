@@ -2,7 +2,7 @@ package register
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -10,34 +10,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/kxplxn/goteam/server-v2/db"
-	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
 // Handler is a HTTP handler for the register endpoint.
-type Handler struct {
-	log relay.ErrMsger
-}
+type Handler struct{}
 
 // NewHandler is the constructor for Handler handler.
-func NewHandler(errMsger relay.ErrMsger) *Handler {
-	return &Handler{log: errMsger}
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
 // ServeHTTP responds to requests made to the register endpoint.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// init logger with writer
-	h.log.Init(w)
-
 	// accept only POST
 	if r.Method != "POST" {
-		h.log.StatusErr(http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
 	// decode body into request object
 	req := &ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Err(err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -50,7 +44,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			h.log.Err(err.Error(), http.StatusInternalServerError)
+			log.Printf("ERROR: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	}
@@ -58,19 +53,22 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// connect to database
 	connStr := os.Getenv(db.ConnStr)
 	if connStr == "" {
-		h.log.Err("db connection string empty", http.StatusInternalServerError)
+		log.Print("ERROR: db connection string is empty")
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	client, ctx, cancel, err := db.Connect(connStr)
 	if err != nil {
-		h.log.Err(err.Error(), http.StatusInternalServerError)
+		log.Printf("ERROR: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer db.Close(client, ctx, cancel)
 
 	// ping database to ensure success
 	if err := db.Ping(client, ctx); err != nil {
-		h.log.Err(err.Error(), http.StatusInternalServerError)
+		log.Printf("ERROR: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -81,19 +79,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		FindOne(ctx, bson.M{"usn": req.Username}).
 		Err()
 	if err == nil {
-		h.log.Err("username taken", http.StatusBadRequest)
-		res.Errs.Username = "This username is taken."
+		res.Errs.Username = "Username is already taken."
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			log.Printf("ERROR: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 	if err != mongo.ErrNoDocuments {
-		h.log.Err(err.Error(), http.StatusInternalServerError)
+		log.Printf("ERROR: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// todo: remove
-	// relay request fields – for testing purposes
-	h.log.Msg(fmt.Sprintf(
-		"usn: %s\npwd: %s\nref: %s\n",
-		req.Username, req.Password, req.Referrer,
-	))
 }

@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
 func TestRegister(t *testing.T) {
@@ -53,7 +51,7 @@ func TestRegister(t *testing.T) {
 				}
 				req.Header.Set("Content-Type", "application/json")
 				w := httptest.NewRecorder()
-				handler := NewHandler(relay.NewAPILogger())
+				handler := NewHandler()
 
 				// act
 				handler.ServeHTTP(w, req)
