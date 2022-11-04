@@ -30,6 +30,11 @@ func TestRegister(t *testing.T) {
 				username: "bobobobobobobobob",
 				wantErrs: []string{"Username cannot be longer than 15 characters."},
 			},
+			{
+				caseName: "InvalidCharacter",
+				username: "bobob!",
+				wantErrs: []string{"Username can only contain letters and digits."},
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange

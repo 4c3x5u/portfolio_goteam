@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -34,6 +35,12 @@ func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
 	// username too long
 	if len(r.Username) > 15 {
 		errs.Username = append(errs.Username, "Username cannot be longer than 15 characters.")
+		return true, errs
+	}
+
+	// username contains invalid characters
+	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", r.Username); match {
+		errs.Username = append(errs.Username, "Username can only contain letters and digits.")
 		return true, errs
 	}
 
