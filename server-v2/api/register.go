@@ -31,6 +31,12 @@ func (r *ReqRegister) Validate() (isErr bool, errs *ErrsRegister) {
 		return true, errs
 	}
 
+	// username too long
+	if len(r.Username) > 15 {
+		errs.Username = append(errs.Username, "Username cannot be longer than 15 characters.")
+		return true, errs
+	}
+
 	return false, nil
 }
 
