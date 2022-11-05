@@ -116,9 +116,14 @@ func TestRegister(t *testing.T) {
 			},
 			{
 				caseName: "NoSymbols",
-				password: "myNOsymb0lP4SSWORD",
+				password: "myNOsymbolP4SSWORD",
 				wantErr: "Password must contain one of the following special characters: " +
 					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+			},
+			{
+				caseName: "HasSpaces",
+				password: "my SP4CED p4ssword",
+				wantErr:  "Password cannot contain spaces.",
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
