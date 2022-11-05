@@ -3,12 +3,7 @@ package register
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-
-	"github.com/kxplxn/goteam/server-v2/db"
 	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
@@ -49,38 +44,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// connect to database
-	connStr := os.Getenv(db.ConnStr)
-	if connStr == "" {
-		relay.ErrAPIInternal(w, "db connection string is empty")
-		return
-	}
-	client, ctx, cancel, err := db.Connect(connStr)
-	if err != nil {
-		relay.ErrAPIInternal(w, err.Error())
-		return
-	}
-	defer db.Close(client, ctx, cancel)
-
-	// ping database to ensure success
-	if err := db.Ping(client, ctx); err != nil {
-		relay.ErrAPIInternal(w, err.Error())
-		return
-	}
-
-	// check whether username is unique
-	err = client.Database("goteam").Collection("users").FindOne(ctx, bson.M{"usn": req.Username}).Err()
-	if err == nil {
-		res.Errs.Username = "Username is already taken."
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			relay.ErrAPIInternal(w, err.Error())
-		}
-		return
-	}
-	if err != mongo.ErrNoDocuments {
-		relay.ErrAPIInternal(w, err.Error())
-		return
-	}
+	relay.ErrAPIInternal(w, "not implemented")
+	return
 }
