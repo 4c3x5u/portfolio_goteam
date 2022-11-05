@@ -71,8 +71,9 @@ func TestRegister(t *testing.T) {
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-				if !cmp.Equal(resBody.Errs.Username, c.wantErr) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, resBody.Errs.Username)
+				gotErr := resBody.Errs.Username
+				if !cmp.Equal(gotErr, c.wantErr) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
 			})
@@ -105,6 +106,11 @@ func TestRegister(t *testing.T) {
 				password: "MYALLUPPERPASSWORD",
 				wantErr:  "Password must contain a lowercase letter (a-z).",
 			},
+			{
+				caseName: "NoUppercase",
+				password: "myalllowerpassword",
+				wantErr:  "Password must contain an uppercase letter (A-Z).",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
@@ -133,8 +139,9 @@ func TestRegister(t *testing.T) {
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-				if !cmp.Equal(resBody.Errs.Password, c.wantErr) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, resBody.Errs.Username)
+				gotErr := resBody.Errs.Password
+				if !cmp.Equal(gotErr, c.wantErr) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
 			})
