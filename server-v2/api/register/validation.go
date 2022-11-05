@@ -38,5 +38,8 @@ func (p *Password) Validate() string {
 	if len(*p) < 8 {
 		return "Password cannot be shorter than 5 characters."
 	}
+	if len(*p) > 64 {
+		return "Password cannot be longer than 64 characters."
+	}
 	return ""
 }

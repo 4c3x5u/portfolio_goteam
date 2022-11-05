@@ -95,6 +95,11 @@ func TestRegister(t *testing.T) {
 				password: "mypassw",
 				wantErr:  "Password cannot be shorter than 5 characters.",
 			},
+			{
+				caseName: "TooLong",
+				password: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhyact",
+				wantErr:  "Password cannot be longer than 64 characters.",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
