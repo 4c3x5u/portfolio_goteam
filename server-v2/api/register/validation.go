@@ -18,7 +18,7 @@ func (u *Username) Validate() string {
 		return "Username cannot be longer than 15 characters."
 	}
 	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", string(*u)); match {
-		return "Username can contain only letters and digits."
+		return "Username can contain only letters (a-z/A-Z) and digits (0-9)."
 	}
 	if match, _ := regexp.MatchString("(^\\d)", string(*u)); match {
 		return "Username can start only with a letter."

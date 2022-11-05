@@ -34,7 +34,7 @@ func TestRegister(t *testing.T) {
 			{
 				caseName: "InvalidCharacter",
 				username: "bobob!",
-				wantErr:  "Username can contain only letters and digits.",
+				wantErr:  "Username can contain only letters (a-z/A-Z) and digits (0-9).",
 			},
 			{
 				caseName: "DigitStart",
