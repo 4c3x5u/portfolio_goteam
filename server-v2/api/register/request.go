@@ -15,13 +15,13 @@ func (r *ReqBody) Validate() *Errs {
 
 	// validate username
 	if errMsg := r.Username.Validate(); errMsg != "" {
-		errs.Username = errMsg
+		errs.Username = append(errs.Username, errMsg)
 		return errs
 	}
 
 	// validate password
 	if errMsg := r.Password.Validate(); errMsg != "" {
-		errs.Password = errMsg
+		errs.Password = append(errs.Username, errMsg)
 		return errs
 	}
 

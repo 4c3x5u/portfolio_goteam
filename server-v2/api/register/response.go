@@ -8,6 +8,6 @@ type ResBody struct {
 // Errs defines the structure of error object that can be encoded in the
 // register endpoint in the case of an error.
 type Errs struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username []string `json:"username"`
+	Password []string `json:"password"`
 }

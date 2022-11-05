@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/kxplxn/goteam/server-v2/assert"
 )
 
 func TestRegister(t *testing.T) {
@@ -14,32 +16,32 @@ func TestRegister(t *testing.T) {
 		for _, c := range []struct {
 			caseName string
 			username string
-			wantErr  string
+			wantErr  []string
 		}{
 			{
 				caseName: "Empty",
 				username: "",
-				wantErr:  "Username cannot be empty.",
+				wantErr:  []string{"Username cannot be empty."},
 			},
 			{
 				caseName: "TooShort",
-				username: "bob",
-				wantErr:  "Username cannot be shorter than 5 characters.",
+				username: "bob1",
+				wantErr:  []string{"Username cannot be shorter than 5 characters."},
 			},
 			{
 				caseName: "TooLong",
 				username: "bobobobobobobobob",
-				wantErr:  "Username cannot be longer than 15 characters.",
+				wantErr:  []string{"Username cannot be longer than 15 characters."},
 			},
 			{
 				caseName: "InvalidCharacter",
 				username: "bobob!",
-				wantErr:  "Username can contain only letters (a-z/A-Z) and digits (0-9).",
+				wantErr:  []string{"Username can contain only letters (a-z/A-Z) and digits (0-9)."},
 			},
 			{
 				caseName: "DigitStart",
 				username: "1bobob",
-				wantErr:  "Username can start only with a letter.",
+				wantErr:  []string{"Username can start only with a letter."},
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
@@ -71,7 +73,7 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Username
-				if gotErr != c.wantErr {
+				if !assert.EqualArr(gotErr, c.wantErr) {
 					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
@@ -83,55 +85,59 @@ func TestRegister(t *testing.T) {
 		for _, c := range []struct {
 			caseName string
 			password string
-			wantErr  string
+			wantErr  []string
 		}{
 			{
 				caseName: "Empty",
 				password: "",
-				wantErr:  "Password cannot be empty.",
+				wantErr:  []string{"Password cannot be empty."},
 			},
 			{
 				caseName: "TooShort",
 				password: "mypassw",
-				wantErr:  "Password cannot be shorter than 5 characters.",
+				wantErr:  []string{"Password cannot be shorter than 5 characters."},
 			},
 			{
 				caseName: "TooLong",
 				password: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
-				wantErr:  "Password cannot be longer than 64 characters.",
+				wantErr:  []string{"Password cannot be longer than 64 characters."},
 			},
 			{
 				caseName: "NoLowercase",
 				password: "MYALLUPPERPASSWORD",
-				wantErr:  "Password must contain a lowercase letter (a-z).",
+				wantErr:  []string{"Password must contain a lowercase letter (a-z)."},
 			},
 			{
 				caseName: "NoUppercase",
 				password: "myalllowerpassword",
-				wantErr:  "Password must contain an uppercase letter (A-Z).",
+				wantErr:  []string{"Password must contain an uppercase letter (A-Z)."},
 			},
 			{
 				caseName: "NoDigits",
 				password: "myNOdigitPASSWORD",
-				wantErr:  "Password must contain a digit (0-9).",
+				wantErr:  []string{"Password must contain a digit (0-9)."},
 			},
 			{
 				caseName: "NoSymbols",
 				password: "myNOsymbolP4SSWORD",
-				wantErr: "Password must contain one of the following special characters: " +
-					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+				wantErr: []string{
+					"Password must contain one of the following special characters: " +
+						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+				},
 			},
 			{
 				caseName: "HasSpaces",
 				password: "my SP4CED p4ssword",
-				wantErr:  "Password cannot contain spaces.",
+				wantErr:  []string{"Password cannot contain spaces."},
 			},
 			{
 				caseName: "NonASCII",
 				password: "myNØNÅSCÎÎp4ssword",
-				wantErr: "Password can contain only letters (a-z/A-Z), digits (0-9), " +
-					"and the following special characters: " +
-					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+				wantErr: []string{
+					"Password can contain only letters (a-z/A-Z), digits (0-9), " +
+						"and the following special characters: " +
+						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+				},
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
@@ -163,7 +169,7 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Password
-				if gotErr != c.wantErr {
+				if !assert.EqualArr(gotErr, c.wantErr) {
 					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
