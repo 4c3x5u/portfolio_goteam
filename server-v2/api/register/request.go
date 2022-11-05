@@ -7,16 +7,17 @@ type ReqBody struct {
 	Referrer string   `json:"referrer"`
 }
 
-// IsValid uses individual field validation logic defined in the validation.go
+// Validate uses individual field validation logic defined in the validation.go
 // file to validate requests sent the register endpoint. It returns false and
 // an errors object if any of the individual validations fail.
-func (r *ReqBody) IsValid() (bool, *Errs) {
+func (r *ReqBody) Validate() *Errs {
 	errs := &Errs{}
 
-	if usnIsValid, usnErrMsg := r.Username.IsValid(); !usnIsValid {
+	// validate username
+	if usnErrMsg := r.Username.Validate(); usnErrMsg != "" {
 		errs.Username = usnErrMsg
-		return false, errs
+		return errs
 	}
 
-	return true, nil
+	return nil
 }

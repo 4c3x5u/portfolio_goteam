@@ -39,7 +39,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := &ResBody{}
 
 	// validate the request
-	if isValid, errs := req.IsValid(); !isValid {
+	if errs := req.Validate(); errs != nil {
 		res.Errs = errs
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
