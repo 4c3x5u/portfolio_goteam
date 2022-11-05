@@ -41,5 +41,8 @@ func (p *Password) Validate() string {
 	if len(*p) > 64 {
 		return "Password cannot be longer than 64 characters."
 	}
+	if match, _ := regexp.MatchString("/[a-z]/", string(*p)); !match {
+		return "Password must contain a lowercase letter (a-z)."
+	}
 	return ""
 }

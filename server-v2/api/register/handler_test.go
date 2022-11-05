@@ -97,8 +97,13 @@ func TestRegister(t *testing.T) {
 			},
 			{
 				caseName: "TooLong",
-				password: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhyact",
+				password: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
 				wantErr:  "Password cannot be longer than 64 characters.",
+			},
+			{
+				caseName: "NoLowercase",
+				password: "MYALLUPPERPASSWORD",
+				wantErr:  "Password must contain a lowercase letter (a-z).",
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
