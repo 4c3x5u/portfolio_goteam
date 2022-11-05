@@ -47,5 +47,8 @@ func (p *Password) Validate() string {
 	if match, _ := regexp.MatchString("[A-Z]", string(*p)); !match {
 		return "Password must contain an uppercase letter (A-Z)."
 	}
+	if match, _ := regexp.MatchString("[0-9]", string(*p)); !match {
+		return "Password must contain a digit (0-9)."
+	}
 	return ""
 }

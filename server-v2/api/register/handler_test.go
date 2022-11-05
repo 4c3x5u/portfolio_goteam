@@ -111,6 +111,11 @@ func TestRegister(t *testing.T) {
 				password: "myalllowerpassword",
 				wantErr:  "Password must contain an uppercase letter (A-Z).",
 			},
+			{
+				caseName: "NoDigits",
+				password: "myNOdigitPASSWORD",
+				wantErr:  "Password must contain a digit (0-9).",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
