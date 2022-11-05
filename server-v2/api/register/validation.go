@@ -25,3 +25,15 @@ func (u *Username) Validate() string {
 	}
 	return ""
 }
+
+// Password defines the password field of a register request.
+type Password string
+
+// Validate applies password validation rules to the Password string and returns
+// the error message if any fails.
+func (p *Password) Validate() string {
+	if *p == "" {
+		return "Password cannot be empty."
+	}
+	return ""
+}

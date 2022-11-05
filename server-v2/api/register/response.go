@@ -9,4 +9,5 @@ type ResBody struct {
 // register endpoint in the case of an error.
 type Errs struct {
 	Username string `json:"username"`
+	Password string `json:"password"`
 }

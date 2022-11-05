@@ -3,7 +3,7 @@ package register
 // ReqBody defines the request body for the register endpoint.
 type ReqBody struct {
 	Username Username `json:"username"`
-	Password string   `json:"password"`
+	Password Password `json:"password"`
 	Referrer string   `json:"referrer"`
 }
 
@@ -14,8 +14,14 @@ func (r *ReqBody) Validate() *Errs {
 	errs := &Errs{}
 
 	// validate username
-	if usnErrMsg := r.Username.Validate(); usnErrMsg != "" {
-		errs.Username = usnErrMsg
+	if errMsg := r.Username.Validate(); errMsg != "" {
+		errs.Username = errMsg
+		return errs
+	}
+
+	// validate password
+	if errMsg := r.Password.Validate(); errMsg != "" {
+		errs.Password = errMsg
 		return errs
 	}
 

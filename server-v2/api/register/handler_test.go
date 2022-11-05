@@ -78,4 +78,51 @@ func TestRegister(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("PasswordValidation", func(t *testing.T) {
+		for _, c := range []struct {
+			caseName string
+			password string
+			wantErr  string
+		}{
+			{
+				caseName: "Empty",
+				password: "",
+				wantErr:  "Password cannot be empty.",
+			},
+		} {
+			t.Run(c.caseName, func(t *testing.T) {
+				// arrange
+				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
+					"username": "mynameisbob", 
+					"password": "%s", 
+					"referrer": ""
+				}`, c.password)))
+				if err != nil {
+					t.Fatal(err)
+				}
+				req.Header.Set("Content-Type", "application/json")
+				w := httptest.NewRecorder()
+				handler := NewHandler()
+
+				// act
+				handler.ServeHTTP(w, req)
+
+				// assert
+				res := w.Result()
+				if res.StatusCode != http.StatusBadRequest {
+					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
+					t.Fail()
+				}
+				resBody := &ResBody{}
+				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if !cmp.Equal(resBody.Errs.Password, c.wantErr) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, resBody.Errs.Username)
+					t.Fail()
+				}
+			})
+		}
+	})
 }
