@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestRegister(t *testing.T) {
@@ -72,7 +70,7 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Username
-				if !cmp.Equal(gotErr, c.wantErr) {
+				if gotErr != c.wantErr {
 					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
@@ -145,7 +143,7 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Password
-				if !cmp.Equal(gotErr, c.wantErr) {
+				if gotErr != c.wantErr {
 					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
 					t.Fail()
 				}
