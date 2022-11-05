@@ -46,7 +46,7 @@ func TestRegister(t *testing.T) {
 				// arrange
 				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
 					"username": "%s", 
-					"password": "securepass1!", 
+					"password": "SecureP4ss?", 
 					"referrer": ""
 				}`, c.username)))
 				if err != nil {
@@ -61,7 +61,8 @@ func TestRegister(t *testing.T) {
 
 				// assert
 				res := w.Result()
-				if res.StatusCode != http.StatusBadRequest {
+				gotStatusCode, wantStatusCode := res.StatusCode, http.StatusBadRequest
+				if gotStatusCode != wantStatusCode {
 					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
 					t.Fail()
 				}
@@ -125,6 +126,13 @@ func TestRegister(t *testing.T) {
 				password: "my SP4CED p4ssword",
 				wantErr:  "Password cannot contain spaces.",
 			},
+			{
+				caseName: "NonASCII",
+				password: "myNØNÅSCÎÎp4ssword",
+				wantErr: "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+					"and the following special characters: " +
+					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
@@ -145,8 +153,9 @@ func TestRegister(t *testing.T) {
 
 				// assert
 				res := w.Result()
-				if res.StatusCode != http.StatusBadRequest {
-					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
+				gotStatusCode, wantStatusCode := res.StatusCode, http.StatusBadRequest
+				if gotStatusCode != wantStatusCode {
+					t.Logf("\nwant: %d\ngot: %d", wantStatusCode, gotStatusCode)
 					t.Fail()
 				}
 				resBody := &ResBody{}

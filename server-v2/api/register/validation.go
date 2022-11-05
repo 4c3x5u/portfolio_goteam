@@ -57,5 +57,10 @@ func (p *Password) Validate() string {
 	if match, _ := regexp.MatchString("\\s", string(*p)); match {
 		return "Password cannot contain spaces."
 	}
+	if match, _ := regexp.MatchString("[^\\x00-\\x7F]", string(*p)); match {
+		return "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+			"and the following special characters: " +
+			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+	}
 	return ""
 }

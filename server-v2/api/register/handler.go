@@ -30,7 +30,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create response object
+	// create response object to set values into
 	res := &ResBody{}
 
 	// validate the request
