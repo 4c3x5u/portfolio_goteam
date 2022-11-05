@@ -114,6 +114,12 @@ func TestRegister(t *testing.T) {
 				password: "myNOdigitPASSWORD",
 				wantErr:  "Password must contain a digit (0-9).",
 			},
+			{
+				caseName: "NoSymbols",
+				password: "myNOsymb0lP4SSWORD",
+				wantErr: "Password must contain one of the following special characters: " +
+					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
