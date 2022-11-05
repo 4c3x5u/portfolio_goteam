@@ -35,5 +35,8 @@ func (p *Password) Validate() string {
 	if *p == "" {
 		return "Password cannot be empty."
 	}
+	if len(*p) < 8 {
+		return "Password cannot be shorter than 5 characters."
+	}
 	return ""
 }

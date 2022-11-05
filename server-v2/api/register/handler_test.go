@@ -90,6 +90,11 @@ func TestRegister(t *testing.T) {
 				password: "",
 				wantErr:  "Password cannot be empty.",
 			},
+			{
+				caseName: "TooShort",
+				password: "mypassw",
+				wantErr:  "Password cannot be shorter than 5 characters.",
+			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
 				// arrange
