@@ -13,96 +13,32 @@ import (
 
 func TestRegister(t *testing.T) {
 	t.Run("UsernameValidation", func(t *testing.T) {
+		const (
+			empty       = "Username cannot be empty."
+			tooShort    = "Username cannot be shorter than 5 characters."
+			tooLong     = "Username cannot be longer than 15 characters."
+			invalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
+			digitStart  = "Username can start only with a letter (a-z/A-Z)."
+		)
 		for _, c := range []struct {
-			caseName string
+			name     string
 			username string
-			wantErr  []string
+			errs     []string
 		}{
-			{
-				caseName: "Empty",
-				username: "",
-				wantErr:  []string{"Username cannot be empty."},
-			},
-			{
-				caseName: "TooShort",
-				username: "bob1",
-				wantErr:  []string{"Username cannot be shorter than 5 characters."},
-			},
-			{
-				caseName: "TooLong",
-				username: "bobobobobobobobob",
-				wantErr:  []string{"Username cannot be longer than 15 characters."},
-			},
-			{
-				caseName: "InvalidCharacter",
-				username: "bobob!",
-				wantErr:  []string{"Username can contain only letters (a-z/A-Z) and digits (0-9)."},
-			},
-			{
-				caseName: "DigitStart",
-				username: "1bobob",
-				wantErr:  []string{"Username can start only with a letter (a-z/A-Z)."},
-			},
-			{
-				caseName: "TooShort_InvalidCharacter",
-				username: "bob!",
-				wantErr: []string{
-					"Username cannot be shorter than 5 characters.",
-					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
-				},
-			},
-			{
-				caseName: "TooShort_DigitStart",
-				username: "1bob",
-				wantErr: []string{
-					"Username cannot be shorter than 5 characters.",
-					"Username can start only with a letter (a-z/A-Z).",
-				},
-			},
-			{
-				caseName: "TooLong_InvalidCharacter",
-				username: "bobobobobobobobo!",
-				wantErr: []string{
-					"Username cannot be longer than 15 characters.",
-					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
-				},
-			},
-			{
-				caseName: "TooLong_DigitStart",
-				username: "1bobobobobobobobo",
-				wantErr: []string{
-					"Username cannot be longer than 15 characters.",
-					"Username can start only with a letter (a-z/A-Z).",
-				},
-			},
-			{
-				caseName: "InvalidCharacter_DigitStart",
-				username: "1bob!",
-				wantErr: []string{
-					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
-					"Username can start only with a letter (a-z/A-Z).",
-				},
-			},
-			{
-				caseName: "TooShort_InvalidCharacter_DigitStart",
-				username: "1bo!",
-				wantErr: []string{
-					"Username cannot be shorter than 5 characters.",
-					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
-					"Username can start only with a letter (a-z/A-Z).",
-				},
-			},
-			{
-				caseName: "TooLong_InvalidCharacter_DigitStart",
-				username: "1bobobobobobobob!",
-				wantErr: []string{
-					"Username cannot be longer than 15 characters.",
-					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
-					"Username can start only with a letter (a-z/A-Z).",
-				},
-			},
+			{name: "Empty", username: "", errs: []string{empty}},
+			{name: "TooShort", username: "bob1", errs: []string{tooShort}},
+			{name: "TooLong", username: "bobobobobobobobob", errs: []string{tooLong}},
+			{name: "InvalidCharacter", username: "bobob!", errs: []string{invalidChar}},
+			{name: "DigitStart", username: "1bobob", errs: []string{digitStart}},
+			{name: "TooShort_InvalidCharacter", username: "bob!", errs: []string{tooShort, invalidChar}},
+			{name: "TooShort_DigitStart", username: "1bob", errs: []string{tooShort, digitStart}},
+			{name: "TooLong_InvalidCharacter", username: "bobobobobobobobo!", errs: []string{tooLong, invalidChar}},
+			{name: "TooLong_DigitStart", username: "1bobobobobobobobo", errs: []string{tooLong, digitStart}},
+			{name: "InvalidCharacter_DigitStart", username: "1bob!", errs: []string{invalidChar, digitStart}},
+			{name: "TooShort_InvalidCharacter_DigitStart", username: "1bo!", errs: []string{tooShort, invalidChar, digitStart}},
+			{name: "TooLong_InvalidCharacter_DigitStart", username: "1bobobobobobobob!", errs: []string{tooLong, invalidChar, digitStart}},
 		} {
-			t.Run(c.caseName, func(t *testing.T) {
+			t.Run(c.name, func(t *testing.T) {
 				// arrange
 				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
 					"username": "%s", 
@@ -131,8 +67,8 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Username
-				if !assert.EqualArr(gotErr, c.wantErr) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
+				if !assert.EqualArr(gotErr, c.errs) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.errs, gotErr)
 					t.Fail()
 				}
 			})

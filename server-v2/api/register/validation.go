@@ -10,7 +10,6 @@ type Username string
 func (u *Username) Validate() []string {
 	var errs []string
 
-	// length validation
 	if *u == "" {
 		errs = append(errs, "Username cannot be empty.")
 		// if username is empty, further validation is pointless – return errs
@@ -21,7 +20,6 @@ func (u *Username) Validate() []string {
 		errs = append(errs, "Username cannot be longer than 15 characters.")
 	}
 
-	// character validation
 	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", string(*u)); match {
 		errs = append(errs, "Username can contain only letters (a-z/A-Z) and digits (0-9).")
 	}
