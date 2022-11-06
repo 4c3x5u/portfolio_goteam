@@ -14,8 +14,8 @@ func (r *ReqBody) Validate() *Errs {
 	errs := &Errs{}
 
 	// validate username
-	if errMsg := r.Username.Validate(); errMsg != "" {
-		errs.Username = append(errs.Username, errMsg)
+	if errsUsername := r.Username.Validate(); errsUsername != nil {
+		errs.Username = errsUsername
 		return errs
 	}
 

@@ -7,23 +7,29 @@ type Username string
 
 // Validate applies username validation rules to the Username string and returns
 // the error message if any fails.
-func (u *Username) Validate() string {
+func (u *Username) Validate() []string {
+	var errs []string
+
+	// length validation
 	if *u == "" {
-		return "Username cannot be empty."
+		errs = append(errs, "Username cannot be empty.")
+		// if username is empty, further validation is pointless – return errs
+		return errs
+	} else if len(*u) < 5 {
+		errs = append(errs, "Username cannot be shorter than 5 characters.")
+	} else if len(*u) > 15 {
+		errs = append(errs, "Username cannot be longer than 15 characters.")
 	}
-	if len(*u) < 5 {
-		return "Username cannot be shorter than 5 characters."
-	}
-	if len(*u) > 15 {
-		return "Username cannot be longer than 15 characters."
-	}
+
+	// character validation
 	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", string(*u)); match {
-		return "Username can contain only letters (a-z/A-Z) and digits (0-9)."
+		errs = append(errs, "Username can contain only letters (a-z/A-Z) and digits (0-9).")
 	}
 	if match, _ := regexp.MatchString("(^\\d)", string(*u)); match {
-		return "Username can start only with a letter."
+		errs = append(errs, "Username can start only with a letter (a-z/A-Z).")
 	}
-	return ""
+
+	return errs
 }
 
 // Password defines the password field of a register request.

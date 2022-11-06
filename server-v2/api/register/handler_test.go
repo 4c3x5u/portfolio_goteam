@@ -41,7 +41,65 @@ func TestRegister(t *testing.T) {
 			{
 				caseName: "DigitStart",
 				username: "1bobob",
-				wantErr:  []string{"Username can start only with a letter."},
+				wantErr:  []string{"Username can start only with a letter (a-z/A-Z)."},
+			},
+			{
+				caseName: "TooShort_InvalidCharacter",
+				username: "bob!",
+				wantErr: []string{
+					"Username cannot be shorter than 5 characters.",
+					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+				},
+			},
+			{
+				caseName: "TooShort_DigitStart",
+				username: "1bob",
+				wantErr: []string{
+					"Username cannot be shorter than 5 characters.",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
+			},
+			{
+				caseName: "TooLong_InvalidCharacter",
+				username: "bobobobobobobobo!",
+				wantErr: []string{
+					"Username cannot be longer than 15 characters.",
+					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+				},
+			},
+			{
+				caseName: "TooLong_DigitStart",
+				username: "1bobobobobobobobo",
+				wantErr: []string{
+					"Username cannot be longer than 15 characters.",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
+			},
+			{
+				caseName: "InvalidCharacter_DigitStart",
+				username: "1bob!",
+				wantErr: []string{
+					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
+			},
+			{
+				caseName: "TooShort_InvalidCharacter_DigitStart",
+				username: "1bo!",
+				wantErr: []string{
+					"Username cannot be shorter than 5 characters.",
+					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
+			},
+			{
+				caseName: "TooLong_InvalidCharacter_DigitStart",
+				username: "1bobobobobobobob!",
+				wantErr: []string{
+					"Username cannot be longer than 15 characters.",
+					"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
 			},
 		} {
 			t.Run(c.caseName, func(t *testing.T) {
