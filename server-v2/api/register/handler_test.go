@@ -11,6 +11,16 @@ import (
 	"github.com/kxplxn/goteam/server-v2/assert"
 )
 
+// ValidationTestCase defines the values that are commonly necessary between
+// validation tests.
+type ValidationTestCase struct {
+	name     string
+	input    string
+	wantErrs []string
+}
+
+// TestRegister perfomes functional tests on the register endpoint via the
+// Handler.
 func TestRegister(t *testing.T) {
 	t.Run("UsernameValidation", func(t *testing.T) {
 		const (
@@ -20,23 +30,19 @@ func TestRegister(t *testing.T) {
 			invalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
 			digitStart  = "Username can start only with a letter (a-z/A-Z)."
 		)
-		for _, c := range []struct {
-			name     string
-			username string
-			errs     []string
-		}{
-			{name: "Empty", username: "", errs: []string{empty}},
-			{name: "TooShort", username: "bob1", errs: []string{tooShort}},
-			{name: "TooLong", username: "bobobobobobobobob", errs: []string{tooLong}},
-			{name: "InvalidCharacter", username: "bobob!", errs: []string{invalidChar}},
-			{name: "DigitStart", username: "1bobob", errs: []string{digitStart}},
-			{name: "TooShort_InvalidCharacter", username: "bob!", errs: []string{tooShort, invalidChar}},
-			{name: "TooShort_DigitStart", username: "1bob", errs: []string{tooShort, digitStart}},
-			{name: "TooLong_InvalidCharacter", username: "bobobobobobobobo!", errs: []string{tooLong, invalidChar}},
-			{name: "TooLong_DigitStart", username: "1bobobobobobobobo", errs: []string{tooLong, digitStart}},
-			{name: "InvalidCharacter_DigitStart", username: "1bob!", errs: []string{invalidChar, digitStart}},
-			{name: "TooShort_InvalidCharacter_DigitStart", username: "1bo!", errs: []string{tooShort, invalidChar, digitStart}},
-			{name: "TooLong_InvalidCharacter_DigitStart", username: "1bobobobobobobob!", errs: []string{tooLong, invalidChar, digitStart}},
+		for _, c := range []ValidationTestCase{
+			{name: "Empty", input: "", wantErrs: []string{empty}},
+			{name: "TooShort", input: "bob1", wantErrs: []string{tooShort}},
+			{name: "TooLong", input: "bobobobobobobobob", wantErrs: []string{tooLong}},
+			{name: "InvalidCharacter", input: "bobob!", wantErrs: []string{invalidChar}},
+			{name: "DigitStart", input: "1bobob", wantErrs: []string{digitStart}},
+			{name: "TooShort_InvalidCharacter", input: "bob!", wantErrs: []string{tooShort, invalidChar}},
+			{name: "TooShort_DigitStart", input: "1bob", wantErrs: []string{tooShort, digitStart}},
+			{name: "TooLong_InvalidCharacter", input: "bobobobobobobobo!", wantErrs: []string{tooLong, invalidChar}},
+			{name: "TooLong_DigitStart", input: "1bobobobobobobobo", wantErrs: []string{tooLong, digitStart}},
+			{name: "InvalidCharacter_DigitStart", input: "1bob!", wantErrs: []string{invalidChar, digitStart}},
+			{name: "TooShort_InvalidCharacter_DigitStart", input: "1bo!", wantErrs: []string{tooShort, invalidChar, digitStart}},
+			{name: "TooLong_InvalidCharacter_DigitStart", input: "1bobobobobobobob!", wantErrs: []string{tooLong, invalidChar, digitStart}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange
@@ -44,7 +50,7 @@ func TestRegister(t *testing.T) {
 					"username": "%s", 
 					"password": "SecureP4ss?", 
 					"referrer": ""
-				}`, c.username)))
+				}`, c.input)))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -67,8 +73,8 @@ func TestRegister(t *testing.T) {
 					t.Fatal(err)
 				}
 				gotErr := resBody.Errs.Username
-				if !assert.EqualArr(gotErr, c.errs) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.errs, gotErr)
+				if !assert.EqualArr(gotErr, c.wantErrs) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErr)
 					t.Fail()
 				}
 			})
@@ -76,71 +82,67 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("PasswordValidation", func(t *testing.T) {
-		for _, c := range []struct {
-			caseName string
-			password string
-			wantErr  []string
-		}{
+		for _, c := range []ValidationTestCase{
 			{
-				caseName: "Empty",
-				password: "",
-				wantErr:  []string{"Password cannot be empty."},
+				name:     "Empty",
+				input:    "",
+				wantErrs: []string{"Password cannot be empty."},
 			},
 			{
-				caseName: "TooShort",
-				password: "mypassw",
-				wantErr:  []string{"Password cannot be shorter than 5 characters."},
+				name:     "TooShort",
+				input:    "mypassw",
+				wantErrs: []string{"Password cannot be shorter than 5 characters."},
 			},
 			{
-				caseName: "TooLong",
-				password: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
-				wantErr:  []string{"Password cannot be longer than 64 characters."},
+				name:     "TooLong",
+				input:    "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{"Password cannot be longer than 64 characters."},
 			},
 			{
-				caseName: "NoLowercase",
-				password: "MYALLUPPERPASSWORD",
-				wantErr:  []string{"Password must contain a lowercase letter (a-z)."},
+				name:     "NoLowercase",
+				input:    "MYALLUPPERPASSWORD",
+				wantErrs: []string{"Password must contain a lowercase letter (a-z)."},
 			},
 			{
-				caseName: "NoUppercase",
-				password: "myalllowerpassword",
-				wantErr:  []string{"Password must contain an uppercase letter (A-Z)."},
+				name:     "NoUppercase",
+				input:    "myalllowerpassword",
+				wantErrs: []string{"Password must contain an uppercase letter (A-Z)."},
 			},
 			{
-				caseName: "NoDigits",
-				password: "myNOdigitPASSWORD",
-				wantErr:  []string{"Password must contain a digit (0-9)."},
+				name:     "NoDigits",
+				input:    "myNOdigitPASSWORD",
+				wantErrs: []string{"Password must contain a digit (0-9)."},
 			},
 			{
-				caseName: "NoSymbols",
-				password: "myNOsymbolP4SSWORD",
-				wantErr: []string{
+				name:  "NoSymbols",
+				input: "myNOsymbolP4SSWORD",
+				wantErrs: []string{
 					"Password must contain one of the following special characters: " +
 						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
 				},
 			},
 			{
-				caseName: "HasSpaces",
-				password: "my SP4CED p4ssword",
-				wantErr:  []string{"Password cannot contain spaces."},
+				name:     "HasSpaces",
+				input:    "my SP4CED p4ssword",
+				wantErrs: []string{"Password cannot contain spaces."},
 			},
 			{
-				caseName: "NonASCII",
-				password: "myNØNÅSCÎÎp4ssword",
-				wantErr: []string{
+				name:  "NonASCII",
+				input: "myNØNÅSCÎÎp4ssword",
+				wantErrs: []string{
 					"Password can contain only letters (a-z/A-Z), digits (0-9), " +
 						"and the following special characters: " +
 						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
 				},
 			},
 		} {
-			t.Run(c.caseName, func(t *testing.T) {
+			t.Run(c.name, func(t *testing.T) {
 				// arrange
 				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
 					"username": "mynameisbob", 
 					"password": "%s", 
 					"referrer": ""
-				}`, c.password)))
+				}`, c.input)))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -162,9 +164,9 @@ func TestRegister(t *testing.T) {
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-				gotErr := resBody.Errs.Password
-				if !assert.EqualArr(gotErr, c.wantErr) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErr, gotErr)
+				gotErrs := resBody.Errs.Password
+				if !assert.EqualArr(gotErrs, c.wantErrs) {
+					t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErrs)
 					t.Fail()
 				}
 			})
