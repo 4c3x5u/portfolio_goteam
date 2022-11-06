@@ -1,3 +1,5 @@
+// Package assert contains helper functions for commonly used assertions in
+// tests.
 package assert
 
 // EqualArr compares two arrays and returns a boolean based on whether or not
