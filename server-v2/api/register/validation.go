@@ -53,7 +53,7 @@ func (p *Password) Validate() (errs []string) {
 	if match, _ := regexp.MatchString("[0-9]", string(*p)); !match {
 		errs = append(errs, "Password must contain a digit (0-9).")
 	}
-	if match, _ := regexp.MatchString("[^a-zA-Z0-9]", string(*p)); !match {
+	if match, _ := regexp.MatchString("[!\"#$%&'()*+,-./:;<=>?[\\]^_`{|}~]", string(*p)); !match {
 		errs = append(errs, "Password must contain one of the following special characters: "+
 			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.")
 	}

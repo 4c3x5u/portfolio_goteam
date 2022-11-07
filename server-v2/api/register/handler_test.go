@@ -89,7 +89,7 @@ func TestRegister(t *testing.T) {
 	t.Run("PasswordValidation", func(t *testing.T) {
 		const (
 			empty     = "Password cannot be empty."
-			tooShort  = "Password cannot be shorter than 5 characters."
+			tooShort  = "Password cannot be shorter than 8 characters."
 			tooLong   = "Password cannot be longer than 64 characters."
 			noLower   = "Password must contain a lowercase letter (a-z)."
 			noUpper   = "Password must contain an uppercase letter (A-Z)."
@@ -109,9 +109,17 @@ func TestRegister(t *testing.T) {
 			{name: "NoLower", input: "MY4LLUPPERPASSWORD!", wantErrs: []string{noLower}},
 			{name: "NoUpper", input: "my4lllowerpassword!", wantErrs: []string{noUpper}},
 			{name: "NoDigits", input: "myNOdigitPASSWORD!", wantErrs: []string{noDigits}},
-			{name: "NoSpecial", input: "myNOsymbolP4SSWORD", wantErrs: []string{noSpecial}},
+			{name: "NoSpecial", input: "myNOspecialP4SSWORD", wantErrs: []string{noSpecial}},
 			{name: "HasSpace", input: "my SP4CED p4ssword !", wantErrs: []string{hasSpace}},
-			{name: "NonASCII", input: "myNØNÅSCÎÎp4ssword", wantErrs: []string{nonASCII}},
+			{name: "NonASCII", input: "myNØNÅSCÎÎp4ssword!", wantErrs: []string{nonASCII}},
+
+			// 2-error cases
+			{name: "TooShort_NoLower", input: "MYP4SS!", wantErrs: []string{tooShort, noLower}},
+			{name: "TooShort_NoUpper", input: "myp4ss!", wantErrs: []string{tooShort, noUpper}},
+			{name: "TooShort_NoDigits", input: "MyPass!", wantErrs: []string{tooShort, noDigits}},
+			{name: "TooShort_NoSpecial", input: "MyP4ssw", wantErrs: []string{tooShort, noSpecial}},
+			{name: "TooShort_HasSpace", input: "My P4s!", wantErrs: []string{tooShort, hasSpace}},
+			{name: "TooShort_NonASCII", input: "M¥π4ss!", wantErrs: []string{tooShort, nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange
