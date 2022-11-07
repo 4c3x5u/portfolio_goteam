@@ -31,16 +31,21 @@ func TestRegister(t *testing.T) {
 			digitStart  = "Username can start only with a letter (a-z/A-Z)."
 		)
 		for _, c := range []ValidationTestCase{
+			// 1-error cases
 			{name: "Empty", input: "", wantErrs: []string{empty}},
 			{name: "TooShort", input: "bob1", wantErrs: []string{tooShort}},
 			{name: "TooLong", input: "bobobobobobobobob", wantErrs: []string{tooLong}},
 			{name: "InvalidCharacter", input: "bobob!", wantErrs: []string{invalidChar}},
 			{name: "DigitStart", input: "1bobob", wantErrs: []string{digitStart}},
+
+			// 2-error cases
 			{name: "TooShort_InvalidCharacter", input: "bob!", wantErrs: []string{tooShort, invalidChar}},
 			{name: "TooShort_DigitStart", input: "1bob", wantErrs: []string{tooShort, digitStart}},
 			{name: "TooLong_InvalidCharacter", input: "bobobobobobobobo!", wantErrs: []string{tooLong, invalidChar}},
 			{name: "TooLong_DigitStart", input: "1bobobobobobobobo", wantErrs: []string{tooLong, digitStart}},
 			{name: "InvalidCharacter_DigitStart", input: "1bob!", wantErrs: []string{invalidChar, digitStart}},
+
+			// 3-error cases
 			{name: "TooShort_InvalidCharacter_DigitStart", input: "1bo!", wantErrs: []string{tooShort, invalidChar, digitStart}},
 			{name: "TooLong_InvalidCharacter_DigitStart", input: "1bobobobobobobob!", wantErrs: []string{tooLong, invalidChar, digitStart}},
 		} {
@@ -82,59 +87,31 @@ func TestRegister(t *testing.T) {
 	})
 
 	t.Run("PasswordValidation", func(t *testing.T) {
+		const (
+			empty     = "Password cannot be empty."
+			tooShort  = "Password cannot be shorter than 5 characters."
+			tooLong   = "Password cannot be longer than 64 characters."
+			noLower   = "Password must contain a lowercase letter (a-z)."
+			noUpper   = "Password must contain an uppercase letter (A-Z)."
+			noDigits  = "Password must contain a digit (0-9)."
+			noSpecial = "Password must contain one of the following special characters: " +
+				"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+			hasSpace = "Password cannot contain spaces."
+			nonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+				"and the following special characters: " +
+				"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+		)
 		for _, c := range []ValidationTestCase{
-			{
-				name:     "Empty",
-				input:    "",
-				wantErrs: []string{"Password cannot be empty."},
-			},
-			{
-				name:     "TooShort",
-				input:    "mypassw",
-				wantErrs: []string{"Password cannot be shorter than 5 characters."},
-			},
-			{
-				name:     "TooLong",
-				input:    "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
-				wantErrs: []string{"Password cannot be longer than 64 characters."},
-			},
-			{
-				name:     "NoLowercase",
-				input:    "MYALLUPPERPASSWORD",
-				wantErrs: []string{"Password must contain a lowercase letter (a-z)."},
-			},
-			{
-				name:     "NoUppercase",
-				input:    "myalllowerpassword",
-				wantErrs: []string{"Password must contain an uppercase letter (A-Z)."},
-			},
-			{
-				name:     "NoDigits",
-				input:    "myNOdigitPASSWORD",
-				wantErrs: []string{"Password must contain a digit (0-9)."},
-			},
-			{
-				name:  "NoSymbols",
-				input: "myNOsymbolP4SSWORD",
-				wantErrs: []string{
-					"Password must contain one of the following special characters: " +
-						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
-				},
-			},
-			{
-				name:     "HasSpaces",
-				input:    "my SP4CED p4ssword",
-				wantErrs: []string{"Password cannot contain spaces."},
-			},
-			{
-				name:  "NonASCII",
-				input: "myNØNÅSCÎÎp4ssword",
-				wantErrs: []string{
-					"Password can contain only letters (a-z/A-Z), digits (0-9), " +
-						"and the following special characters: " +
-						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
-				},
-			},
+			// 1-error cases
+			{name: "Empty", input: "", wantErrs: []string{empty}},
+			{name: "TooShort", input: "mypassw", wantErrs: []string{tooShort}},
+			{name: "TooLong", input: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong}},
+			{name: "NoLower", input: "MYALLUPPERPASSWORD", wantErrs: []string{noLower}},
+			{name: "NoUpper", input: "myalllowerpassword", wantErrs: []string{noUpper}},
+			{name: "NoDigits", input: "myNOdigitPASSWORD", wantErrs: []string{noDigits}},
+			{name: "NoSpecial", input: "myNOsymbolP4SSWORD", wantErrs: []string{noSpecial}},
+			{name: "HasSpace", input: "my SP4CED p4ssword", wantErrs: []string{hasSpace}},
+			{name: "NonASCII", input: "myNØNÅSCÎÎp4ssword", wantErrs: []string{nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange

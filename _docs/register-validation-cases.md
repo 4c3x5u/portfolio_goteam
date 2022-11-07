@@ -27,15 +27,15 @@
 ## Password
 
 ### 1 error
-- [ ] empty 
-- [ ] too_short 
-- [ ] too_long 
-- [ ] no_lowercase
-- [ ] no_uppercase
-- [ ] no_digits
-- [ ] no_symbols
-- [ ] has_spaces
-- [ ] non_ascii
+- [X] empty 
+- [X] too_short 
+- [X] too_long 
+- [X] no_lowercase
+- [X] no_uppercase
+- [X] no_digits
+- [X] no_symbols
+- [X] has_spaces
+- [X] non_ascii
 
 ### 2 errors
 - [ ] too_short,no_lowercase
