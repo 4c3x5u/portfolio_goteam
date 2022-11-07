@@ -20,8 +20,8 @@ func (r *ReqBody) Validate() *Errs {
 	}
 
 	// validate password
-	if errMsg := r.Password.Validate(); errMsg != "" {
-		errs.Password = append(errs.Username, errMsg)
+	if errsPassword := r.Password.Validate(); errsPassword != nil {
+		errs.Password = errsPassword
 		return errs
 	}
 

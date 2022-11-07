@@ -104,13 +104,13 @@ func TestRegister(t *testing.T) {
 		for _, c := range []ValidationTestCase{
 			// 1-error cases
 			{name: "Empty", input: "", wantErrs: []string{empty}},
-			{name: "TooShort", input: "mypassw", wantErrs: []string{tooShort}},
-			{name: "TooLong", input: "mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong}},
-			{name: "NoLower", input: "MYALLUPPERPASSWORD", wantErrs: []string{noLower}},
-			{name: "NoUpper", input: "myalllowerpassword", wantErrs: []string{noUpper}},
-			{name: "NoDigits", input: "myNOdigitPASSWORD", wantErrs: []string{noDigits}},
+			{name: "TooShort", input: "Myp4ss!", wantErrs: []string{tooShort}},
+			{name: "TooLong", input: "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong}},
+			{name: "NoLower", input: "MY4LLUPPERPASSWORD!", wantErrs: []string{noLower}},
+			{name: "NoUpper", input: "my4lllowerpassword!", wantErrs: []string{noUpper}},
+			{name: "NoDigits", input: "myNOdigitPASSWORD!", wantErrs: []string{noDigits}},
 			{name: "NoSpecial", input: "myNOsymbolP4SSWORD", wantErrs: []string{noSpecial}},
-			{name: "HasSpace", input: "my SP4CED p4ssword", wantErrs: []string{hasSpace}},
+			{name: "HasSpace", input: "my SP4CED p4ssword !", wantErrs: []string{hasSpace}},
 			{name: "NonASCII", input: "myNØNÅSCÎÎp4ssword", wantErrs: []string{nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
