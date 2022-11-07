@@ -38,33 +38,33 @@
 - [X] non_ascii
 
 ### 2 errors
-- [ ] too_short,no_lowercase
-- [ ] too_short,no_uppercase
-- [ ] too_short,no_digits
-- [ ] too_short,no_symbols
-- [ ] too_short,has_spaces
-- [ ] too_short,non_ascii
-- [ ] too_long,no_lowercase
-- [ ] too_long,no_uppercase
-- [ ] too_long,no_digits
-- [ ] too_long,no_symbols
-- [ ] too_long,has_spaces
-- [ ] too_long,non_ascii
-- [ ] no_lowercase,no_uppercase
-- [ ] no_lowercase,no_digits
-- [ ] no_lowercase,no_symbols
-- [ ] no_lowercase,has_spaces
-- [ ] no_lowercase,non_ascii
-- [ ] no_uppercase,no_digits
-- [ ] no_uppercase,no_symbols
-- [ ] no_uppercase,has_spaces
-- [ ] no_uppercase,non_ascii
-- [ ] no_digits,no_symbols
-- [ ] no_digits,has_spaces
-- [ ] no_digits,non_ascii
-- [ ] no_symbols,has_spaces
-- [ ] no_symbols,non_ascii
-- [ ] has_spaces,non_ascii
+- [X] too_short,no_lowercase
+- [X] too_short,no_uppercase
+- [X] too_short,no_digits
+- [X] too_short,no_symbols
+- [X] too_short,has_spaces
+- [X] too_short,non_ascii
+- [X] too_long,no_lowercase
+- [X] too_long,no_uppercase
+- [X] too_long,no_digits
+- [X] too_long,no_symbols
+- [X] too_long,has_spaces
+- [X] too_long,non_ascii
+- [X] no_lowercase,no_uppercase
+- [X] no_lowercase,no_digits
+- [X] no_lowercase,no_symbols
+- [X] no_lowercase,has_spaces
+- [X] no_lowercase,non_ascii
+- [X] no_uppercase,no_digits
+- [X] no_uppercase,no_symbols
+- [X] no_uppercase,has_spaces
+- [X] no_uppercase,non_ascii
+- [X] no_digits,no_symbols
+- [X] no_digits,has_spaces
+- [X] no_digits,non_ascii
+- [X] no_symbols,has_spaces
+- [X] no_symbols,non_ascii
+- [X] has_spaces,non_ascii
 
 ### 3 errors
 - [ ] too_short,no_lowercase,no_uppercase

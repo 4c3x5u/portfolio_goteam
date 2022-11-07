@@ -39,7 +39,7 @@ func (p *Password) Validate() (errs []string) {
 		// if password empty, further validation is pointless – return wantErrs
 		return
 	} else if len(*p) < 8 {
-		errs = append(errs, "Password cannot be shorter than 5 characters.")
+		errs = append(errs, "Password cannot be shorter than 8 characters.")
 	} else if len(*p) > 64 {
 		errs = append(errs, "Password cannot be longer than 64 characters.")
 	}

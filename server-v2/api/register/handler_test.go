@@ -105,7 +105,11 @@ func TestRegister(t *testing.T) {
 			// 1-error cases
 			{name: "Empty", input: "", wantErrs: []string{empty}},
 			{name: "TooShort", input: "Myp4ss!", wantErrs: []string{tooShort}},
-			{name: "TooLong", input: "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong}},
+			{
+				name:     "TooLong",
+				input:    "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{tooLong},
+			},
 			{name: "NoLower", input: "MY4LLUPPERPASSWORD!", wantErrs: []string{noLower}},
 			{name: "NoUpper", input: "my4lllowerpassword!", wantErrs: []string{noUpper}},
 			{name: "NoDigits", input: "myNOdigitPASSWORD!", wantErrs: []string{noDigits}},
@@ -119,7 +123,52 @@ func TestRegister(t *testing.T) {
 			{name: "TooShort_NoDigits", input: "MyPass!", wantErrs: []string{tooShort, noDigits}},
 			{name: "TooShort_NoSpecial", input: "MyP4ssw", wantErrs: []string{tooShort, noSpecial}},
 			{name: "TooShort_HasSpace", input: "My P4s!", wantErrs: []string{tooShort, hasSpace}},
-			{name: "TooShort_NonASCII", input: "M¥π4ss!", wantErrs: []string{tooShort, nonASCII}},
+			{name: "TooShort_NonASCII", input: "M¥P4s!", wantErrs: []string{tooShort, nonASCII}},
+			{
+				name:     "TooLong_NoLower",
+				input:    "MYP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH",
+				wantErrs: []string{tooLong, noLower},
+			},
+			{
+				name:     "TooLong_NoUpper",
+				input:    "myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{tooLong, noUpper},
+			},
+			{
+				name:     "TooLong_NoDigits",
+				input:    "Mypasswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{tooLong, noDigits},
+			},
+			{
+				name:     "TooLong_NoSpecial",
+				input:    "Myp4sswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{tooLong, noSpecial},
+			},
+			{
+				name:     "TooLong_HasSpace",
+				input:    "Myp4sswo   rdwh!chislongandimeanreallylongforsomereasonohiknowwhy",
+				wantErrs: []string{tooLong, hasSpace},
+			},
+			{
+				name:     "TooLong_NonASCII",
+				input:    "Myp4§§wordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh",
+				wantErrs: []string{tooLong, nonASCII},
+			},
+			{name: "NoLower_NoUpper", input: "4444!!!!", wantErrs: []string{noLower, noUpper}},
+			{name: "NoLower_NoDigits", input: "MYP@SSW!", wantErrs: []string{noLower, noDigits}},
+			{name: "NoLower_NoSpecial", input: "MYP4SSW1", wantErrs: []string{noLower, noSpecial}},
+			{name: "NoLower_HasSpace", input: "MYP4SS !", wantErrs: []string{noLower, hasSpace}},
+			{name: "NoLower_NonASCII", input: "MYP4§§W!", wantErrs: []string{noLower, nonASCII}},
+			{name: "NoUpper_NoDigits", input: "myp@ssw!", wantErrs: []string{noUpper, noDigits}},
+			{name: "NoUpper_NoSpecial", input: "myp4ssw1", wantErrs: []string{noUpper, noSpecial}},
+			{name: "NoUpper_HasSpace", input: "myp4ss !", wantErrs: []string{noUpper, hasSpace}},
+			{name: "NoUpper_NonASCII", input: "myp4§§w!", wantErrs: []string{noUpper, nonASCII}},
+			{name: "NoDigits_NoSpecial", input: "MyPasswd", wantErrs: []string{noDigits, noSpecial}},
+			{name: "NoDigits_HasSpace", input: "MyPass !", wantErrs: []string{noDigits, hasSpace}},
+			{name: "NoDigits_NonASCII", input: "MyPa§§w!", wantErrs: []string{noDigits, nonASCII}},
+			{name: "NoSymbol_HasSpace", input: "My  P4ss", wantErrs: []string{noSpecial, hasSpace}},
+			{name: "NoSymbol_NonASCII", input: "MyPa§§w1", wantErrs: []string{noSpecial, nonASCII}},
+			{name: "HasSpace_NonASCII", input: "MyP4§§ !", wantErrs: []string{hasSpace, nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange
