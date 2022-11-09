@@ -123,7 +123,7 @@ func TestRegister(t *testing.T) {
 			{name: "TooShort_NoDigits", input: "MyPass!", wantErrs: []string{tooShort, noDigits}},
 			{name: "TooShort_NoSpecial", input: "MyP4ssw", wantErrs: []string{tooShort, noSpecial}},
 			{name: "TooShort_HasSpace", input: "My P4s!", wantErrs: []string{tooShort, hasSpace}},
-			{name: "TooShort_NonASCII", input: "M¥P4s!", wantErrs: []string{tooShort, nonASCII}},
+			{name: "TooShort_NonASCII", input: "M¥P4s!2", wantErrs: []string{tooShort, nonASCII}},
 			{
 				name:     "TooLong_NoLower",
 				input:    "MYP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH",

@@ -12,9 +12,9 @@ func (u *Username) Validate() (errs []string) {
 		errs = append(errs, "Username cannot be empty.")
 		// if username empty, further validation is pointless – return wantErrs
 		return
-	} else if len(*u) < 5 {
+	} else if len([]rune(*u)) < 5 {
 		errs = append(errs, "Username cannot be shorter than 5 characters.")
-	} else if len(*u) > 15 {
+	} else if len([]rune(*u)) > 15 {
 		errs = append(errs, "Username cannot be longer than 15 characters.")
 	}
 
@@ -38,9 +38,9 @@ func (p *Password) Validate() (errs []string) {
 		errs = append(errs, "Password cannot be empty.")
 		// if password empty, further validation is pointless – return wantErrs
 		return
-	} else if len(*p) < 8 {
+	} else if len([]rune(*p)) < 8 {
 		errs = append(errs, "Password cannot be shorter than 8 characters.")
-	} else if len(*p) > 64 {
+	} else if len([]rune(*p)) > 64 {
 		errs = append(errs, "Password cannot be longer than 64 characters.")
 	}
 
