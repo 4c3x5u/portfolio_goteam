@@ -169,6 +169,13 @@ func TestRegister(t *testing.T) {
 			{name: "NoSymbol_HasSpace", input: "My  P4ss", wantErrs: []string{noSpecial, hasSpace}},
 			{name: "NoSymbol_NonASCII", input: "MyPa§§w1", wantErrs: []string{noSpecial, nonASCII}},
 			{name: "HasSpace_NonASCII", input: "MyP4§§ !", wantErrs: []string{hasSpace, nonASCII}},
+
+			// 3-error cases
+			{name: "TooShort_NoLower_NoUpper", input: "1421!@$", wantErrs: []string{tooShort, noLower, noUpper}},
+			{name: "TooShort_NoLower_NoDigits", input: "PASS!@$", wantErrs: []string{tooShort, noLower, noDigits}},
+			{name: "TooShort_NoLower_NoSpecial", input: "PASS123", wantErrs: []string{tooShort, noLower, noSpecial}},
+			{name: "TooShort_NoLower_HasSpace", input: "PA$ 123", wantErrs: []string{tooShort, noLower, hasSpace}},
+			{name: "TooShort_NoLower_NonASCII", input: "PA$£123", wantErrs: []string{tooShort, noLower, nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange

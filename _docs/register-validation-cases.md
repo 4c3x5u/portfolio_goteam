@@ -67,11 +67,11 @@
 - [X] has_spaces,non_ascii
 
 ### 3 errors
-- [ ] too_short,no_lowercase,no_uppercase
-- [ ] too_short,no_lowercase,no_digits
-- [ ] too_short,no_lowercase,no_symbols
-- [ ] too_short,no_lowercase,has_spaces
-- [ ] too_short,no_lowercase,non_ascii
+- [X] too_short,no_lowercase,no_uppercase
+- [X] too_short,no_lowercase,no_digits
+- [X] too_short,no_lowercase,no_symbols
+- [X] too_short,no_lowercase,has_spaces
+- [X] too_short,no_lowercase,non_ascii
 - [ ] too_short,no_uppercase,no_digits
 - [ ] too_short,no_uppercase,no_symbols
 - [ ] too_short,no_uppercase,has_spaces
