@@ -72,51 +72,51 @@
 - [X] too_short,no_lowercase,no_symbols
 - [X] too_short,no_lowercase,has_spaces
 - [X] too_short,no_lowercase,non_ascii
-- [ ] too_short,no_uppercase,no_digits
-- [ ] too_short,no_uppercase,no_symbols
-- [ ] too_short,no_uppercase,has_spaces
-- [ ] too_short,no_uppercase,non_ascii
-- [ ] too_short,no_digits,no_symbols
-- [ ] too_short,no_digits,has_spaces
-- [ ] too_short,no_digits,non_ascii
-- [ ] too_short,no_symbols,has_spaces
-- [ ] too_short,no_symbols,non_ascii
-- [ ] too_short,has_spaces,non_ascii
-- [ ] too_long,no_lowercase,no_uppercase
-- [ ] too_long,no_lowercase,no_digits
-- [ ] too_long,no_lowercase,no_symbols
-- [ ] too_long,no_lowercase,has_spaces
-- [ ] too_long,no_lowercase,non_ascii
-- [ ] too_long,no_uppercase,no_digits
-- [ ] too_long,no_uppercase,no_symbols
-- [ ] too_long,no_uppercase,has_spaces
-- [ ] too_long,no_uppercase,non_ascii
-- [ ] too_long,no_digits,no_symbols
-- [ ] too_long,no_digits,has_spaces
-- [ ] too_long,no_digits,non_ascii
-- [ ] too_long,no_symbols,has_spaces
-- [ ] too_long,no_symbols,non_ascii
-- [ ] too_long,has_spaces,non_ascii
-- [ ] no_lowercase,no_uppercase,no_digits
-- [ ] no_lowercase,no_uppercase,no_symbols
-- [ ] no_lowercase,no_uppercase,has_spaces
-- [ ] no_lowercase,no_uppercase,non_ascii
-- [ ] no_lowercase,no_digits,no_symbols
-- [ ] no_lowercase,no_digits,has_spaces
-- [ ] no_lowercase,no_digits,non_ascii
-- [ ] no_lowercase,no_symbols,has_spaces
-- [ ] no_lowercase,no_symbols,non_ascii
-- [ ] no_lowercase,has_spaces,non_ascii
-- [ ] no_uppercase,no_digits,no_symbols
-- [ ] no_uppercase,no_digits,has_spaces
-- [ ] no_uppercase,no_digits,non_ascii
-- [ ] no_uppercase,no_symbols,has_spaces
-- [ ] no_uppercase,no_symbols,non_ascii
-- [ ] no_uppercase,has_spaces,non_ascii
-- [ ] no_digits,no_symbols,has_spaces
-- [ ] no_digits,no_symbols,non_ascii
-- [ ] no_digits,has_spaces,non_ascii
-- [ ] no_symbols,has_spaces,non_ascii
+- [X] too_short,no_uppercase,no_digits
+- [X] too_short,no_uppercase,no_symbols
+- [X] too_short,no_uppercase,has_spaces
+- [X] too_short,no_uppercase,non_ascii
+- [X] too_short,no_digits,no_symbols
+- [X] too_short,no_digits,has_spaces
+- [X] too_short,no_digits,non_ascii
+- [X] too_short,no_symbols,has_spaces
+- [X] too_short,no_symbols,non_ascii
+- [X] too_short,has_spaces,non_ascii
+- [X] too_long,no_lowercase,no_uppercase
+- [X] too_long,no_lowercase,no_digits
+- [X] too_long,no_lowercase,no_symbols
+- [X] too_long,no_lowercase,has_spaces
+- [X] too_long,no_lowercase,non_ascii
+- [X] too_long,no_uppercase,no_digits
+- [X] too_long,no_uppercase,no_symbols
+- [X] too_long,no_uppercase,has_spaces
+- [X] too_long,no_uppercase,non_ascii
+- [X] too_long,no_digits,no_symbols
+- [X] too_long,no_digits,has_spaces
+- [X] too_long,no_digits,non_ascii
+- [X] too_long,no_symbols,has_spaces
+- [X] too_long,no_symbols,non_ascii
+- [X] too_long,has_spaces,non_ascii
+- [X] no_lowercase,no_uppercase,no_digits
+- [X] no_lowercase,no_uppercase,no_symbols
+- [X] no_lowercase,no_uppercase,has_spaces
+- [X] no_lowercase,no_uppercase,non_ascii
+- [X] no_lowercase,no_digits,no_symbols
+- [X] no_lowercase,no_digits,has_spaces
+- [X] no_lowercase,no_digits,non_ascii
+- [X] no_lowercase,no_symbols,has_spaces
+- [X] no_lowercase,no_symbols,non_ascii
+- [X] no_lowercase,has_spaces,non_ascii
+- [X] no_uppercase,no_digits,no_symbols
+- [X] no_uppercase,no_digits,has_spaces
+- [X] no_uppercase,no_digits,non_ascii
+- [X] no_uppercase,no_symbols,has_spaces
+- [X] no_uppercase,no_symbols,non_ascii
+- [X] no_uppercase,has_spaces,non_ascii
+- [X] no_digits,no_symbols,has_spaces
+- [X] no_digits,no_symbols,non_ascii
+- [X] no_digits,has_spaces,non_ascii
+- [X] no_symbols,has_spaces,non_ascii
 
 ### 4 errors
 - [ ] too_short,no_lowercase,no_uppercase,no_digits
