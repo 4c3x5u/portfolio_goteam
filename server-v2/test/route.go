@@ -9,10 +9,13 @@ import (
 	"testing"
 )
 
-type Errser interface {
-	Errs() map[string][]string
+// ErrsMapper allows errors returned from API routes to be investigated in
+// Route.Run through the field name that is set on each RoutCase.
+type ErrsMapper interface {
+	MapErrs() map[string][]string
 }
 
+// RouteCase defines an API route test case.
 type RouteCase struct {
 	name       string
 	inputField string
@@ -22,15 +25,18 @@ type RouteCase struct {
 	children   []*RouteCase
 }
 
+// Route contains pieces of data that are common among a set of RouteCase
+// objects. It does NOT contain the RouteCase objects themselves for its Run
+// function to be able to be called recursively.
 type Route struct {
-	name         string
 	address      string
 	httpMethod   string
 	handler      http.Handler
 	validReqBody map[string]string
-	resBody      Errser
+	resBody      ErrsMapper
 }
 
+// Run runs a given set of RouteCase objects recursively.
 func (r *Route) Run(t *testing.T, cases []*RouteCase) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -66,7 +72,7 @@ func (r *Route) Run(t *testing.T, cases []*RouteCase) {
 			if err := json.NewDecoder(res.Body).Decode(&r.resBody); err != nil {
 				t.Fatal(err)
 			}
-			gotErr := r.resBody.Errs()[c.errsField]
+			gotErr := r.resBody.MapErrs()[c.errsField]
 			if !assert.EqualArr(gotErr, c.wantErrs) {
 				t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErr)
 				t.Fail()
