@@ -7,7 +7,7 @@ import (
 	"github.com/kxplxn/goteam/server-v2/relay"
 )
 
-// Handler is a HTTP handler for the register endpoint.
+// Handler is a HTTP handler for the register route.
 type Handler struct{}
 
 // NewHandler is the constructor for Handler.
@@ -15,7 +15,7 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-// ServeHTTP responds to requests made to the register endpoint.
+// ServeHTTP responds to requests made to the register route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// accept only POST
 	if r.Method != "POST" {

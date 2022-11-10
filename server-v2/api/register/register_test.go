@@ -7,8 +7,8 @@ import (
 	"github.com/kxplxn/goteam/server-v2/test"
 )
 
-// TestRegisterAPI performs functional tests on the register route.
-func TestRegisterAPI(t *testing.T) {
+// TestRegister performs functional tests on the register API route.
+func TestRegister(t *testing.T) {
 	const (
 		usnEmpty       = "Username cannot be empty."
 		usnTooShort    = "Username cannot be shorter than 5 characters."

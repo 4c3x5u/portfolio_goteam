@@ -1,6 +1,6 @@
 package register
 
-// ReqBody defines the request body for the register endpoint.
+// ReqBody defines the request body for the register route.
 type ReqBody struct {
 	Username Username `json:"username"`
 	Password Password `json:"password"`
@@ -8,7 +8,7 @@ type ReqBody struct {
 }
 
 // Validate uses individual field validation logic defined in the validation.go
-// file to validate requests sent the register endpoint. It returns false and
+// file to validate requests sent the register route. It returns false and
 // an errors object if any of the individual validations fail.
 func (r *ReqBody) Validate() *Errs {
 	errs := &Errs{}

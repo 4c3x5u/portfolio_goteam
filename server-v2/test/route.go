@@ -1,6 +1,3 @@
-// Package test contains code that is common between certain tests and
-// encapsulates each type of test, test suite, and test case into types that
-// contains the pieces of data needed to run the said common code.
 package test
 
 import (
@@ -112,8 +109,7 @@ func (r *Route) Run(t *testing.T) {
 
 					// make assertions on the response, status code and errors returned (assert)
 					res := w.Result()
-					gotStatusCode := res.StatusCode
-					if gotStatusCode != s.wantStatusCode {
+					if res.StatusCode != s.wantStatusCode {
 						t.Logf("\nwant: %d\ngot: %d", s.wantStatusCode, res.StatusCode)
 						t.Fail()
 					}
