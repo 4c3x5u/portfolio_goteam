@@ -10,7 +10,7 @@ type Username string
 func (u *Username) Validate() (errs []string) {
 	if *u == "" {
 		errs = append(errs, "Username cannot be empty.")
-		// if username empty, further validation is pointless – return wantErrs
+		// if username empty, further validation is pointless – return errors
 		return
 	} else if len([]rune(*u)) < 5 {
 		errs = append(errs, "Username cannot be shorter than 5 characters.")
