@@ -10,7 +10,7 @@ import (
 // Handler is a HTTP handler for the register endpoint.
 type Handler struct{}
 
-// NewHandler is the constructor for Handler handler.
+// NewHandler is the constructor for Handler.
 func NewHandler() *Handler {
 	return &Handler{}
 }

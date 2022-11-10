@@ -1,343 +1,264 @@
 package register
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/kxplxn/goteam/server-v2/assert"
+	"github.com/kxplxn/goteam/server-v2/test"
 )
-
-// ValidationTestCase defines the values that are commonly necessary between
-// validation tests.
-type ValidationTestCase struct {
-	name     string
-	input    string
-	wantErrs []string
-}
 
 // TestRegister perfomes functional tests on the register endpoint via the
 // Handler.
 func TestRegister(t *testing.T) {
-	t.Run("UsernameValidation", func(t *testing.T) {
-		const (
-			empty       = "Username cannot be empty."
-			tooShort    = "Username cannot be shorter than 5 characters."
-			tooLong     = "Username cannot be longer than 15 characters."
-			invalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
-			digitStart  = "Username can start only with a letter (a-z/A-Z)."
-		)
-		for _, c := range []ValidationTestCase{
+	const (
+		usnEmpty       = "Username cannot be empty."
+		usnTooShort    = "Username cannot be shorter than 5 characters."
+		usnTooLong     = "Username cannot be longer than 15 characters."
+		usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
+		usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
+
+		pwdEmpty     = "Password cannot be empty."
+		pwdTooShort  = "Password cannot be shorter than 8 characters."
+		pwdTooLong   = "Password cannot be longer than 64 characters."
+		pwdNoLower   = "Password must contain a lowercase letter (a-z)."
+		pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
+		pwdNoDigit   = "Password must contain a digit (0-9)."
+		pwdNoSpecial = "Password must contain one of the following special characters: " +
+			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+		pwdHasSpace = "Password cannot contain spaces."
+		pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+			"and the following special characters: " +
+			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+	)
+
+	reqBody := make(map[string]string)
+	reqBody["username"] = "bobby"
+	reqBody["password"] = "S3curePa$$"
+	resBody := &ResBody{}
+
+	test.NewRoute("/register", http.MethodPost, NewHandler(), reqBody, resBody, []*test.RouteSuite{
+		test.NewRouteSuite("UsernameValidation", "username", []*test.RouteCase{
 			// 1-error cases
-			{name: "Empty", input: "", wantErrs: []string{empty}},
-			{name: "TooShort", input: "bob1", wantErrs: []string{tooShort}},
-			{name: "TooLong", input: "bobobobobobobobob", wantErrs: []string{tooLong}},
-			{name: "InvalidCharacter", input: "bobob!", wantErrs: []string{invalidChar}},
-			{name: "DigitStart", input: "1bobob", wantErrs: []string{digitStart}},
+			test.NewRouteCase("Empty", "", []string{usnEmpty}),
+			test.NewRouteCase("TooShort", "bob1", []string{usnTooShort}),
+			test.NewRouteCase("TooLong", "bobobobobobobobob", []string{usnTooLong}),
+			test.NewRouteCase("InvalidCharacter", "bobob!", []string{usnInvalidChar}),
+			test.NewRouteCase("DigitStart", "1bobob", []string{usnDigitStart}),
 
 			// 2-error cases
-			{name: "TooShort_InvalidCharacter", input: "bob!", wantErrs: []string{tooShort, invalidChar}},
-			{name: "TooShort_DigitStart", input: "1bob", wantErrs: []string{tooShort, digitStart}},
-			{name: "TooLong_InvalidCharacter", input: "bobobobobobobobo!", wantErrs: []string{tooLong, invalidChar}},
-			{name: "TooLong_DigitStart", input: "1bobobobobobobobo", wantErrs: []string{tooLong, digitStart}},
-			{name: "InvalidCharacter_DigitStart", input: "1bob!", wantErrs: []string{invalidChar, digitStart}},
+			test.NewRouteCase("TooShort_InvalidCharacter", "bob!", []string{usnTooShort, usnInvalidChar}),
+			test.NewRouteCase("TooShort_DigitStart", "1bob", []string{usnTooShort, usnDigitStart}),
+			test.NewRouteCase("TooLong_InvalidCharacter", "bobobobobobobobo!", []string{usnTooLong, usnInvalidChar}),
+			test.NewRouteCase("TooLong_DigitStart", "1bobobobobobobobo", []string{usnTooLong, usnDigitStart}),
+			test.NewRouteCase("InvalidCharacter_DigitStart", "1bob!", []string{usnInvalidChar, usnDigitStart}),
 
 			// 3-error cases
-			{name: "TooShort_InvalidCharacter_DigitStart", input: "1bo!", wantErrs: []string{tooShort, invalidChar, digitStart}},
-			{name: "TooLong_InvalidCharacter_DigitStart", input: "1bobobobobobobob!", wantErrs: []string{tooLong, invalidChar, digitStart}},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				// arrange
-				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
-					"username": "%s", 
-					"password": "SecureP4ss?", 
-					"referrer": ""
-				}`, c.input)))
-				if err != nil {
-					t.Fatal(err)
-				}
-				req.Header.Set("Content-Type", "application/json")
-				w := httptest.NewRecorder()
-				handler := NewHandler()
+			test.NewRouteCase("TooShort_InvalidCharacter_DigitStart", "1bo!", []string{usnTooShort, usnInvalidChar, usnDigitStart}),
+			test.NewRouteCase("TooLong_InvalidCharacter_DigitStart", "1bobobobobobobob!", []string{usnTooLong, usnInvalidChar, usnDigitStart}),
+		}, http.StatusBadRequest),
 
-				// act
-				handler.ServeHTTP(w, req)
-
-				// assert
-				res := w.Result()
-				gotStatusCode, wantStatusCode := res.StatusCode, http.StatusBadRequest
-				if gotStatusCode != wantStatusCode {
-					t.Logf("\nwant: %d\ngot: %d", http.StatusBadRequest, res.StatusCode)
-					t.Fail()
-				}
-				resBody := &ResBody{}
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				gotErr := resBody.Errs.Username
-				if !assert.EqualArr(gotErr, c.wantErrs) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErr)
-					t.Fail()
-				}
-			})
-		}
-	})
-
-	t.Run("PasswordValidation", func(t *testing.T) {
-		const (
-			empty     = "Password cannot be empty."
-			tooShort  = "Password cannot be shorter than 8 characters."
-			tooLong   = "Password cannot be longer than 64 characters."
-			noLower   = "Password must contain a lowercase letter (a-z)."
-			noUpper   = "Password must contain an uppercase letter (A-Z)."
-			noDigit   = "Password must contain a digit (0-9)."
-			noSpecial = "Password must contain one of the following special characters: " +
-				"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-			hasSpace = "Password cannot contain spaces."
-			nonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
-				"and the following special characters: " +
-				"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-		)
-		for _, c := range []ValidationTestCase{
+		test.NewRouteSuite("PasswordValidation", "password", []*test.RouteCase{
 			// 1-error cases
-			{name: "Empty", input: "", wantErrs: []string{empty}},
-			{name: "TooShort", input: "Myp4ss!", wantErrs: []string{tooShort}},
-			{name: "TooLong", input: "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong}},
-			{name: "NoLower", input: "MY4LLUPPERPASSWORD!", wantErrs: []string{noLower}},
-			{name: "NoUpper", input: "my4lllowerpassword!", wantErrs: []string{noUpper}},
-			{name: "NoDigit", input: "myNOdigitPASSWORD!", wantErrs: []string{noDigit}},
-			{name: "NoSpecial", input: "myNOspecialP4SSWORD", wantErrs: []string{noSpecial}},
-			{name: "HasSpace", input: "my SP4CED p4ssword !", wantErrs: []string{hasSpace}},
-			{name: "NonASCII", input: "myNØNÅSCÎÎp4ssword!", wantErrs: []string{nonASCII}},
+			test.NewRouteCase("Empty", "", []string{pwdEmpty}),
+			test.NewRouteCase("TooShort", "Myp4ss!", []string{pwdTooShort}),
+			test.NewRouteCase("TooLong", "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong}),
+			test.NewRouteCase("NoLower", "MY4LLUPPERPASSWORD!", []string{pwdNoLower}),
+			test.NewRouteCase("NoUpper", "my4lllowerpassword!", []string{pwdNoUpper}),
+			test.NewRouteCase("NoDigit", "myNOdigitPASSWORD!", []string{pwdNoDigit}),
+			test.NewRouteCase("NoSpecial", "myNOspecialP4SSWORD", []string{pwdNoSpecial}),
+			test.NewRouteCase("HasSpace", "my SP4CED p4ssword !", []string{pwdHasSpace}),
+			test.NewRouteCase("NonASCII", "myNØNÅSCÎÎp4ssword!", []string{pwdNonASCII}),
 
 			// 2-error cases
-			{name: "TooShort_NoLower", input: "MYP4SS!", wantErrs: []string{tooShort, noLower}},
-			{name: "TooShort_NoUpper", input: "myp4ss!", wantErrs: []string{tooShort, noUpper}},
-			{name: "TooShort_NoDigit", input: "MyPass!", wantErrs: []string{tooShort, noDigit}},
-			{name: "TooShort_NoSpecial", input: "MyP4ssw", wantErrs: []string{tooShort, noSpecial}},
-			{name: "TooShort_HasSpace", input: "My P4s!", wantErrs: []string{tooShort, hasSpace}},
-			{name: "TooShort_NonASCII", input: "M¥P4s!2", wantErrs: []string{tooShort, nonASCII}},
-			{name: "TooLong_NoLower", input: "MYP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", wantErrs: []string{tooLong, noLower}},
-			{name: "TooLong_NoUpper", input: "myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noUpper}},
-			{name: "TooLong_NoDigit", input: "Mypasswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noDigit}},
-			{name: "TooLong_NoSpecial", input: "Myp4sswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noSpecial}},
-			{name: "TooLong_HasSpace", input: "Myp4sswo   rdwh!chislongandimeanreallylongforsomereasonohiknowwhy", wantErrs: []string{tooLong, hasSpace}},
-			{name: "TooLong_NonASCII", input: "Myp4££wordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, nonASCII}},
-			{name: "NoLower_NoUpper", input: "4444!!!!", wantErrs: []string{noLower, noUpper}},
-			{name: "NoLower_NoDigit", input: "MYP@SSW!", wantErrs: []string{noLower, noDigit}},
-			{name: "NoLower_NoSpecial", input: "MYP4SSW1", wantErrs: []string{noLower, noSpecial}},
-			{name: "NoLower_HasSpace", input: "MYP4SS !", wantErrs: []string{noLower, hasSpace}},
-			{name: "NoLower_NonASCII", input: "MYP4££W!", wantErrs: []string{noLower, nonASCII}},
-			{name: "NoUpper_NoDigit", input: "myp@ssw!", wantErrs: []string{noUpper, noDigit}},
-			{name: "NoUpper_NoSpecial", input: "myp4ssw1", wantErrs: []string{noUpper, noSpecial}},
-			{name: "NoUpper_HasSpace", input: "myp4ss !", wantErrs: []string{noUpper, hasSpace}},
-			{name: "NoUpper_NonASCII", input: "myp4££w!", wantErrs: []string{noUpper, nonASCII}},
-			{name: "NoDigit_NoSpecial", input: "MyPasswd", wantErrs: []string{noDigit, noSpecial}},
-			{name: "NoDigit_HasSpace", input: "MyPass !", wantErrs: []string{noDigit, hasSpace}},
-			{name: "NoDigit_NonASCII", input: "MyPa££w!", wantErrs: []string{noDigit, nonASCII}},
-			{name: "NoSpecial_HasSpace", input: "My  P4ss", wantErrs: []string{noSpecial, hasSpace}},
-			{name: "NoSpecial_NonASCII", input: "MyPa££w1", wantErrs: []string{noSpecial, nonASCII}},
-			{name: "HasSpace_NonASCII", input: "MyP4££ !", wantErrs: []string{hasSpace, nonASCII}},
+			test.NewRouteCase("TooShort_NoLower", "MYP4SS!", []string{pwdTooShort, pwdNoLower}),
+			test.NewRouteCase("TooShort_NoUpper", "myp4ss!", []string{pwdTooShort, pwdNoUpper}),
+			test.NewRouteCase("TooShort_NoDigit", "MyPass!", []string{pwdTooShort, pwdNoDigit}),
+			test.NewRouteCase("TooShort_NoSpecial", "MyP4ssw", []string{pwdTooShort, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_HasSpace", "My P4s!", []string{pwdTooShort, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NonASCII", "M¥P4s!2", []string{pwdTooShort, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower", "MYP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", []string{pwdTooLong, pwdNoLower}),
+			test.NewRouteCase("TooLong_NoUpper", "myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoUpper}),
+			test.NewRouteCase("TooLong_NoDigit", "Mypasswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoDigit}),
+			test.NewRouteCase("TooLong_NoSpecial", "Myp4sswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_HasSpace", "Myp4sswo   rdwh!chislongandimeanreallylongforsomereasonohiknowwhy", []string{pwdTooLong, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NonASCII", "Myp4££wordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper", "4444!!!!", []string{pwdNoLower, pwdNoUpper}),
+			test.NewRouteCase("NoLower_NoDigit", "MYP@SSW!", []string{pwdNoLower, pwdNoDigit}),
+			test.NewRouteCase("NoLower_NoSpecial", "MYP4SSW1", []string{pwdNoLower, pwdNoSpecial}),
+			test.NewRouteCase("NoLower_HasSpace", "MYP4SS !", []string{pwdNoLower, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NonASCII", "MYP4££W!", []string{pwdNoLower, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoDigit", "myp@ssw!", []string{pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("NoUpper_NoSpecial", "myp4ssw1", []string{pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("NoUpper_HasSpace", "myp4ss !", []string{pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("NoUpper_NonASCII", "myp4££w!", []string{pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("NoDigit_NoSpecial", "MyPasswd", []string{pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("NoDigit_HasSpace", "MyPass !", []string{pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("NoDigit_NonASCII", "MyPa££w!", []string{pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("NoSpecial_HasSpace", "My  P4ss", []string{pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoSpecial_NonASCII", "MyPa££w1", []string{pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("HasSpace_NonASCII", "MyP4££ !", []string{pwdHasSpace, pwdNonASCII}),
 
 			// 3-error cases
-			{name: "TooShort_NoLower_NoUpper", input: "1421!@$", wantErrs: []string{tooShort, noLower, noUpper}},
-			{name: "TooShort_NoLower_NoDigit", input: "PASS!@$", wantErrs: []string{tooShort, noLower, noDigit}},
-			{name: "TooShort_NoLower_NoSpecial", input: "PASS123", wantErrs: []string{tooShort, noLower, noSpecial}},
-			{name: "TooShort_NoLower_HasSpace", input: "PA$ 123", wantErrs: []string{tooShort, noLower, hasSpace}},
-			{name: "TooShort_NoLower_NonASCII", input: "PA$£123", wantErrs: []string{tooShort, noLower, nonASCII}},
-			{name: "TooShort_NoUpper_NoDigit", input: "pass$$$", wantErrs: []string{tooShort, noUpper, noDigit}},
-			{name: "TooShort_NoUpper_NoSpecial", input: "pass123", wantErrs: []string{tooShort, noUpper, noSpecial}},
-			{name: "TooShort_NoUpper_HasSpace", input: "pa$ 123", wantErrs: []string{tooShort, noUpper, hasSpace}},
-			{name: "TooShort_NoUpper_NonASCII", input: "pa$£123", wantErrs: []string{tooShort, noUpper, nonASCII}},
-			{name: "TooShort_NoDigit_NoSpecial", input: "Passwor", wantErrs: []string{tooShort, noDigit, noSpecial}},
-			{name: "TooShort_NoDigit_HasSpace", input: "Pa$$ wo", wantErrs: []string{tooShort, noDigit, hasSpace}},
-			{name: "TooShort_NoDigit_NonASCII", input: "Pa$$£wo", wantErrs: []string{tooShort, noDigit, nonASCII}},
-			{name: "TooShort_NoSpecial_HasSpace", input: "Pa55 wo", wantErrs: []string{tooShort, noSpecial, hasSpace}},
-			{name: "TooShort_NoSpecial_NonASCII", input: "Pa55£wo", wantErrs: []string{tooShort, noSpecial, nonASCII}},
-			{name: "TooShort_HasSpace_NonASCII", input: "P4$ £wo", wantErrs: []string{tooShort, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper", input: "111422222222!3333333333333333333333333333333333333333333333333333", wantErrs: []string{tooLong, noLower, noUpper}},
-			{name: "TooLong_NoLower_NoDigit", input: "MYPASSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", wantErrs: []string{tooLong, noLower, noDigit}},
-			{name: "TooLong_NoLower_NoSpecial", input: "MYP4SSWORDWHICHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", wantErrs: []string{tooLong, noLower, noSpecial}},
-			{name: "TooLong_NoLower_HasSpace", input: "MYP4SS    WH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", wantErrs: []string{tooLong, noLower, hasSpace}},
-			{name: "TooLong_NoLower_NonASCII", input: "£YP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", wantErrs: []string{tooLong, noLower, nonASCII}},
-			{name: "TooLong_NoUpper_NoDigit", input: "mypasswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noUpper, noDigit}},
-			{name: "TooLong_NoUpper_NoSpecial", input: "myp4sswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noUpper, noSpecial}},
-			{name: "TooLong_NoUpper_HasSpace", input: "myp4ss    wh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noUpper, hasSpace}},
-			{name: "TooLong_NoUpper_NonASCII", input: "£yp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noUpper, nonASCII}},
-			{name: "TooLong_NoDigit_NoSpecial", input: "Mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noDigit, noSpecial}},
-			{name: "TooLong_NoDigit_HasSpace", input: "Mypass    wh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noDigit, hasSpace}},
-			{name: "TooLong_NoDigit_NonASCII", input: "Myp£sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noDigit, nonASCII}},
-			{name: "TooLong_NoSpecial_HasSpace", input: "Myp4ss    whichislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{tooLong, noSpecial, hasSpace}},
-			{name: "TooLong_HasSpace_NonASCII", input: "Myp4ssw£   rdwh!chislongandimeanreallylongforsomereasonohiknowwhy", wantErrs: []string{tooLong, hasSpace, nonASCII}},
-			{name: "NoLower_NoUpper_NoDigit", input: "!!!!!!!!", wantErrs: []string{noLower, noUpper, noDigit}},
-			{name: "NoLower_NoUpper_NoSpecial", input: "33333333", wantErrs: []string{noLower, noUpper, noSpecial}},
-			{name: "NoLower_NoUpper_HasSpace", input: "444  !!!", wantErrs: []string{noLower, noUpper, hasSpace}},
-			{name: "NoLower_NoUpper_NonASCII", input: "£££444!!", wantErrs: []string{noLower, noUpper, nonASCII}},
-			{name: "NoLower_NoDigit_NoSpecial", input: "MYPASSWO", wantErrs: []string{noLower, noDigit, noSpecial}},
-			{name: "NoLower_NoDigit_HasSpace", input: "MYP@SS !", wantErrs: []string{noLower, noDigit, hasSpace}},
-			{name: "NoLower_NoDigit_NonASCII", input: "M£P@SSW!", wantErrs: []string{noLower, noDigit, nonASCII}},
-			{name: "NoLower_NoSpecial_HasSpace", input: "MYP4  W1", wantErrs: []string{noLower, noSpecial, hasSpace}},
-			{name: "NoLower_NoSpecial_NonASCII", input: "M£P4SSW1", wantErrs: []string{noLower, noSpecial, nonASCII}},
-			{name: "NoLower_HasSpace_NonASCII", input: "M£P4SS !", wantErrs: []string{noLower, hasSpace, nonASCII}},
-			{name: "NoUpper_NoDigit_NoSpecial", input: "mypasswo", wantErrs: []string{noUpper, noDigit, noSpecial}},
-			{name: "NoUpper_NoDigit_HasSpace", input: "myp@ss !", wantErrs: []string{noUpper, noDigit, hasSpace}},
-			{name: "NoUpper_NoDigit_NonASCII", input: "m£p@ssw!", wantErrs: []string{noUpper, noDigit, nonASCII}},
-			{name: "NoUpper_NoSpecial_HasSpace", input: "myp4ss 1", wantErrs: []string{noUpper, noSpecial, hasSpace}},
-			{name: "NoUpper_NoSpecial_NonASCII", input: "m£p4ssw1", wantErrs: []string{noUpper, noSpecial, nonASCII}},
-			{name: "NoUpper_HasSpace_NonASCII", input: "m£p4ss !", wantErrs: []string{noUpper, hasSpace, nonASCII}},
-			{name: "NoDigit_NoSpecial_HasSpace", input: "MyPass o", wantErrs: []string{noDigit, noSpecial, hasSpace}},
-			{name: "NoDigit_NoSpecial_NonASCII", input: "M£Passwd", wantErrs: []string{noDigit, noSpecial, nonASCII}},
-			{name: "NoDigit_HasSpace_NonASCII", input: "M£Pass !", wantErrs: []string{noDigit, hasSpace, nonASCII}},
-			{name: "NoSpecial_HasSpace_NonASCII", input: "M£  P4ss", wantErrs: []string{noSpecial, hasSpace, nonASCII}},
+			test.NewRouteCase("TooShort_NoLower_NoUpper", "1421!@$", []string{pwdTooShort, pwdNoLower, pwdNoUpper}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit", "PASS!@$", []string{pwdTooShort, pwdNoLower, pwdNoDigit}),
+			test.NewRouteCase("TooShort_NoLower_NoSpecial", "PASS123", []string{pwdTooShort, pwdNoLower, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoLower_HasSpace", "PA$ 123", []string{pwdTooShort, pwdNoLower, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NonASCII", "PA$£123", []string{pwdTooShort, pwdNoLower, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit", "pass$$$", []string{pwdTooShort, pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("TooShort_NoUpper_NoSpecial", "pass123", []string{pwdTooShort, pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoUpper_HasSpace", "pa$ 123", []string{pwdTooShort, pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoUpper_NonASCII", "pa$£123", []string{pwdTooShort, pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoDigit_NoSpecial", "Passwor", []string{pwdTooShort, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoDigit_HasSpace", "Pa$$ wo", []string{pwdTooShort, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoDigit_NonASCII", "Pa$$£wo", []string{pwdTooShort, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoSpecial_HasSpace", "Pa55 wo", []string{pwdTooShort, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoSpecial_NonASCII", "Pa55£wo", []string{pwdTooShort, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_HasSpace_NonASCII", "P4$ £wo", []string{pwdTooShort, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper", "111422222222!3333333333333333333333333333333333333333333333333333", []string{pwdTooLong, pwdNoLower, pwdNoUpper}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit", "MYPASSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", []string{pwdTooLong, pwdNoLower, pwdNoDigit}),
+			test.NewRouteCase("TooLong_NoLower_NoSpecial", "MYP4SSWORDWHICHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", []string{pwdTooLong, pwdNoLower, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoLower_HasSpace", "MYP4SS    WH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", []string{pwdTooLong, pwdNoLower, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NonASCII", "£YP4SSWORDWH!CHISLONGANDIMEANREALLYLONGFORSOMEREASONOHIKNOWWHYTBH", []string{pwdTooLong, pwdNoLower, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit", "mypasswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("TooLong_NoUpper_NoSpecial", "myp4sswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoUpper_HasSpace", "myp4ss    wh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoUpper_NonASCII", "£yp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoDigit_NoSpecial", "Mypasswordwhichislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoDigit_HasSpace", "Mypass    wh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoDigit_NonASCII", "Myp£sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoSpecial_HasSpace", "Myp4ss    whichislongandimeanreallylongforsomereasonohiknowwhytbh", []string{pwdTooLong, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_HasSpace_NonASCII", "Myp4ssw£   rdwh!chislongandimeanreallylongforsomereasonohiknowwhy", []string{pwdTooLong, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit", "!!!!!!!!", []string{pwdNoLower, pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("NoLower_NoUpper_NoSpecial", "33333333", []string{pwdNoLower, pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("NoLower_NoUpper_HasSpace", "444  !!!", []string{pwdNoLower, pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoUpper_NonASCII", "£££444!!", []string{pwdNoLower, pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoDigit_NoSpecial", "MYPASSWO", []string{pwdNoLower, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("NoLower_NoDigit_HasSpace", "MYP@SS !", []string{pwdNoLower, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoDigit_NonASCII", "M£P@SSW!", []string{pwdNoLower, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoSpecial_HasSpace", "MYP4  W1", []string{pwdNoLower, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoSpecial_NonASCII", "M£P4SSW1", []string{pwdNoLower, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoLower_HasSpace_NonASCII", "M£P4SS !", []string{pwdNoLower, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoDigit_NoSpecial", "mypasswo", []string{pwdNoUpper, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("NoUpper_NoDigit_HasSpace", "myp@ss !", []string{pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("NoUpper_NoDigit_NonASCII", "m£p@ssw!", []string{pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoSpecial_HasSpace", "myp4ss 1", []string{pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoUpper_NoSpecial_NonASCII", "m£p4ssw1", []string{pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_HasSpace_NonASCII", "m£p4ss !", []string{pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoDigit_NoSpecial_HasSpace", "MyPass o", []string{pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoDigit_NoSpecial_NonASCII", "M£Passwd", []string{pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoDigit_HasSpace_NonASCII", "M£Pass !", []string{pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoSpecial_HasSpace_NonASCII", "M£  P4ss", []string{pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
 
 			// 4-error cases
-			{name: "TooShort_NoLower_NoUpper_NoDigit", input: "!@$!@$!", wantErrs: []string{tooShort, noLower, noUpper, noDigit}},
-			{name: "TooShort_NoLower_NoUpper_NoSpecial", input: "1421111", wantErrs: []string{tooShort, noLower, noUpper, noSpecial}},
-			{name: "TooShort_NoLower_NoUpper_HasSpace", input: "142 !@$", wantErrs: []string{tooShort, noLower, noUpper, hasSpace}},
-			{name: "TooShort_NoLower_NoUpper_NonASCII", input: "14£1!@$", wantErrs: []string{tooShort, noLower, noUpper, nonASCII}},
-			{name: "TooShort_NoLower_NoDigit_NoSpecial", input: "PASSSSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial}},
-			{name: "TooShort_NoLower_NoDigit_HasSpace", input: "PAS !@$", wantErrs: []string{tooShort, noLower, noDigit, hasSpace}},
-			{name: "TooShort_NoLower_NoDigit_NonASCII", input: "P£SS!@$", wantErrs: []string{tooShort, noLower, noDigit, nonASCII}},
-			{name: "TooShort_NoLower_NoSpecial_HasSpace", input: "PAS 123", wantErrs: []string{tooShort, noLower, noSpecial, hasSpace}},
-			{name: "TooShort_NoLower_NoSpecial_NonASCII", input: "P£SS123", wantErrs: []string{tooShort, noLower, noSpecial, nonASCII}},
-			{name: "TooShort_NoLower_HasSpace_NonASCII", input: "P£$ 123", wantErrs: []string{tooShort, noLower, hasSpace, nonASCII}},
-			{name: "TooShort_NoUpper_NoDigit_NoSpecial", input: "passsss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial}},
-			{name: "TooShort_NoUpper_NoDigit_HasSpace", input: "pas $$$", wantErrs: []string{tooShort, noUpper, noDigit, hasSpace}},
-			{name: "TooShort_NoUpper_NoDigit_NonASCII", input: "p£ss$$$", wantErrs: []string{tooShort, noUpper, noDigit, nonASCII}},
-			{name: "TooShort_NoUpper_NoSpecial_HasSpace", input: "pas 123", wantErrs: []string{tooShort, noUpper, noSpecial, hasSpace}},
-			{name: "TooShort_NoUpper_NoSpecial_NonASCII", input: "p£ss123", wantErrs: []string{tooShort, noUpper, noSpecial, nonASCII}},
-			{name: "TooShort_NoUpper_HasSpace_NonASCII", input: "p£$ 123", wantErrs: []string{tooShort, noUpper, hasSpace, nonASCII}},
-			{name: "TooShort_NoDigit_NoSpecial_HasSpace", input: "Pas wor", wantErrs: []string{tooShort, noDigit, noSpecial, hasSpace}},
-			{name: "TooShort_NoDigit_NoSpecial_NonASCII", input: "P£sswor", wantErrs: []string{tooShort, noDigit, noSpecial, nonASCII}},
-			{name: "TooShort_NoDigit_HasSpace_NonASCII", input: "P£$$ wo", wantErrs: []string{tooShort, noDigit, hasSpace, nonASCII}},
-			{name: "TooShort_NoSpecial_HasSpace_NonASCII", input: "P£55 wo", wantErrs: []string{tooShort, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit", input: "!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@", wantErrs: []string{tooLong, noLower, noUpper, noDigit}},
-			{name: "TooLong_NoLower_NoUpper_NoSpecial", input: "14211111421111142111114211111421111142111114211114211111421111142", wantErrs: []string{tooLong, noLower, noUpper, noSpecial}},
-			{name: "TooLong_NoLower_NoUpper_HasSpace", input: "142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$14", wantErrs: []string{tooLong, noLower, noUpper, hasSpace}},
-			{name: "TooLong_NoLower_NoUpper_NonASCII", input: "14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14", wantErrs: []string{tooLong, noLower, noUpper, nonASCII}},
-			{name: "TooLong_NoLower_NoDigit_NoSpecial", input: "PASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPA", wantErrs: []string{tooLong, noLower, noDigit, noSpecial}},
-			{name: "TooLong_NoLower_NoDigit_HasSpace", input: "PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PA", wantErrs: []string{tooLong, noLower, noDigit, hasSpace}},
-			{name: "TooLong_NoLower_NoDigit_NonASCII", input: "P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£", wantErrs: []string{tooLong, noLower, noDigit, nonASCII}},
-			{name: "TooLong_NoLower_NoSpecial_HasSpace", input: "PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PA", wantErrs: []string{tooLong, noLower, noSpecial, hasSpace}},
-			{name: "TooLong_NoLower_NoSpecial_NonASCII", input: "P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£", wantErrs: []string{tooLong, noLower, noSpecial, nonASCII}},
-			{name: "TooLong_NoLower_HasSpace_NonASCII", input: "P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£", wantErrs: []string{tooLong, noLower, hasSpace, nonASCII}},
-			{name: "TooLong_NoUpper_NoDigit_NoSpecial", input: "passssspassssspassssspassssspassssspassssspassssspassssspassssspa", wantErrs: []string{tooLong, noUpper, noDigit, noSpecial}},
-			{name: "TooLong_NoUpper_NoDigit_HasSpace", input: "pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pa", wantErrs: []string{tooLong, noUpper, noDigit, hasSpace}},
-			{name: "TooLong_NoUpper_NoDigit_NonASCII", input: "p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£", wantErrs: []string{tooLong, noUpper, noDigit, nonASCII}},
-			{name: "TooLong_NoUpper_NoSpecial_HasSpace", input: "pas 123pas 123pas 123pas 123pas 123pas 123pas 123pas 123pas 123pa", wantErrs: []string{tooLong, noUpper, noSpecial, hasSpace}},
-			{name: "TooLong_NoUpper_NoSpecial_NonASCII", input: "p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£p£ss123", wantErrs: []string{tooLong, noUpper, noSpecial, nonASCII}},
-			{name: "TooLong_NoUpper_HasSpace_NonASCII", input: "p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£", wantErrs: []string{tooLong, noUpper, hasSpace, nonASCII}},
-			{name: "TooLong_NoDigit_NoSpecial_HasSpace", input: "Pas worPas worPas worPas worPas worPas worPas worPas worPas worPa", wantErrs: []string{tooLong, noDigit, noSpecial, hasSpace}},
-			{name: "TooLong_NoDigit_NoSpecial_NonASCII", input: "P£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£", wantErrs: []string{tooLong, noDigit, noSpecial, nonASCII}},
-			{name: "TooLong_NoDigit_HasSpace_NonASCII", input: "P£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£", wantErrs: []string{tooLong, noDigit, hasSpace, nonASCII}},
-			{name: "TooLong_NoSpecial_HasSpace_NonASCII", input: "P£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£", wantErrs: []string{tooLong, noSpecial, hasSpace, nonASCII}},
-			{name: "NoLower_NoUpper_NoDigit_HasSpace", input: "!!!  !!!", wantErrs: []string{noLower, noUpper, noDigit, hasSpace}},
-			{name: "NoLower_NoUpper_NoDigit_NonASCII", input: "!!!££!!!", wantErrs: []string{noLower, noUpper, noDigit, nonASCII}},
-			{name: "NoLower_NoUpper_NoSpecial_HasSpace", input: "333  333", wantErrs: []string{noLower, noUpper, noSpecial, hasSpace}},
-			{name: "NoLower_NoUpper_NoSpecial_NonASCII", input: "333££333", wantErrs: []string{noLower, noUpper, noSpecial, nonASCII}},
-			{name: "NoLower_NoUpper_HasSpace_NonASCII", input: "4£4  !!!", wantErrs: []string{noLower, noUpper, hasSpace, nonASCII}},
-			{name: "NoLower_NoDigit_NoSpecial_HasSpace", input: "MYP  SWO", wantErrs: []string{noLower, noDigit, noSpecial, hasSpace}},
-			{name: "NoLower_NoDigit_NoSpecial_NonASCII", input: "MYP££SWO", wantErrs: []string{noLower, noDigit, noSpecial, nonASCII}},
-			{name: "NoLower_NoDigit_HasSpace_NonASCII", input: "M£P@SS !", wantErrs: []string{noLower, noDigit, hasSpace, nonASCII}},
-			{name: "NoLower_NoSpecial_HasSpace_NonASCII", input: "M£P4  W1", wantErrs: []string{noLower, noSpecial, hasSpace, nonASCII}},
-			{name: "NoUpper_NoDigit_NoSpecial_HasSpace", input: "myp  swo", wantErrs: []string{noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "NoUpper_NoDigit_NoSpecial_NonASCII", input: "myp££swo", wantErrs: []string{noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "NoUpper_NoDigit_HasSpace_NonASCII", input: "m£p@ss !", wantErrs: []string{noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "NoUpper_NoSpecial_HasSpace_NonASCII", input: "m£p4  w1", wantErrs: []string{noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "NoDigit_NoSpecial_HasSpace_NonASCII", input: "MyP£ss o", wantErrs: []string{noDigit, noSpecial, hasSpace, nonASCII}},
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit", "!@$!@$!", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoSpecial", "1421111", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_HasSpace", "142 !@$", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NonASCII", "14£1!@$", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_NoSpecial", "PASSSSS", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_HasSpace", "PAS !@$", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_NonASCII", "P£SS!@$", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoSpecial_HasSpace", "PAS 123", []string{pwdTooShort, pwdNoLower, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoSpecial_NonASCII", "P£SS123", []string{pwdTooShort, pwdNoLower, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_HasSpace_NonASCII", "P£$ 123", []string{pwdTooShort, pwdNoLower, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_NoSpecial", "passsss", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_HasSpace", "pas $$$", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_NonASCII", "p£ss$$$", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoSpecial_HasSpace", "pas 123", []string{pwdTooShort, pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoUpper_NoSpecial_NonASCII", "p£ss123", []string{pwdTooShort, pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_HasSpace_NonASCII", "p£$ 123", []string{pwdTooShort, pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoDigit_NoSpecial_HasSpace", "Pas wor", []string{pwdTooShort, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoDigit_NoSpecial_NonASCII", "P£sswor", []string{pwdTooShort, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoDigit_HasSpace_NonASCII", "P£$$ wo", []string{pwdTooShort, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoSpecial_HasSpace_NonASCII", "P£55 wo", []string{pwdTooShort, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit", "!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoSpecial", "14211111421111142111114211111421111142111114211114211111421111142", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_HasSpace", "142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$142 !@$14", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NonASCII", "14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14£1!@$14", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_NoSpecial", "PASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPASSSSSPA", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_HasSpace", "PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PAS !@$PA", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_NonASCII", "P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£SS!@$P£", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoSpecial_HasSpace", "PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PAS 123PA", []string{pwdTooLong, pwdNoLower, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoSpecial_NonASCII", "P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£SS123P£", []string{pwdTooLong, pwdNoLower, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_HasSpace_NonASCII", "P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£$ 123P£", []string{pwdTooLong, pwdNoLower, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_NoSpecial", "passssspassssspassssspassssspassssspassssspassssspassssspassssspa", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdNoSpecial}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_HasSpace", "pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pas $$$pa", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_NonASCII", "p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£ss$$$p£", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoSpecial_HasSpace", "pas 123pas 123pas 123pas 123pas 123pas 123pas 123pas 123pas 123pa", []string{pwdTooLong, pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoUpper_NoSpecial_NonASCII", "p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£ss123p£p£ss123", []string{pwdTooLong, pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_HasSpace_NonASCII", "p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£", []string{pwdTooLong, pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoDigit_NoSpecial_HasSpace", "Pas worPas worPas worPas worPas worPas worPas worPas worPas worPa", []string{pwdTooLong, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoDigit_NoSpecial_NonASCII", "P£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£ssworP£", []string{pwdTooLong, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoDigit_HasSpace_NonASCII", "P£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£$$ woP£", []string{pwdTooLong, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoSpecial_HasSpace_NonASCII", "P£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£55 woP£", []string{pwdTooLong, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_HasSpace", "!!!  !!!", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_NonASCII", "!!!££!!!", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoSpecial_HasSpace", "333  333", []string{pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoUpper_NoSpecial_NonASCII", "333££333", []string{pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_HasSpace_NonASCII", "4£4  !!!", []string{pwdNoLower, pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoDigit_NoSpecial_HasSpace", "MYP  SWO", []string{pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoDigit_NoSpecial_NonASCII", "MYP££SWO", []string{pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoDigit_HasSpace_NonASCII", "M£P@SS !", []string{pwdNoLower, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoSpecial_HasSpace_NonASCII", "M£P4  W1", []string{pwdNoLower, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoDigit_NoSpecial_HasSpace", "myp  swo", []string{pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoUpper_NoDigit_NoSpecial_NonASCII", "myp££swo", []string{pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoDigit_HasSpace_NonASCII", "m£p@ss !", []string{pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoSpecial_HasSpace_NonASCII", "m£p4  w1", []string{pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoDigit_NoSpecial_HasSpace_NonASCII", "MyP£ss o", []string{pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
 
 			// 5-error cases
-			{name: "TooShort_NoLower_NoUpper_NoDigit_HasSpace", input: "!@   $!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, hasSpace}},
-			{name: "TooShort_NoLower_NoUpper_NoDigit_NonASCII", input: "!@£££$!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, nonASCII}},
-			{name: "TooShort_NoLower_NoUpper_NoSpecial_HasSpace", input: "14   11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, hasSpace}},
-			{name: "TooShort_NoLower_NoUpper_NoSpecial_NonASCII", input: "14£££11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, nonASCII}},
-			{name: "TooShort_NoLower_NoUpper_HasSpace_NonASCII", input: "1£2 !@$", wantErrs: []string{tooShort, noLower, noUpper, hasSpace, nonASCII}},
-			{name: "TooShort_NoLower_NoDigit_NoSpecial_HasSpace", input: "PAS SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, hasSpace}},
-			{name: "TooShort_NoLower_NoDigit_NoSpecial_NonASCII", input: "PAS£SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, nonASCII}},
-			{name: "TooShort_NoLower_NoDigit_HasSpace_NonASCII", input: "P£S !@$", wantErrs: []string{tooShort, noLower, noDigit, hasSpace, nonASCII}},
-			{name: "TooShort_NoLower_NoSpecial_HasSpace_NonASCII", input: "P£S 123", wantErrs: []string{tooShort, noLower, noSpecial, hasSpace, nonASCII}},
-			{name: "TooShort_NoUpper_NoDigit_NoSpecial_HasSpace", input: "pas sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "TooShort_NoUpper_NoDigit_NoSpecial_NonASCII", input: "pas£sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "TooShort_NoUpper_NoDigit_HasSpace_NonASCII", input: "p£s $$$", wantErrs: []string{tooShort, noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "TooShort_NoUpper_NoSpecial_HasSpace_NonASCII", input: "p£s 123", wantErrs: []string{tooShort, noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "TooShort_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£s wor", wantErrs: []string{tooShort, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_HasSpace", input: "!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@", wantErrs: []string{tooLong, noLower, noUpper, noDigit, hasSpace}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_NonASCII", input: "!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@", wantErrs: []string{tooLong, noLower, noUpper, noDigit, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoSpecial_HasSpace", input: "14   1114   1114   1114   1114   1114   1114   1114   1114   1114", wantErrs: []string{tooLong, noLower, noUpper, noSpecial, hasSpace}},
-			{name: "TooLong_NoLower_NoUpper_NoSpecial_NonASCII", input: "14£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114", wantErrs: []string{tooLong, noLower, noUpper, noSpecial, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_HasSpace_NonASCII", input: "1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£", wantErrs: []string{tooLong, noLower, noUpper, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoDigit_NoSpecial_HasSpace", input: "PAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPA", wantErrs: []string{tooLong, noLower, noDigit, noSpecial, hasSpace}},
-			{name: "TooLong_NoLower_NoDigit_NoSpecial_NonASCII", input: "PAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPA", wantErrs: []string{tooLong, noLower, noDigit, noSpecial, nonASCII}},
-			{name: "TooLong_NoLower_NoDigit_HasSpace_NonASCII", input: "P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£", wantErrs: []string{tooLong, noLower, noDigit, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoSpecial_HasSpace_NonASCII", input: "P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£", wantErrs: []string{tooLong, noLower, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoUpper_NoDigit_NoSpecial_HasSpace", input: "pas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspa", wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "TooLong_NoUpper_NoDigit_NoSpecial_NonASCII", input: "pas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspa", wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "TooLong_NoUpper_NoDigit_HasSpace_NonASCII", input: "p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£", wantErrs: []string{tooLong, noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "TooLong_NoUpper_NoSpecial_HasSpace_NonASCII", input: "p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£", wantErrs: []string{tooLong, noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£", wantErrs: []string{tooLong, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", input: "        ", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", input: "££££££££", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "NoLower_NoUpper_NoDigit_HasSpace_NonASCII", input: "!£!  !!!", wantErrs: []string{noLower, noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "3£3  333", wantErrs: []string{noLower, noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "M£P  SWO", wantErrs: []string{noLower, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "m£p  swo", wantErrs: []string{noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_HasSpace", "!@   $!", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_NonASCII", "!@£££$!", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoSpecial_HasSpace", "14   11", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoSpecial_NonASCII", "14£££11", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_HasSpace_NonASCII", "1£2 !@$", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_NoSpecial_HasSpace", "PAS SSS", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_NoSpecial_NonASCII", "PAS£SSS", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_HasSpace_NonASCII", "P£S !@$", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoSpecial_HasSpace_NonASCII", "P£S 123", []string{pwdTooShort, pwdNoLower, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_NoSpecial_HasSpace", "pas sss", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_NoSpecial_NonASCII", "pas£sss", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_HasSpace_NonASCII", "p£s $$$", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoSpecial_HasSpace_NonASCII", "p£s 123", []string{pwdTooShort, pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoDigit_NoSpecial_HasSpace_NonASCII", "P£s wor", []string{pwdTooShort, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_HasSpace", "!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_NonASCII", "!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoSpecial_HasSpace", "14   1114   1114   1114   1114   1114   1114   1114   1114   1114", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoSpecial_NonASCII", "14£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_HasSpace_NonASCII", "1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_NoSpecial_HasSpace", "PAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPA", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_NoSpecial_NonASCII", "PAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPA", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_HasSpace_NonASCII", "P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoSpecial_HasSpace_NonASCII", "P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£", []string{pwdTooLong, pwdNoLower, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_NoSpecial_HasSpace", "pas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspa", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_NoSpecial_NonASCII", "pas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspa", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_HasSpace_NonASCII", "p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoSpecial_HasSpace_NonASCII", "p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£", []string{pwdTooLong, pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoDigit_NoSpecial_HasSpace_NonASCII", "P£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£", []string{pwdTooLong, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", "        ", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", "££££££££", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_HasSpace_NonASCII", "!£!  !!!", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", "3£3  333", []string{pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", "M£P  SWO", []string{pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "m£p  swo", []string{pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
 
 			// 6-error cases
-			{name: "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", input: "       ", wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", input: "£££££££", wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "TooShort_NoLower_NoUpper_NoDigit_HasSpace_NonASCII", input: "!£   $!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "TooShort_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "1£   11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "TooShort_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£S SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "TooShort_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "p£s sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", input: "                                                                 ", wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, hasSpace}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", input: "£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££", wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_HasSpace_NonASCII", input: "!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£", wantErrs: []string{tooLong, noLower, noUpper, noDigit, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "1£   111£   111£   111£   111£   111£   111£   111£   111£   111£", wantErrs: []string{tooLong, noLower, noUpper, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£", wantErrs: []string{tooLong, noLower, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "p£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£", wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "   ££   ", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", "       ", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", "£££££££", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_HasSpace_NonASCII", "!£   $!", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", "1£   11", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", "P£S SSS", []string{pwdTooShort, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooShort_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "p£s sss", []string{pwdTooShort, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", "                                                                 ", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", "£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_HasSpace_NonASCII", "!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", "1£   111£   111£   111£   111£   111£   111£   111£   111£   111£", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", "P£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£", []string{pwdTooLong, pwdNoLower, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "p£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£", []string{pwdTooLong, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "   ££   ", []string{pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
 
 			// 7-error cases
-			{name: "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "   £   ", wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
-			{name: "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "   £      £      £      £      £      £      £      £      £     ", wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				// arrange
-				req, err := http.NewRequest("POST", "/register", strings.NewReader(fmt.Sprintf(`{
-					"username": "mynameisbob", 
-					"password": "%s", 
-					"referrer": ""
-				}`, c.input)))
-				if err != nil {
-					t.Fatal(err)
-				}
-				req.Header.Set("Content-Type", "application/json")
-				w := httptest.NewRecorder()
-				handler := NewHandler()
-
-				// act
-				handler.ServeHTTP(w, req)
-
-				// assert
-				res := w.Result()
-				gotStatusCode, wantStatusCode := res.StatusCode, http.StatusBadRequest
-				if gotStatusCode != wantStatusCode {
-					t.Logf("\nwant: %d\ngot: %d", wantStatusCode, gotStatusCode)
-					t.Fail()
-				}
-				resBody := &ResBody{}
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				gotErrs := resBody.Errs.Password
-				if !assert.EqualArr(gotErrs, c.wantErrs) {
-					t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErrs)
-					t.Fail()
-				}
-			})
-		}
-	})
+			test.NewRouteCase("TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "   £   ", []string{pwdTooShort, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+			test.NewRouteCase("TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", "   £      £      £      £      £      £      £      £      £     ", []string{pwdTooLong, pwdNoLower, pwdNoUpper, pwdNoDigit, pwdNoSpecial, pwdHasSpace, pwdNonASCII}),
+		}, http.StatusBadRequest),
+	}).Run(t)
 }
