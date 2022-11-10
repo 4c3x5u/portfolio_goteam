@@ -428,8 +428,7 @@ func TestRegister(t *testing.T) {
 			{name: "TooShort_NoUpper_NoDigit_HasSpace_NonASCII", input: "p£s $$$", wantErrs: []string{tooShort, noUpper, noDigit, hasSpace, nonASCII}},
 			{name: "TooShort_NoUpper_NoSpecial_HasSpace_NonASCII", input: "p£s 123", wantErrs: []string{tooShort, noUpper, noSpecial, hasSpace, nonASCII}},
 			{name: "TooShort_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£s wor", wantErrs: []string{tooShort, noDigit, noSpecial, hasSpace, nonASCII}},
-			{
-				name:     "TooLong_NoLower_NoUpper_NoDigit_HasSpace",
+			{name: "TooLong_NoLower_NoUpper_NoDigit_HasSpace",
 				input:    "!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@",
 				wantErrs: []string{tooLong, noLower, noUpper, noDigit, hasSpace},
 			},
@@ -504,6 +503,57 @@ func TestRegister(t *testing.T) {
 			{name: "NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "3£3  333", wantErrs: []string{noLower, noUpper, noSpecial, hasSpace, nonASCII}},
 			{name: "NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "M£P  SWO", wantErrs: []string{noLower, noDigit, noSpecial, hasSpace, nonASCII}},
 			{name: "NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "m£p  swo", wantErrs: []string{noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
+
+			// 6-error cases
+			{name: "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", input: "       ", wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, hasSpace}},
+			{name: "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", input: "£££££££", wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, nonASCII}},
+			{name: "TooShort_NoLower_NoUpper_NoDigit_HasSpace_NonASCII", input: "!£   $!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, hasSpace, nonASCII}},
+			{name: "TooShort_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "1£   11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, hasSpace, nonASCII}},
+			{name: "TooShort_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£S SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, hasSpace, nonASCII}},
+			{name: "TooShort_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "p£s sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace",
+				input:    "                                                                 ",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, hasSpace},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_NonASCII",
+				input:    "£££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££££",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_HasSpace_NonASCII",
+				input:    "!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£   $!!£",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoSpecial_HasSpace_NonASCII",
+				input:    "1£   111£   111£   111£   111£   111£   111£   111£   111£   111£",
+				wantErrs: []string{tooLong, noLower, noUpper, noSpecial, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoDigit_NoSpecial_HasSpace_NonASCII",
+				input:    "P£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£S SSSP£",
+				wantErrs: []string{tooLong, noLower, noDigit, noSpecial, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII",
+				input:    "p£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£s sssp£",
+				wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, hasSpace, nonASCII},
+			},
+			{name: "NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "   ££   ", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
+
+			// 7-error cases
+			{
+				name:     "TooShort_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII",
+				input:    "   £   ",
+				wantErrs: []string{tooShort, noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII",
+				input:    "   £      £      £      £      £      £      £      £      £     ",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, noSpecial, hasSpace, nonASCII},
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange
