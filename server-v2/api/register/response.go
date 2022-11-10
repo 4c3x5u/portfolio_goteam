@@ -5,9 +5,10 @@ type ResBody struct {
 	Errs *Errs `json:"errors"`
 }
 
-// MapErrs implements the ErrsMapper interface from Package test for the test
-// cases to be able to inspect the errors object through dynamically set fields.
-func (r *ResBody) MapErrs() map[string][]string {
+// ErrsMap implements the ErrsMapper interface from Package test for the test
+// cases to be able to inspect the errors object through dynamically defined
+// field names
+func (r *ResBody) ErrsMap() map[string][]string {
 	errsMap := make(map[string][]string)
 	errsMap["username"] = r.Errs.Username
 	errsMap["password"] = r.Errs.Password

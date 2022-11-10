@@ -6,5 +6,5 @@ package test
 // ErrsMapper allows errors returned from API routes to be investigated in
 // Route.Run via the field name that is set on each RoutCase.
 type ErrsMapper interface {
-	MapErrs() map[string][]string
+	ErrsMap() map[string][]string
 }

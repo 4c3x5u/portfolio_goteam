@@ -10,36 +10,36 @@ import (
 	"github.com/kxplxn/goteam/server-v2/assert"
 )
 
-// RouteCase defines an API route test case.
-type RouteCase struct {
+// CaseRoute defines an API route test case.
+type CaseRoute struct {
 	name     string
 	input    string
 	wantErrs []string
 }
 
-// NewRouteCase is the constructor for RouteCase.
-func NewRouteCase(name string, input string, wantErrs []string) *RouteCase {
-	return &RouteCase{name: name, input: input, wantErrs: wantErrs}
+// NewCaseRoute is the constructor for CaseRoute.
+func NewCaseRoute(name string, input string, wantErrs []string) *CaseRoute {
+	return &CaseRoute{name: name, input: input, wantErrs: wantErrs}
 }
 
-// RouteSuite contains a set of API route test cases as well as the name given
+// SuiteRoute contains a set of API route test cases as well as the name given
 // to the set, the request/error field that the cases are concerned with, and
 // the expected http response status code.
-type RouteSuite struct {
+type SuiteRoute struct {
 	name           string
 	field          string
-	cases          []*RouteCase
+	cases          []*CaseRoute
 	wantStatusCode int
 }
 
-// NewRouteSuite is the constructor for RouteSuite.
-func NewRouteSuite(
+// NewSuiteRoute is the constructor for SuiteRoute.
+func NewSuiteRoute(
 	name string,
 	inputField string,
-	cases []*RouteCase,
+	cases []*CaseRoute,
 	wantStatusCode int,
-) *RouteSuite {
-	return &RouteSuite{
+) *SuiteRoute {
+	return &SuiteRoute{
 		name:           name,
 		field:          inputField,
 		cases:          cases,
@@ -55,7 +55,7 @@ type Route struct {
 	handler    http.Handler
 	reqBody    map[string]string
 	resBody    ErrsMapper
-	suites     []*RouteSuite
+	suites     []*SuiteRoute
 }
 
 // NewRoute is the constructor for Route.
@@ -65,7 +65,7 @@ func NewRoute(
 	handler http.Handler,
 	reqBody map[string]string,
 	resBody ErrsMapper,
-	suites []*RouteSuite,
+	suites []*SuiteRoute,
 ) *Route {
 	return &Route{
 		url:        url,
@@ -77,7 +77,7 @@ func NewRoute(
 	}
 }
 
-// Run runs a given set of RouteCase objects recursively.
+// Run runs a given set of CaseRoute objects recursively.
 func (r *Route) Run(t *testing.T) {
 	for _, s := range r.suites {
 		t.Run(s.name, func(t *testing.T) {
@@ -117,7 +117,7 @@ func (r *Route) Run(t *testing.T) {
 					if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 						t.Fatal(err)
 					}
-					gotErr := resBody.MapErrs()[s.field]
+					gotErr := resBody.ErrsMap()[s.field]
 					if !assert.EqualArr(gotErr, c.wantErrs) {
 						t.Logf("\nwant: %+v\ngot: %+v", c.wantErrs, gotErr)
 						t.Fail()
