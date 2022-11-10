@@ -278,7 +278,7 @@ func TestRegister(t *testing.T) {
 			{name: "NoSpecial_HasSpace_NonASCII", input: "M£  P4ss", wantErrs: []string{noSpecial, hasSpace, nonASCII}},
 
 			// 4-error cases
-			{name: "TooShort_NoLower_NoUpper_NoDigits", input: "!@$!@$!", wantErrs: []string{tooShort, noLower, noUpper, noDigit}},
+			{name: "TooShort_NoLower_NoUpper_NoDigit", input: "!@$!@$!", wantErrs: []string{tooShort, noLower, noUpper, noDigit}},
 			{name: "TooShort_NoLower_NoUpper_NoSpecial", input: "1421111", wantErrs: []string{tooShort, noLower, noUpper, noSpecial}},
 			{name: "TooShort_NoLower_NoUpper_HasSpace", input: "142 !@$", wantErrs: []string{tooShort, noLower, noUpper, hasSpace}},
 			{name: "TooShort_NoLower_NoUpper_NonASCII", input: "14£1!@$", wantErrs: []string{tooShort, noLower, noUpper, nonASCII}},
@@ -299,7 +299,7 @@ func TestRegister(t *testing.T) {
 			{name: "TooShort_NoDigit_HasSpace_NonASCII", input: "P£$$ wo", wantErrs: []string{tooShort, noDigit, hasSpace, nonASCII}},
 			{name: "TooShort_NoSpecial_HasSpace_NonASCII", input: "P£55 wo", wantErrs: []string{tooShort, noSpecial, hasSpace, nonASCII}},
 			{
-				name:     "TooLong_NoLower_NoUpper_NoDigits",
+				name:     "TooLong_NoLower_NoUpper_NoDigit",
 				input:    "!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@$!@$!!@",
 				wantErrs: []string{tooLong, noLower, noUpper, noDigit},
 			},
@@ -412,6 +412,98 @@ func TestRegister(t *testing.T) {
 			{name: "NoUpper_NoDigit_HasSpace_NonASCII", input: "m£p@ss !", wantErrs: []string{noUpper, noDigit, hasSpace, nonASCII}},
 			{name: "NoUpper_NoSpecial_HasSpace_NonASCII", input: "m£p4  w1", wantErrs: []string{noUpper, noSpecial, hasSpace, nonASCII}},
 			{name: "NoDigit_NoSpecial_HasSpace_NonASCII", input: "MyP£ss o", wantErrs: []string{noDigit, noSpecial, hasSpace, nonASCII}},
+
+			// 5-error cases
+			{name: "TooShort_NoLower_NoUpper_NoDigit_HasSpace", input: "!@   $!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, hasSpace}},
+			{name: "TooShort_NoLower_NoUpper_NoDigit_NonASCII", input: "!@£££$!", wantErrs: []string{tooShort, noLower, noUpper, noDigit, nonASCII}},
+			{name: "TooShort_NoLower_NoUpper_NoSpecial_HasSpace", input: "14   11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, hasSpace}},
+			{name: "TooShort_NoLower_NoUpper_NoSpecial_NonASCII", input: "14£££11", wantErrs: []string{tooShort, noLower, noUpper, noSpecial, nonASCII}},
+			{name: "TooShort_NoLower_NoUpper_HasSpace_NonASCII", input: "1£2 !@$", wantErrs: []string{tooShort, noLower, noUpper, hasSpace, nonASCII}},
+			{name: "TooShort_NoLower_NoDigit_NoSpecial_HasSpace", input: "PAS SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, hasSpace}},
+			{name: "TooShort_NoLower_NoDigit_NoSpecial_NonASCII", input: "PAS£SSS", wantErrs: []string{tooShort, noLower, noDigit, noSpecial, nonASCII}},
+			{name: "TooShort_NoLower_NoDigit_HasSpace_NonASCII", input: "P£S !@$", wantErrs: []string{tooShort, noLower, noDigit, hasSpace, nonASCII}},
+			{name: "TooShort_NoLower_NoSpecial_HasSpace_NonASCII", input: "P£S 123", wantErrs: []string{tooShort, noLower, noSpecial, hasSpace, nonASCII}},
+			{name: "TooShort_NoUpper_NoDigit_NoSpecial_HasSpace", input: "pas sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, hasSpace}},
+			{name: "TooShort_NoUpper_NoDigit_NoSpecial_NonASCII", input: "pas£sss", wantErrs: []string{tooShort, noUpper, noDigit, noSpecial, nonASCII}},
+			{name: "TooShort_NoUpper_NoDigit_HasSpace_NonASCII", input: "p£s $$$", wantErrs: []string{tooShort, noUpper, noDigit, hasSpace, nonASCII}},
+			{name: "TooShort_NoUpper_NoSpecial_HasSpace_NonASCII", input: "p£s 123", wantErrs: []string{tooShort, noUpper, noSpecial, hasSpace, nonASCII}},
+			{name: "TooShort_NoDigit_NoSpecial_HasSpace_NonASCII", input: "P£s wor", wantErrs: []string{tooShort, noDigit, noSpecial, hasSpace, nonASCII}},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_HasSpace",
+				input:    "!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@   $!!@",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, hasSpace},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoDigit_NonASCII",
+				input:    "!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@£££$!!@",
+				wantErrs: []string{tooLong, noLower, noUpper, noDigit, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoSpecial_HasSpace",
+				input:    "14   1114   1114   1114   1114   1114   1114   1114   1114   1114",
+				wantErrs: []string{tooLong, noLower, noUpper, noSpecial, hasSpace},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_NoSpecial_NonASCII",
+				input:    "14£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114£££1114",
+				wantErrs: []string{tooLong, noLower, noUpper, noSpecial, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoUpper_HasSpace_NonASCII",
+				input:    "1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£2 !@$1£",
+				wantErrs: []string{tooLong, noLower, noUpper, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoDigit_NoSpecial_HasSpace",
+				input:    "PAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPAS SSSPA",
+				wantErrs: []string{tooLong, noLower, noDigit, noSpecial, hasSpace},
+			},
+			{
+				name:     "TooLong_NoLower_NoDigit_NoSpecial_NonASCII",
+				input:    "PAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPAS£SSSPA",
+				wantErrs: []string{tooLong, noLower, noDigit, noSpecial, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoDigit_HasSpace_NonASCII",
+				input:    "P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£S !@$P£",
+				wantErrs: []string{tooLong, noLower, noDigit, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoLower_NoSpecial_HasSpace_NonASCII",
+				input:    "P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£S 123P£",
+				wantErrs: []string{tooLong, noLower, noSpecial, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoUpper_NoDigit_NoSpecial_HasSpace",
+				input:    "pas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspas ssspa",
+				wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, hasSpace},
+			},
+			{
+				name:     "TooLong_NoUpper_NoDigit_NoSpecial_NonASCII",
+				input:    "pas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspas£ssspa",
+				wantErrs: []string{tooLong, noUpper, noDigit, noSpecial, nonASCII},
+			},
+			{
+				name:     "TooLong_NoUpper_NoDigit_HasSpace_NonASCII",
+				input:    "p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£s $$$p£",
+				wantErrs: []string{tooLong, noUpper, noDigit, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoUpper_NoSpecial_HasSpace_NonASCII",
+				input:    "p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£s 123p£",
+				wantErrs: []string{tooLong, noUpper, noSpecial, hasSpace, nonASCII},
+			},
+			{
+				name:     "TooLong_NoDigit_NoSpecial_HasSpace_NonASCII",
+				input:    "P£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£s worP£",
+				wantErrs: []string{tooLong, noDigit, noSpecial, hasSpace, nonASCII},
+			},
+			{name: "NoLower_NoUpper_NoDigit_NoSpecial_HasSpace", input: "        ", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, hasSpace}},
+			{name: "NoLower_NoUpper_NoDigit_NoSpecial_NonASCII", input: "££££££££", wantErrs: []string{noLower, noUpper, noDigit, noSpecial, nonASCII}},
+			{name: "NoLower_NoUpper_NoDigit_HasSpace_NonASCII", input: "!£!  !!!", wantErrs: []string{noLower, noUpper, noDigit, hasSpace, nonASCII}},
+			{name: "NoLower_NoUpper_NoSpecial_HasSpace_NonASCII", input: "3£3  333", wantErrs: []string{noLower, noUpper, noSpecial, hasSpace, nonASCII}},
+			{name: "NoLower_NoDigit_NoSpecial_HasSpace_NonASCII", input: "M£P  SWO", wantErrs: []string{noLower, noDigit, noSpecial, hasSpace, nonASCII}},
+			{name: "NoUpper_NoDigit_NoSpecial_HasSpace_NonASCII", input: "m£p  swo", wantErrs: []string{noUpper, noDigit, noSpecial, hasSpace, nonASCII}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// arrange

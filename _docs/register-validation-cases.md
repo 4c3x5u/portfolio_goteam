@@ -159,8 +159,7 @@
 - [X] too_long,no_digits,no_symbols,non_ascii
 - [X] too_long,no_digits,has_spaces,non_ascii
 - [X] too_long,no_symbols,has_spaces,non_ascii
-- [ ] ~~no_lowercase,no_uppercase,no_digits,no_symbols~~
-  - impossible case
+- [ ] ~~no_lowercase,no_uppercase,no_digits,no_symbols~~ (IMPOSSIBLE CASE)
 - [X] no_lowercase,no_uppercase,no_digits,has_spaces
 - [X] no_lowercase,no_uppercase,no_digits,non_ascii
 - [X] no_lowercase,no_uppercase,no_symbols,has_spaces
@@ -177,48 +176,51 @@
 - [X] no_digits,no_symbols,has_spaces,non_ascii
 
 ### 5 errors
-- [ ] too_short,no_lowercase,no_uppercase,no_digits,no_symbols
-- [ ] too_short,no_lowercase,no_uppercase,no_digits,has_spaces
-- [ ] too_short,no_lowercase,no_uppercase,no_digits,non_ascii
-- [ ] too_short,no_lowercase,no_uppercase,no_symbols,has_spaces
-- [ ] too_short,no_lowercase,no_uppercase,no_symbols,non_ascii
-- [ ] too_short,no_lowercase,no_uppercase,has_spaces,non_ascii
-- [ ] too_short,no_lowercase,no_digits,no_symbols,has_spaces
-- [ ] too_short,no_lowercase,no_digits,no_symbols,non_ascii
-- [ ] too_short,no_lowercase,no_digits,has_spaces,non_ascii
-- [ ] too_short,no_lowercase,no_symbols,has_spaces,non_ascii
-- [ ] too_short,no_uppercase,no_digits,no_symbols,has_spaces
-- [ ] too_short,no_uppercase,no_digits,no_symbols,non_ascii
-- [ ] too_short,no_uppercase,no_digits,has_spaces,non_ascii
-- [ ] too_short,no_uppercase,no_symbols,has_spaces,non_ascii
-- [ ] too_short,no_digits,no_symbols,has_spaces,non_ascii
-- [ ] too_long,no_lowercase,no_uppercase,no_digits,no_symbols
-- [ ] too_long,no_lowercase,no_uppercase,no_digits,has_spaces
-- [ ] too_long,no_lowercase,no_uppercase,no_digits,non_ascii
-- [ ] too_long,no_lowercase,no_uppercase,no_symbols,has_spaces
-- [ ] too_long,no_lowercase,no_uppercase,no_symbols,non_ascii
-- [ ] too_long,no_lowercase,no_uppercase,has_spaces,non_ascii
-- [ ] too_long,no_lowercase,no_digits,no_symbols,has_spaces
-- [ ] too_long,no_lowercase,no_digits,no_symbols,non_ascii
-- [ ] too_long,no_lowercase,no_digits,has_spaces,non_ascii
-- [ ] too_long,no_lowercase,no_symbols,has_spaces,non_ascii
-- [ ] too_long,no_uppercase,no_digits,no_symbols,has_spaces
-- [ ] too_long,no_uppercase,no_digits,no_symbols,non_ascii
-- [ ] too_long,no_uppercase,no_digits,has_spaces,non_ascii
-- [ ] too_long,no_uppercase,no_symbols,has_spaces,non_ascii
-- [ ] too_long,no_digits,no_symbols,has_spaces,non_ascii
-- [ ] no_lowercase,no_uppercase,no_digits,no_symbols,has_spaces
-- [ ] no_lowercase,no_uppercase,no_digits,no_symbols,non_ascii
-- [ ] no_lowercase,no_uppercase,no_digits,has_spaces,non_ascii
-- [ ] no_lowercase,no_uppercase,no_symbols,has_spaces,non_ascii
-- [ ] no_lowercase,no_digits,no_symbols,has_spaces,non_ascii
-- [ ] no_uppercase,no_digits,no_symbols,has_spaces,non_ascii
+- [ ] ~~too_short,no_lowercase,no_uppercase,no_digits,no_symbols~~ (IMPOSSIBLE CASE)
+- [X] too_short,no_lowercase,no_uppercase,no_digits,has_spaces
+- [X] too_short,no_lowercase,no_uppercase,no_digits,non_ascii
+- [X] too_short,no_lowercase,no_uppercase,no_symbols,has_spaces
+- [X] too_short,no_lowercase,no_uppercase,no_symbols,non_ascii
+- [X] too_short,no_lowercase,no_uppercase,has_spaces,non_ascii
+- [X] too_short,no_lowercase,no_digits,no_symbols,has_spaces
+- [X] too_short,no_lowercase,no_digits,no_symbols,non_ascii
+- [X] too_short,no_lowercase,no_digits,has_spaces,non_ascii
+- [X] too_short,no_lowercase,no_symbols,has_spaces,non_ascii
+- [X] too_short,no_uppercase,no_digits,no_symbols,has_spaces
+- [X] too_short,no_uppercase,no_digits,no_symbols,non_ascii
+- [X] too_short,no_uppercase,no_digits,has_spaces,non_ascii
+- [X] too_short,no_uppercase,no_symbols,has_spaces,non_ascii
+- [X] too_short,no_digits,no_symbols,has_spaces,non_ascii
+- [ ] ~~too_long,no_lowercase,no_uppercase,no_digits,no_symbols~~ (IMPOSSIBLE CASE)
+- [X] too_long,no_lowercase,no_uppercase,no_digits,has_spaces
+- [X] too_long,no_lowercase,no_uppercase,no_digits,non_ascii
+- [X] too_long,no_lowercase,no_uppercase,no_symbols,has_spaces
+- [X] too_long,no_lowercase,no_uppercase,no_symbols,non_ascii
+- [X] too_long,no_lowercase,no_uppercase,has_spaces,non_ascii
+- [X] too_long,no_lowercase,no_digits,no_symbols,has_spaces
+- [X] too_long,no_lowercase,no_digits,no_symbols,non_ascii
+- [X] too_long,no_lowercase,no_digits,has_spaces,non_ascii
+- [X] too_long,no_lowercase,no_symbols,has_spaces,non_ascii
+- [X] too_long,no_uppercase,no_digits,no_symbols,has_spaces
+- [X] too_long,no_uppercase,no_digits,no_symbols,non_ascii
+- [X] too_long,no_uppercase,no_digits,has_spaces,non_ascii
+- [X] too_long,no_uppercase,no_symbols,has_spaces,non_ascii
+- [X] too_long,no_digits,no_symbols,has_spaces,non_ascii
+- [X] no_lowercase,no_uppercase,no_digits,no_symbols,has_spaces
+- [X] no_lowercase,no_uppercase,no_digits,no_symbols,non_ascii
+- [X] no_lowercase,no_uppercase,no_digits,has_spaces,non_ascii
+- [X] no_lowercase,no_uppercase,no_symbols,has_spaces,non_ascii
+- [X] no_lowercase,no_digits,no_symbols,has_spaces,non_ascii
+- [X] no_uppercase,no_digits,no_symbols,has_spaces,non_ascii
 
 ### 6 errors
 - [ ] too_short,no_lowercase,no_uppercase,no_digits,no_symbols,has_spaces
 - [ ] too_short,no_lowercase,no_uppercase,no_digits,no_symbols,non_ascii
+- 
 - [ ] too_short,no_lowercase,no_uppercase,no_digits,has_spaces,non_ascii
+- 
 - [ ] too_short,no_lowercase,no_uppercase,no_symbols,has_spaces,non_ascii
+- 
 - [ ] too_short,no_lowercase,no_digits,no_symbols,has_spaces,non_ascii
 - [ ] too_short,no_uppercase,no_digits,no_symbols,has_spaces,non_ascii
 - [ ] too_long,no_lowercase,no_uppercase,no_digits,no_symbols,has_spaces
