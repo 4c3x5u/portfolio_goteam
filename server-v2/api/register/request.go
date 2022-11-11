@@ -4,7 +4,6 @@ package register
 type ReqBody struct {
 	Username Username `json:"username"`
 	Password Password `json:"password"`
-	Referrer string   `json:"referrer"`
 }
 
 // Validate uses individual field validation logic defined in the validation.go
