@@ -12,5 +12,4 @@ import (
 func ErrAPIInternal(w http.ResponseWriter, msg string) {
 	log.Printf("ERROR: %s", msg)
 	w.WriteHeader(http.StatusInternalServerError)
-	return
 }

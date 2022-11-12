@@ -9,8 +9,8 @@ type ReqBody struct {
 // Validate uses individual field validation logic defined in the validation.go
 // file to validate requests sent the register route. It returns an errors
 // object if any of the individual validations fail.
-func (r *ReqBody) Validate() *Errs {
-	errs := &Errs{}
+func (r *ReqBody) Validate() *ErrsValidation {
+	errs := &ErrsValidation{}
 
 	errs.Username = r.Username.Validate()
 	errs.Password = r.Password.Validate()

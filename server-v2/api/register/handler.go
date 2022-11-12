@@ -8,11 +8,13 @@ import (
 )
 
 // Handler is a HTTP handler for the register route.
-type Handler struct{}
+type Handler struct {
+	creatorUser CreatorUser
+}
 
 // NewHandler is the constructor for Handler.
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(creatorUser CreatorUser) *Handler {
+	return &Handler{creatorUser: creatorUser}
 }
 
 // ServeHTTP responds to requests made to the register route.
@@ -35,7 +37,22 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// validate the request
 	if errs := req.Validate(); errs != nil {
-		res.Errs = errs
+		res.ErrsValidation = errs
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			relay.ErrAPIInternal(w, err.Error())
+		}
+		return
+	}
+
+	errsValidation, err := h.creatorUser.CreateUser(string(req.Username), string(req.Password))
+	if err != nil {
+		relay.ErrAPIInternal(w, err.Error())
+		return
+	}
+	if errsValidation != nil {
+		res.ErrsValidation = errsValidation
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(res); err != nil {
