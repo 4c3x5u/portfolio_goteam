@@ -35,10 +35,10 @@ func TestRegister(t *testing.T) {
 	reqBody["password"] = "S3curePa$$"
 	resBody := &ResBody{}
 
-	// basic username and password fields validation
+	// basic (lengh and regex-based) validation for username and password fields
 	handlerBasic := NewHandler(NewFakeCreatorUser(nil))
 	test.NewRoute("/register", http.MethodPost, handlerBasic, reqBody, resBody, []*test.SuiteRoute{
-		test.NewSuiteRoute("UsernameValidationBasic", "username", []*test.CaseRoute{
+		test.NewSuiteRoute("ValidationBasicUsername", "username", []*test.CaseRoute{
 			// 1-error cases
 			test.NewCaseRoute("Empty", "", []string{usnEmpty}),
 			test.NewCaseRoute("TooShort", "bob1", []string{usnTooShort}),
@@ -58,7 +58,7 @@ func TestRegister(t *testing.T) {
 			test.NewCaseRoute("TooLong_InvalidCharacter_DigitStart", "1bobobobobobobob!", []string{usnTooLong, usnInvalidChar, usnDigitStart}),
 		}, http.StatusBadRequest),
 
-		test.NewSuiteRoute("PasswordValidationBasic", "password", []*test.CaseRoute{
+		test.NewSuiteRoute("ValidationBasicPassword", "password", []*test.CaseRoute{
 			// 1-error cases
 			test.NewCaseRoute("Empty", "", []string{pwdEmpty}),
 			test.NewCaseRoute("TooShort", "Myp4ss!", []string{pwdTooShort}),
@@ -263,14 +263,14 @@ func TestRegister(t *testing.T) {
 		}, http.StatusBadRequest),
 	}).Run(t)
 
-	// username exists validation
+	// advanced (db-dependent) validation for the username field
 	handlerUsernameTaken := NewHandler(
 		NewFakeCreatorUser(&ErrsValidation{
 			Username: []string{"Username is already taken."},
 		}),
 	)
 	test.NewRoute("/register", http.MethodPost, handlerUsernameTaken, reqBody, resBody, []*test.SuiteRoute{
-		test.NewSuiteRoute("UsernameValidationExists", "username", []*test.CaseRoute{
+		test.NewSuiteRoute("ValidationAdvancedUsername", "username", []*test.CaseRoute{
 			test.NewCaseRoute("IsTaken", "bobby", []string{"Username is already taken."}),
 		}, http.StatusBadRequest),
 	}).Run(t)

@@ -15,7 +15,7 @@ func (r *ReqBody) Validate() *ErrsValidation {
 	errs.Username = r.Username.Validate()
 	errs.Password = r.Password.Validate()
 
-	if errs.Username != nil || errs.Password != nil {
+	if len(errs.Username) > 0 || len(errs.Password) > 0 {
 		return errs
 	}
 	return nil
