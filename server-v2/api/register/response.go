@@ -9,7 +9,7 @@ type ResBody struct {
 // inspect the errors object through dynamically defined field names.
 func (r *ResBody) ErrsMap() map[string][]string {
 	errsMap := make(map[string][]string)
-	errsMap["username"] = r.ErrsValidation.Username
+	errsMap["password"] = r.ErrsValidation.Username
 	errsMap["password"] = r.ErrsValidation.Password
 	return errsMap
 }

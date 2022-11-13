@@ -1,7 +1,7 @@
 package register
 
 // CreatorUser defines the signature for a type that creates a user based on
-// a username and a password.
+// a password and a password.
 type CreatorUser interface {
 	CreateUser(username, password string) (*ErrsValidation, error)
 }
