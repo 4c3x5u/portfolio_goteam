@@ -39,27 +39,27 @@ func TestHandler(t *testing.T) {
 		// test cases
 		for _, c := range []struct {
 			name          string
-			errsValidator *ErrsValidation
-			errsCreator   *ErrsValidation
-			wantErrs      *ErrsValidation
+			errsValidator *Errs
+			errsCreator   *Errs
+			wantErrs      *Errs
 		}{
 			{
 				name:          "Validator1",
-				errsValidator: &ErrsValidation{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
+				errsValidator: &Errs{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
 				errsCreator:   nil,
-				wantErrs:      &ErrsValidation{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
+				wantErrs:      &Errs{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
 			},
 			{
 				name:          "Validator2",
-				errsValidator: &ErrsValidation{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+				errsValidator: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 				errsCreator:   nil,
-				wantErrs:      &ErrsValidation{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+				wantErrs:      &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			},
 			{
 				name:          "Creator",
 				errsValidator: nil,
-				errsCreator:   &ErrsValidation{Username: []string{usnTaken}},
-				wantErrs:      &ErrsValidation{Username: []string{usnTaken}},
+				errsCreator:   &Errs{Username: []string{usnTaken}},
+				wantErrs:      &Errs{Username: []string{usnTaken}},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -85,8 +85,8 @@ func TestHandler(t *testing.T) {
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-				assert.EqualArr(t, c.wantErrs.Username, resBody.ErrsValidation.Username)
-				assert.EqualArr(t, c.wantErrs.Password, resBody.ErrsValidation.Password)
+				assert.EqualArr(t, c.wantErrs.Username, resBody.Errs.Username)
+				assert.EqualArr(t, c.wantErrs.Password, resBody.Errs.Password)
 			})
 		}
 	})

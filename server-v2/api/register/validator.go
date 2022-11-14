@@ -3,9 +3,9 @@ package register
 import "regexp"
 
 // ValidatorReq represents a type that validates a *ReqBody and returns an
-// *ErrsValidation based on the validation errors that occur.
+// *Errs based on the validation errors that occur.
 type ValidatorReq interface {
-	Validate(req *ReqBody) (errs *ErrsValidation)
+	Validate(req *ReqBody) (errs *Errs)
 }
 
 // Validator is the request validator for the register route.
@@ -26,8 +26,8 @@ func NewValidator(validatorUsername, validatorPassword ValidatorStr) *Validator 
 // file to validate requests sent the register route. It returns an errors
 // object if any of the individual validations fail. It implements the
 // ValidatorReq interface on the Validator struct.
-func (v *Validator) Validate(req *ReqBody) *ErrsValidation {
-	errs := &ErrsValidation{}
+func (v *Validator) Validate(req *ReqBody) *Errs {
+	errs := &Errs{}
 	errs.Username = v.ValidatorUsername.Validate(req.Username)
 	errs.Password = v.ValidatorPassword.Validate(req.Password)
 	if len(errs.Username) > 0 || len(errs.Password) > 0 {

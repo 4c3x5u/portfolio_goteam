@@ -40,7 +40,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// validate the request
 	if errs := h.validator.Validate(req); errs != nil {
-		res.ErrsValidation = errs
+		res.Errs = errs
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
@@ -51,7 +51,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errsValidation != nil {
-		res.ErrsValidation = errsValidation
+		res.Errs = errsValidation
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}

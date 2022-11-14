@@ -2,23 +2,23 @@ package register
 
 // fakeCreatorUser is a test fake for CreatorUser.
 type fakeCreatorUser struct {
-	errs *ErrsValidation
+	errs *Errs
 }
 
 // CreateUser implements the CreatorUser interface on the fakeCreatorUser
-// struct. It returns a pre-set *ErrsValidation object.
-func (c *fakeCreatorUser) CreateUser(_, _ string) (*ErrsValidation, error) {
+// struct. It returns a pre-set *Errs object.
+func (c *fakeCreatorUser) CreateUser(_, _ string) (*Errs, error) {
 	return c.errs, nil
 }
 
 // fakeValidatorReq is a test fake for ValidatorReq
 type fakeValidatorReq struct {
-	errs *ErrsValidation
+	errs *Errs
 }
 
 // Validate implements the ValidatorReq interface on the fakeValidatorReq
 // struct.
-func (f *fakeValidatorReq) Validate(_ *ReqBody) (_ *ErrsValidation) {
+func (f *fakeValidatorReq) Validate(_ *ReqBody) (_ *Errs) {
 	return f.errs
 }
 

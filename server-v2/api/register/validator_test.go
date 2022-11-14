@@ -29,7 +29,7 @@ func TestValidator(t *testing.T) {
 	)
 
 	// This suite of tests is only for ensuring valdator returns the correct
-	// ErrsValidation object based on the errors that field validators return.
+	// Errs object based on the errors that field validators return.
 	// Each possible outcome from each field validator is tested in the
 	// following test suites.
 	t.Run("Validator", func(t *testing.T) {
