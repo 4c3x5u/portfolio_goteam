@@ -39,17 +39,38 @@ func TestValidator(t *testing.T) {
 
 		for _, c := range []struct {
 			name         string
+			reqBody      *ReqBody
 			errsUsername []string
 			errsPassword []string
 		}{
-			{name: "UsnEmpty_PwdEmpty", errsUsername: []string{usnEmpty}, errsPassword: []string{pwdEmpty}},
-			{name: "UsnTooShort_UsnInvalidChar_PwdEmpty", errsUsername: []string{usnTooShort, usnInvalidChar}, errsPassword: []string{pwdEmpty}},
-			{name: "UsnDigitStart_PwdTooLong_PwdNoDigit", errsUsername: []string{usnDigitStart}, errsPassword: []string{pwdTooLong, pwdNoDigit}},
+			{
+				name:         "UsnEmpty_PwdEmpty",
+				reqBody:      &ReqBody{Username: "", Password: ""},
+				errsUsername: []string{usnEmpty},
+				errsPassword: []string{pwdEmpty},
+			},
+			{
+				name:         "UsnTooShort_UsnInvalidChar_PwdEmpty",
+				reqBody:      &ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+				errsUsername: []string{usnTooShort, usnInvalidChar},
+				errsPassword: []string{pwdNonASCII},
+			},
+			{
+				name:         "UsnDigitStart_PwdTooLong_PwdNoDigit",
+				reqBody:      &ReqBody{Username: "1bobob", Password: "MyPass!"},
+				errsUsername: []string{usnDigitStart},
+				errsPassword: []string{pwdTooShort, pwdNoDigit},
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				fakeValidatorUsername.outErrs = c.errsUsername
 				fakeValidatorPassword.outErrs = c.errsPassword
-				res := sut.Validate(&ReqBody{})
+
+				res := sut.Validate(c.reqBody)
+
+				assert.Equal(t, c.reqBody.Username, fakeValidatorUsername.inVal)
+				assert.Equal(t, c.reqBody.Password, fakeValidatorPassword.inVal)
+
 				assert.EqualArr(t, c.errsUsername, res.Username)
 				assert.EqualArr(t, c.errsPassword, res.Password)
 			})
