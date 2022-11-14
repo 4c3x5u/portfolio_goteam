@@ -45,6 +45,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create user
 	errsValidation, err := h.creatorUser.CreateUser(req.Username, req.Password)
 	if err != nil {
 		relay.ServerErr(w, err.Error())

@@ -47,8 +47,8 @@ func TestValidator(t *testing.T) {
 			{name: "UsnDigitStart_PwdTooLong_PwdNoDigit", errsUsername: []string{usnDigitStart}, errsPassword: []string{pwdTooLong, pwdNoDigit}},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				fakeValidatorUsername.errs = c.errsUsername
-				fakeValidatorPassword.errs = c.errsPassword
+				fakeValidatorUsername.outErrs = c.errsUsername
+				fakeValidatorPassword.outErrs = c.errsPassword
 				res := sut.Validate(&ReqBody{})
 				assert.EqualArr(t, c.errsUsername, res.Username)
 				assert.EqualArr(t, c.errsPassword, res.Password)

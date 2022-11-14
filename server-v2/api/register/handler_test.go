@@ -21,14 +21,6 @@ func TestHandler(t *testing.T) {
 			pwdNoDigit  = "Password must contain a digit (0-9)."
 		)
 
-		// create an empty request body - since we're using fakes for user
-		// creator and request validator that do not actually process the
-		// request, it's irrevelant what it contains
-		reqBody, err := json.Marshal(&ReqBody{})
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		// handler setup
 		creator, validator := &fakeCreatorUser{}, &fakeValidatorReq{}
 		sut := NewHandler(creator, validator)
@@ -39,33 +31,45 @@ func TestHandler(t *testing.T) {
 		// test cases
 		for _, c := range []struct {
 			name          string
+			reqBody       *ReqBody
 			errsValidator *Errs
 			errsCreator   *Errs
 			wantErrs      *Errs
 		}{
 			{
 				name:          "Validator1",
+				reqBody:       &ReqBody{Username: "bob1", Password: "Myp4ss!"},
 				errsValidator: &Errs{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
 				errsCreator:   nil,
 				wantErrs:      &Errs{Username: []string{usnTooShort}, Password: []string{pwdTooShort}},
 			},
 			{
 				name:          "Validator2",
+				reqBody:       &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 				errsValidator: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 				errsCreator:   nil,
 				wantErrs:      &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			},
 			{
 				name:          "Creator",
+				reqBody:       &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 				errsValidator: nil,
 				errsCreator:   &Errs{Username: []string{usnTaken}},
 				wantErrs:      &Errs{Username: []string{usnTaken}},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				// set the errs return on fake validator and creator (arrange)
-				validator.errs = c.errsValidator
-				creator.errs = c.errsCreator
+				// parse response body - done only to assert tha the creator and
+				// the validator receives the correct input based on the request
+				// passed in
+				reqBody, err := json.Marshal(c.reqBody)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				// set the wantOutErrs return on fake validator and creator (arrange)
+				validator.outErrs = c.errsValidator
+				creator.outErrs = c.errsCreator
 
 				// create request (arrange)
 				req, err := http.NewRequest("POST", "/register", bytes.NewReader(reqBody))
@@ -77,6 +81,20 @@ func TestHandler(t *testing.T) {
 
 				// send request (act)
 				sut.ServeHTTP(w, req)
+
+				// assert that the handler correctly passed in the arguments
+				// for request validator and user creator
+				assert.Equal(t, c.reqBody.Username, validator.inReqBody.Username)
+				assert.Equal(t, c.reqBody.Password, validator.inReqBody.Password)
+
+				// When errors occur on validator, the handler code will
+				// terminate and creator will not be called, causing these
+				// assertions to fail. Only make them if the validator is set
+				// to return nil Errs.
+				if c.errsValidator == nil {
+					assert.Equal(t, c.reqBody.Username, creator.inUsername)
+					assert.Equal(t, c.reqBody.Password, creator.inPassword)
+				}
 
 				// make assertions on the status code and response body (assert)
 				res := w.Result()
