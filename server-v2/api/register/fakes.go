@@ -1,49 +1,34 @@
 package register
 
-// FakeCreatorUser is a test fake for CreatorUser.
-type FakeCreatorUser struct {
+// fakeCreatorUser is a test fake for CreatorUser.
+type fakeCreatorUser struct {
 	errs *ErrsValidation
 }
 
-// NewFakeCreatorUser is the constructor for FakeCreatorUser.
-func NewFakeCreatorUser(errs *ErrsValidation) *FakeCreatorUser {
-	return &FakeCreatorUser{errs: errs}
-}
-
-// CreateUser implements the CreatorUser interface on the FakeCreatorUser
+// CreateUser implements the CreatorUser interface on the fakeCreatorUser
 // struct. It returns a pre-set *ErrsValidation object.
-func (c *FakeCreatorUser) CreateUser(_, _ string) (*ErrsValidation, error) {
+func (c *fakeCreatorUser) CreateUser(_, _ string) (*ErrsValidation, error) {
 	return c.errs, nil
 }
 
-// FakeValidatorReq is a test fake for ValidatorReq
-type FakeValidatorReq struct {
+// fakeValidatorReq is a test fake for ValidatorReq
+type fakeValidatorReq struct {
 	errs *ErrsValidation
 }
 
-// NewFakeValidatorReq is the constructor for FakeValidatorReq.
-func NewFakeValidatorReq() *FakeValidatorReq {
-	return &FakeValidatorReq{}
-}
-
-// Validate implements the ValidatorReq interface on the FakeValidatorReq
+// Validate implements the ValidatorReq interface on the fakeValidatorReq
 // struct.
-func (f *FakeValidatorReq) Validate(_ *ReqBody) (_ *ErrsValidation) {
+func (f *fakeValidatorReq) Validate(_ *ReqBody) (_ *ErrsValidation) {
 	return f.errs
 }
 
-// FakeValidatorStr is a test fake for ValidatorStr.
-type FakeValidatorStr struct {
+// fakeValidatorStr is a test fake for ValidatorStr.
+type fakeValidatorStr struct {
 	errs []string
 }
 
-// NewFakeValidatorStr is the constructor for FakeValidatorStr.
-func NewFakeValidatorStr() *FakeValidatorStr {
-	return &FakeValidatorStr{}
-}
-
-// Validate implements the ValidatorStr interface on the FakeValidatorStr
+// Validate implements the ValidatorStr interface on the fakeValidatorStr
 // struct. It returns a pre-set string slice for errsUsername.
-func (f *FakeValidatorStr) Validate(_ string) (errs []string) {
+func (f *fakeValidatorStr) Validate(_ string) (errs []string) {
 	return f.errs
 }

@@ -30,8 +30,7 @@ func TestHandler(t *testing.T) {
 		}
 
 		// handler setup
-		creator := NewFakeCreatorUser(nil)
-		validator := NewFakeValidatorReq()
+		creator, validator := &fakeCreatorUser{}, &fakeValidatorReq{}
 		sut := NewHandler(creator, validator)
 
 		// test cases below should all return 400
@@ -82,12 +81,10 @@ func TestHandler(t *testing.T) {
 				// make assertions on the status code and response body (assert)
 				res := w.Result()
 				assert.Equal(t, wantStatusCode, res.StatusCode)
-
 				resBody := &ResBody{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
-
 				assert.EqualArr(t, c.wantErrs.Username, resBody.ErrsValidation.Username)
 				assert.EqualArr(t, c.wantErrs.Password, resBody.ErrsValidation.Password)
 			})
