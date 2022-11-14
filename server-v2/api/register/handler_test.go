@@ -10,10 +10,9 @@ import (
 	"github.com/kxplxn/goteam/server-v2/assert"
 )
 
-// todo: move to db tests
-const usnTaken = "Username is already taken."
-
 func TestHandler(t *testing.T) {
+	const usnTaken = "Username is already taken."
+
 	// handler setup
 	creator, validator := &fakeCreatorUser{}, &fakeValidatorReq{}
 	sut := NewHandler(creator, validator)
@@ -23,25 +22,25 @@ func TestHandler(t *testing.T) {
 
 	// test cases
 	for _, c := range []struct {
-		name          string
-		reqBody       *ReqBody
-		errsValidator *Errs
-		errsCreator   *Errs
-		wantErrs      *Errs
+		name               string
+		reqBody            *ReqBody
+		errsValidator      *Errs
+		outUsernameIsTaken bool
+		wantErrs           *Errs
 	}{
 		{
-			name:          "ErrsValidator",
-			reqBody:       &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			errsValidator: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			errsCreator:   nil,
-			wantErrs:      &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			name:               "ErrsValidator",
+			reqBody:            &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			errsValidator:      &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			outUsernameIsTaken: false,
+			wantErrs:           &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
-			name:          "ErrsCreator",
-			reqBody:       &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			errsValidator: nil,
-			errsCreator:   &Errs{Username: []string{usnTaken}},
-			wantErrs:      &Errs{Username: []string{usnTaken}},
+			name:               "ErrsCreator",
+			reqBody:            &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			errsValidator:      nil,
+			outUsernameIsTaken: true,
+			wantErrs:           &Errs{Username: []string{usnTaken}},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -55,7 +54,7 @@ func TestHandler(t *testing.T) {
 
 			// set the wantOutErrs return on fake validator and creator (arrange)
 			validator.outErrs = c.errsValidator
-			creator.outErrs = c.errsCreator
+			creator.outUsernameIsTaken = c.outUsernameIsTaken
 
 			// create request (arrange)
 			req, err := http.NewRequest("POST", "/register", bytes.NewReader(reqBody))

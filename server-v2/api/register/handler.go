@@ -46,17 +46,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create user
-	errsValidation, err := h.creatorUser.CreateUser(req.Username, req.Password)
+	usernameTaken, err := h.creatorUser.CreateUser(req.Username, req.Password)
 	if err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	if errsValidation != nil {
-		res.Errs = errsValidation
+	if usernameTaken {
+		res.Errs = &Errs{Username: []string{"Username is already taken."}}
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
-
-	relay.ServerErr(w, "not implemented")
-	return
 }

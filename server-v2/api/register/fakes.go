@@ -28,14 +28,14 @@ func (f *fakeValidatorStr) Validate(val string) (errs []string) {
 
 // fakeCreatorUser is a test fake for CreatorUser.
 type fakeCreatorUser struct {
-	inUsername string
-	inPassword string
-	outErrs    *Errs
+	inUsername         string
+	inPassword         string
+	outUsernameIsTaken bool
 }
 
 // CreateUser implements the CreatorUser interface on the fakeCreatorUser
 // struct. It returns a pre-set *Errs object.
-func (f *fakeCreatorUser) CreateUser(username, password string) (*Errs, error) {
+func (f *fakeCreatorUser) CreateUser(username, password string) (bool, error) {
 	f.inUsername, f.inPassword = username, password
-	return f.outErrs, nil
+	return f.outUsernameIsTaken, nil
 }
