@@ -26,16 +26,16 @@ func (f *fakeValidatorStr) Validate(val string) (errs []string) {
 	return f.outErrs
 }
 
-// fakeCreatorUser is a test fake for CreatorUser.
-type fakeCreatorUser struct {
+// fakeExistorUser is a test fake for Existor.
+type fakeExistorUser struct {
 	inUsername string
-	inPassword string
+	outExists  bool
 	outErr     error
 }
 
-// CreateUser implements the CreatorUser interface on the fakeCreatorUser
+// Exists implements the Existor interface on the fakeExistorUser
 // struct. It returns a pre-set *Errs object.
-func (f *fakeCreatorUser) CreateUser(username, password string) error {
-	f.inUsername, f.inPassword = username, password
-	return f.outErr
+func (f *fakeExistorUser) Exists(username string) (bool, error) {
+	f.inUsername = username
+	return f.outExists, f.outErr
 }

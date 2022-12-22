@@ -6,18 +6,20 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"server/db"
+
 	"server/relay"
 )
 
 // Handler is a HTTP handler for the register route.
 type Handler struct {
-	creatorUser CreatorUser
+	existorUser db.Existor
 	validator   ValidatorReq
 }
 
 // NewHandler is the constructor for Handler.
-func NewHandler(creatorUser CreatorUser, validator ValidatorReq) *Handler {
-	return &Handler{creatorUser: creatorUser, validator: validator}
+func NewHandler(existorUser db.Existor, validator ValidatorReq) *Handler {
+	return &Handler{existorUser: existorUser, validator: validator}
 }
 
 const errHandlerUsernameTaken = "Username is already taken."
@@ -40,15 +42,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch err := h.creatorUser.CreateUser(req.Username, req.Password); err {
-	case nil:
-		return
-	case errCreatorUsernameTaken:
-		res.Errs = &Errs{Username: []string{errHandlerUsernameTaken}}
-		relay.ClientJSON(w, res, http.StatusBadRequest)
-		return
-	default:
+	userExists, err := h.existorUser.Exists(req.Username)
+	if err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
+	if userExists {
+		res.Errs = &Errs{Username: []string{errHandlerUsernameTaken}}
+		relay.ClientJSON(w, res, http.StatusBadRequest)
+		return
+	}
+
+	// todo: create the user
 }

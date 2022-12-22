@@ -1,12 +1,12 @@
-package register
+package db
 
 import (
 	"database/sql"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-
 	"server/assert"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestCreatorDBUser(t *testing.T) {
@@ -17,11 +17,12 @@ func TestCreatorDBUser(t *testing.T) {
 		defer def(db)
 		mock.ExpectQuery(query).WillReturnError(sql.ErrNoRows)
 		mock.ExpectClose()
-		sut := NewCreatorDBUser(db)
+		sut, wantExists := NewExistorUser(db), false
 
-		err := sut.CreateUser("", "")
+		gotExists, err := sut.Exists("")
 
 		assert.Nil(t, err)
+		assert.Equal(t, wantExists, gotExists)
 	})
 
 	t.Run("errCreatorUsernameTaken", func(t *testing.T) {
@@ -29,11 +30,12 @@ func TestCreatorDBUser(t *testing.T) {
 		defer def(db)
 		mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(""))
 		mock.ExpectClose()
-		sut, wantErr := NewCreatorDBUser(db), errCreatorUsernameTaken
+		sut, wantExists := NewExistorUser(db), true
 
-		err := sut.CreateUser("", "")
+		gotExists, err := sut.Exists("")
 
-		assert.Equal(t, wantErr.Error(), err.Error())
+		assert.Nil(t, err)
+		assert.Equal(t, wantExists, gotExists)
 	})
 
 	t.Run("ErrConnDone", func(t *testing.T) {
@@ -43,10 +45,11 @@ func TestCreatorDBUser(t *testing.T) {
 			ExpectQuery(`SELECT username FROM users WHERE username = \$1`).
 			WillReturnError(sql.ErrConnDone)
 		mock.ExpectClose()
-		sut, wantErr := NewCreatorDBUser(db), sql.ErrConnDone
+		sut, wantExists, wantErr := NewExistorUser(db), false, sql.ErrConnDone
 
-		err := sut.CreateUser("", "")
+		gotExists, err := sut.Exists("")
 
+		assert.Equal(t, wantExists, gotExists)
 		assert.Equal(t, wantErr.Error(), err.Error())
 	})
 }

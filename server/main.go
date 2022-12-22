@@ -7,11 +7,12 @@ import (
 	"os"
 
 	apiRegister "server/api/register"
+	"server/db"
 )
 
 func main() {
 	// todo: use a secret for DBCONNSTR, not an environment variable
-	db, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
+	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -19,7 +20,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/register", apiRegister.NewHandler(
-		apiRegister.NewCreatorDBUser(db),
+		db.NewExistorUser(conn),
 		apiRegister.NewValidator(
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
