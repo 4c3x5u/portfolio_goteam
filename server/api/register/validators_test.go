@@ -3,7 +3,7 @@ package register
 import (
 	"testing"
 
-	"github.com/kxplxn/goteam/server-v2/assert"
+	"server/assert"
 )
 
 const (

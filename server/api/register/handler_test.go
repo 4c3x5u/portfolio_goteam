@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"goteam/server-v2/assert"
+	"server/assert"
 )
 
 func TestHandler(t *testing.T) {

@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/kxplxn/goteam/server-v2/assert"
+	"github.com/DATA-DOG/go-sqlmock"
+
+	"server/assert"
 )
 
 func TestCreatorDBUser(t *testing.T) {
