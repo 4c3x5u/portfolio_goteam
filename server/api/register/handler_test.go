@@ -97,7 +97,15 @@ func TestHandler(t *testing.T) {
 				if existorUser.outErr == nil && existorUser.outExists != true {
 					assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
 					if c.hasherOutErr == nil {
-						assert.EqualArr(t, c.hasherOutHash, creatorUser.inPassword)
+						creatorInPwd, err := json.Marshal(creatorUser.inArgs[1])
+						if err != nil {
+							t.Fatal(err)
+						}
+						hasherOutHash, err := json.Marshal(c.hasherOutHash)
+						if err != nil {
+							t.Fatal(err)
+						}
+						assert.EqualArr(t, hasherOutHash, creatorInPwd)
 					}
 				}
 			}

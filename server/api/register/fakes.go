@@ -52,12 +52,11 @@ func (f *fakeHasherPwd) Hash(plaintext string) ([]byte, error) {
 }
 
 type fakeCreatorUser struct {
-	inUsername string
-	inPassword []byte
-	outErr     error
+	inArgs []any
+	outErr error
 }
 
-func (f *fakeCreatorUser) Create(username string, password []byte) error {
-	f.inUsername, f.inPassword = username, password
+func (f *fakeCreatorUser) Create(args ...any) error {
+	f.inArgs = args
 	return f.outErr
 }
