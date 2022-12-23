@@ -39,3 +39,25 @@ func (f *fakeExistorUser) Exists(username string) (bool, error) {
 	f.inUsername = username
 	return f.outExists, f.outErr
 }
+
+type fakeHasherPwd struct {
+	inPlaintext string
+	outHash     []byte
+	outErr      error
+}
+
+func (f *fakeHasherPwd) Hash(plaintext string) ([]byte, error) {
+	f.inPlaintext = plaintext
+	return f.outHash, f.outErr
+}
+
+type fakeCreatorUser struct {
+	inUsername string
+	inPassword []byte
+	outErr     error
+}
+
+func (f *fakeCreatorUser) Create(username string, password []byte) error {
+	f.inUsername, f.inPassword = username, password
+	return f.outErr
+}

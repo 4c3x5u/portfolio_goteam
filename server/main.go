@@ -20,11 +20,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/register", apiRegister.NewHandler(
-		db.NewExistorUser(conn),
 		apiRegister.NewValidator(
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
 		),
+		db.NewExistorUser(conn),
+		apiRegister.NewHasherPwd(),
+		db.NewCreatorUser(conn),
 	))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {

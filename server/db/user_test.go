@@ -9,10 +9,10 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestCreatorDBUser(t *testing.T) {
+func TestExistorUser(t *testing.T) {
 	query := `SELECT username FROM users WHERE username = \$1`
 
-	t.Run("CreatedDBUser", func(t *testing.T) {
+	t.Run("Doesn't Exist", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
 		mock.ExpectQuery(query).WillReturnError(sql.ErrNoRows)
@@ -25,7 +25,7 @@ func TestCreatorDBUser(t *testing.T) {
 		assert.Equal(t, wantExists, gotExists)
 	})
 
-	t.Run("errCreatorUsernameTaken", func(t *testing.T) {
+	t.Run("Exists", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
 		mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(""))

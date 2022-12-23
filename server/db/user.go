@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+
 	_ "github.com/lib/pq"
 )
 
@@ -26,4 +27,24 @@ func (c *ExistorUser) Exists(username string) (bool, error) {
 	default:
 		return false, err
 	}
+}
+
+// CreatorUser is a type that creates a user in the database with the given
+// username and password.
+type CreatorUser struct {
+	db *sql.DB
+}
+
+// NewCreatorUser is the constructor for CreatorUser.
+func NewCreatorUser(db *sql.DB) *CreatorUser {
+	return &CreatorUser{db: db}
+}
+
+// Create creates a user in the database with the given username and password.
+func (c *CreatorUser) Create(args ...any) error {
+	_, err := c.db.Exec(
+		`INSERT INTO users(username, password) VALUES ($1, $2)`,
+		args,
+	)
+	return err
 }

@@ -13,13 +13,25 @@ import (
 
 // Handler is a HTTP handler for the register route.
 type Handler struct {
-	existorUser db.Existor
 	validator   ValidatorReq
+	existorUser db.Existor
+	hasherPwd   Hasher
+	creatorUser db.Creator
 }
 
 // NewHandler is the constructor for Handler.
-func NewHandler(existorUser db.Existor, validator ValidatorReq) *Handler {
-	return &Handler{existorUser: existorUser, validator: validator}
+func NewHandler(
+	validator ValidatorReq,
+	existorUser db.Existor,
+	hasherPwd Hasher,
+	creatorUser db.Creator,
+) *Handler {
+	return &Handler{
+		validator:   validator,
+		existorUser: existorUser,
+		hasherPwd:   hasherPwd,
+		creatorUser: creatorUser,
+	}
 }
 
 const errHandlerUsernameTaken = "Username is already taken."
@@ -42,16 +54,24 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userExists, err := h.existorUser.Exists(req.Username)
-	if err != nil {
+	if userExists, err := h.existorUser.Exists(req.Username); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	}
-	if userExists {
+	} else if userExists {
 		res.Errs = &Errs{Username: []string{errHandlerUsernameTaken}}
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
 
-	// todo: create the user
+	if pwdHash, err := h.hasherPwd.Hash(req.Password); err != nil {
+		relay.ServerErr(w, err.Error())
+		return
+	} else if err := h.creatorUser.Create(req.Username, pwdHash); err != nil {
+		relay.ServerErr(w, err.Error())
+		return
+	}
+
+	// todo: login (e.g. return cookie)
+
+	w.WriteHeader(http.StatusOK)
 }

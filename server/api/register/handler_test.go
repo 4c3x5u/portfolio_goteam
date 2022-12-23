@@ -12,39 +12,50 @@ import (
 
 func TestHandler(t *testing.T) {
 	// handler setup
-	existorUser, validator := &fakeExistorUser{}, &fakeValidatorReq{}
-	sut := NewHandler(existorUser, validator)
+	var (
+		validator   = &fakeValidatorReq{}
+		existorUser = &fakeExistorUser{}
+		hasherPwd   = &fakeHasherPwd{}
+		creatorUser = &fakeCreatorUser{}
+	)
 
-	// test cases below should all return 400
-	wantStatusCode := http.StatusBadRequest
-
-	// test cases
 	for _, c := range []struct {
 		name             string
 		reqBody          *ReqBody
-		outErrValidator  *Errs
-		outExistsCreator bool
-		outErrCreator    error
-		wantErrsHandler  *Errs
+		validatorOutErrs *Errs
+		existorOutExists bool
+		existorOutErr    error
+		hasherOutHash    []byte
+		hasherOutErr     error
+		wantStatusCode   int
+		wantHandlerErrs  *Errs
 	}{
 		{
 			name:             "ErrsValidator",
 			reqBody:          &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			outErrValidator:  &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			outExistsCreator: false,
-			outErrCreator:    nil,
-			wantErrsHandler:  &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			validatorOutErrs: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			existorOutExists: false,
+			existorOutErr:    nil,
+			hasherOutHash:    []byte{},
+			hasherOutErr:     nil,
+			wantStatusCode:   http.StatusBadRequest,
+			wantHandlerErrs:  &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
 			name:             "ErrsCreator",
 			reqBody:          &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outErrValidator:  nil,
-			outExistsCreator: true,
-			outErrCreator:    nil,
-			wantErrsHandler:  &Errs{Username: []string{errHandlerUsernameTaken}},
+			validatorOutErrs: nil,
+			existorOutExists: true,
+			existorOutErr:    nil,
+			hasherOutHash:    []byte{},
+			hasherOutErr:     nil,
+			wantStatusCode:   http.StatusBadRequest,
+			wantHandlerErrs:  &Errs{Username: []string{errHandlerUsernameTaken}},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser)
+
 			// parse response body - done only to assert tha the creator and
 			// the validator receives the correct input based on the request
 			// passed in
@@ -53,10 +64,12 @@ func TestHandler(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			// set the wantOutErrs return on fake validator and creator (arrange)
-			validator.outErrs = c.outErrValidator
-			existorUser.outExists = c.outExistsCreator
-			existorUser.outErr = c.outErrCreator
+			// set pre-determinate return values for Handler dependencies
+			validator.outErrs = c.validatorOutErrs
+			existorUser.outExists = c.existorOutExists
+			existorUser.outErr = c.existorOutErr
+			hasherPwd.outHash = c.hasherOutHash
+			hasherPwd.outErr = c.hasherOutErr
 
 			// create request (arrange)
 			req, err := http.NewRequest("POST", "/register", bytes.NewReader(reqBody))
@@ -74,22 +87,31 @@ func TestHandler(t *testing.T) {
 			assert.Equal(t, c.reqBody.Username, validator.inReqBody.Username)
 			assert.Equal(t, c.reqBody.Password, validator.inReqBody.Password)
 
-			// When errors occur on validator, the handler code will
-			// terminate and creator will not be called, causing this assertion
-			// to fail. Only make it if the validator is expected to return // nil Errs.
-			if c.outErrValidator == nil {
+			// There are multiple breakpoints to the assertions here. Each stage
+			// of the Handler is either ran or not ran based on the error
+			// returns on Handler's dependencies. The conditionals below serve
+			// to only run the assertions up onto the point where the Handler
+			// exist execution.
+			if c.validatorOutErrs == nil {
 				assert.Equal(t, c.reqBody.Username, existorUser.inUsername)
+				if existorUser.outErr == nil && existorUser.outExists != true {
+					assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
+					if c.hasherOutErr == nil {
+						assert.EqualArr(t, c.hasherOutHash, creatorUser.inPassword)
+					}
+				}
 			}
 
-			// make assertions on the status code and response body (assert)
+			// make assertions on the status code and response body
 			res := w.Result()
-			assert.Equal(t, wantStatusCode, res.StatusCode)
 			resBody := &ResBody{}
 			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}
-			assert.EqualArr(t, c.wantErrsHandler.Username, resBody.Errs.Username)
-			assert.EqualArr(t, c.wantErrsHandler.Password, resBody.Errs.Password)
+
+			assert.Equal(t, c.wantStatusCode, res.StatusCode)
+			assert.EqualArr(t, c.wantHandlerErrs.Username, resBody.Errs.Username)
+			assert.EqualArr(t, c.wantHandlerErrs.Password, resBody.Errs.Password)
 		})
 	}
 }
