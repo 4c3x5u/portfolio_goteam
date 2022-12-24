@@ -8,7 +8,7 @@ type ReqBody struct {
 
 // ResBody defines the response body for the register route.
 type ResBody struct {
-	Errs *Errs `json:"errors"`
+	ErrField *Errs `json:"fieldErrors"`
 }
 
 // Errs defines the structure of error object that can be encoded in

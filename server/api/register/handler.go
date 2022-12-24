@@ -34,7 +34,7 @@ func NewHandler(
 	}
 }
 
-const errHandlerUsernameTaken = "Username is already taken."
+const errFieldUsernameTaken = "Username is already taken."
 
 // ServeHTTP responds to requests made to the register route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +49,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errs := h.validator.Validate(req); errs != nil {
-		res.Errs = errs
+		res.ErrField = errs
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
@@ -58,7 +58,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	} else if userExists {
-		res.Errs = &Errs{Username: []string{errHandlerUsernameTaken}}
+		res.ErrField = &Errs{Username: []string{errFieldUsernameTaken}}
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
@@ -71,7 +71,5 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo: login (e.g. return cookie)
-
-	w.WriteHeader(http.StatusOK)
+	relay.ClientJSON(w, res, http.StatusOK)
 }

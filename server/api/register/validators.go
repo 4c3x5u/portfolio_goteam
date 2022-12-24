@@ -88,7 +88,7 @@ func NewValidatorPassword() *ValidatorPassword {
 func (v *ValidatorPassword) Validate(password string) (errs []string) {
 	if password == "" {
 		errs = append(errs, "Password cannot be empty.")
-		// if password empty, further validation is pointless – return wantHandlerErrs
+		// if password empty, further validation is pointless
 		return
 	} else if len([]rune(password)) < 8 {
 		errs = append(errs, "Password cannot be shorter than 8 characters.")
