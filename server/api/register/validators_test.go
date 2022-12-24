@@ -34,29 +34,29 @@ func TestValidator(t *testing.T) {
 	fakeValidatorUsername := &fakeValidatorStr{}
 	fakeValidatorPassword := &fakeValidatorStr{}
 
-	sut := NewValidator(fakeValidatorUsername, fakeValidatorPassword)
+	sut := NewValidatorReq(fakeValidatorUsername, fakeValidatorPassword)
 
 	for _, c := range []struct {
 		name         string
-		reqBody      *ReqBody
+		reqBody      *Req
 		errsUsername []string
 		errsPassword []string
 	}{
 		{
 			name:         "UsnEmpty_PwdEmpty",
-			reqBody:      &ReqBody{Username: "", Password: ""},
+			reqBody:      &Req{Username: "", Password: ""},
 			errsUsername: []string{usnEmpty},
 			errsPassword: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort_UsnInvalidChar_PwdEmpty",
-			reqBody:      &ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+			reqBody:      &Req{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
 			errsUsername: []string{usnTooShort, usnInvalidChar},
 			errsPassword: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart_PwdTooLong_PwdNoDigit",
-			reqBody:      &ReqBody{Username: "1bobob", Password: "MyPass!"},
+			reqBody:      &Req{Username: "1bobob", Password: "MyPass!"},
 			errsUsername: []string{usnDigitStart},
 			errsPassword: []string{pwdTooShort, pwdNoDigit},
 		},
@@ -69,12 +69,12 @@ func TestValidator(t *testing.T) {
 			// act
 			res := sut.Validate(c.reqBody)
 
-			// assert that Validator passed in the arguments to field
+			// assert that ValidatorReq passed in the arguments to field
 			// validators correctly
-			assert.Equal(t, c.reqBody.Username, fakeValidatorUsername.inVal)
-			assert.Equal(t, c.reqBody.Password, fakeValidatorPassword.inVal)
+			assert.Equal(t, c.reqBody.Username, fakeValidatorUsername.inArg)
+			assert.Equal(t, c.reqBody.Password, fakeValidatorPassword.inArg)
 
-			// assert that Validator returned the correct errors based on
+			// assert that ValidatorReq returned the correct errors based on
 			// field validator return values
 			assert.EqualArr(t, c.errsUsername, res.Username)
 			assert.EqualArr(t, c.errsPassword, res.Password)

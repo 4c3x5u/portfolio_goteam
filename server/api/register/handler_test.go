@@ -22,7 +22,7 @@ func TestHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name            string
-		reqBody         *ReqBody
+		reqBody         *Req
 		outErrValidator *Errs
 		outResExistor   bool
 		outErrExistor   error
@@ -34,7 +34,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name:            "ErrValidator",
-			reqBody:         &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			reqBody:         &Req{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			outErrValidator: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			outResExistor:   false,
 			outErrExistor:   nil,
@@ -46,7 +46,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "ResExistorTrue",
-			reqBody:         &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			reqBody:         &Req{Username: "bob21", Password: "Myp4ssword!"},
 			outErrValidator: nil,
 			outResExistor:   true,
 			outErrExistor:   nil,
@@ -58,7 +58,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "ErrExistor",
-			reqBody:         &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidator: nil,
 			outResExistor:   false,
 			outErrExistor:   errors.New("existor fatal error"),
@@ -70,7 +70,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "ErrHasher",
-			reqBody:         &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidator: nil,
 			outResExistor:   false,
 			outErrExistor:   nil,
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "ErrCreator",
-			reqBody:         &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidator: nil,
 			outResExistor:   false,
 			outErrExistor:   nil,
@@ -94,7 +94,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "ResHandlerOK",
-			reqBody:         &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidator: nil,
 			outResExistor:   false,
 			outErrExistor:   nil,
@@ -171,14 +171,14 @@ func TestHandler(t *testing.T) {
 			// internal server errors where an empty res body is returned and
 			// these assertions are not viable
 			if c.outErrExistor == nil && c.outErrHasher == nil && c.outErrCreator == nil {
-				resBody := &ResBody{}
+				resBody := &Res{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
 
 				if c.wantFieldErrs != nil {
-					assert.EqualArr(t, c.wantFieldErrs.Username, resBody.ErrField.Username)
-					assert.EqualArr(t, c.wantFieldErrs.Password, resBody.ErrField.Password)
+					assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
+					assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
 				}
 			}
 		})

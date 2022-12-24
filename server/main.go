@@ -20,7 +20,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/register", apiRegister.NewHandler(
-		apiRegister.NewValidator(
+		apiRegister.NewValidatorReq(
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
 		),

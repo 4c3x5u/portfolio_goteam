@@ -13,7 +13,7 @@ import (
 
 // Handler is a HTTP handler for the register route.
 type Handler struct {
-	validator   ValidatorReq
+	validator   Validator
 	existorUser db.Existor
 	hasherPwd   Hasher
 	creatorUser db.Creator
@@ -21,7 +21,7 @@ type Handler struct {
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	validator ValidatorReq,
+	validator Validator,
 	existorUser db.Existor,
 	hasherPwd Hasher,
 	creatorUser db.Creator,
@@ -43,13 +43,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, res := &ReqBody{}, &ResBody{}
+	req, res := &Req{}, &Res{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
 	if errs := h.validator.Validate(req); errs != nil {
-		res.ErrField = errs
+		res.Errs = errs
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}
@@ -58,7 +58,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	} else if userExists {
-		res.ErrField = &Errs{Username: []string{errFieldUsernameTaken}}
+		res.Errs = &Errs{Username: []string{errFieldUsernameTaken}}
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return
 	}

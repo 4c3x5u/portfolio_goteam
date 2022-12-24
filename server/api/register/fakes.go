@@ -1,28 +1,28 @@
 package register
 
-// fakeValidatorReq is a test fake for ValidatorReq
+// fakeValidatorReq is a test fake for Validator
 type fakeValidatorReq struct {
-	inReqBody *ReqBody
+	inReqBody *Req
 	outErrs   *Errs
 }
 
-// Validate implements the ValidatorReq interface on the fakeValidatorReq
+// Validate implements the Validator interface on the fakeValidatorReq
 // struct.
-func (f *fakeValidatorReq) Validate(reqBody *ReqBody) *Errs {
+func (f *fakeValidatorReq) Validate(reqBody *Req) *Errs {
 	f.inReqBody = reqBody
 	return f.outErrs
 }
 
 // fakeValidatorStr is a test fake for ValidatorStr.
 type fakeValidatorStr struct {
-	inVal   string
+	inArg   string
 	outErrs []string
 }
 
 // Validate implements the ValidatorStr interface on the fakeValidatorStr
 // struct. It returns a pre-set string slice for errsUsername.
 func (f *fakeValidatorStr) Validate(val string) (errs []string) {
-	f.inVal = val
+	f.inArg = val
 	return f.outErrs
 }
 

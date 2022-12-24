@@ -1,22 +1,24 @@
 package register
 
-import "regexp"
+import (
+	"regexp"
+)
 
-// ValidatorReq represents a type that validates a *ReqBody and returns an
+// Validator represents a type that validates a *Req and returns an
 // *Errs based on the validation errors that occur.
-type ValidatorReq interface {
-	Validate(req *ReqBody) (errs *Errs)
+type Validator interface {
+	Validate(req *Req) (errs *Errs)
 }
 
-// Validator is the request validator for the register route.
-type Validator struct {
+// ValidatorReq is the request validator for the register route.
+type ValidatorReq struct {
 	ValidatorUsername ValidatorStr
 	ValidatorPassword ValidatorStr
 }
 
-// NewValidator is the constructor for Validator.
-func NewValidator(validatorUsername, validatorPassword ValidatorStr) *Validator {
-	return &Validator{
+// NewValidatorReq is the constructor for ValidatorReq.
+func NewValidatorReq(validatorUsername, validatorPassword ValidatorStr) *ValidatorReq {
+	return &ValidatorReq{
 		ValidatorUsername: validatorUsername,
 		ValidatorPassword: validatorPassword,
 	}
@@ -25,8 +27,8 @@ func NewValidator(validatorUsername, validatorPassword ValidatorStr) *Validator 
 // Validate uses individual field validation logic defined in the validation.go
 // file to validate requests sent the register route. It returns an errors
 // object if any of the individual validations fail. It implements the
-// ValidatorReq interface on the Validator struct.
-func (v *Validator) Validate(req *ReqBody) *Errs {
+// Validator interface on the ValidatorReq struct.
+func (v *ValidatorReq) Validate(req *Req) *Errs {
 	errs := &Errs{}
 	errs.Username = v.ValidatorUsername.Validate(req.Username)
 	errs.Password = v.ValidatorPassword.Validate(req.Password)
