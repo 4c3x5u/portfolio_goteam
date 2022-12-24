@@ -6,7 +6,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// ExistorUser is a type that checks whether a user with a given username exists
+// ExistorUser is a type that checks whether a user with a given Username exists
 // in the database.
 type ExistorUser struct{ db *sql.DB }
 
@@ -18,7 +18,7 @@ func NewExistorUser(db *sql.DB) *ExistorUser { return &ExistorUser{db: db} }
 // query.
 func (c *ExistorUser) Exists(username string) (bool, error) {
 	switch err := c.db.
-		QueryRow(`SELECT username FROM users WHERE username = $1`, username).
+		QueryRow(`SELECT Username FROM users WHERE Username = $1`, username).
 		Err(); err {
 	case nil:
 		return true, nil
@@ -30,7 +30,7 @@ func (c *ExistorUser) Exists(username string) (bool, error) {
 }
 
 // CreatorUser is a type that creates a user in the database with the given
-// username and password.
+// Username and password.
 type CreatorUser struct {
 	db *sql.DB
 }
@@ -40,10 +40,10 @@ func NewCreatorUser(db *sql.DB) *CreatorUser {
 	return &CreatorUser{db: db}
 }
 
-// Create creates a user in the database with the given username and password.
+// Create creates a user in the database with the given Username and password.
 func (c *CreatorUser) Create(args ...any) error {
 	_, err := c.db.Exec(
-		`INSERT INTO users(username, password) VALUES ($1, $2)`,
+		`INSERT INTO users(Username, password) VALUES ($1, $2)`,
 		args,
 	)
 	return err

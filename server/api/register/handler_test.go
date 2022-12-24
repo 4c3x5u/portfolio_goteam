@@ -14,10 +14,11 @@ import (
 func TestHandler(t *testing.T) {
 	// handler setup
 	var (
-		validator   = &fakeValidatorReq{}
-		existorUser = &fakeExistorUser{}
-		hasherPwd   = &fakeHasherPwd{}
-		creatorUser = &fakeCreatorUser{}
+		validator     = &fakeValidatorReq{}
+		existorUser   = &fakeExistorUser{}
+		hasherPwd     = &fakeHasherPwd{}
+		creatorUser   = &fakeCreatorUser{}
+		keeperSession = &fakeKeeperSession{}
 	)
 
 	for _, c := range []struct {
@@ -109,7 +110,7 @@ func TestHandler(t *testing.T) {
 		// TODO: Abstract a Logger to make assertions on logged messages?
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser)
+			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser, keeperSession)
 
 			// parse response body - done only to assert tha the creator and
 			// the validator receives the correct input based on the request

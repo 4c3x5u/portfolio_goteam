@@ -10,7 +10,7 @@ import (
 )
 
 func TestExistorUser(t *testing.T) {
-	query := `SELECT username FROM users WHERE username = \$1`
+	query := `SELECT Username FROM users WHERE Username = \$1`
 
 	t.Run("Doesn't Exist", func(t *testing.T) {
 		db, mock, def := setup(t)
@@ -28,7 +28,7 @@ func TestExistorUser(t *testing.T) {
 	t.Run("Exists", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
-		mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow(""))
+		mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"Username"}).AddRow(""))
 		mock.ExpectClose()
 		sut, wantExists := NewExistorUser(db), true
 
@@ -42,7 +42,7 @@ func TestExistorUser(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
 		mock.
-			ExpectQuery(`SELECT username FROM users WHERE username = \$1`).
+			ExpectQuery(`SELECT Username FROM users WHERE Username = \$1`).
 			WillReturnError(sql.ErrConnDone)
 		mock.ExpectClose()
 		sut, wantExists, wantErr := NewExistorUser(db), false, sql.ErrConnDone

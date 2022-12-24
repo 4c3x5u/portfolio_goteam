@@ -27,6 +27,7 @@ func main() {
 		db.NewExistorUser(conn),
 		apiRegister.NewHasherPwd(),
 		db.NewCreatorUser(conn),
+		db.NewCreatorSession(conn),
 	))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {

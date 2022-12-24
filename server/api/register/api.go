@@ -8,11 +8,13 @@ type Req struct {
 
 // Res defines the response body for the register route.
 type Res struct {
-	Errs *Errs `json:"errors"`
+	Msg  string `json:"message"`
+	Errs *Errs  `json:"errors"`
 }
 
 // Errs defines the structure of request field errors.
 type Errs struct {
 	Username []string `json:"username"`
 	Password []string `json:"password"`
+	Session  string   `json:"session"`
 }
