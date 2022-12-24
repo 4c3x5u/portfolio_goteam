@@ -85,9 +85,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	expiresAt := time.Now().Add(1 * time.Hour)
 	if err := h.creatorSession.Create(sessionToken, req.Username, expiresAt); err != nil {
 		// user successfuly registered but session keeper errored
-		// TODO: Redirect to login when login is implemented.
-		res.Errs.Session = "register success but session keeper error"
-		relay.ClientJSON(w, res, http.StatusInternalServerError)
+		res.Errs = &Errs{Session: "register success but session keeper error"}
+		relay.ClientErr(w, res, res.Errs.Session, http.StatusUnauthorized)
 		return
 	} else {
 		// register succes, session keeper success, all good...

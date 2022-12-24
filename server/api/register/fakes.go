@@ -61,12 +61,12 @@ func (f *fakeCreatorUser) Create(args ...any) error {
 	return f.outErr
 }
 
-type fakeKeeperSession struct {
+type fakeCreatorSession struct {
 	inArgs []any
 	outErr error
 }
 
-func (f *fakeKeeperSession) Create(args ...any) error {
+func (f *fakeCreatorSession) Create(args ...any) error {
 	f.inArgs = args
 	return f.outErr
 }

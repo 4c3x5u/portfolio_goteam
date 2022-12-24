@@ -14,103 +14,123 @@ import (
 func TestHandler(t *testing.T) {
 	// handler setup
 	var (
-		validator     = &fakeValidatorReq{}
-		existorUser   = &fakeExistorUser{}
-		hasherPwd     = &fakeHasherPwd{}
-		creatorUser   = &fakeCreatorUser{}
-		keeperSession = &fakeKeeperSession{}
+		validator      = &fakeValidatorReq{}
+		existorUser    = &fakeExistorUser{}
+		hasherPwd      = &fakeHasherPwd{}
+		creatorUser    = &fakeCreatorUser{}
+		creatorSession = &fakeCreatorSession{}
 	)
 
 	for _, c := range []struct {
-		name            string
-		reqBody         *Req
-		outErrValidator *Errs
-		outResExistor   bool
-		outErrExistor   error
-		outResHasher    []byte
-		outErrHasher    error
-		outErrCreator   error
-		wantStatusCode  int
-		wantFieldErrs   *Errs
+		name                 string
+		reqBody              *Req
+		outErrValidator      *Errs
+		outResExistor        bool
+		outErrExistor        error
+		outResHasher         []byte
+		outErrHasher         error
+		outErrCreatorUser    error
+		wantStatusCode       int
+		wantFieldErrs        *Errs
+		outErrCreatorSession error
 	}{
 		{
-			name:            "ErrValidator",
-			reqBody:         &Req{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			outErrValidator: &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			outResExistor:   false,
-			outErrExistor:   nil,
-			outResHasher:    nil,
-			outErrHasher:    nil,
-			outErrCreator:   nil,
-			wantStatusCode:  http.StatusBadRequest,
-			wantFieldErrs:   &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			name:                 "ErrValidator",
+			reqBody:              &Req{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			outErrValidator:      &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			outResExistor:        false,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			wantFieldErrs:        &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
-			name:            "ResExistorTrue",
-			reqBody:         &Req{Username: "bob21", Password: "Myp4ssword!"},
-			outErrValidator: nil,
-			outResExistor:   true,
-			outErrExistor:   nil,
-			outResHasher:    nil,
-			outErrHasher:    nil,
-			outErrCreator:   nil,
-			wantStatusCode:  http.StatusBadRequest,
-			wantFieldErrs:   &Errs{Username: []string{errFieldUsernameTaken}},
+			name:                 "ResExistorTrue",
+			reqBody:              &Req{Username: "bob21", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        true,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			wantFieldErrs:        &Errs{Username: []string{errFieldUsernameTaken}},
 		},
 		{
-			name:            "ErrExistor",
-			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidator: nil,
-			outResExistor:   false,
-			outErrExistor:   errors.New("existor fatal error"),
-			outResHasher:    nil,
-			outErrHasher:    nil,
-			outErrCreator:   nil,
-			wantStatusCode:  http.StatusInternalServerError,
-			wantFieldErrs:   nil,
+			name:                 "ErrExistor",
+			reqBody:              &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        false,
+			outErrExistor:        errors.New("existor fatal error"),
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantFieldErrs:        nil,
 		},
 		{
-			name:            "ErrHasher",
-			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidator: nil,
-			outResExistor:   false,
-			outErrExistor:   nil,
-			outResHasher:    nil,
-			outErrHasher:    errors.New("hasher fatal error"),
-			outErrCreator:   nil,
-			wantStatusCode:  http.StatusInternalServerError,
-			wantFieldErrs:   nil,
+			name:                 "ErrHasher",
+			reqBody:              &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        false,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         errors.New("hasher fatal error"),
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantFieldErrs:        nil,
 		},
 		{
-			name:            "ErrCreator",
-			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidator: nil,
-			outResExistor:   false,
-			outErrExistor:   nil,
-			outResHasher:    nil,
-			outErrHasher:    nil,
-			outErrCreator:   errors.New("creator fatal error"),
-			wantStatusCode:  http.StatusInternalServerError,
-			wantFieldErrs:   nil,
+			name:                 "ErrCreatorUser",
+			reqBody:              &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        false,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    errors.New("creator fatal error"),
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantFieldErrs:        nil,
 		},
 		{
-			name:            "ResHandlerOK",
-			reqBody:         &Req{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidator: nil,
-			outResExistor:   false,
-			outErrExistor:   nil,
-			outResHasher:    nil,
-			outErrHasher:    nil,
-			outErrCreator:   nil,
-			wantStatusCode:  http.StatusOK,
-			wantFieldErrs:   nil,
+			name:                 "ErrCreatorSession",
+			reqBody:              &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        false,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: errors.New("session creator error"),
+			wantStatusCode:       http.StatusUnauthorized,
+			wantFieldErrs:        &Errs{Session: "register success but session keeper error"},
+		},
+		{
+			name:                 "ResHandlerOK",
+			reqBody:              &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			outErrValidator:      nil,
+			outResExistor:        false,
+			outErrExistor:        nil,
+			outResHasher:         nil,
+			outErrHasher:         nil,
+			outErrCreatorUser:    nil,
+			outErrCreatorSession: nil,
+			wantStatusCode:       http.StatusOK,
+			wantFieldErrs:        nil,
 		},
 		// TODO: Expand – stages? Curried function that takes in *testing.T and
 		//       whatever else arg needed to make its assertions. Simpler.
 		// TODO: Abstract a Logger to make assertions on logged messages?
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser, keeperSession)
+			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser, creatorSession)
 
 			// parse response body - done only to assert tha the creator and
 			// the validator receives the correct input based on the request
@@ -126,7 +146,8 @@ func TestHandler(t *testing.T) {
 			existorUser.outErr = c.outErrExistor
 			hasherPwd.outHash = c.outResHasher
 			hasherPwd.outErr = c.outErrHasher
-			creatorUser.outErr = c.outErrCreator
+			creatorUser.outErr = c.outErrCreatorUser
+			creatorSession.outErr = c.outErrCreatorSession
 
 			// create request (arrange)
 			req, err := http.NewRequest("POST", "/register", bytes.NewReader(reqBody))
@@ -171,7 +192,7 @@ func TestHandler(t *testing.T) {
 			// assert on response body – however, there are some cases such as
 			// internal server errors where an empty res body is returned and
 			// these assertions are not viable
-			if c.outErrExistor == nil && c.outErrHasher == nil && c.outErrCreator == nil {
+			if c.outErrExistor == nil && c.outErrHasher == nil && c.outErrCreatorUser == nil {
 				resBody := &Res{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
@@ -180,6 +201,7 @@ func TestHandler(t *testing.T) {
 				if c.wantFieldErrs != nil {
 					assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
 					assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
+					assert.Equal(t, c.wantFieldErrs.Session, resBody.Errs.Session)
 				}
 			}
 		})
