@@ -110,7 +110,7 @@ func TestHandler(t *testing.T) {
 			outErrCreatorUser:    nil,
 			outErrCreatorSession: errors.New("session creator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &Errs{Session: "register success but session keeper error"},
+			wantFieldErrs:        &Errs{Session: errSession},
 		},
 		{
 			name:                 "ResHandlerOK",

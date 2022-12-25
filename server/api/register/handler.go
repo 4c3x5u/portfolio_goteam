@@ -39,7 +39,13 @@ func NewHandler(
 	}
 }
 
+// errFieldUsernameTaken is the error message returned from the handler when the
+// username given to it is already registered for another user.
 const errFieldUsernameTaken = "Username is already taken."
+
+// errFieldUsernameTaken is the error message returned from the handler when
+// register is successful but errors occur during session creation.
+const errSession = "Register success but session error."
 
 // ServeHTTP responds to requests made to the register route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -80,12 +86,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// keep a new session for this user and set session token cookie
+	// Create a new session for this user and set session token cookie. Exists
+	// checks aren't necessary since this should only be run on new user
+	// register success.
 	sessionToken := uuid.NewString()
 	expiresAt := time.Now().Add(1 * time.Hour)
 	if err := h.creatorSession.Create(sessionToken, req.Username, expiresAt); err != nil {
 		// user successfuly registered but session keeper errored
-		res.Errs = &Errs{Session: "register success but session keeper error"}
+		res.Errs = &Errs{Session: errSession}
 		relay.ClientErr(w, res, res.Errs.Session, http.StatusUnauthorized)
 		return
 	} else {
