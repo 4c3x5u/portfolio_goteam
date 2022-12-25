@@ -18,8 +18,8 @@ type Handler struct {
 	validator      Validator
 	existorUser    db.Existor
 	hasherPwd      Hasher
-	creatorUser    db.Creator
-	creatorSession db.Creator
+	creatorUser    db.CreatorStrBytes
+	creatorSession db.CreatorTwoStrTime
 }
 
 // NewHandler is the constructor for Handler.
@@ -27,8 +27,8 @@ func NewHandler(
 	validator Validator,
 	existorUser db.Existor,
 	hasherPwd Hasher,
-	creatorUser db.Creator,
-	creatorSession db.Creator,
+	creatorUser db.CreatorStrBytes,
+	creatorSession db.CreatorTwoStrTime,
 ) *Handler {
 	return &Handler{
 		validator:      validator,

@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"time"
 )
 
 // CreatorSession manages active sessions and provides access to them.
@@ -14,10 +15,10 @@ func NewCreatorSession(db *sql.DB) *CreatorSession {
 
 // Create creates a session in the database with the given id, username, and
 // expiry.
-func (m *CreatorSession) Create(args ...any) error {
+func (m *CreatorSession) Create(id, username string, expiry time.Time) error {
 	_, err := m.db.Exec(
 		`INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3)`,
-		args,
+		id, username, expiry.String(),
 	)
 	return err
 }
