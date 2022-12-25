@@ -10,44 +10,45 @@ import (
 )
 
 func TestExistorUser(t *testing.T) {
-	query := `SELECT Username FROM users WHERE Username = \$1`
+	username := "bob21"
+	query := `SELECT username FROM users WHERE username = \$1`
 
-	t.Run("Doesn't Exist", func(t *testing.T) {
+	t.Run("ExistsFalse", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
-		mock.ExpectQuery(query).WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrNoRows)
 		mock.ExpectClose()
 		sut, wantExists := NewExistorUser(db), false
 
-		gotExists, err := sut.Exists("")
+		gotExists, err := sut.Exists(username)
 
 		assert.Nil(t, err)
 		assert.Equal(t, wantExists, gotExists)
 	})
 
-	t.Run("Exists", func(t *testing.T) {
+	t.Run("ExistsTrue", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
-		mock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{"Username"}).AddRow(""))
+		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
+			sqlmock.NewRows([]string{"username"}).AddRow(""),
+		)
 		mock.ExpectClose()
 		sut, wantExists := NewExistorUser(db), true
 
-		gotExists, err := sut.Exists("")
+		gotExists, err := sut.Exists(username)
 
 		assert.Nil(t, err)
 		assert.Equal(t, wantExists, gotExists)
 	})
 
-	t.Run("ErrConnDone", func(t *testing.T) {
+	t.Run("ExistsErr", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
-		mock.
-			ExpectQuery(`SELECT Username FROM users WHERE Username = \$1`).
-			WillReturnError(sql.ErrConnDone)
+		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrConnDone)
 		mock.ExpectClose()
 		sut, wantExists, wantErr := NewExistorUser(db), false, sql.ErrConnDone
 
-		gotExists, err := sut.Exists("")
+		gotExists, err := sut.Exists(username)
 
 		assert.Equal(t, wantExists, gotExists)
 		assert.Equal(t, wantErr.Error(), err.Error())
