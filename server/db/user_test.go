@@ -61,12 +61,13 @@ func TestExistorUser(t *testing.T) {
 
 func TestCreatorUser(t *testing.T) {
 	username, password := "bob21", []byte("hashedpwd")
+	query := `INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("CreateOK", func(t *testing.T) {
 		db, mock, def := setup(t)
 		defer def(db)
 		mock.
-			ExpectExec(`INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`).
+			ExpectExec(query).
 			WithArgs(username, string(password)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewCreatorUser(db)
