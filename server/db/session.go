@@ -13,8 +13,8 @@ func NewCreatorSession(db *sql.DB) *CreatorSession {
 	return &CreatorSession{db: db}
 }
 
-// Create creates a session in the database with the given id, username, and
-// expiry.
+// Create creates a session in the database with the given id and username
+// strings, and expiry time.
 func (m *CreatorSession) Create(id, username string, expiry time.Time) error {
 	_, err := m.db.Exec(
 		`INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3)`,

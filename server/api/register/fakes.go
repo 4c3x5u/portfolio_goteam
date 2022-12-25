@@ -1,15 +1,19 @@
 package register
 
+import (
+	"time"
+)
+
 // fakeValidatorReq is a test fake for Validator
 type fakeValidatorReq struct {
-	inReqBody *Req
-	outErrs   *Errs
+	inReq   *Req
+	outErrs *Errs
 }
 
 // Validate implements the Validator interface on the fakeValidatorReq
 // struct.
 func (f *fakeValidatorReq) Validate(reqBody *Req) *Errs {
-	f.inReqBody = reqBody
+	f.inReq = reqBody
 	return f.outErrs
 }
 
@@ -52,21 +56,24 @@ func (f *fakeHasherPwd) Hash(plaintext string) ([]byte, error) {
 }
 
 type fakeCreatorUser struct {
-	inArgs []any
-	outErr error
+	inUsername string
+	inPassword []byte
+	outErr     error
 }
 
-func (f *fakeCreatorUser) Create(args ...any) error {
-	f.inArgs = args
+func (f *fakeCreatorUser) Create(username string, password []byte) error {
+	f.inUsername, f.inPassword = username, password
 	return f.outErr
 }
 
 type fakeCreatorSession struct {
-	inArgs []any
-	outErr error
+	inID       string
+	inUsername string
+	inExpiry   time.Time
+	outErr     error
 }
 
-func (f *fakeCreatorSession) Create(args ...any) error {
-	f.inArgs = args
+func (f *fakeCreatorSession) Create(id string, username string, expiry time.Time) error {
+	f.inID, f.inUsername, f.inExpiry = id, username, expiry
 	return f.outErr
 }
