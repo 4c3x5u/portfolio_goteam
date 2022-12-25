@@ -15,7 +15,7 @@ import (
 
 // Handler is a HTTP handler for the register route.
 type Handler struct {
-	validator      Validator
+	validatorReq   Validator
 	existorUser    db.Existor
 	hasherPwd      Hasher
 	creatorUser    db.CreatorStrBytes
@@ -24,14 +24,14 @@ type Handler struct {
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	validator Validator,
+	validatorReq Validator,
 	existorUser db.Existor,
 	hasherPwd Hasher,
 	creatorUser db.CreatorStrBytes,
 	creatorSession db.CreatorTwoStrTime,
 ) *Handler {
 	return &Handler{
-		validator:      validator,
+		validatorReq:   validatorReq,
 		existorUser:    existorUser,
 		hasherPwd:      hasherPwd,
 		creatorUser:    creatorUser,
@@ -61,7 +61,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	if errs := h.validator.Validate(req); errs != nil {
+	if errs := h.validatorReq.Validate(req); errs != nil {
 		res.Errs = errs
 		relay.ClientJSON(w, res, http.StatusBadRequest)
 		return

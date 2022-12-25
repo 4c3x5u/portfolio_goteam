@@ -16,7 +16,7 @@ func TestExistorUser(t *testing.T) {
 
 	t.Run("ExistsFalse", func(t *testing.T) {
 		wantExists := false
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrNoRows)
 		mock.ExpectClose()
@@ -30,7 +30,7 @@ func TestExistorUser(t *testing.T) {
 
 	t.Run("ExistsTrue", func(t *testing.T) {
 		wantExists := true
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 			sqlmock.NewRows([]string{"username"}).AddRow(""),
@@ -46,7 +46,7 @@ func TestExistorUser(t *testing.T) {
 
 	t.Run("ExistsErr", func(t *testing.T) {
 		wantExists, wantErr := false, sql.ErrConnDone
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrConnDone)
 		mock.ExpectClose()
@@ -64,7 +64,7 @@ func TestCreatorUser(t *testing.T) {
 	query := `INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("CreateOK", func(t *testing.T) {
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.
 			ExpectExec(query).
@@ -79,7 +79,7 @@ func TestCreatorUser(t *testing.T) {
 
 	t.Run("CreateErr", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.
 			ExpectExec(`INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`).
@@ -91,21 +91,4 @@ func TestCreatorUser(t *testing.T) {
 
 		assert.Equal(t, wantErr.Error(), err.Error())
 	})
-}
-
-// setup is for setting up the DB and Sqlmock for each test case. The first two
-// return values are self-explanatory, and the third is the database teardown
-// function to be deferred by the test case.
-// TODO: Extract this function when it's needed by another test.
-func setup(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func(*sql.DB)) {
-	db, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return db, mock, func(db *sql.DB) {
-		mock.ExpectClose()
-		if err := db.Close(); err != nil {
-			t.Fatal(err)
-		}
-	}
 }

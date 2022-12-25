@@ -14,7 +14,7 @@ import (
 func TestHandler(t *testing.T) {
 	// handler setup
 	var (
-		validator      = &fakeValidatorReq{}
+		validatorReq   = &fakeValidatorReq{}
 		existorUser    = &fakeExistorUser{}
 		hasherPwd      = &fakeHasherPwd{}
 		creatorUser    = &fakeCreatorUser{}
@@ -131,7 +131,7 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// set pre-determinate return values for Handler dependencies
-			validator.outErrs = c.outErrValidatorReq
+			validatorReq.outErrs = c.outErrValidatorReq
 			existorUser.outExists = c.outResExistorUser
 			existorUser.outErr = c.outErrExistorUser
 			hasherPwd.outHash = c.outResHasherPwd
@@ -140,10 +140,10 @@ func TestHandler(t *testing.T) {
 			creatorSession.outErr = c.outErrCreatorSession
 
 			// create handler
-			sut := NewHandler(validator, existorUser, hasherPwd, creatorUser, creatorSession)
+			sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
 
 			// parse response body - done only to assert tha the creator and
-			// the validator receives the correct input based on the request
+			// the valiadtor receives the correct input based on the request
 			// passed in
 			reqBody, err := json.Marshal(c.req)
 			if err != nil {
@@ -164,16 +164,20 @@ func TestHandler(t *testing.T) {
 			// Input-based assertions to be run up onto the point where handler
 			// stops execution. Conditionals serve to determine which
 			// dependencies should have received their function arguments.
-			assert.Equal(t, c.req.Username, validator.inReq.Username)
-			assert.Equal(t, c.req.Password, validator.inReq.Password)
+			assert.Equal(t, c.req.Username, validatorReq.inReq.Username)
+			assert.Equal(t, c.req.Password, validatorReq.inReq.Password)
 			if c.outErrValidatorReq == nil {
+				// validatorReq.Validate doesn't error – existorUser.Exists is called
 				assert.Equal(t, c.req.Username, existorUser.inUsername)
 				if c.outErrExistorUser == nil && c.outResExistorUser == false {
+					// existorUser.Exists return true and doesn't error - hasherPwd.Hash is called
 					assert.Equal(t, c.req.Password, hasherPwd.inPlaintext)
 					if c.outErrHasherPwd == nil {
+						// hasherPwd.Hash doesn't error – creatorUser.Create is called
 						assert.Equal(t, c.req.Username, creatorUser.inUsername)
 						assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.inPassword))
 						if c.outErrCreatorUser == nil {
+							// creatorUser.Create doesn't error – creatorSession.Create is called
 							assert.Equal(t, c.req.Username, creatorSession.inUsername)
 						}
 					}
@@ -194,12 +198,12 @@ func TestHandler(t *testing.T) {
 				}
 
 				if c.wantFieldErrs != nil {
-					// want field errs
+					// field errors - assert on them
 					assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
 					assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
 					assert.Equal(t, c.wantFieldErrs.Session, resBody.Errs.Session)
 				} else {
-					// don't want field errs - session token must be set
+					// no field errors - assert on session token
 					foundSessionToken := false
 					for _, cookie := range res.Cookies() {
 						if cookie.Name == "sessionToken" {

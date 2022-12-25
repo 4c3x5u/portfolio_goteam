@@ -13,7 +13,7 @@ func TestCreatorSession(t *testing.T) {
 	query := `INSERT INTO sessions\(id, username, expiry\) VALUES \(\$1, \$2, \$3\)`
 
 	t.Run("CreateOK", func(t *testing.T) {
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.
 			ExpectExec(query).
@@ -28,7 +28,7 @@ func TestCreatorSession(t *testing.T) {
 
 	t.Run("CreateErr", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, def := setup(t)
+		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.
 			ExpectExec(query).
