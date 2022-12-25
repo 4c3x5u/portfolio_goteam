@@ -161,11 +161,9 @@ func TestHandler(t *testing.T) {
 			// send request (act)
 			sut.ServeHTTP(w, req)
 
-			// There are multiple breakpoints to the assertions here. Each stage
-			// of the Handler is either run or not run based on the error
-			// returns on Handler's dependencies. The conditionals below serve
-			// to only run the assertions up to the point where the Handler
-			// exits execution.
+			// Input-based assertions to be run up onto the point where handler
+			// stops execution. Conditionals serve to determine which
+			// dependencies should have received their function arguments.
 			assert.Equal(t, c.req.Username, validator.inReq.Username)
 			assert.Equal(t, c.req.Password, validator.inReq.Password)
 			if c.outErrValidatorReq == nil {
@@ -186,23 +184,22 @@ func TestHandler(t *testing.T) {
 			res := w.Result()
 			assert.Equal(t, c.wantStatusCode, res.StatusCode)
 
-			// assert on response body – however, there are some cases such as
+			// Assert on response body – however, there are some cases such as
 			// internal server errors where an empty res body is returned and
-			// these assertions are not viable
-			if (c.outErrExistorUser == nil && c.outResExistorUser == false) &&
-				c.outErrHasherPwd == nil && c.outErrCreatorUser == nil {
+			// these assertions are not run.
+			if c.outErrExistorUser == nil && c.outErrHasherPwd == nil && c.outErrCreatorUser == nil {
 				resBody := &Res{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}
 
-				if c.outErrValidatorReq != nil {
+				if c.wantFieldErrs != nil {
+					// want field errs
 					assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
 					assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
 					assert.Equal(t, c.wantFieldErrs.Session, resBody.Errs.Session)
-				} else if c.outErrCreatorSession == nil {
-					// No existing user found, no error expected from creator.
-					// Therefore, sessionToken must exist
+				} else {
+					// don't want field errs - session token must be set
 					foundSessionToken := false
 					for _, cookie := range res.Cookies() {
 						if cookie.Name == "sessionToken" {
