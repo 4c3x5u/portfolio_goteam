@@ -148,9 +148,6 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusOK,
 			wantFieldErrs:        nil,
 		},
-		// TODO: Expand – stages? Curried function that takes in *testing.T and
-		//       whatever else arg needed to make its assertions. Simpler.
-		// TODO: Abstract a Logger to make assertions on logged messages?
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for Handler dependencies.
@@ -162,6 +159,7 @@ func TestHandler(t *testing.T) {
 			creatorUser.outErr = c.outErrCreatorUser
 			creatorSession.outErr = c.outErrCreatorSession
 
+			// todo: Extract?
 			// Parse request body.
 			reqBody, err := json.Marshal(c.reqBody)
 			if err != nil {

@@ -13,7 +13,7 @@ import (
 	"server/relay"
 )
 
-// Handler is a HTTP handler for the register route.
+// Handler is the http.Handler for the register route.
 type Handler struct {
 	validatorReq   Validator
 	existorUser    db.Existor
@@ -39,18 +39,10 @@ func NewHandler(
 	}
 }
 
-// errFieldUsernameTaken is the error message returned from the handler when the
-// username given to it is already registered for another user.
-const errFieldUsernameTaken = "Username is already taken."
-
-// errFieldUsernameTaken is the error message returned from the handler when
-// register is successful but errors occur during session creation.
-const errSession = "Register success but session error."
-
 // ServeHTTP responds to requests made to the register route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST.
-	if r.Method != "POST" {
+	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
@@ -107,3 +99,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// errFieldUsernameTaken is the error message returned from the handler when the
+// username given to it is already registered for another user.
+const errFieldUsernameTaken = "Username is already taken."
+
+// errFieldUsernameTaken is the error message returned from the handler when
+// register is successful but errors occur during session creation.
+const errSession = "Register success but session error."
