@@ -1,13 +1,13 @@
 package register
 
-// Req defines the request body for the register route.
-type Req struct {
+// ReqBody defines the request body for the register route.
+type ReqBody struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// Res defines the response body for the register route.
-type Res struct {
+// ResBody defines the response body for the register route.
+type ResBody struct {
 	Msg  string `json:"message"`
 	Errs *Errs  `json:"errors"`
 }

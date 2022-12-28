@@ -20,10 +20,11 @@ func TestHandler(t *testing.T) {
 		creatorUser    = &fakeCreatorUser{}
 		creatorSession = &fakeCreatorSession{}
 	)
+	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
 
 	for _, c := range []struct {
 		name                 string
-		req                  *Req
+		reqBody              *ReqBody
 		outErrValidatorReq   *Errs
 		outResExistorUser    bool
 		outErrExistorUser    error
@@ -36,7 +37,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name:                 "ErrValidator",
-			req:                  &Req{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			reqBody:              &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			outErrValidatorReq:   &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			outResExistorUser:    false,
 			outErrExistorUser:    nil,
@@ -49,7 +50,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ResExistorTrue",
-			req:                  &Req{Username: "bob21", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    true,
 			outErrExistorUser:    nil,
@@ -62,7 +63,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ErrExistor",
-			req:                  &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    false,
 			outErrExistorUser:    errors.New("existor fatal error"),
@@ -75,7 +76,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ErrHasher",
-			req:                  &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    false,
 			outErrExistorUser:    nil,
@@ -88,7 +89,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ErrCreatorUser",
-			req:                  &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    false,
 			outErrExistorUser:    nil,
@@ -101,7 +102,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ErrCreatorSession",
-			req:                  &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    false,
 			outErrExistorUser:    nil,
@@ -114,7 +115,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "ResHandlerOK",
-			req:                  &Req{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
 			outResExistorUser:    false,
 			outErrExistorUser:    nil,
@@ -130,7 +131,7 @@ func TestHandler(t *testing.T) {
 		// TODO: Abstract a Logger to make assertions on logged messages?
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			// set pre-determinate return values for Handler dependencies
+			// Set pre-determinate return values for Handler dependencies.
 			validatorReq.outErrs = c.outErrValidatorReq
 			existorUser.outExists = c.outResExistorUser
 			existorUser.outErr = c.outErrExistorUser
@@ -139,18 +140,11 @@ func TestHandler(t *testing.T) {
 			creatorUser.outErr = c.outErrCreatorUser
 			creatorSession.outErr = c.outErrCreatorSession
 
-			// create handler
-			sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
-
-			// parse response body - done only to assert tha the creator and
-			// the valiadtor receives the correct input based on the request
-			// passed in
-			reqBody, err := json.Marshal(c.req)
+			// Parse request body.
+			reqBody, err := json.Marshal(c.reqBody)
 			if err != nil {
 				t.Fatal(err)
 			}
-
-			// create request (arrange)
 			req, err := http.NewRequest("POST", "/register", bytes.NewReader(reqBody))
 			if err != nil {
 				t.Fatal(err)
@@ -158,33 +152,33 @@ func TestHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
-			// send request (act)
+			// Send request (act).
 			sut.ServeHTTP(w, req)
 
 			// Input-based assertions to be run up onto the point where handler
 			// stops execution. Conditionals serve to determine which
 			// dependencies should have received their function arguments.
-			assert.Equal(t, c.req.Username, validatorReq.inReq.Username)
-			assert.Equal(t, c.req.Password, validatorReq.inReq.Password)
+			assert.Equal(t, c.reqBody.Username, validatorReq.inReqBody.Username)
+			assert.Equal(t, c.reqBody.Password, validatorReq.inReqBody.Password)
 			if c.outErrValidatorReq == nil {
-				// validatorReq.Validate doesn't error – existorUser.Exists is called
-				assert.Equal(t, c.req.Username, existorUser.inUsername)
+				// validatorReq.Validate doesn't error – existorUser.Exists is called.
+				assert.Equal(t, c.reqBody.Username, existorUser.inUsername)
 				if c.outErrExistorUser == nil && c.outResExistorUser == false {
-					// existorUser.Exists return true and doesn't error - hasherPwd.Hash is called
-					assert.Equal(t, c.req.Password, hasherPwd.inPlaintext)
+					// existorUser.Exists return true and doesn't error - hasherPwd.Hash is called.
+					assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
 					if c.outErrHasherPwd == nil {
-						// hasherPwd.Hash doesn't error – creatorUser.Create is called
-						assert.Equal(t, c.req.Username, creatorUser.inUsername)
+						// hasherPwd.Hash doesn't error – creatorUser.Create is called.
+						assert.Equal(t, c.reqBody.Username, creatorUser.inUsername)
 						assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.inPassword))
 						if c.outErrCreatorUser == nil {
-							// creatorUser.Create doesn't error – creatorSession.Create is called
-							assert.Equal(t, c.req.Username, creatorSession.inUsername)
+							// creatorUser.Create doesn't error – creatorSession.Create is called.
+							assert.Equal(t, c.reqBody.Username, creatorSession.inUsername)
 						}
 					}
 				}
 			}
 
-			// assert on status code
+			// Assert on status code.
 			res := w.Result()
 			assert.Equal(t, c.wantStatusCode, res.StatusCode)
 
@@ -192,7 +186,7 @@ func TestHandler(t *testing.T) {
 			// internal server errors where an empty res body is returned and
 			// these assertions are not run.
 			if c.outErrExistorUser == nil && c.outErrHasherPwd == nil && c.outErrCreatorUser == nil {
-				resBody := &Res{}
+				resBody := &ResBody{}
 				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
 				}

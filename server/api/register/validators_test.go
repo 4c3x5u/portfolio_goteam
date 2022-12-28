@@ -38,25 +38,25 @@ func TestValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name         string
-		reqBody      *Req
+		reqBody      *ReqBody
 		errsUsername []string
 		errsPassword []string
 	}{
 		{
 			name:         "UsnEmpty_PwdEmpty",
-			reqBody:      &Req{Username: "", Password: ""},
+			reqBody:      &ReqBody{Username: "", Password: ""},
 			errsUsername: []string{usnEmpty},
 			errsPassword: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort_UsnInvalidChar_PwdEmpty",
-			reqBody:      &Req{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+			reqBody:      &ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
 			errsUsername: []string{usnTooShort, usnInvalidChar},
 			errsPassword: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart_PwdTooLong_PwdNoDigit",
-			reqBody:      &Req{Username: "1bobob", Password: "MyPass!"},
+			reqBody:      &ReqBody{Username: "1bobob", Password: "MyPass!"},
 			errsUsername: []string{usnDigitStart},
 			errsPassword: []string{pwdTooShort, pwdNoDigit},
 		},

@@ -49,39 +49,39 @@ const errSession = "Register success but session error."
 
 // ServeHTTP responds to requests made to the register route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// only accept post
+	// Only accept POST.
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
-	// read and validate request
-	req, res := &Req{}, &Res{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	// Read and validate requests.
+	reqBody, resBody := &ReqBody{}, &ResBody{}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	if errs := h.validatorReq.Validate(req); errs != nil {
-		res.Errs = errs
-		relay.ClientJSON(w, res, http.StatusBadRequest)
+	if errs := h.validatorReq.Validate(reqBody); errs != nil {
+		resBody.Errs = errs
+		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	}
 
-	// user exists checks/error
-	if userExists, err := h.existorUser.Exists(req.Username); err != nil {
+	// Check whether the username is taken.
+	if userExists, err := h.existorUser.Exists(reqBody.Username); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else if userExists {
-		res.Errs = &Errs{Username: []string{errFieldUsernameTaken}}
-		relay.ClientJSON(w, res, http.StatusBadRequest)
+		resBody.Errs = &Errs{Username: []string{errFieldUsernameTaken}}
+		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	}
 
-	// hash password and create user
-	if pwdHash, err := h.hasherPwd.Hash(req.Password); err != nil {
+	// Hash password and create user.
+	if pwdHash, err := h.hasherPwd.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err := h.creatorUser.Create(req.Username, pwdHash); err != nil {
+	} else if err := h.creatorUser.Create(reqBody.Username, pwdHash); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
@@ -89,21 +89,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create a new session for this user and set session token cookie. Exists
 	// checks aren't necessary since this should only be run on new user
 	// register success.
-	sessionToken := uuid.NewString()
-	expiresAt := time.Now().Add(1 * time.Hour)
-	if err := h.creatorSession.Create(sessionToken, req.Username, expiresAt); err != nil {
-		// user successfuly registered but session keeper errored
-		res.Errs = &Errs{Session: errSession}
-		relay.ClientErr(w, res, res.Errs.Session, http.StatusUnauthorized)
+	sessionID := uuid.NewString()
+	sessionExpiry := time.Now().Add(1 * time.Hour)
+	if err := h.creatorSession.Create(sessionID, reqBody.Username, sessionExpiry); err != nil {
+		// User successfuly registered but session creator errored.
+		resBody.Errs = &Errs{Session: errSession}
+		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
 		return
 	} else {
-		// register succes, session keeper success, all good...
+		// Register succes, session creator success, all good...
 		http.SetCookie(w, &http.Cookie{
 			Name:    "sessionToken",
-			Value:   sessionToken,
-			Expires: expiresAt,
+			Value:   sessionID,
+			Expires: sessionExpiry,
 		})
-		relay.ClientJSON(w, res, http.StatusOK)
+		relay.ClientJSON(w, resBody, http.StatusOK)
 		return
 	}
 }

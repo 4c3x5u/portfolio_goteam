@@ -6,14 +6,14 @@ import (
 
 // fakeValidatorReq is a test fake for Validator
 type fakeValidatorReq struct {
-	inReq   *Req
-	outErrs *Errs
+	inReqBody *ReqBody
+	outErrs   *Errs
 }
 
 // Validate implements the Validator interface on the fakeValidatorReq
 // struct.
-func (f *fakeValidatorReq) Validate(reqBody *Req) *Errs {
-	f.inReq = reqBody
+func (f *fakeValidatorReq) Validate(reqBody *ReqBody) *Errs {
+	f.inReqBody = reqBody
 	return f.outErrs
 }
 
