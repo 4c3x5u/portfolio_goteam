@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	apiLogin "server/api/login"
 	apiRegister "server/api/register"
 	"server/db"
 )
@@ -29,6 +30,8 @@ func main() {
 		db.NewCreatorUser(conn),
 		db.NewCreatorSession(conn),
 	))
+
+	mux.Handle("/login", apiLogin.NewHandler())
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
