@@ -62,20 +62,13 @@ func TestValidator(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			// arrange field validator return values
 			fakeValidatorUsername.outErrs = c.errsUsername
 			fakeValidatorPassword.outErrs = c.errsPassword
 
-			// act
 			res := sut.Validate(c.reqBody)
 
-			// assert that ValidatorReq passed in the arguments to field
-			// validators correctly
 			assert.Equal(t, c.reqBody.Username, fakeValidatorUsername.inArg)
 			assert.Equal(t, c.reqBody.Password, fakeValidatorPassword.inArg)
-
-			// assert that ValidatorReq returned the correct errors based on
-			// field validator return values
 			assert.EqualArr(t, c.errsUsername, res.Username)
 			assert.EqualArr(t, c.errsPassword, res.Password)
 		})
