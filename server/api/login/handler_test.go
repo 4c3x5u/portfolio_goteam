@@ -15,12 +15,30 @@ func TestHandler(t *testing.T) {
 	existorUser := &db.FakeExistor{}
 	sut := NewHandler(existorUser)
 
-	t.Run("ErrHttpMethod", func(t *testing.T) {
-		reqBody, err := json.Marshal(&ReqBody{})
+	for _, c := range []struct {
+		name           string
+		httpMethod     string
+		reqBody        *ReqBody
+		wantStatusCode int
+	}{
+		{
+			name:           "ErrHTTPMethod",
+			httpMethod:     http.MethodGet,
+			reqBody:        &ReqBody{},
+			wantStatusCode: http.StatusMethodNotAllowed,
+		},
+		{
+			name:           "ErrNoUsername",
+			httpMethod:     http.MethodPost,
+			reqBody:        &ReqBody{},
+			wantStatusCode: http.StatusBadRequest,
+		},
+	} {
+		reqBodyJSON, err := json.Marshal(c.reqBody)
 		if err != nil {
 			t.Fatal(err)
 		}
-		req, err := http.NewRequest(http.MethodGet, "/login", bytes.NewReader(reqBody))
+		req, err := http.NewRequest(c.httpMethod, "/login", bytes.NewReader(reqBodyJSON))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -29,24 +47,6 @@ func TestHandler(t *testing.T) {
 
 		sut.ServeHTTP(w, req)
 
-		assert.Equal(t, http.StatusMethodNotAllowed, w.Result().StatusCode)
-	})
-
-	t.Run("ErrNoUsername", func(t *testing.T) {
-		reqBody := &ReqBody{}
-		reqBodyJSON, err := json.Marshal(reqBody)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(reqBodyJSON))
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		w := httptest.NewRecorder()
-
-		sut.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusBadRequest, w.Result().StatusCode)
-	})
+		assert.Equal(t, c.wantStatusCode, w.Result().StatusCode)
+	}
 }
