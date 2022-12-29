@@ -12,26 +12,26 @@ import (
 )
 
 func main() {
-	// todo: use a secret for DBCONNSTR, not an environment variable
 	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	mux := http.NewServeMux()
+	existorUser := db.NewExistorUser(conn)
 
 	mux.Handle("/register", apiRegister.NewHandler(
 		apiRegister.NewValidatorReq(
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
 		),
-		db.NewExistorUser(conn),
+		existorUser,
 		apiRegister.NewHasherPwd(),
 		db.NewCreatorUser(conn),
 		db.NewCreatorSession(conn),
 	))
 
-	mux.Handle("/login", apiLogin.NewHandler())
+	mux.Handle("/login", apiLogin.NewHandler(existorUser))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)

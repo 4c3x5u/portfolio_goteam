@@ -1,19 +1,36 @@
 package login
 
-import "net/http"
+import (
+	"encoding/json"
+	"net/http"
+
+	"server/db"
+	"server/relay"
+)
 
 // Handler is the HTTP handler for the login route.
-type Handler struct{}
+type Handler struct{ existorUser db.Existor }
 
 // NewHandler is the constructor for Handler.
-func NewHandler() *Handler {
-	return &Handler{}
+func NewHandler(existorUser db.Existor) *Handler {
+	return &Handler{existorUser: existorUser}
 }
 
 // ServeHTTP responds to requests made to the login route.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	reqBody := &ReqBody{}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		relay.ServerErr(w, err.Error())
+		return
+	}
+
+	if reqBody.Username == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 }

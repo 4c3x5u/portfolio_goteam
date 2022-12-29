@@ -1,5 +1,3 @@
-// Package register contains types and functions required for the register API
-// route (/register).
 package register
 
 import (
@@ -95,7 +93,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Value:   sessionID,
 			Expires: sessionExpiry,
 		})
-		relay.ClientJSON(w, resBody, http.StatusOK)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 }
