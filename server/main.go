@@ -18,20 +18,22 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	existorUser := db.NewExistorUser(conn)
 
 	mux.Handle("/register", apiRegister.NewHandler(
 		apiRegister.NewValidatorReq(
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
 		),
-		existorUser,
+		db.NewExistorUser(conn),
 		apiRegister.NewHasherPwd(),
 		db.NewCreatorUser(conn),
 		db.NewCreatorSession(conn),
 	))
 
-	mux.Handle("/login", apiLogin.NewHandler(existorUser))
+	mux.Handle("/login", apiLogin.NewHandler(
+		db.NewReaderUserPwd(conn),
+		apiLogin.NewComparerHash(),
+	))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)

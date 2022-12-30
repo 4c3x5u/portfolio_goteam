@@ -1,6 +1,6 @@
 package register
 
-// fakeValidator is a test fake for Validator
+// fakeValidator is a test fake for Validator.
 type fakeValidator struct {
 	inReqBody *ReqBody
 	outErrs   *Errs

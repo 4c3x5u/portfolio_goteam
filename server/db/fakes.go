@@ -2,6 +2,19 @@ package db
 
 import "time"
 
+// FakeReaderBytes is a test fake for Reader[[]byte].
+type FakeReaderBytes struct {
+	InArg  string
+	OutRes []byte
+	OutErr error
+}
+
+// Read implements the Reader[[]byte] interface on FakeReaderBytes.
+func (f *FakeReaderBytes) Read(arg string) ([]byte, error) {
+	f.InArg = arg
+	return f.OutRes, f.OutErr
+}
+
 // FakeExistor is a test fake for Existor.
 type FakeExistor struct {
 	InArg     string

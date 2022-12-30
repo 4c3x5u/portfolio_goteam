@@ -4,40 +4,43 @@ import (
 	"testing"
 
 	"server/assert"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // TestHasherComparer tests both the HasherPwd and ComparerHash by first hashing
-// a plaintext string with HasherPwd and then comparing the original plaintext
+// a inPlaintext string with HasherPwd and then comparing the original inPlaintext
 // to the hash with ComparerHash.
 func TestHasherComparer(t *testing.T) {
 	for _, c := range []struct {
-		name        string
-		plaintext   string
-		hashCompare []byte
-		compareText string
-		wantIsMatch bool
+		name           string
+		inPlaintext    string
+		matchPlaintext string
+		wantErr        error
 	}{
 		{
-			name:        "IsMatch",
-			plaintext:   "password",
-			compareText: "password",
-			wantIsMatch: true,
+			name:           "IsMatch",
+			inPlaintext:    "password",
+			matchPlaintext: "password",
+			wantErr:        nil,
 		},
 		{
-			name:        "IsNoMatch",
-			plaintext:   "password",
-			compareText: "notpassword",
-			wantIsMatch: false,
+			name:           "IsNoMatch",
+			inPlaintext:    "password",
+			matchPlaintext: "notthesame",
+			wantErr:        bcrypt.ErrMismatchedHashAndPassword,
 		},
 	} {
-		hasher := &HasherPwd{}
-		resHash, err := hasher.Hash(c.plaintext)
-		assert.Nil(t, err)
-
-		comparer := &ComparerHash{}
-		isMatch, err := comparer.Compare(resHash, c.compareText)
-		assert.Nil(t, err)
-
-		assert.Equal(t, c.wantIsMatch, isMatch)
+		t.Run(c.name, func(t *testing.T) {
+			hasher := &HasherPwd{}
+			resHash, err := hasher.Hash(c.inPlaintext)
+			assert.Nil(t, err)
+			err = bcrypt.CompareHashAndPassword(resHash, []byte(c.matchPlaintext))
+			if c.wantErr != nil {
+				assert.Equal(t, c.wantErr.Error(), err.Error())
+			} else {
+				assert.Nil(t, c.wantErr)
+			}
+		})
 	}
 }

@@ -10,6 +10,44 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
+func TestReaderUser(t *testing.T) {
+	username := "bob21"
+	query := `SELECT password FROM users WHERE username = \$1`
+
+	t.Run("Err", func(t *testing.T) {
+		wantErr := sql.ErrNoRows
+
+		db, mock, def := setupTest(t)
+		defer def(db)
+		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
+		mock.ExpectClose()
+
+		sut := NewReaderUserPwd(db)
+
+		_, err := sut.Read(username)
+		assert.Equal(t, wantErr.Error(), err.Error())
+	})
+
+	t.Run("Res", func(t *testing.T) {
+		wantPwd := "Myp4ssword!"
+
+		db, mock, def := setupTest(t)
+		defer def(db)
+		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
+			mock.NewRows([]string{"password"}).AddRow(wantPwd),
+		)
+		mock.ExpectClose()
+
+		sut := NewReaderUserPwd(db)
+
+		pwd, err := sut.Read(username)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assert.Equal(t, wantPwd, string(pwd))
+	})
+}
+
 func TestExistorUser(t *testing.T) {
 	username := "bob21"
 	query := `SELECT username FROM users WHERE username = \$1`

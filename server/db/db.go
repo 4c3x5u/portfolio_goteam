@@ -2,19 +2,24 @@ package db
 
 import "time"
 
-// Existor represents a type that checks whether a certain entity exists or not
+// Reader represents a type reads a record from the database.
+type Reader[T any] interface {
+	Read(id string) (T, error)
+}
+
+// Existor represents a type that checks whether a certain record exists or not
 // based on a string argument.
 type Existor interface {
 	Exists(id string) (bool, error)
 }
 
-// CreatorStrBytes represents a type that creates an entity in the database
+// CreatorStrBytes represents a type that creates a record in the database
 // based on a string and a []byte argument.
 type CreatorStrBytes interface {
 	Create(arg1 string, arg2 []byte) error
 }
 
-// CreatorTwoStrTime represents a type that creates an entity in the database
+// CreatorTwoStrTime represents a type that creates a record in the database
 // based on three arguments – two strings and one time.Time.
 type CreatorTwoStrTime interface {
 	Create(arg1, arg2 string, arg3 time.Time) error

@@ -6,6 +6,23 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// ReaderUserPwd is a type that can be used to read users (i.e. records from users
+// table) from the database.
+type ReaderUserPwd struct{ db *sql.DB }
+
+// NewReaderUserPwd is the constructor for ReaderUserPwd.
+func NewReaderUserPwd(db *sql.DB) *ReaderUserPwd {
+	return &ReaderUserPwd{db: db}
+}
+
+// Read uses the username of a user to read their password from the database.
+func (r *ReaderUserPwd) Read(username string) (password []byte, err error) {
+	err = r.db.
+		QueryRow(`SELECT password FROM users WHERE username = $1`, username).
+		Scan(&password)
+	return
+}
+
 // ExistorUser is a type that checks whether a user with a given Username exists
 // in the database.
 type ExistorUser struct{ db *sql.DB }
@@ -16,8 +33,8 @@ func NewExistorUser(db *sql.DB) *ExistorUser { return &ExistorUser{db: db} }
 // Exists checks whether a user exists in the database, returning true if it
 // does and false if not. It also returns any errors encountered during database
 // query.
-func (c *ExistorUser) Exists(username string) (bool, error) {
-	switch err := c.db.
+func (e *ExistorUser) Exists(username string) (bool, error) {
+	switch err := e.db.
 		QueryRow(`SELECT username FROM users WHERE username = $1`, username).
 		Err(); err {
 	case nil:

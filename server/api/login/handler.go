@@ -1,6 +1,7 @@
 package login
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -9,11 +10,14 @@ import (
 )
 
 // Handler is the HTTP handler for the login route.
-type Handler struct{ existorUser db.Existor }
+type Handler struct {
+	readerUserPwd db.Reader[[]byte]
+	comparerHash  Comparer
+}
 
 // NewHandler is the constructor for Handler.
-func NewHandler(existorUser db.Existor) *Handler {
-	return &Handler{existorUser: existorUser}
+func NewHandler(readerUserPwd db.Reader[[]byte], comparerHash Comparer) *Handler {
+	return &Handler{readerUserPwd: readerUserPwd, comparerHash: comparerHash}
 }
 
 // ServeHTTP responds to requests made to the login route. Unlike the register
@@ -37,10 +41,21 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userFound, err := h.existorUser.Exists(reqBody.Username); err != nil {
+	password, err := h.readerUserPwd.Read(reqBody.Username)
+	if err == sql.ErrNoRows {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else if err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if !userFound {
+	}
+
+	isMatch, err := h.comparerHash.Compare(password, reqBody.Password)
+	if err != nil {
+		relay.ServerErr(w, err.Error())
+		return
+	}
+	if !isMatch {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
