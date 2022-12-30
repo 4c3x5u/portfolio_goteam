@@ -20,49 +20,65 @@ func TestHandler(t *testing.T) {
 		name              string
 		httpMethod        string
 		reqBody           *ReqBody
-		wantStatusCode    int
 		outResExistorUser bool
 		outErrExistorUser error
+		wantStatusCode    int
 	}{
 		{
 			name:              "ErrHTTPMethod",
 			httpMethod:        http.MethodGet,
 			reqBody:           &ReqBody{},
-			wantStatusCode:    http.StatusMethodNotAllowed,
 			outResExistorUser: true,
 			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusMethodNotAllowed,
 		},
 		{
 			name:              "ErrNoUsername",
 			httpMethod:        http.MethodPost,
 			reqBody:           &ReqBody{},
-			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: true,
 			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusBadRequest,
 		},
 		{
 			name:              "ErrUsernameEmpty",
 			httpMethod:        http.MethodPost,
 			reqBody:           &ReqBody{Username: ""},
-			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: true,
 			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusBadRequest,
 		},
 		{
 			name:              "ErrUserNotFound",
 			httpMethod:        http.MethodPost,
 			reqBody:           &ReqBody{Username: "bob21"},
-			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: false,
 			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusBadRequest,
 		},
 		{
 			name:              "ErrExistor",
 			httpMethod:        http.MethodPost,
-			reqBody:           &ReqBody{Username: "bob21"},
-			wantStatusCode:    http.StatusInternalServerError,
+			reqBody:           &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			outResExistorUser: true,
 			outErrExistorUser: errors.New("existor fatal error"),
+			wantStatusCode:    http.StatusInternalServerError,
+		},
+		{
+			name:              "ErrNoPassword",
+			httpMethod:        http.MethodPost,
+			reqBody:           &ReqBody{Username: "bob21"},
+			outResExistorUser: true,
+			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusBadRequest,
+		},
+		{
+			name:              "ErrPasswordEmpty",
+			httpMethod:        http.MethodPost,
+			reqBody:           &ReqBody{Username: "bob21", Password: ""},
+			outResExistorUser: true,
+			outErrExistorUser: nil,
+			wantStatusCode:    http.StatusBadRequest,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

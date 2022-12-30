@@ -32,7 +32,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if reqBody.Username == "" {
+	if reqBody.Username == "" || reqBody.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
