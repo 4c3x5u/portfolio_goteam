@@ -2,10 +2,12 @@ package db
 
 import (
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
-	"server/assert"
 	"testing"
 	"time"
+
+	"server/assert"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestCreatorSession(t *testing.T) {

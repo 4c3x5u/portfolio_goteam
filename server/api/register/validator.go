@@ -1,8 +1,6 @@
 package register
 
-import (
-	"regexp"
-)
+import "regexp"
 
 // Validator represents a type that validates a *ReqBody and returns an
 // *Errs based on the validation errors that occur.

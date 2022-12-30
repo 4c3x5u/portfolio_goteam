@@ -1,11 +1,6 @@
 package register
 
-import (
-	"golang.org/x/crypto/bcrypt"
-)
-
-// TODO: This can technically be in its own package but will it be needed by the
-//       other handlers first?
+import "golang.org/x/crypto/bcrypt"
 
 // Hasher represents a type that is used to hash a plaintext string value and
 // return hashed bytes alongside any error that occur in the process.

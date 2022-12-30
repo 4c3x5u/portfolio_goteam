@@ -2,13 +2,13 @@ package register
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"net/http"
 	"time"
 
 	"server/db"
-
 	"server/relay"
+
+	"github.com/google/uuid"
 )
 
 // Handler is the http.Handler for the register route.

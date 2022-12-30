@@ -1,8 +1,9 @@
 package register
 
 import (
-	"server/assert"
 	"testing"
+
+	"server/assert"
 )
 
 // TestHasherComparer tests both the HasherPwd and ComparerHash by first hashing

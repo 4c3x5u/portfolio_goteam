@@ -6,10 +6,10 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"server/db"
 	"testing"
 
 	"server/assert"
+	"server/db"
 )
 
 func TestHandler(t *testing.T) {
