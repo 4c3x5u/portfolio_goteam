@@ -31,7 +31,7 @@ func main() {
 		db.NewCreatorSession(conn),
 	))
 
-	mux.Handle("/login", apiLogin.NewHandler())
+	mux.Handle("/login", apiLogin.NewHandler(existorUser))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
