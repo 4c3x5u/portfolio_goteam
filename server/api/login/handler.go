@@ -37,7 +37,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userFound, _ := h.existorUser.Exists(reqBody.Username); !userFound {
+	if userFound, err := h.existorUser.Exists(reqBody.Username); err != nil {
+		relay.ServerErr(w, err.Error())
+		return
+	} else if !userFound {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

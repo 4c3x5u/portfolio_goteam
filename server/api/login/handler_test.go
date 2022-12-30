@@ -3,6 +3,7 @@ package login
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"server/db"
@@ -21,6 +22,7 @@ func TestHandler(t *testing.T) {
 		reqBody           *ReqBody
 		wantStatusCode    int
 		outResExistorUser bool
+		outErrExistorUser error
 	}{
 		{
 			name:              "ErrHTTPMethod",
@@ -28,6 +30,7 @@ func TestHandler(t *testing.T) {
 			reqBody:           &ReqBody{},
 			wantStatusCode:    http.StatusMethodNotAllowed,
 			outResExistorUser: true,
+			outErrExistorUser: nil,
 		},
 		{
 			name:              "ErrNoUsername",
@@ -35,6 +38,7 @@ func TestHandler(t *testing.T) {
 			reqBody:           &ReqBody{},
 			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: true,
+			outErrExistorUser: nil,
 		},
 		{
 			name:              "ErrUsernameEmpty",
@@ -42,6 +46,7 @@ func TestHandler(t *testing.T) {
 			reqBody:           &ReqBody{Username: ""},
 			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: true,
+			outErrExistorUser: nil,
 		},
 		{
 			name:              "ErrUserNotFound",
@@ -49,10 +54,20 @@ func TestHandler(t *testing.T) {
 			reqBody:           &ReqBody{Username: "bob21"},
 			wantStatusCode:    http.StatusBadRequest,
 			outResExistorUser: false,
+			outErrExistorUser: nil,
+		},
+		{
+			name:              "ErrExistor",
+			httpMethod:        http.MethodPost,
+			reqBody:           &ReqBody{Username: "bob21"},
+			wantStatusCode:    http.StatusInternalServerError,
+			outResExistorUser: true,
+			outErrExistorUser: errors.New("existor fatal error"),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			existorUser.OutExists = c.outResExistorUser
+			existorUser.OutErr = c.outErrExistorUser
 
 			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {
