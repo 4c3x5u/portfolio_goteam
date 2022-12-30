@@ -45,7 +45,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read and validate requests.
+	// Read and validate request.
 	reqBody, resBody := &ReqBody{}, &ResBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
@@ -76,9 +76,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new session for this user and set session token cookie. Exists
-	// checks aren't necessary since this should only be run on new user
-	// register success.
+	// Create a new session for this user and set session token cookie.
 	sessionID := uuid.NewString()
 	sessionExpiry := time.Now().Add(1 * time.Hour)
 	if err := h.creatorSession.Create(sessionID, reqBody.Username, sessionExpiry); err != nil {
