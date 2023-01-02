@@ -2,6 +2,7 @@ package register
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -16,7 +17,7 @@ func TestHandler(t *testing.T) {
 	// handler setup
 	var (
 		validatorReq   = &fakeValidator{}
-		existorUser    = &db.FakeExistor{}
+		existorUser    = &db.FakeReaderUser{}
 		hasherPwd      = &fakeHasherPwd{}
 		creatorUser    = &db.FakeCreatorStrBytes{}
 		creatorSession = &db.FakeCreatorTwoStrTime{}
@@ -28,8 +29,8 @@ func TestHandler(t *testing.T) {
 		httpMethod           string
 		reqBody              *ReqBody
 		outErrValidatorReq   *Errs
-		outResExistorUser    bool
-		outErrExistorUser    error
+		outResReaderUser     *db.User
+		outErrReaderUser     error
 		outResHasherPwd      []byte
 		outErrHasherPwd      error
 		outErrCreatorUser    error
@@ -42,8 +43,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodGet,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -56,8 +57,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			outErrValidatorReq:   &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -70,8 +71,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    true,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -84,8 +85,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    errors.New("existor fatal error"),
+			outResReaderUser:     nil,
+			outErrReaderUser:     errors.New("existor fatal error"),
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -98,8 +99,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     sql.ErrNoRows,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      errors.New("hasher fatal error"),
 			outErrCreatorUser:    nil,
@@ -112,8 +113,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     sql.ErrNoRows,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    errors.New("creator fatal error"),
@@ -126,8 +127,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     sql.ErrNoRows,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -140,8 +141,8 @@ func TestHandler(t *testing.T) {
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
-			outResExistorUser:    false,
-			outErrExistorUser:    nil,
+			outResReaderUser:     nil,
+			outErrReaderUser:     sql.ErrNoRows,
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
@@ -153,8 +154,8 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for Handler dependencies.
 			validatorReq.outErrs = c.outErrValidatorReq
-			existorUser.OutExists = c.outResExistorUser
-			existorUser.OutErr = c.outErrExistorUser
+			existorUser.OutRes = c.outResReaderUser
+			existorUser.OutErr = c.outErrReaderUser
 			hasherPwd.outHash = c.outResHasherPwd
 			hasherPwd.outErr = c.outErrHasherPwd
 			creatorUser.OutErr = c.outErrCreatorUser
@@ -182,10 +183,10 @@ func TestHandler(t *testing.T) {
 				assert.Equal(t, c.reqBody.Username, validatorReq.inReqBody.Username)
 				assert.Equal(t, c.reqBody.Password, validatorReq.inReqBody.Password)
 				if c.outErrValidatorReq == nil {
-					// validatorReq.Validate doesn't error – existorUser.Exists is called.
+					// validatorReq.Validate doesn't error – readerUser.Exists is called.
 					assert.Equal(t, c.reqBody.Username, existorUser.InArg)
-					if c.outErrExistorUser == nil && c.outResExistorUser == false {
-						// existorUser.Exists return true and doesn't error - hasherPwd.Hash is called.
+					if c.outErrReaderUser == sql.ErrNoRows {
+						// readerUser.Exists returns sql.ErrNoRows - hasherPwd.Hash is called.
 						assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
 						if c.outErrHasherPwd == nil {
 							// hasherPwd.Hash doesn't error – creatorUser.Create is called.
@@ -208,7 +209,7 @@ func TestHandler(t *testing.T) {
 			// internal server errors where an empty res body is returned and
 			// these assertions are not run.
 			if c.httpMethod != http.MethodPost ||
-				c.outErrExistorUser != nil ||
+				c.outErrReaderUser != nil ||
 				c.outErrHasherPwd != nil ||
 				c.outErrCreatorUser != nil ||
 				c.wantStatusCode == http.StatusOK {

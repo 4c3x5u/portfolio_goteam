@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"errors"
 	"testing"
 
@@ -12,17 +11,17 @@ import (
 
 func TestReaderUser(t *testing.T) {
 	username := "bob21"
-	query := `SELECT password FROM users WHERE username = \$1`
+	query := `SELECT username, password FROM users WHERE username = \$1`
 
 	t.Run("Err", func(t *testing.T) {
-		wantErr := sql.ErrNoRows
+		wantErr := errors.New("reader fatal error")
 
 		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
 
-		sut := NewReaderUserPwd(db)
+		sut := NewReaderUser(db)
 
 		_, err := sut.Read(username)
 		assert.Equal(t, wantErr.Error(), err.Error())
@@ -34,66 +33,18 @@ func TestReaderUser(t *testing.T) {
 		db, mock, def := setupTest(t)
 		defer def(db)
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
-			mock.NewRows([]string{"password"}).AddRow(wantPwd),
+			mock.NewRows([]string{"username", "password"}).AddRow(username, wantPwd),
 		)
 		mock.ExpectClose()
 
-		sut := NewReaderUserPwd(db)
+		sut := NewReaderUser(db)
 
-		pwd, err := sut.Read(username)
+		user, err := sut.Read(username)
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, wantPwd, string(pwd))
-	})
-}
-
-func TestExistorUser(t *testing.T) {
-	username := "bob21"
-	query := `SELECT username FROM users WHERE username = \$1`
-
-	t.Run("ExistsFalse", func(t *testing.T) {
-		wantExists := false
-		db, mock, def := setupTest(t)
-		defer def(db)
-		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrNoRows)
-		mock.ExpectClose()
-		sut := NewExistorUser(db)
-
-		gotExists, err := sut.Exists(username)
-
-		assert.Nil(t, err)
-		assert.Equal(t, wantExists, gotExists)
-	})
-
-	t.Run("ExistsTrue", func(t *testing.T) {
-		wantExists := true
-		db, mock, def := setupTest(t)
-		defer def(db)
-		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
-			sqlmock.NewRows([]string{"username"}).AddRow(""),
-		)
-		mock.ExpectClose()
-		sut := NewExistorUser(db)
-
-		gotExists, err := sut.Exists(username)
-
-		assert.Nil(t, err)
-		assert.Equal(t, wantExists, gotExists)
-	})
-
-	t.Run("ExistsErr", func(t *testing.T) {
-		wantExists, wantErr := false, sql.ErrConnDone
-		db, mock, def := setupTest(t)
-		defer def(db)
-		mock.ExpectQuery(query).WithArgs(username).WillReturnError(sql.ErrConnDone)
-		mock.ExpectClose()
-		sut := NewExistorUser(db)
-
-		gotExists, err := sut.Exists(username)
-
-		assert.Equal(t, wantExists, gotExists)
-		assert.Equal(t, wantErr.Error(), err.Error())
+		assert.Equal(t, username, user.Username)
+		assert.Equal(t, wantPwd, string(user.Password))
 	})
 }
 

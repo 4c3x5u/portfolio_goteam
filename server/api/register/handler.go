@@ -1,6 +1,7 @@
 package register
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -14,7 +15,7 @@ import (
 // Handler is the http.Handler for the register route.
 type Handler struct {
 	validatorReq   Validator
-	existorUser    db.Existor
+	readerUser     db.Reader[*db.User]
 	hasherPwd      Hasher
 	creatorUser    db.CreatorStrBytes
 	creatorSession db.CreatorTwoStrTime
@@ -23,14 +24,14 @@ type Handler struct {
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validatorReq Validator,
-	existorUser db.Existor,
+	readerUser db.Reader[*db.User],
 	hasherPwd Hasher,
 	creatorUser db.CreatorStrBytes,
 	creatorSession db.CreatorTwoStrTime,
 ) *Handler {
 	return &Handler{
 		validatorReq:   validatorReq,
-		existorUser:    existorUser,
+		readerUser:     readerUser,
 		hasherPwd:      hasherPwd,
 		creatorUser:    creatorUser,
 		creatorSession: creatorSession,
@@ -58,12 +59,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check whether the username is taken.
-	if userExists, err := h.existorUser.Exists(reqBody.Username); err != nil {
-		relay.ServerErr(w, err.Error())
-		return
-	} else if userExists {
+	if _, err := h.readerUser.Read(reqBody.Username); err == nil {
 		resBody.Errs = &Errs{Username: []string{errFieldUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
+		return
+	} else if err != nil && err != sql.ErrNoRows {
+		relay.ServerErr(w, err.Error())
 		return
 	}
 

@@ -6,44 +6,33 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// ReaderUserPwd is a type that can be used to read users (i.e. records from users
-// table) from the database.
-type ReaderUserPwd struct{ db *sql.DB }
+// User represents a row in the users table inside the database.
+type User struct {
+	Username string
+	Password []byte
+}
 
-// NewReaderUserPwd is the constructor for ReaderUserPwd.
-func NewReaderUserPwd(db *sql.DB) *ReaderUserPwd {
-	return &ReaderUserPwd{db: db}
+// NewUser is the constructor for User.
+func NewUser(username string, password []byte) *User {
+	return &User{Username: username, Password: password}
+}
+
+// ReaderUser is a type that can be used to read users (i.e. records from users
+// table) from the database.
+type ReaderUser struct{ db *sql.DB }
+
+// NewReaderUser is the constructor for ReaderUser.
+func NewReaderUser(db *sql.DB) *ReaderUser {
+	return &ReaderUser{db: db}
 }
 
 // Read uses the username of a user to read their password from the database.
-func (r *ReaderUserPwd) Read(username string) (password []byte, err error) {
-	err = r.db.
-		QueryRow(`SELECT password FROM users WHERE username = $1`, username).
-		Scan(&password)
-	return
-}
-
-// ExistorUser is a type that checks whether a user with a given Username exists
-// in the database.
-type ExistorUser struct{ db *sql.DB }
-
-// NewExistorUser is the constructor for ExistorUser.
-func NewExistorUser(db *sql.DB) *ExistorUser { return &ExistorUser{db: db} }
-
-// Exists checks whether a user exists in the database, returning true if it
-// does and false if not. It also returns any errors encountered during database
-// query.
-func (e *ExistorUser) Exists(username string) (bool, error) {
-	switch err := e.db.
-		QueryRow(`SELECT username FROM users WHERE username = $1`, username).
-		Err(); err {
-	case nil:
-		return true, nil
-	case sql.ErrNoRows:
-		return false, nil
-	default:
-		return false, err
-	}
+func (r *ReaderUser) Read(username string) (*User, error) {
+	user := NewUser("", []byte{})
+	err := r.db.
+		QueryRow(`SELECT username, password FROM users WHERE username = $1`, username).
+		Scan(&user.Username, &user.Password)
+	return user, err
 }
 
 // CreatorUser is a type that creates a user in the database with the given

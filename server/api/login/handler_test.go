@@ -14,114 +14,114 @@ import (
 )
 
 func TestHandler(t *testing.T) {
-	readerPwd := &db.FakeReaderBytes{}
+	readerPwd := &db.FakeReaderUser{}
 	comparerPwd := &fakeComparer{}
 	sut := NewHandler(readerPwd, comparerPwd)
 
 	for _, c := range []struct {
-		name                string
-		httpMethod          string
-		reqBody             *ReqBody
-		outResReaderUserPwd []byte
-		outErrReaderUserPwd error
-		outResComparerHash  bool
-		outErrComparerHash  error
-		wantStatusCode      int
+		name               string
+		httpMethod         string
+		reqBody            *ReqBody
+		outResReaderUser   *db.User
+		outErrReaderUser   error
+		outResComparerHash bool
+		outErrComparerHash error
+		wantStatusCode     int
 	}{
 		{
-			name:                "ErrHTTPMethod",
-			httpMethod:          http.MethodGet,
-			reqBody:             &ReqBody{},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusMethodNotAllowed,
+			name:               "ErrHTTPMethod",
+			httpMethod:         http.MethodGet,
+			reqBody:            &ReqBody{},
+			outResReaderUser:   nil,
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusMethodNotAllowed,
 		},
 		{
-			name:                "ErrNoUsername",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrNoUsername",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{},
+			outResReaderUser:   nil,
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrUsernameEmpty",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: ""},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrUsernameEmpty",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: ""},
+			outResReaderUser:   nil,
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrUserNotFound",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21"},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: sql.ErrNoRows,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrUserNotFound",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21"},
+			outResReaderUser:   nil,
+			outErrReaderUser:   sql.ErrNoRows,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrExistor",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: errors.New("existor fatal error"),
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusInternalServerError,
+			name:               "ErrExistor",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:   nil,
+			outErrReaderUser:   errors.New("existor fatal error"),
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusInternalServerError,
 		},
 		{
-			name:                "ErrNoPassword",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21"},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrNoPassword",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21"},
+			outResReaderUser:   nil,
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrPasswordEmpty",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21", Password: ""},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrPasswordEmpty",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21", Password: ""},
+			outResReaderUser:   nil,
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrPasswordWrong",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  nil,
-			wantStatusCode:      http.StatusBadRequest,
+			name:               "ErrPasswordWrong",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:   &db.User{},
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: nil,
+			wantStatusCode:     http.StatusBadRequest,
 		},
 		{
-			name:                "ErrComparerHash",
-			httpMethod:          http.MethodPost,
-			reqBody:             &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUserPwd: []byte{},
-			outErrReaderUserPwd: nil,
-			outResComparerHash:  false,
-			outErrComparerHash:  errors.New("comparer fatal error"),
-			wantStatusCode:      http.StatusInternalServerError,
+			name:               "ErrComparerHash",
+			httpMethod:         http.MethodPost,
+			reqBody:            &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:   &db.User{},
+			outErrReaderUser:   nil,
+			outResComparerHash: false,
+			outErrComparerHash: errors.New("comparer fatal error"),
+			wantStatusCode:     http.StatusInternalServerError,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			readerPwd.OutRes = c.outResReaderUserPwd
-			readerPwd.OutErr = c.outErrReaderUserPwd
+			readerPwd.OutRes = c.outResReaderUser
+			readerPwd.OutErr = c.outErrReaderUser
 			comparerPwd.outRes = c.outResComparerHash
 			comparerPwd.outErr = c.outErrComparerHash
 

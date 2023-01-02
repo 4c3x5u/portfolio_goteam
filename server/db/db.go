@@ -7,12 +7,6 @@ type Reader[T any] interface {
 	Read(id string) (T, error)
 }
 
-// Existor represents a type that checks whether a certain record exists or not
-// based on a string argument.
-type Existor interface {
-	Exists(id string) (bool, error)
-}
-
 // CreatorStrBytes represents a type that creates a record in the database
 // based on a string and a []byte argument.
 type CreatorStrBytes interface {

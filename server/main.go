@@ -24,14 +24,14 @@ func main() {
 			apiRegister.NewValidatorUsername(),
 			apiRegister.NewValidatorPassword(),
 		),
-		db.NewExistorUser(conn),
+		db.NewReaderUser(conn),
 		apiRegister.NewHasherPwd(),
 		db.NewCreatorUser(conn),
 		db.NewCreatorSession(conn),
 	))
 
 	mux.Handle("/login", apiLogin.NewHandler(
-		db.NewReaderUserPwd(conn),
+		db.NewReaderUser(conn),
 		apiLogin.NewComparerHash(),
 	))
 
