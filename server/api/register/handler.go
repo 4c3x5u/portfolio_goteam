@@ -17,7 +17,7 @@ type Handler struct {
 	validatorReq   Validator
 	readerUser     db.Reader[*db.User]
 	hasherPwd      Hasher
-	creatorUser    db.CreatorStrBytes
+	creatorUser    db.Creator[*db.User]
 	creatorSession db.CreatorTwoStrTime
 }
 
@@ -26,7 +26,7 @@ func NewHandler(
 	validatorReq Validator,
 	readerUser db.Reader[*db.User],
 	hasherPwd Hasher,
-	creatorUser db.CreatorStrBytes,
+	creatorUser db.Creator[*db.User],
 	creatorSession db.CreatorTwoStrTime,
 ) *Handler {
 	return &Handler{
@@ -72,7 +72,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasherPwd.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err := h.creatorUser.Create(reqBody.Username, pwdHash); err != nil {
+	} else if err := h.creatorUser.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}

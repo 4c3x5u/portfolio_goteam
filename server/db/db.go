@@ -7,6 +7,10 @@ type Reader[T any] interface {
 	Read(id string) (T, error)
 }
 
+type Creator[T any] interface {
+	Create(rec T) error
+}
+
 // CreatorStrBytes represents a type that creates a record in the database
 // based on a string and a []byte argument.
 type CreatorStrBytes interface {

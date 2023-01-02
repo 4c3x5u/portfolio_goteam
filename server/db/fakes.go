@@ -15,16 +15,15 @@ func (f *FakeReaderUser) Read(arg string) (*User, error) {
 	return f.OutRes, f.OutErr
 }
 
-// FakeCreatorStrBytes is a test fake for CreatorStrBytes.
-type FakeCreatorStrBytes struct {
-	InArgA string
-	InArgB []byte
+// FakeCreatorUser is a test fake for CreatorStrBytes.
+type FakeCreatorUser struct {
+	InArg  *User
 	OutErr error
 }
 
-// Create implements the CreatorStrBytes interface on FakeCreatorStrBytes.
-func (f *FakeCreatorStrBytes) Create(argA string, argB []byte) error {
-	f.InArgA, f.InArgB = argA, argB
+// Create implements the CreatorStrBytes interface on FakeCreatorUser.
+func (f *FakeCreatorUser) Create(user *User) error {
+	f.InArg = user
 	return f.OutErr
 }
 

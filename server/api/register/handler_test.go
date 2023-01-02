@@ -19,7 +19,7 @@ func TestHandler(t *testing.T) {
 		validatorReq   = &fakeValidator{}
 		existorUser    = &db.FakeReaderUser{}
 		hasherPwd      = &fakeHasherPwd{}
-		creatorUser    = &db.FakeCreatorStrBytes{}
+		creatorUser    = &db.FakeCreatorUser{}
 		creatorSession = &db.FakeCreatorTwoStrTime{}
 	)
 	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
@@ -190,8 +190,8 @@ func TestHandler(t *testing.T) {
 						assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
 						if c.outErrHasherPwd == nil {
 							// hasherPwd.Hash doesn't error – creatorUser.Create is called.
-							assert.Equal(t, c.reqBody.Username, creatorUser.InArgA)
-							assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.InArgB))
+							assert.Equal(t, c.reqBody.Username, creatorUser.InArg.Username)
+							assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.InArg.Password))
 							if c.outErrCreatorUser == nil {
 								// creatorUser.Create doesn't error – creatorSession.Create is called.
 								assert.Equal(t, c.reqBody.Username, creatorSession.InArgB)

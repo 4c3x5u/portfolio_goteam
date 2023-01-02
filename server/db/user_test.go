@@ -61,7 +61,7 @@ func TestCreatorUser(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewCreatorUser(db)
 
-		err := sut.Create(username, password)
+		err := sut.Create(NewUser(username, password))
 
 		assert.Nil(t, err)
 	})
@@ -76,7 +76,7 @@ func TestCreatorUser(t *testing.T) {
 			WillReturnError(wantErr)
 		sut := NewCreatorUser(db)
 
-		err := sut.Create(username, password)
+		err := sut.Create(NewUser(username, password))
 
 		assert.Equal(t, wantErr.Error(), err.Error())
 	})

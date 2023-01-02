@@ -45,10 +45,10 @@ func NewCreatorUser(db *sql.DB) *CreatorUser {
 }
 
 // Create creates a user in the database with the given Username and password.
-func (c *CreatorUser) Create(username string, password []byte) error {
+func (c *CreatorUser) Create(user *User) error {
 	_, err := c.db.Exec(
 		`INSERT INTO users(username, password) VALUES ($1, $2)`,
-		username, string(password),
+		user.Username, string(user.Password),
 	)
 	return err
 }
