@@ -15,19 +15,18 @@ type Comparer interface {
 type ComparerHash struct{}
 
 // NewComparerHash is the constructor for ComparerHash.
-func NewComparerHash() *ComparerHash {
-	return &ComparerHash{}
-}
+func NewComparerHash() *ComparerHash { return &ComparerHash{} }
 
 // Compare compares the given hashed bytes with the given plaintext string. The
 // first return value communicates whether it was a match. The second return
 // value is for any errors that may ocur during comparison.
 func (c *ComparerHash) Compare(hash []byte, plaintext string) (bool, error) {
-	if err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext)); err != nil {
-		if err.Error() == "crypto/bcrypt: hashedPassword is not the hash of the given password" {
-			return false, nil
-		}
+	err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext))
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		return false, nil
+	} else if err != nil {
 		return false, err
+	} else {
+		return true, nil
 	}
-	return true, nil
 }

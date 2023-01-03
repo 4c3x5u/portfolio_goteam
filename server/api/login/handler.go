@@ -4,28 +4,31 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"server/db"
 	"server/relay"
+
+	"github.com/google/uuid"
 )
 
 // Handler is the HTTP handler for the login route.
 type Handler struct {
-	readerUser    db.Reader[*db.User]
-	comparerHash  Comparer
-	readerSession db.Reader[*db.Session]
+	readerUser      db.Reader[*db.User]
+	comparerHash    Comparer
+	upserterSession db.Upserter[*db.Session]
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	readerUser db.Reader[*db.User],
 	comparerHash Comparer,
-	readerSession db.Reader[*db.Session],
+	upserterSession db.Upserter[*db.Session],
 ) *Handler {
 	return &Handler{
-		readerUser:    readerUser,
-		comparerHash:  comparerHash,
-		readerSession: readerSession,
+		readerUser:      readerUser,
+		comparerHash:    comparerHash,
+		upserterSession: upserterSession,
 	}
 }
 
@@ -69,9 +72,20 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.readerSession.Read(reqBody.Username)
-	if err != nil && err != sql.ErrNoRows {
+	session := db.NewSession(
+		uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour),
+	)
+	if err = h.upserterSession.Upsert(session); err != nil {
 		relay.ServerErr(w, err.Error())
+		return
+	} else {
+		// Register succes, session creator success, all good...
+		http.SetCookie(w, &http.Cookie{
+			Name:    "sessionToken",
+			Value:   session.ID,
+			Expires: session.Expiry,
+		})
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 }

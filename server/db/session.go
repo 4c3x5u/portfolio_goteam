@@ -35,20 +35,16 @@ func (c *CreatorSession) Create(session *Session) error {
 	return err
 }
 
-// ReaderSession is a type that can be used to read sesions from the database.
-type ReaderSession struct{ db *sql.DB }
+type UpserterSession struct{ db *sql.DB }
 
-// NewReaderSession is the constructor for ReaderSession.
-func NewReaderSession(db *sql.DB) *ReaderSession {
-	return &ReaderSession{db: db}
+func NewUpserterSession(db *sql.DB) *UpserterSession {
+	return &UpserterSession{db: db}
 }
 
-// Read uses the username of a user to read the session associated with that
-// user from the database.
-func (r *ReaderSession) Read(username string) (*Session, error) {
-	session := NewSession("", "", time.Now())
-	err := r.db.
-		QueryRow(`SELECT id, username, expiry FROM sessions WHERE username = $1`, username).
-		Scan(&session.ID, &session.Username, &session.Expiry)
-	return session, err
+func (u *UpserterSession) Upsert(session *Session) error {
+	_, err := u.db.Exec(
+		`INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3) ON CONFLICT username DO UPDATE SET expiry = $3`,
+		session.ID, session.Username, session.Expiry.String(),
+	)
+	return err
 }

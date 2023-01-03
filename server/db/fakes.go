@@ -12,17 +12,16 @@ func (f *FakeCreatorSession) Create(session *Session) error {
 	return f.OutErr
 }
 
-// FakeReaderSession is a test fake for Reader[*Session].
-type FakeReaderSession struct {
-	InArg      string
-	OutSession *Session
-	OutErr     error
+// FakeUpserterSession is a test fake for Upserter[*Session].
+type FakeUpserterSession struct {
+	InArg  *Session
+	OutErr error
 }
 
-// Read implements the Reader[*Session]  interface on FakeReaderSession.
-func (f FakeReaderSession) Read(username string) (*Session, error) {
-	f.InArg = username
-	return f.OutSession, f.OutErr
+// Upsert implements the Upserter[*Session]  interface on FakeUpserterSession.
+func (f FakeUpserterSession) Upsert(session *Session) error {
+	f.InArg = session
+	return f.OutErr
 }
 
 // FakeCreatorUser is a test fake for Creator[*User].
