@@ -79,7 +79,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	} else {
-		// Register succes, session creator success, all good...
 		http.SetCookie(w, &http.Cookie{
 			Name:    "sessionToken",
 			Value:   session.ID,

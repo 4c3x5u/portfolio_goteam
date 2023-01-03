@@ -51,7 +51,7 @@ func TestCreatorSession(t *testing.T) {
 func TestUpserterSession(t *testing.T) {
 	var (
 		session = NewSession("3aad526f-afea-4d07-986a-72fcf245bd18", "bob21", time.Now().Add(1*time.Hour))
-		query   = `INSERT INTO sessions\(id, username, expiry\) VALUES \(\$1, \$2, \$3\) ON CONFLICT username DO UPDATE SET expiry = \$3`
+		query   = `INSERT INTO sessions\(id, username, expiry\) VALUES \(\$1, \$2, \$3\) ON CONFLICT \(username\) DO UPDATE SET expiry = \$3`
 	)
 
 	t.Run("UpsertOK", func(t *testing.T) {
