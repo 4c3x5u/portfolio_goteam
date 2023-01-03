@@ -1,5 +1,4 @@
-// Package relay contains code used to relay messages to either the end user,
-// the, logs or both.
+// Package relay contains code for logging and/or relaying messages to the user.
 package relay
 
 import (

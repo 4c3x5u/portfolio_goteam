@@ -20,7 +20,7 @@ func TestHandler(t *testing.T) {
 		existorUser    = &db.FakeReaderUser{}
 		hasherPwd      = &fakeHasherPwd{}
 		creatorUser    = &db.FakeCreatorUser{}
-		creatorSession = &db.FakeCreatorTwoStrTime{}
+		creatorSession = &db.FakeCreatorSession{}
 	)
 	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
 
@@ -183,18 +183,18 @@ func TestHandler(t *testing.T) {
 				assert.Equal(t, c.reqBody.Username, validatorReq.inReqBody.Username)
 				assert.Equal(t, c.reqBody.Password, validatorReq.inReqBody.Password)
 				if c.outErrValidatorReq == nil {
-					// validatorReq.Validate doesn't error – readerUser.Exists is called.
+					// validator.Validate doesn't error – readerUser.Exists is called.
 					assert.Equal(t, c.reqBody.Username, existorUser.InArg)
 					if c.outErrReaderUser == sql.ErrNoRows {
-						// readerUser.Exists returns sql.ErrNoRows - hasherPwd.Hash is called.
+						// readerUser.Exists returns sql.ErrNoRows - hasher.Hash is called.
 						assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
 						if c.outErrHasherPwd == nil {
-							// hasherPwd.Hash doesn't error – creatorUser.Create is called.
+							// hasher.Hash doesn't error – creatorUser.Create is called.
 							assert.Equal(t, c.reqBody.Username, creatorUser.InArg.Username)
 							assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.InArg.Password))
 							if c.outErrCreatorUser == nil {
 								// creatorUser.Create doesn't error – creatorSession.Create is called.
-								assert.Equal(t, c.reqBody.Username, creatorSession.InArgB)
+								assert.Equal(t, c.reqBody.Username, creatorSession.InArg.Username)
 							}
 						}
 					}

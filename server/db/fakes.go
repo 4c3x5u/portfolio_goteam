@@ -1,7 +1,5 @@
 package db
 
-import "time"
-
 // FakeReaderUser is a test fake for Reader[[]byte].
 type FakeReaderUser struct {
 	InArg  string
@@ -27,16 +25,14 @@ func (f *FakeCreatorUser) Create(user *User) error {
 	return f.OutErr
 }
 
-// FakeCreatorTwoStrTime is a test fake for CreatorTwoStrTime.
-type FakeCreatorTwoStrTime struct {
-	InArgA string
-	InArgB string
-	InArgC time.Time
+// FakeCreatorSession is a test fake for CreatorTwoStrTime.
+type FakeCreatorSession struct {
+	InArg  *Session
 	OutErr error
 }
 
-// Create implements the CreatorTwoStrTime interface on FakeCreatorTwoStrTime.
-func (f *FakeCreatorTwoStrTime) Create(argA string, argB string, argC time.Time) error {
-	f.InArgA, f.InArgB, f.InArgC = argA, argB, argC
+// Create implements the CreatorTwoStrTime interface on FakeCreatorSession.
+func (f *FakeCreatorSession) Create(session *Session) error {
+	f.InArg = session
 	return f.OutErr
 }

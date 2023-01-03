@@ -1,5 +1,5 @@
-// Package register contains types and functions used for serving the register
-// API route.
+// Package register contains code for responding to HTTP requests made to the
+// register API route.
 package register
 
 // ReqBody defines the request body for Handler.

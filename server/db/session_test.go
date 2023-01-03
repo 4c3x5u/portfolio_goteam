@@ -23,7 +23,7 @@ func TestCreatorSession(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewCreatorSession(db)
 
-		err := sut.Create(id, username, expiry)
+		err := sut.Create(NewSession(id, username, expiry))
 
 		assert.Nil(t, err)
 	})
@@ -38,7 +38,7 @@ func TestCreatorSession(t *testing.T) {
 			WillReturnError(wantErr)
 		sut := NewCreatorSession(db)
 
-		err := sut.Create(id, username, expiry)
+		err := sut.Create(NewSession(id, username, expiry))
 
 		assert.Equal(t, wantErr.Error(), err.Error())
 	})

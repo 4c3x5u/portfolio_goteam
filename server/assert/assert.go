@@ -27,9 +27,9 @@ func EqualArr[T comparable](t *testing.T, want, got []T) {
 			}
 		}
 		return true
-	}(want, got)
+	}
 
-	if !areEqual {
+	if !areEqual(want, got) {
 		t.Logf("\nwant: %+v\ngot: %+v", want, got)
 		t.Fail()
 	}

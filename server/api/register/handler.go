@@ -14,25 +14,25 @@ import (
 
 // Handler is the http.Handler for the register route.
 type Handler struct {
-	validatorReq   Validator
+	validator      Validator
 	readerUser     db.Reader[*db.User]
-	hasherPwd      Hasher
+	hasher         Hasher
 	creatorUser    db.Creator[*db.User]
-	creatorSession db.CreatorTwoStrTime
+	creatorSession db.Creator[*db.Session]
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validatorReq Validator,
 	readerUser db.Reader[*db.User],
-	hasherPwd Hasher,
+	hasher Hasher,
 	creatorUser db.Creator[*db.User],
-	creatorSession db.CreatorTwoStrTime,
+	creatorSession db.Creator[*db.Session],
 ) *Handler {
 	return &Handler{
-		validatorReq:   validatorReq,
+		validator:      validatorReq,
 		readerUser:     readerUser,
-		hasherPwd:      hasherPwd,
+		hasher:         hasher,
 		creatorUser:    creatorUser,
 		creatorSession: creatorSession,
 	}
@@ -52,7 +52,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	if errs := h.validatorReq.Validate(reqBody); errs != nil {
+	if errs := h.validator.Validate(reqBody); errs != nil {
 		resBody.Errs = errs
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
@@ -69,7 +69,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Hash password and create user.
-	if pwdHash, err := h.hasherPwd.Hash(reqBody.Password); err != nil {
+	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else if err := h.creatorUser.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
@@ -78,9 +78,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create a new session for this user and set session token cookie.
-	sessionID := uuid.NewString()
-	sessionExpiry := time.Now().Add(1 * time.Hour)
-	if err := h.creatorSession.Create(sessionID, reqBody.Username, sessionExpiry); err != nil {
+	session := db.NewSession(uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour))
+	if err := h.creatorSession.Create(session); err != nil {
 		// User successfuly registered but session creator errored.
 		resBody.Errs = &Errs{Session: errSession}
 		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
@@ -89,8 +88,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Register succes, session creator success, all good...
 		http.SetCookie(w, &http.Cookie{
 			Name:    "sessionToken",
-			Value:   sessionID,
-			Expires: sessionExpiry,
+			Value:   session.ID,
+			Expires: session.Expiry,
 		})
 		w.WriteHeader(http.StatusOK)
 		return

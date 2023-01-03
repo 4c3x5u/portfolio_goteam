@@ -1,5 +1,5 @@
-// Package login contains types and functions used for serving the login API
-// route.
+// Package login contains code for responding to HTTP requests made to the login
+// API route.
 package login
 
 // ReqBody defines the request body for Handler.

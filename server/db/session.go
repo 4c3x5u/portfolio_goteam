@@ -5,6 +5,18 @@ import (
 	"time"
 )
 
+// Session represents a record in the sessions table inside the database.
+type Session struct {
+	ID       string
+	Username string
+	Expiry   time.Time
+}
+
+// NewSession is the constructor for Session.
+func NewSession(id, username string, expiry time.Time) *Session {
+	return &Session{ID: id, Username: username, Expiry: expiry}
+}
+
 // CreatorSession manages active sessions and provides access to them.
 type CreatorSession struct{ db *sql.DB }
 
@@ -15,10 +27,10 @@ func NewCreatorSession(db *sql.DB) *CreatorSession {
 
 // Create creates a session in the database with the given id and username
 // strings, and expiry time.
-func (m *CreatorSession) Create(id, username string, expiry time.Time) error {
+func (m *CreatorSession) Create(session *Session) error {
 	_, err := m.db.Exec(
 		`INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3)`,
-		id, username, expiry.String(),
+		session.ID, session.Username, session.Expiry.String(),
 	)
 	return err
 }
