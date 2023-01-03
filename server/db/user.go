@@ -17,24 +17,6 @@ func NewUser(username string, password []byte) *User {
 	return &User{Username: username, Password: password}
 }
 
-// ReaderUser is a type that can be used to read users (i.e. records from users
-// table) from the database.
-type ReaderUser struct{ db *sql.DB }
-
-// NewReaderUser is the constructor for ReaderUser.
-func NewReaderUser(db *sql.DB) *ReaderUser {
-	return &ReaderUser{db: db}
-}
-
-// Read uses the username of a user to read their password from the database.
-func (r *ReaderUser) Read(username string) (*User, error) {
-	user := NewUser("", []byte{})
-	err := r.db.
-		QueryRow(`SELECT username, password FROM users WHERE username = $1`, username).
-		Scan(&user.Username, &user.Password)
-	return user, err
-}
-
 // CreatorUser is a type that creates a user in the database with the given
 // Username and password.
 type CreatorUser struct{ db *sql.DB }
@@ -51,4 +33,22 @@ func (c *CreatorUser) Create(user *User) error {
 		user.Username, string(user.Password),
 	)
 	return err
+}
+
+// ReaderUser is a type that can be used to read users (i.e. records from users
+// table) from the database.
+type ReaderUser struct{ db *sql.DB }
+
+// NewReaderUser is the constructor for ReaderUser.
+func NewReaderUser(db *sql.DB) *ReaderUser {
+	return &ReaderUser{db: db}
+}
+
+// Read uses the username of a user to read their password from the database.
+func (r *ReaderUser) Read(username string) (*User, error) {
+	user := NewUser("", []byte{})
+	err := r.db.
+		QueryRow(`SELECT username, password FROM users WHERE username = $1`, username).
+		Scan(&user.Username, &user.Password)
+	return user, err
 }
