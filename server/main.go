@@ -33,6 +33,7 @@ func main() {
 	mux.Handle("/login", apiLogin.NewHandler(
 		db.NewReaderUser(conn),
 		apiLogin.NewComparerHash(),
+		db.NewReaderSession(conn),
 	))
 
 	if err := http.ListenAndServe(":8080", mux); err != nil {

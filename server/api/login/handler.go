@@ -11,13 +11,22 @@ import (
 
 // Handler is the HTTP handler for the login route.
 type Handler struct {
-	readerUser   db.Reader[*db.User]
-	comparerHash Comparer
+	readerUser    db.Reader[*db.User]
+	comparerHash  Comparer
+	readerSession db.Reader[*db.Session]
 }
 
 // NewHandler is the constructor for Handler.
-func NewHandler(readerUser db.Reader[*db.User], comparerHash Comparer) *Handler {
-	return &Handler{readerUser: readerUser, comparerHash: comparerHash}
+func NewHandler(
+	readerUser db.Reader[*db.User],
+	comparerHash Comparer,
+	readerSession db.Reader[*db.Session],
+) *Handler {
+	return &Handler{
+		readerUser:    readerUser,
+		comparerHash:  comparerHash,
+		readerSession: readerSession,
+	}
 }
 
 // ServeHTTP responds to requests made to the login route. Unlike the register
@@ -57,6 +66,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if !isMatch {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.readerSession.Read(reqBody.Username)
+	if err != nil && err != sql.ErrNoRows {
+		relay.ServerErr(w, err.Error())
 		return
 	}
 }

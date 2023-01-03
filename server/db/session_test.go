@@ -14,7 +14,7 @@ func TestCreatorSession(t *testing.T) {
 	var (
 		id       = "ba929ec9-91a4-4fca-b6ec-edf10d6c827e"
 		username = "bob21"
-		expiry   = time.Now()
+		expiry   = time.Now().Add(1 * time.Hour)
 		query    = `INSERT INTO sessions\(id, username, expiry\) VALUES \(\$1, \$2, \$3\)`
 	)
 
