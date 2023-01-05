@@ -78,7 +78,7 @@ func TestHandler(t *testing.T) {
 			outErrCreatorUser:    nil,
 			outErrCreatorSession: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantFieldErrs:        &Errs{Username: []string{errFieldUsernameTaken}},
+			wantFieldErrs:        &Errs{Username: []string{strErrUsernameTaken}},
 		},
 		{
 			name:                 "ErrExistor",
@@ -134,7 +134,7 @@ func TestHandler(t *testing.T) {
 			outErrCreatorUser:    nil,
 			outErrCreatorSession: errors.New("session creator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &Errs{Session: errSession},
+			wantFieldErrs:        &Errs{Session: strErrSession},
 		},
 		{
 			name:                 "ResHandlerOK",

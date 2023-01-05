@@ -22,14 +22,13 @@ func NewUser(username string, password []byte) *User {
 type CreatorUser struct{ db *sql.DB }
 
 // NewCreatorUser is the constructor for CreatorUser.
-func NewCreatorUser(db *sql.DB) *CreatorUser {
-	return &CreatorUser{db: db}
-}
+func NewCreatorUser(db *sql.DB) *CreatorUser { return &CreatorUser{db: db} }
 
 // Create creates a user in the database with the given Username and password.
 func (c *CreatorUser) Create(user *User) error {
 	_, err := c.db.Exec(
-		`INSERT INTO users(username, password) VALUES ($1, $2)`,
+		"INSERT INTO users(username, password) VALUES ($1, $2) "+
+			"ON CONFLICT (username) DO NOTHING",
 		user.Username, string(user.Password),
 	)
 	return err
@@ -40,9 +39,7 @@ func (c *CreatorUser) Create(user *User) error {
 type ReaderUser struct{ db *sql.DB }
 
 // NewReaderUser is the constructor for ReaderUser.
-func NewReaderUser(db *sql.DB) *ReaderUser {
-	return &ReaderUser{db: db}
-}
+func NewReaderUser(db *sql.DB) *ReaderUser { return &ReaderUser{db: db} }
 
 // Read uses the username of a user to read their password from the database.
 func (r *ReaderUser) Read(username string) (*User, error) {

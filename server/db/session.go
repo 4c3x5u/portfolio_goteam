@@ -49,7 +49,8 @@ func NewUpserterSession(db *sql.DB) *UpserterSession {
 // with the same username already exists in the database, and inserts if not.
 func (u *UpserterSession) Upsert(session *Session) error {
 	_, err := u.db.Exec(
-		`INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET expiry = $3`,
+		"INSERT INTO sessions(id, username, expiry) VALUES ($1, $2, $3) "+
+			"ON CONFLICT (username) DO UPDATE SET expiry = $3",
 		session.ID, session.Username, session.Expiry.String(),
 	)
 	return err

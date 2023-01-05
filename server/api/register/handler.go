@@ -58,12 +58,17 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check whether the username is taken.
+	// Check whether the username is taken. This db call can be removed by
+	// adding an "ON CONFLICT (username) DO NOTHING" clause to the query that
+	// user creator uses, and then returning strErrUsernameTaken if affected
+	// rows come back 0. However, not sure if that would increase or decrease
+	// the performance as hashing will then occur before exists checks.
+	// TODO: Test when deployed.
 	if _, err := h.readerUser.Read(reqBody.Username); err == nil {
-		resBody.Errs = &Errs{Username: []string{errFieldUsernameTaken}}
+		resBody.Errs = &Errs{Username: []string{strErrUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
-	} else if err != nil && err != sql.ErrNoRows {
+	} else if err != sql.ErrNoRows {
 		relay.ServerErr(w, err.Error())
 		return
 	}
@@ -81,25 +86,25 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	session := db.NewSession(uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour))
 	if err := h.creatorSession.Create(session); err != nil {
 		// User successfuly registered but session creator errored.
-		resBody.Errs = &Errs{Session: errSession}
+		resBody.Errs = &Errs{Session: strErrSession}
 		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
 		return
-	} else {
-		// Register succes, session creator success, all good...
-		http.SetCookie(w, &http.Cookie{
-			Name:    "sessionToken",
-			Value:   session.ID,
-			Expires: session.Expiry,
-		})
-		w.WriteHeader(http.StatusOK)
-		return
 	}
+
+	// Register succes, session creator success, all good...
+	http.SetCookie(w, &http.Cookie{
+		Name:    "sessionToken",
+		Value:   session.ID,
+		Expires: session.Expiry,
+	})
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
-// errFieldUsernameTaken is the error message returned from the handler when the
+// strErrUsernameTaken is the error message returned from the handler when the
 // username given to it is already registered for another user.
-const errFieldUsernameTaken = "Username is already taken."
+const strErrUsernameTaken = "Username is already taken."
 
-// errFieldUsernameTaken is the error message returned from the handler when
+// strErrUsernameTaken is the error message returned from the handler when
 // register is successful but errors occur during session creation.
-const errSession = "Register success but session error."
+const strErrSession = "Register success but session error."

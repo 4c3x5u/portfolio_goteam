@@ -43,13 +43,10 @@ type ValidatorStr interface {
 }
 
 // ValidatorUsername is the password field validator for the register route.
-type ValidatorUsername struct {
-}
+type ValidatorUsername struct{}
 
 // NewValidatorUsername is the constructor for ValidatorUsername.
-func NewValidatorUsername() *ValidatorUsername {
-	return &ValidatorUsername{}
-}
+func NewValidatorUsername() *ValidatorUsername { return &ValidatorUsername{} }
 
 // Validate applies password validation rules to the Username string and returns
 // the error message if any fails.
@@ -75,13 +72,10 @@ func (v *ValidatorUsername) Validate(username string) (errs []string) {
 }
 
 // ValidatorPassword is the password field validator for the register route.
-type ValidatorPassword struct {
-}
+type ValidatorPassword struct{}
 
 // NewValidatorPassword is the constructor for ValidatorPassword.
-func NewValidatorPassword() *ValidatorPassword {
-	return &ValidatorPassword{}
-}
+func NewValidatorPassword() *ValidatorPassword { return &ValidatorPassword{} }
 
 // Validate applies password validation rules to the Password string and returns
 // the error message if any fails.

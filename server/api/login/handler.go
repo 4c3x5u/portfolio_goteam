@@ -37,22 +37,25 @@ func NewHandler(
 // we instead just want to return a 400 Bad Request, which the client should
 // use to display a boilerplate "Invalid credentials." error.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Only accept POST.
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Read and validate request.
 	reqBody := &ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-
 	if reqBody.Username == "" || reqBody.Password == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
+	// Read the user in the database who owns the username that came in the
+	// request.
 	user, err := h.readerUser.Read(reqBody.Username)
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusBadRequest)
@@ -62,6 +65,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Compare the password passed in via the request with the hashed password
+	// of the user from the database.
 	isMatch, err := h.comparerHash.Compare(user.Password, reqBody.Password)
 	if err != nil {
 		relay.ServerErr(w, err.Error())
@@ -72,6 +77,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create a new session, upsert it into the database and give set the
+	// session token cookie for the user.
 	session := db.NewSession(
 		uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour),
 	)
