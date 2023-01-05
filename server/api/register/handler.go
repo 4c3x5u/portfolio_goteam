@@ -85,13 +85,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Create a new session for this user and set session token cookie.
 	session := db.NewSession(uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour))
 	if err := h.creatorSession.Create(session); err != nil {
-		// User successfuly registered but session creator errored.
+		// User successfully registered but session creator errored.
 		resBody.Errs = &Errs{Session: strErrSession}
 		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
 		return
 	}
 
-	// Register succes, session creator success, all good...
+	// Register success, session creator success, all good...
 	http.SetCookie(w, &http.Cookie{
 		Name:    "sessionToken",
 		Value:   session.ID,

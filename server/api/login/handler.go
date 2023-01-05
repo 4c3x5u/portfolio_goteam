@@ -67,12 +67,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
-	isMatch, err := h.comparerHash.Compare(user.Password, reqBody.Password)
-	if err != nil {
+	if isMatch, err := h.comparerHash.Compare(user.Password, reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	}
-	if !isMatch {
+	} else if !isMatch {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
