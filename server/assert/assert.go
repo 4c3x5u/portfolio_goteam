@@ -4,7 +4,7 @@ package assert
 
 import "testing"
 
-func Equal[T comparable](t *testing.T, want, got T) {
+func Equal(t *testing.T, want, got any) {
 	if want != got {
 		t.Logf("\nwant: %+v\ngot: %+v", want, got)
 		t.Fail()
