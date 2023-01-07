@@ -6,9 +6,12 @@ import (
 	"net/http"
 	"os"
 
-	apiLogin "server/api/login"
-	apiRegister "server/api/register"
+	"server/api/login"
+	"server/api/register"
+	"server/auth"
 	"server/db"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func main() {
@@ -19,20 +22,20 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", apiRegister.NewHandler(
-		apiRegister.NewValidatorReq(
-			apiRegister.NewValidatorUsername(),
-			apiRegister.NewValidatorPassword(),
+	mux.Handle("/register", register.NewHandler(
+		register.NewValidatorReq(
+			register.NewValidatorUsername(),
+			register.NewValidatorPassword(),
 		),
 		db.NewReaderUser(conn),
-		apiRegister.NewHasherPwd(),
+		register.NewHasherPwd(),
 		db.NewCreatorUser(conn),
-		db.NewCreatorSession(conn),
+		auth.NewGeneratorToken(os.Getenv("JWTSIGNATURE"), jwt.SigningMethodHS256),
 	))
 
-	mux.Handle("/login", apiLogin.NewHandler(
+	mux.Handle("/login", login.NewHandler(
 		db.NewReaderUser(conn),
-		apiLogin.NewComparerHash(),
+		login.NewComparerHash(),
 		db.NewUpserterSession(conn),
 	))
 

@@ -18,11 +18,11 @@ func NewGeneratorToken(key string, methodSigning jwt.SigningMethod) *GeneratorTo
 	return &GeneratorToken{key: key, methodSigning: methodSigning}
 }
 
-// Generate generates a token for the user associated with a given username.
-func (g *GeneratorToken) Generate(username string) (string, error) {
-	now := time.Now()
+// Generate generates a JWT for the user associated with a given username.
+// The sub argument is the subject ID (e.g. username), and exp is for expiry.
+func (g *GeneratorToken) Generate(sub string, exp time.Time) (string, error) {
 	return jwt.NewWithClaims(g.methodSigning, jwt.MapClaims{
-		"sub": username,
-		"exp": now.Add(1 * time.Hour).Unix(),
+		"sub": sub,
+		"exp": exp.Unix(),
 	}).SignedString([]byte(g.key))
 }

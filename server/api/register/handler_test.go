@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"server/assert"
+	"server/auth"
 	"server/db"
 )
 
@@ -20,9 +21,9 @@ func TestHandler(t *testing.T) {
 		existorUser    = &db.FakeReaderUser{}
 		hasherPwd      = &fakeHasherPwd{}
 		creatorUser    = &db.FakeCreatorUser{}
-		creatorSession = &db.FakeCreatorSession{}
+		generatorToken = &auth.FakeGenerator{}
 	)
-	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, creatorSession)
+	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, generatorToken)
 
 	for _, c := range []struct {
 		name                 string
@@ -34,7 +35,8 @@ func TestHandler(t *testing.T) {
 		outResHasherPwd      []byte
 		outErrHasherPwd      error
 		outErrCreatorUser    error
-		outErrCreatorSession error
+		outResGeneratorToken string
+		outErrGeneratorToken error
 		wantStatusCode       int
 		wantFieldErrs        *Errs
 	}{
@@ -48,7 +50,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusMethodNotAllowed,
 			wantFieldErrs:        nil,
 		},
@@ -62,7 +65,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			wantFieldErrs:        &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
@@ -76,7 +80,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			wantFieldErrs:        &Errs{Username: []string{strErrUsernameTaken}},
 		},
@@ -90,7 +95,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
@@ -104,7 +110,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      errors.New("hasher fatal error"),
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
@@ -118,7 +125,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    errors.New("creator fatal error"),
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
@@ -132,9 +140,10 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: errors.New("session creator error"),
+			outResGeneratorToken: "",
+			outErrGeneratorToken: errors.New("token generator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &Errs{Session: strErrSession},
+			wantFieldErrs:        &Errs{Session: strErrToken},
 		},
 		{
 			name:                 "ResHandlerOK",
@@ -146,7 +155,8 @@ func TestHandler(t *testing.T) {
 			outResHasherPwd:      nil,
 			outErrHasherPwd:      nil,
 			outErrCreatorUser:    nil,
-			outErrCreatorSession: nil,
+			outResGeneratorToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			outErrGeneratorToken: nil,
 			wantStatusCode:       http.StatusOK,
 			wantFieldErrs:        nil,
 		},
@@ -159,7 +169,8 @@ func TestHandler(t *testing.T) {
 			hasherPwd.outHash = c.outResHasherPwd
 			hasherPwd.outErr = c.outErrHasherPwd
 			creatorUser.OutErr = c.outErrCreatorUser
-			creatorSession.OutErr = c.outErrCreatorSession
+			generatorToken.OutRes = c.outResGeneratorToken
+			generatorToken.OutErr = c.outErrGeneratorToken
 
 			// Parse request body.
 			reqBody, err := json.Marshal(c.reqBody)
@@ -193,8 +204,8 @@ func TestHandler(t *testing.T) {
 							assert.Equal(t, c.reqBody.Username, creatorUser.InArg.Username)
 							assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.InArg.Password))
 							if c.outErrCreatorUser == nil {
-								// creatorUser.Create doesn't error – creatorSession.Create is called.
-								assert.Equal(t, c.reqBody.Username, creatorSession.InArg.Username)
+								// creatorUser.Create doesn't error – generatorToken.Create is called.
+								assert.Equal(t, c.reqBody.Username, generatorToken.InSub)
 							}
 						}
 					}
@@ -228,13 +239,14 @@ func TestHandler(t *testing.T) {
 				assert.Equal(t, c.wantFieldErrs.Session, resBody.Errs.Session)
 			} else {
 				// no field errors - assert on session token
-				foundSessionToken := false
+				foundAuthToken := false
 				for _, cookie := range res.Cookies() {
-					if cookie.Name == "sessionToken" {
-						foundSessionToken = true
+					if cookie.Name == "authToken" {
+						foundAuthToken = true
+						assert.Equal(t, c.outResGeneratorToken, cookie.Value)
 					}
 				}
-				assert.Equal(t, true, foundSessionToken)
+				assert.Equal(t, true, foundAuthToken)
 			}
 		})
 	}

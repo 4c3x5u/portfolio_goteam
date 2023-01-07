@@ -6,10 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"server/auth"
 	"server/db"
 	"server/relay"
-
-	"github.com/google/uuid"
 )
 
 // Handler is the http.Handler for the register route.
@@ -18,7 +17,7 @@ type Handler struct {
 	readerUser     db.Reader[*db.User]
 	hasher         Hasher
 	creatorUser    db.Creator[*db.User]
-	creatorSession db.Creator[*db.Session]
+	generatorToken auth.Generator
 }
 
 // NewHandler is the constructor for Handler.
@@ -27,14 +26,14 @@ func NewHandler(
 	readerUser db.Reader[*db.User],
 	hasher Hasher,
 	creatorUser db.Creator[*db.User],
-	creatorSession db.Creator[*db.Session],
+	generatorToken auth.Generator,
 ) *Handler {
 	return &Handler{
 		validator:      validatorReq,
 		readerUser:     readerUser,
 		hasher:         hasher,
 		creatorUser:    creatorUser,
-		creatorSession: creatorSession,
+		generatorToken: generatorToken,
 	}
 }
 
@@ -82,29 +81,26 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new session for this user and set session token cookie.
-	session := db.NewSession(uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour))
-	if err := h.creatorSession.Create(session); err != nil {
-		// User successfully registered but session creator errored.
-		resBody.Errs = &Errs{Session: strErrSession}
+	// Generate a JWT for the user and return it in a Set-Cookie header
+	expiry := time.Now().Add(1 * time.Hour)
+	if tokenStr, err := h.generatorToken.Generate(reqBody.Username, expiry); err != nil {
+		resBody.Errs = &Errs{Session: strErrToken}
 		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
 		return
+	} else {
+		http.SetCookie(w, &http.Cookie{
+			Name:    "authToken",
+			Value:   tokenStr,
+			Expires: expiry.UTC(),
+		})
+		w.WriteHeader(http.StatusOK)
 	}
-
-	// Register success, session creator success, all good...
-	http.SetCookie(w, &http.Cookie{
-		Name:    "sessionToken",
-		Value:   session.ID,
-		Expires: session.Expiry,
-	})
-	w.WriteHeader(http.StatusOK)
-	return
 }
 
 // strErrUsernameTaken is the error message returned from the handler when the
 // username given to it is already registered for another user.
 const strErrUsernameTaken = "Username is already taken."
 
-// strErrUsernameTaken is the error message returned from the handler when
-// register is successful but errors occur during session creation.
-const strErrSession = "Register success but session error."
+// strErrToken is the error message returned from the handler when register is
+// successful and the user is created but errors occur during token generation.
+const strErrToken = "Register success, token generator error."
