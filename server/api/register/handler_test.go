@@ -131,7 +131,7 @@ func TestHandler(t *testing.T) {
 			wantFieldErrs:        nil,
 		},
 		{
-			name:                 "ErrCreatorSession",
+			name:                 "ErrGeneratorToken",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
@@ -143,10 +143,10 @@ func TestHandler(t *testing.T) {
 			outResGeneratorToken: "",
 			outErrGeneratorToken: errors.New("token generator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &Errs{Session: strErrToken},
+			wantFieldErrs:        &Errs{Auth: errAuth},
 		},
 		{
-			name:                 "ResHandlerOK",
+			name:                 "OK",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			outErrValidatorReq:   nil,
@@ -236,17 +236,17 @@ func TestHandler(t *testing.T) {
 				// field errors - assert on them
 				assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
 				assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
-				assert.Equal(t, c.wantFieldErrs.Session, resBody.Errs.Session)
+				assert.Equal(t, c.wantFieldErrs.Auth, resBody.Errs.Auth)
 			} else {
-				// no field errors - assert on session token
-				foundAuthToken := false
+				// no field errors - assert on auth token
+				tokenFound := false
 				for _, cookie := range res.Cookies() {
 					if cookie.Name == "authToken" {
-						foundAuthToken = true
+						tokenFound = true
 						assert.Equal(t, c.outResGeneratorToken, cookie.Value)
 					}
 				}
-				assert.Equal(t, true, foundAuthToken)
+				assert.Equal(t, true, tokenFound)
 			}
 		})
 	}

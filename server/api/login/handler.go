@@ -6,29 +6,28 @@ import (
 	"net/http"
 	"time"
 
+	"server/auth"
 	"server/db"
 	"server/relay"
-
-	"github.com/google/uuid"
 )
 
 // Handler is the HTTP handler for the login route.
 type Handler struct {
-	readerUser      db.Reader[*db.User]
-	comparerHash    Comparer
-	upserterSession db.Upserter[*db.Session]
+	readerUser     db.Reader[*db.User]
+	comparerHash   Comparer
+	generatorToken auth.Generator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	readerUser db.Reader[*db.User],
 	comparerHash Comparer,
-	upserterSession db.Upserter[*db.Session],
+	generatorToken auth.Generator,
 ) *Handler {
 	return &Handler{
-		readerUser:      readerUser,
-		comparerHash:    comparerHash,
-		upserterSession: upserterSession,
+		readerUser:     readerUser,
+		comparerHash:   comparerHash,
+		generatorToken: generatorToken,
 	}
 }
 
@@ -75,19 +74,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create a new session, upsert it into the database and give set the
-	// session token cookie for the user.
-	session := db.NewSession(
-		uuid.NewString(), reqBody.Username, time.Now().Add(1*time.Hour),
-	)
-	if err = h.upserterSession.Upsert(session); err != nil {
+	// Generate a JWT for the user and return it in a Set-Cookie header
+	expiry := time.Now().Add(1 * time.Hour)
+	if tokenStr, err := h.generatorToken.Generate(reqBody.Username, expiry); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{
-			Name:    "sessionToken",
-			Value:   session.ID,
-			Expires: session.Expiry,
+			Name:    "authToken",
+			Value:   tokenStr,
+			Expires: expiry.UTC(),
 		})
 		w.WriteHeader(http.StatusOK)
 		return

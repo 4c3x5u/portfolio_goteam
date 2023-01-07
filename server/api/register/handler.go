@@ -84,8 +84,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Generate a JWT for the user and return it in a Set-Cookie header
 	expiry := time.Now().Add(1 * time.Hour)
 	if tokenStr, err := h.generatorToken.Generate(reqBody.Username, expiry); err != nil {
-		resBody.Errs = &Errs{Session: strErrToken}
-		relay.ClientErr(w, resBody, resBody.Errs.Session, http.StatusUnauthorized)
+		resBody.Errs = &Errs{Auth: errAuth}
+		relay.ClientErr(w, resBody, resBody.Errs.Auth, http.StatusUnauthorized)
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{
@@ -94,6 +94,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Expires: expiry.UTC(),
 		})
 		w.WriteHeader(http.StatusOK)
+		return
 	}
 }
 
@@ -101,6 +102,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // username given to it is already registered for another user.
 const strErrUsernameTaken = "Username is already taken."
 
-// strErrToken is the error message returned from the handler when register is
-// successful and the user is created but errors occur during token generation.
-const strErrToken = "Register success, token generator error."
+// errAuth is the error message returned from handlers when the token generator
+// throws an error
+const errAuth = "You have been registered successfuly but something went wrong. " +
+	"Please log in using the credentials you registered with."

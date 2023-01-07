@@ -10,148 +10,161 @@ import (
 	"testing"
 
 	"server/assert"
+	"server/auth"
 	"server/db"
 )
 
 func TestHandler(t *testing.T) {
 	var (
-		readerPwd     = &db.FakeReaderUser{}
-		comparerPwd   = &fakeComparer{}
-		readerSession = &db.FakeUpserterSession{}
+		readerPwd      = &db.FakeReaderUser{}
+		comparerPwd    = &fakeComparer{}
+		generatorToken = &auth.FakeGenerator{}
 	)
-	sut := NewHandler(readerPwd, comparerPwd, readerSession)
+	sut := NewHandler(readerPwd, comparerPwd, generatorToken)
 
 	for _, c := range []struct {
-		name                  string
-		httpMethod            string
-		reqBody               *ReqBody
-		outResReaderUser      *db.User
-		outErrReaderUser      error
-		outResComparerHash    bool
-		outErrComparerHash    error
-		outErrUpserterSession error
-		wantStatusCode        int
+		name                 string
+		httpMethod           string
+		reqBody              *ReqBody
+		outResReaderUser     *db.User
+		outErrReaderUser     error
+		outResComparerHash   bool
+		outErrComparerHash   error
+		outResGeneratorToken string
+		outErrGeneratorToken error
+		wantStatusCode       int
 	}{
 		{
-			name:                  "ErrHTTPMethod",
-			httpMethod:            http.MethodGet,
-			reqBody:               &ReqBody{},
-			outResReaderUser:      nil,
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusMethodNotAllowed,
+			name:                 "ErrHTTPMethod",
+			httpMethod:           http.MethodGet,
+			reqBody:              &ReqBody{},
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusMethodNotAllowed,
 		},
 		{
-			name:                  "ErrNoUsername",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{},
-			outResReaderUser:      nil,
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrNoUsername",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{},
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrUsernameEmpty",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: ""},
-			outResReaderUser:      nil,
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrUsernameEmpty",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: ""},
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrUserNotFound",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21"},
-			outResReaderUser:      nil,
-			outErrReaderUser:      sql.ErrNoRows,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrUserNotFound",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21"},
+			outResReaderUser:     nil,
+			outErrReaderUser:     sql.ErrNoRows,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrExistor",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUser:      nil,
-			outErrReaderUser:      errors.New("existor fatal error"),
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusInternalServerError,
+			name:                 "ErrExistor",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:     nil,
+			outErrReaderUser:     errors.New("existor fatal error"),
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusInternalServerError,
 		},
 		{
-			name:                  "ErrNoPassword",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21"},
-			outResReaderUser:      nil,
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrNoPassword",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21"},
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrPasswordEmpty",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: ""},
-			outResReaderUser:      nil,
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrPasswordEmpty",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: ""},
+			outResReaderUser:     nil,
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrPasswordWrong",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUser:      &db.User{},
-			outErrReaderUser:      nil,
-			outResComparerHash:    false,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusBadRequest,
+			name:                 "ErrPasswordWrong",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:     &db.User{},
+			outErrReaderUser:     nil,
+			outResComparerHash:   false,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                  "ErrComparerHash",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUser:      &db.User{},
-			outErrReaderUser:      nil,
-			outResComparerHash:    true,
-			outErrComparerHash:    errors.New("hash comparer error"),
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusInternalServerError,
+			name:                 "ErrComparerHash",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:     &db.User{},
+			outErrReaderUser:     nil,
+			outResComparerHash:   true,
+			outErrComparerHash:   errors.New("hash comparer error"),
+			outResGeneratorToken: "",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusInternalServerError,
 		},
 		{
-			name:                  "ErrUpserterSession",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUser:      &db.User{},
-			outErrReaderUser:      nil,
-			outResComparerHash:    true,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: errors.New("session upserter error"),
-			wantStatusCode:        http.StatusInternalServerError,
+			name:                 "ErrGeneratorToken",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:     &db.User{},
+			outErrReaderUser:     nil,
+			outResComparerHash:   true,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "",
+			outErrGeneratorToken: errors.New("token generator error"),
+			wantStatusCode:       http.StatusInternalServerError,
 		},
 		{
-			name:                  "OK",
-			httpMethod:            http.MethodPost,
-			reqBody:               &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outResReaderUser:      &db.User{},
-			outErrReaderUser:      nil,
-			outResComparerHash:    true,
-			outErrComparerHash:    nil,
-			outErrUpserterSession: nil,
-			wantStatusCode:        http.StatusOK,
+			name:                 "OK",
+			httpMethod:           http.MethodPost,
+			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			outResReaderUser:     &db.User{},
+			outErrReaderUser:     nil,
+			outResComparerHash:   true,
+			outErrComparerHash:   nil,
+			outResGeneratorToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			outErrGeneratorToken: nil,
+			wantStatusCode:       http.StatusOK,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -159,7 +172,8 @@ func TestHandler(t *testing.T) {
 			readerPwd.OutErr = c.outErrReaderUser
 			comparerPwd.outRes = c.outResComparerHash
 			comparerPwd.outErr = c.outErrComparerHash
-			readerSession.OutErr = c.outErrUpserterSession
+			generatorToken.OutRes = c.outResGeneratorToken
+			generatorToken.OutErr = c.outErrGeneratorToken
 
 			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {
@@ -179,8 +193,9 @@ func TestHandler(t *testing.T) {
 			if c.wantStatusCode == http.StatusOK {
 				foundSessionToken := false
 				for _, cookie := range w.Result().Cookies() {
-					if cookie.Name == "sessionToken" {
+					if cookie.Name == "authToken" {
 						foundSessionToken = true
+						assert.Equal(t, c.outResGeneratorToken, cookie.Value)
 					}
 				}
 				assert.Equal(t, true, foundSessionToken)
