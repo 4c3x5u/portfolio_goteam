@@ -29,7 +29,9 @@ func TestCreatorSession(t *testing.T) {
 
 		err := sut.Create(NewSession(id, username, expiry))
 
-		assert.Nil(t, err)
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
 	})
 
 	t.Run("CreateErr", func(t *testing.T) {
@@ -44,7 +46,9 @@ func TestCreatorSession(t *testing.T) {
 
 		err := sut.Create(NewSession(id, username, expiry))
 
-		assert.Equal(t, wantErr.Error(), err.Error())
+		if err = assert.Equal(wantErr, err); err != nil {
+			t.Error(err)
+		}
 	})
 }
 
@@ -65,7 +69,9 @@ func TestUpserterSession(t *testing.T) {
 
 		err := sut.Upsert(session)
 
-		assert.Nil(t, err)
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
 	})
 
 	t.Run("UpsertErr", func(t *testing.T) {
@@ -80,6 +86,8 @@ func TestUpserterSession(t *testing.T) {
 
 		err := sut.Upsert(session)
 
-		assert.Equal(t, wantErr.Error(), err.Error())
+		if err = assert.Equal(wantErr, err); err != nil {
+			t.Error(err)
+		}
 	})
 }

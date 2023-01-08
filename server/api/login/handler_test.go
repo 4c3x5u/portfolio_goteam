@@ -188,17 +188,23 @@ func TestHandler(t *testing.T) {
 
 			sut.ServeHTTP(w, req)
 
-			assert.Equal(t, c.wantStatusCode, w.Result().StatusCode)
-			// no field errors - assert on session token
+			if err = assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
+				t.Error(err)
+			}
 			if c.wantStatusCode == http.StatusOK {
+				// no field errors - assert on authToken
 				foundSessionToken := false
 				for _, cookie := range w.Result().Cookies() {
 					if cookie.Name == "authToken" {
 						foundSessionToken = true
-						assert.Equal(t, c.outResGeneratorToken, cookie.Value)
+						if err = assert.Equal(c.outResGeneratorToken, cookie.Value); err != nil {
+							t.Error(err)
+						}
 					}
 				}
-				assert.Equal(t, true, foundSessionToken)
+				if err = assert.True(foundSessionToken); err != nil {
+					t.Error(err)
+				}
 			}
 		})
 	}

@@ -191,21 +191,37 @@ func TestHandler(t *testing.T) {
 			// stops execution. Conditionals serve to determine which
 			// dependencies should have received their function arguments.
 			if c.httpMethod == http.MethodPost {
-				assert.Equal(t, c.reqBody.Username, validatorReq.inReqBody.Username)
-				assert.Equal(t, c.reqBody.Password, validatorReq.inReqBody.Password)
+				if err = assert.Equal(c.reqBody.Username, validatorReq.inReqBody.Username); err != nil {
+					t.Error(err)
+				}
+				if err = assert.Equal(c.reqBody.Password, validatorReq.inReqBody.Password); err != nil {
+					t.Error(err)
+				}
+
 				if c.outErrValidatorReq == nil {
 					// validator.Validate doesn't error – readerUser.Exists is called.
-					assert.Equal(t, c.reqBody.Username, existorUser.InArg)
+					if err = assert.Equal(c.reqBody.Username, existorUser.InArg); err != nil {
+						t.Error(err)
+					}
 					if c.outErrReaderUser == sql.ErrNoRows {
 						// readerUser.Exists returns sql.ErrNoRows - hasher.Hash is called.
-						assert.Equal(t, c.reqBody.Password, hasherPwd.inPlaintext)
+						if err = assert.Equal(c.reqBody.Password, hasherPwd.inPlaintext); err != nil {
+							t.Error(err)
+						}
+
 						if c.outErrHasherPwd == nil {
 							// hasher.Hash doesn't error – creatorUser.Create is called.
-							assert.Equal(t, c.reqBody.Username, creatorUser.InArg.Username)
-							assert.Equal(t, string(c.outResHasherPwd), string(creatorUser.InArg.Password))
+							if err = assert.Equal(c.reqBody.Username, creatorUser.InArg.Username); err != nil {
+								t.Error(err)
+							}
+							if err = assert.Equal(string(c.outResHasherPwd), string(creatorUser.InArg.Password)); err != nil {
+								t.Error(err)
+							}
 							if c.outErrCreatorUser == nil {
 								// creatorUser.Create doesn't error – generatorToken.Create is called.
-								assert.Equal(t, c.reqBody.Username, generatorToken.InSub)
+								if err = assert.Equal(c.reqBody.Username, generatorToken.InSub); err != nil {
+									t.Error(err)
+								}
 							}
 						}
 					}
@@ -214,7 +230,9 @@ func TestHandler(t *testing.T) {
 
 			// Assert on status code.
 			res := w.Result()
-			assert.Equal(t, c.wantStatusCode, res.StatusCode)
+			if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
 
 			// Assert on response body – however, there are some cases such as
 			// internal server errors where an empty res body is returned and
@@ -234,19 +252,29 @@ func TestHandler(t *testing.T) {
 
 			if c.wantFieldErrs != nil {
 				// field errors - assert on them
-				assert.EqualArr(t, c.wantFieldErrs.Username, resBody.Errs.Username)
-				assert.EqualArr(t, c.wantFieldErrs.Password, resBody.Errs.Password)
-				assert.Equal(t, c.wantFieldErrs.Auth, resBody.Errs.Auth)
+				if err = assert.EqualArr(c.wantFieldErrs.Username, resBody.Errs.Username); err != nil {
+					t.Error(err)
+				}
+				if err = assert.EqualArr(c.wantFieldErrs.Password, resBody.Errs.Password); err != nil {
+					t.Error(err)
+				}
+				if err = assert.Equal(c.wantFieldErrs.Auth, resBody.Errs.Auth); err != nil {
+					t.Error(err)
+				}
 			} else {
 				// no field errors - assert on auth token
 				tokenFound := false
 				for _, cookie := range res.Cookies() {
 					if cookie.Name == "authToken" {
 						tokenFound = true
-						assert.Equal(t, c.outResGeneratorToken, cookie.Value)
+						if err = assert.Equal(c.outResGeneratorToken, cookie.Value); err != nil {
+							t.Error(err)
+						}
 					}
 				}
-				assert.Equal(t, true, tokenFound)
+				if err = assert.Equal(true, tokenFound); err != nil {
+					t.Error(err)
+				}
 			}
 		})
 	}

@@ -17,17 +17,31 @@ func TestGeneratorToken(t *testing.T) {
 	)
 
 	tokenStr, err := sut.Generate(username, expiry)
-	assert.Nil(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
-		assert.Equal(t, true, ok)
+		if err = assert.True(ok); err != nil {
+			t.Error(err)
+		}
 		return []byte(sut.key), nil
 	})
-	assert.Nil(t, err)
+	if err = assert.Nil(err); err != nil {
+		t.Error(err)
+	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	assert.Equal(t, true, ok)
-	assert.Equal(t, nil, claims.Valid())
-	assert.Equal(t, username, claims["sub"].(string))
-	assert.Equal(t, float64(expiry.Unix()), claims["exp"].(float64))
+	if err = assert.True(ok); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Nil(claims.Valid()); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(username, claims["sub"].(string)); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(float64(expiry.Unix()), claims["exp"].(float64)); err != nil {
+		t.Error(err)
+	}
 }

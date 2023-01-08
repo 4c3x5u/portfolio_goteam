@@ -42,12 +42,12 @@ func TestComparerHash(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			isMatch, err := sut.Compare([]byte(c.inHashStr), c.inPlaintext)
-			if c.wantErr == nil {
-				assert.Nil(t, err)
-			} else {
-				assert.Equal(t, c.wantErr.Error(), err.Error())
+			if err = assert.Equal(c.wantErr, err); err != nil {
+				t.Error(err)
 			}
-			assert.Equal(t, c.wantIsMatch, isMatch)
+			if err = assert.Equal(c.wantIsMatch, isMatch); err != nil {
+				t.Error(err)
+			}
 		})
 	}
 }

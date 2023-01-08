@@ -34,12 +34,14 @@ func TestHasherComparer(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			hasher := &HasherPwd{}
 			resHash, err := hasher.Hash(c.inPlaintext)
-			assert.Nil(t, err)
+			if err = assert.Nil(err); err != nil {
+				t.Error(err)
+			}
+
 			err = bcrypt.CompareHashAndPassword(resHash, []byte(c.matchPlaintext))
-			if c.wantErr != nil {
-				assert.Equal(t, c.wantErr.Error(), err.Error())
-			} else {
-				assert.Nil(t, c.wantErr)
+
+			if err = assert.Equal(c.wantErr, err); err != nil {
+				t.Error(err)
 			}
 		})
 	}

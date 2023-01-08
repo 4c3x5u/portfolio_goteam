@@ -24,7 +24,9 @@ func TestReaderUser(t *testing.T) {
 		sut := NewReaderUser(db)
 
 		_, err := sut.Read(username)
-		assert.Equal(t, wantErr.Error(), err.Error())
+		if err = assert.Equal(wantErr, err); err != nil {
+			t.Error(err)
+		}
 	})
 
 	t.Run("Res", func(t *testing.T) {
@@ -43,8 +45,12 @@ func TestReaderUser(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		assert.Equal(t, username, user.Username)
-		assert.Equal(t, wantPwd, string(user.Password))
+		if err = assert.Equal(username, user.Username); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(wantPwd, string(user.Password)); err != nil {
+			t.Error(err)
+		}
 	})
 }
 
@@ -63,7 +69,9 @@ func TestCreatorUser(t *testing.T) {
 
 		err := sut.Create(NewUser(username, password))
 
-		assert.Nil(t, err)
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
 	})
 
 	t.Run("CreateErr", func(t *testing.T) {
@@ -78,6 +86,8 @@ func TestCreatorUser(t *testing.T) {
 
 		err := sut.Create(NewUser(username, password))
 
-		assert.Equal(t, wantErr.Error(), err.Error())
+		if err = assert.Equal(wantErr, err); err != nil {
+			t.Error(err)
+		}
 	})
 }
