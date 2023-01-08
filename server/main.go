@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"server/token"
 
-	"server/api/login"
-	"server/api/register"
-	"server/auth"
+	loginAPI "server/api/login"
+	registerAPI "server/api/register"
 	"server/db"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -21,7 +21,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	generatorToken := auth.NewGeneratorToken(
+	jwtGenerator := token.NewJWTGenerator(
 		os.Getenv("JWTSIGNATURE"),
 		jwt.SigningMethodHS256,
 	)
@@ -29,21 +29,21 @@ func main() {
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", register.NewHandler(
-		register.NewValidatorReq(
-			register.NewValidatorUsername(),
-			register.NewValidatorPassword(),
+	mux.Handle("/register", registerAPI.NewHandler(
+		registerAPI.NewRequestValidator(
+			registerAPI.NewUsernameValidator(),
+			registerAPI.NewPasswordValidator(),
 		),
-		db.NewReaderUser(conn),
-		register.NewHasherPwd(),
-		db.NewCreatorUser(conn),
-		generatorToken,
+		db.NewUserReader(conn),
+		registerAPI.NewPasswordHasher(),
+		db.NewUserCreator(conn),
+		jwtGenerator,
 	))
 
-	mux.Handle("/login", login.NewHandler(
-		db.NewReaderUser(conn),
-		login.NewComparerHash(),
-		generatorToken,
+	mux.Handle("/login", loginAPI.NewHandler(
+		db.NewUserReader(conn),
+		loginAPI.NewPasswordComparer(),
+		jwtGenerator,
 	))
 
 	// Serve the API routes using the ServeMux.

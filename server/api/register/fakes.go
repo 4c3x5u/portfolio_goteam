@@ -3,37 +3,37 @@ package register
 // fakeValidator is a test fake for Validator.
 type fakeValidator struct {
 	inReqBody *ReqBody
-	outErrs   *Errs
+	outErrs   *ValidationErrs
 }
 
 // Validate implements the Validator interface on fakeValidator.
 // struct.
-func (f *fakeValidator) Validate(reqBody *ReqBody) *Errs {
+func (f *fakeValidator) Validate(reqBody *ReqBody) *ValidationErrs {
 	f.inReqBody = reqBody
 	return f.outErrs
 }
 
-// fakeValidatorStr is a test fake for ValidatorStr.
-type fakeValidatorStr struct {
+// fakeStringValidator is a test fake for StringValidator.
+type fakeStringValidator struct {
 	inArg   string
 	outErrs []string
 }
 
-// Validate implements the ValidatorStr interface on fakeValidatorStr.
-func (f *fakeValidatorStr) Validate(arg string) (errs []string) {
+// Validate implements the StringValidator interface on fakeStringValidator.
+func (f *fakeStringValidator) Validate(arg string) (errs []string) {
 	f.inArg = arg
 	return f.outErrs
 }
 
-// fakeHasherPwd is a test fake for Hasher.
-type fakeHasherPwd struct {
+// fakeHasher is a test fake for Hasher.
+type fakeHasher struct {
 	inPlaintext string
 	outHash     []byte
 	outErr      error
 }
 
-// Hash implements the Hasher interface on fakeHasherPwd.
-func (f *fakeHasherPwd) Hash(plaintext string) ([]byte, error) {
+// Hash implements the Hasher interface on fakeHasher.
+func (f *fakeHasher) Hash(plaintext string) ([]byte, error) {
 	f.inPlaintext = plaintext
 	return f.outHash, f.outErr
 }

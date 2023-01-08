@@ -10,12 +10,12 @@ type ReqBody struct {
 
 // ResBody defines the response body for Handler.
 type ResBody struct {
-	Msg  string `json:"message"`
-	Errs *Errs  `json:"errors"`
+	Msg            string          `json:"message"`
+	ValidationErrs *ValidationErrs `json:"errors"`
 }
 
-// Errs defines the structure errors returned in ResBody.
-type Errs struct {
+// ValidationErrs defines the validation errors returned in ResBody.
+type ValidationErrs struct {
 	Username []string `json:"username"`
 	Password []string `json:"password"`
 	Auth     string   `json:"auth"`

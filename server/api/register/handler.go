@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"server/token"
 	"time"
 
-	"server/auth"
 	"server/db"
 	"server/relay"
 )
@@ -14,26 +14,26 @@ import (
 // Handler is the http.Handler for the register route.
 type Handler struct {
 	validator      Validator
-	readerUser     db.Reader[*db.User]
+	userReader     db.Reader[*db.User]
 	hasher         Hasher
-	creatorUser    db.Creator[*db.User]
-	generatorToken auth.Generator
+	userCreator    db.Creator[*db.User]
+	tokenGenerator token.Generator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	validatorReq Validator,
-	readerUser db.Reader[*db.User],
+	validator Validator,
+	userReader db.Reader[*db.User],
 	hasher Hasher,
-	creatorUser db.Creator[*db.User],
-	generatorToken auth.Generator,
+	userCreator db.Creator[*db.User],
+	tokenGenerator token.Generator,
 ) *Handler {
 	return &Handler{
-		validator:      validatorReq,
-		readerUser:     readerUser,
+		validator:      validator,
+		userReader:     userReader,
 		hasher:         hasher,
-		creatorUser:    creatorUser,
-		generatorToken: generatorToken,
+		userCreator:    userCreator,
+		tokenGenerator: tokenGenerator,
 	}
 }
 
@@ -52,7 +52,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errs := h.validator.Validate(reqBody); errs != nil {
-		resBody.Errs = errs
+		resBody.ValidationErrs = errs
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	}
@@ -63,8 +63,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// rows come back 0. However, not sure if that would increase or decrease
 	// the performance as hashing will then occur before exists checks.
 	// TODO: Test when deployed.
-	if _, err := h.readerUser.Read(reqBody.Username); err == nil {
-		resBody.Errs = &Errs{Username: []string{strErrUsernameTaken}}
+	if _, err := h.userReader.Read(reqBody.Username); err == nil {
+		resBody.ValidationErrs = &ValidationErrs{Username: []string{strErrUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	} else if err != sql.ErrNoRows {
@@ -76,16 +76,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err = h.creatorUser.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
+	} else if err = h.userCreator.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
 
 	// Generate a JWT for the user and return it in a Set-Cookie header
 	expiry := time.Now().Add(1 * time.Hour)
-	if tokenStr, err := h.generatorToken.Generate(reqBody.Username, expiry); err != nil {
-		resBody.Errs = &Errs{Auth: errAuth}
-		relay.ClientErr(w, resBody, resBody.Errs.Auth, http.StatusUnauthorized)
+	if tokenStr, err := h.tokenGenerator.Generate(reqBody.Username, expiry); err != nil {
+		resBody.ValidationErrs = &ValidationErrs{Auth: errAuth}
+		relay.ClientErr(w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized)
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{

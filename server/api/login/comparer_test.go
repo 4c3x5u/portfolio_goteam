@@ -8,44 +8,44 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestComparerHash(t *testing.T) {
-	sut := NewComparerHash()
+func TestPasswordComparer(t *testing.T) {
+	sut := NewPasswordComparer()
 
 	for _, c := range []struct {
 		name        string
-		inHashStr   string
+		inHash      []byte
 		inPlaintext string
-		wantIsMatch bool
+		wantMatch   bool
 		wantErr     error
 	}{
 		{
-			name:        "IsMatchTrue",
+			name:        "Match",
 			inPlaintext: "password",
-			inHashStr:   "$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS",
-			wantIsMatch: true,
+			inHash:      []byte("$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS"),
+			wantMatch:   true,
 			wantErr:     nil,
 		},
 		{
-			name:        "IsMatchFalse",
+			name:        "NoMatch",
 			inPlaintext: "password",
-			inHashStr:   "$2a$04$ngqMWrzBWyg8KO3MGk1cnOISt3wyeBwbFlkvghSHKBkSYOeO2.7XG",
-			wantIsMatch: false,
+			inHash:      []byte("$2a$04$ngqMWrzBWyg8KO3MGk1cnOISt3wyeBwbFlkvghSHKBkSYOeO2.7XG"),
+			wantMatch:   false,
 			wantErr:     nil,
 		},
 		{
-			name:        "ErrTooShort",
+			name:        "Error",
 			inPlaintext: "password",
-			inHashStr:   "$2a$04$ngqMWrzBWyg8K",
-			wantIsMatch: false,
+			inHash:      []byte("$2a$04$ngqMWrzBWyg8K"),
+			wantMatch:   false,
 			wantErr:     bcrypt.ErrHashTooShort,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			isMatch, err := sut.Compare([]byte(c.inHashStr), c.inPlaintext)
+			match, err := sut.Compare(c.inHash, c.inPlaintext)
 			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(c.wantIsMatch, isMatch); err != nil {
+			if err = assert.Equal(c.wantMatch, match); err != nil {
 				t.Error(err)
 			}
 		})

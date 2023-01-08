@@ -7,10 +7,10 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// setupTest is for setting up the DB and Sqlmock for server/db test cases. The
+// setUpDBMock sets up the DB and Sqlmock for server/db test cases. The
 // first two return values are self-explanatory, and the third is the database
 // teardown function to be deferred by the test case.
-func setupTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
+func setUpDBMock(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)

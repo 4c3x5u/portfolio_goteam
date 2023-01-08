@@ -6,64 +6,43 @@ import (
 	"server/assert"
 )
 
-const (
-	usnEmpty       = "Username cannot be empty."
-	usnTooShort    = "Username cannot be shorter than 5 characters."
-	usnTooLong     = "Username cannot be longer than 15 characters."
-	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
-	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
-
-	pwdEmpty     = "Password cannot be empty."
-	pwdTooShort  = "Password cannot be shorter than 8 characters."
-	pwdTooLong   = "Password cannot be longer than 64 characters."
-	pwdNoLower   = "Password must contain a lowercase letter (a-z)."
-	pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
-	pwdNoDigit   = "Password must contain a digit (0-9)."
-	pwdNoSpecial = "Password must contain one of the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-	pwdHasSpace = "Password cannot contain spaces."
-	pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
-		"and the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-)
-
-// This suite of tests is only for ensuring valdator returns the correct Errs
+// This suite of tests is only for ensuring valdator returns the correct ValidationErrs
 // object based on the errors that field validators return. Each possible
 // outcome from each field validator is tested in the following test suites.
-func TestValidator(t *testing.T) {
-	fakeValidatorUsername := &fakeValidatorStr{}
-	fakeValidatorPassword := &fakeValidatorStr{}
+func TestRequestValidator(t *testing.T) {
+	fakeValidatorUsername := &fakeStringValidator{}
+	fakeValidatorPassword := &fakeStringValidator{}
 
-	sut := NewValidatorReq(fakeValidatorUsername, fakeValidatorPassword)
+	sut := NewRequestValidator(fakeValidatorUsername, fakeValidatorPassword)
 
 	for _, c := range []struct {
 		name         string
 		reqBody      *ReqBody
-		errsUsername []string
-		errsPassword []string
+		usernameErrs []string
+		passwordErrs []string
 	}{
 		{
 			name:         "UsnEmpty_PwdEmpty",
 			reqBody:      &ReqBody{Username: "", Password: ""},
-			errsUsername: []string{usnEmpty},
-			errsPassword: []string{pwdEmpty},
+			usernameErrs: []string{usnEmpty},
+			passwordErrs: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort_UsnInvalidChar_PwdEmpty",
 			reqBody:      &ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
-			errsUsername: []string{usnTooShort, usnInvalidChar},
-			errsPassword: []string{pwdNonASCII},
+			usernameErrs: []string{usnTooShort, usnInvalidChar},
+			passwordErrs: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart_PwdTooLong_PwdNoDigit",
 			reqBody:      &ReqBody{Username: "1bobob", Password: "MyPass!"},
-			errsUsername: []string{usnDigitStart},
-			errsPassword: []string{pwdTooShort, pwdNoDigit},
+			usernameErrs: []string{usnDigitStart},
+			passwordErrs: []string{pwdTooShort, pwdNoDigit},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			fakeValidatorUsername.outErrs = c.errsUsername
-			fakeValidatorPassword.outErrs = c.errsPassword
+			fakeValidatorUsername.outErrs = c.usernameErrs
+			fakeValidatorPassword.outErrs = c.passwordErrs
 
 			res := sut.Validate(c.reqBody)
 
@@ -73,10 +52,10 @@ func TestValidator(t *testing.T) {
 			if err := assert.Equal(c.reqBody.Password, fakeValidatorPassword.inArg); err != nil {
 				t.Error(err)
 			}
-			if err := assert.EqualArr(c.errsUsername, res.Username); err != nil {
+			if err := assert.EqualArr(c.usernameErrs, res.Username); err != nil {
 				t.Error(err)
 			}
-			if err := assert.EqualArr(c.errsPassword, res.Password); err != nil {
+			if err := assert.EqualArr(c.passwordErrs, res.Password); err != nil {
 				t.Error(err)
 			}
 		})
@@ -84,7 +63,7 @@ func TestValidator(t *testing.T) {
 }
 
 func TestValidatorUsername(t *testing.T) {
-	sut := NewValidatorUsername()
+	sut := NewUsernameValidator()
 
 	for _, c := range []struct {
 		name     string
@@ -120,7 +99,7 @@ func TestValidatorUsername(t *testing.T) {
 }
 
 func TestValidatorPassword(t *testing.T) {
-	sut := NewValidatorPassword()
+	sut := NewPasswordValidator()
 
 	for _, c := range []struct {
 		name     string

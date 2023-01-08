@@ -7,170 +7,170 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"server/token"
 	"testing"
 
 	"server/assert"
-	"server/auth"
 	"server/db"
 )
 
 func TestHandler(t *testing.T) {
 	// handler setup
 	var (
-		validatorReq   = &fakeValidator{}
-		existorUser    = &db.FakeReaderUser{}
-		hasherPwd      = &fakeHasherPwd{}
-		creatorUser    = &db.FakeCreatorUser{}
-		generatorToken = &auth.FakeGenerator{}
+		validator      = &fakeValidator{}
+		userReader     = &db.FakeUserReader{}
+		hasher         = &fakeHasher{}
+		userCreator    = &db.FakeUserCreator{}
+		tokenGenerator = &token.FakeGenerator{}
 	)
-	sut := NewHandler(validatorReq, existorUser, hasherPwd, creatorUser, generatorToken)
+	sut := NewHandler(validator, userReader, hasher, userCreator, tokenGenerator)
 
 	for _, c := range []struct {
 		name                 string
 		httpMethod           string
 		reqBody              *ReqBody
-		outErrValidatorReq   *Errs
-		outResReaderUser     *db.User
-		outErrReaderUser     error
-		outResHasherPwd      []byte
-		outErrHasherPwd      error
-		outErrCreatorUser    error
-		outResGeneratorToken string
-		outErrGeneratorToken error
+		validatorOutErr      *ValidationErrs
+		userReaderOutRes     *db.User
+		userReaderOutErr     error
+		hasherOutRes         []byte
+		hasherOutErr         error
+		userCreatorOutErr    error
+		tokenGeneratorOutRes string
+		tokenGeneratorOutErr error
 		wantStatusCode       int
-		wantFieldErrs        *Errs
+		wantFieldErrs        *ValidationErrs
 	}{
 		{
-			name:                 "ErrHttpMethod",
+			name:                 "HttpMethodError",
 			httpMethod:           http.MethodGet,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     nil,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusMethodNotAllowed,
 			wantFieldErrs:        nil,
 		},
 		{
-			name:                 "ErrValidator",
+			name:                 "ValidatorError",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			outErrValidatorReq:   &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			outResReaderUser:     nil,
-			outErrReaderUser:     nil,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      &ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			userReaderOutRes:     nil,
+			userReaderOutErr:     nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantFieldErrs:        &Errs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			wantFieldErrs:        &ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
-			name:                 "ResExistorTrue",
+			name:                 "UsernameTaken",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     nil,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantFieldErrs:        &Errs{Username: []string{strErrUsernameTaken}},
+			wantFieldErrs:        &ValidationErrs{Username: []string{strErrUsernameTaken}},
 		},
 		{
-			name:                 "ErrExistor",
+			name:                 "UserReaderError",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     errors.New("existor fatal error"),
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     errors.New("user reader error"),
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
 		{
-			name:                 "ErrHasher",
+			name:                 "HasherError",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     sql.ErrNoRows,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      errors.New("hasher fatal error"),
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         errors.New("hasher fatal error"),
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
 		{
-			name:                 "ErrCreatorUser",
+			name:                 "UserCreatorError",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     sql.ErrNoRows,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    errors.New("creator fatal error"),
-			outResGeneratorToken: "",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    errors.New("creator fatal error"),
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantFieldErrs:        nil,
 		},
 		{
-			name:                 "ErrGeneratorToken",
+			name:                 "TokenGeneratorError",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     sql.ErrNoRows,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "",
-			outErrGeneratorToken: errors.New("token generator error"),
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: errors.New("token generator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &Errs{Auth: errAuth},
+			wantFieldErrs:        &ValidationErrs{Auth: errAuth},
 		},
 		{
-			name:                 "OK",
+			name:                 "Success",
 			httpMethod:           http.MethodPost,
 			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			outErrValidatorReq:   nil,
-			outResReaderUser:     nil,
-			outErrReaderUser:     sql.ErrNoRows,
-			outResHasherPwd:      nil,
-			outErrHasherPwd:      nil,
-			outErrCreatorUser:    nil,
-			outResGeneratorToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			outErrGeneratorToken: nil,
+			validatorOutErr:      nil,
+			userReaderOutRes:     nil,
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
 			wantFieldErrs:        nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for Handler dependencies.
-			validatorReq.outErrs = c.outErrValidatorReq
-			existorUser.OutRes = c.outResReaderUser
-			existorUser.OutErr = c.outErrReaderUser
-			hasherPwd.outHash = c.outResHasherPwd
-			hasherPwd.outErr = c.outErrHasherPwd
-			creatorUser.OutErr = c.outErrCreatorUser
-			generatorToken.OutRes = c.outResGeneratorToken
-			generatorToken.OutErr = c.outErrGeneratorToken
+			validator.outErrs = c.validatorOutErr
+			userReader.OutRes = c.userReaderOutRes
+			userReader.OutErr = c.userReaderOutErr
+			hasher.outHash = c.hasherOutRes
+			hasher.outErr = c.hasherOutErr
+			userCreator.OutErr = c.userCreatorOutErr
+			tokenGenerator.OutRes = c.tokenGeneratorOutRes
+			tokenGenerator.OutErr = c.tokenGeneratorOutErr
 
 			// Parse request body.
 			reqBody, err := json.Marshal(c.reqBody)
@@ -191,35 +191,35 @@ func TestHandler(t *testing.T) {
 			// stops execution. Conditionals serve to determine which
 			// dependencies should have received their function arguments.
 			if c.httpMethod == http.MethodPost {
-				if err = assert.Equal(c.reqBody.Username, validatorReq.inReqBody.Username); err != nil {
+				if err = assert.Equal(c.reqBody.Username, validator.inReqBody.Username); err != nil {
 					t.Error(err)
 				}
-				if err = assert.Equal(c.reqBody.Password, validatorReq.inReqBody.Password); err != nil {
+				if err = assert.Equal(c.reqBody.Password, validator.inReqBody.Password); err != nil {
 					t.Error(err)
 				}
 
-				if c.outErrValidatorReq == nil {
-					// validator.Validate doesn't error – readerUser.Exists is called.
-					if err = assert.Equal(c.reqBody.Username, existorUser.InArg); err != nil {
+				if c.validatorOutErr == nil {
+					// validator.Validate doesn't error – userReader.Exists is called.
+					if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
 						t.Error(err)
 					}
-					if c.outErrReaderUser == sql.ErrNoRows {
-						// readerUser.Exists returns sql.ErrNoRows - hasher.Hash is called.
-						if err = assert.Equal(c.reqBody.Password, hasherPwd.inPlaintext); err != nil {
+					if c.userReaderOutErr == sql.ErrNoRows {
+						// userReader.Exists returns sql.ErrNoRows - hasher.Hash is called.
+						if err = assert.Equal(c.reqBody.Password, hasher.inPlaintext); err != nil {
 							t.Error(err)
 						}
 
-						if c.outErrHasherPwd == nil {
-							// hasher.Hash doesn't error – creatorUser.Create is called.
-							if err = assert.Equal(c.reqBody.Username, creatorUser.InArg.Username); err != nil {
+						if c.hasherOutErr == nil {
+							// hasher.Hash doesn't error – userCreator.Create is called.
+							if err = assert.Equal(c.reqBody.Username, userCreator.InArg.Username); err != nil {
 								t.Error(err)
 							}
-							if err = assert.Equal(string(c.outResHasherPwd), string(creatorUser.InArg.Password)); err != nil {
+							if err = assert.Equal(string(c.hasherOutRes), string(userCreator.InArg.Password)); err != nil {
 								t.Error(err)
 							}
-							if c.outErrCreatorUser == nil {
-								// creatorUser.Create doesn't error – generatorToken.Create is called.
-								if err = assert.Equal(c.reqBody.Username, generatorToken.InSub); err != nil {
+							if c.userCreatorOutErr == nil {
+								// userCreator.Create doesn't error – tokenGenerator.Create is called.
+								if err = assert.Equal(c.reqBody.Username, tokenGenerator.InSub); err != nil {
 									t.Error(err)
 								}
 							}
@@ -238,9 +238,9 @@ func TestHandler(t *testing.T) {
 			// internal server errors where an empty res body is returned and
 			// these assertions are not run.
 			if c.httpMethod != http.MethodPost ||
-				c.outErrReaderUser != nil ||
-				c.outErrHasherPwd != nil ||
-				c.outErrCreatorUser != nil ||
+				c.userReaderOutErr != nil ||
+				c.hasherOutErr != nil ||
+				c.userCreatorOutErr != nil ||
 				c.wantStatusCode == http.StatusOK {
 				return
 			}
@@ -252,13 +252,13 @@ func TestHandler(t *testing.T) {
 
 			if c.wantFieldErrs != nil {
 				// field errors - assert on them
-				if err = assert.EqualArr(c.wantFieldErrs.Username, resBody.Errs.Username); err != nil {
+				if err = assert.EqualArr(c.wantFieldErrs.Username, resBody.ValidationErrs.Username); err != nil {
 					t.Error(err)
 				}
-				if err = assert.EqualArr(c.wantFieldErrs.Password, resBody.Errs.Password); err != nil {
+				if err = assert.EqualArr(c.wantFieldErrs.Password, resBody.ValidationErrs.Password); err != nil {
 					t.Error(err)
 				}
-				if err = assert.Equal(c.wantFieldErrs.Auth, resBody.Errs.Auth); err != nil {
+				if err = assert.Equal(c.wantFieldErrs.Auth, resBody.ValidationErrs.Auth); err != nil {
 					t.Error(err)
 				}
 			} else {
@@ -267,7 +267,7 @@ func TestHandler(t *testing.T) {
 				for _, cookie := range res.Cookies() {
 					if cookie.Name == "authToken" {
 						tokenFound = true
-						if err = assert.Equal(c.outResGeneratorToken, cookie.Value); err != nil {
+						if err = assert.Equal(c.tokenGeneratorOutRes, cookie.Value); err != nil {
 							t.Error(err)
 						}
 					}

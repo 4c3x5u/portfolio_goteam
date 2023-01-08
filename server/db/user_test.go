@@ -2,26 +2,25 @@ package db
 
 import (
 	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 
 	"server/assert"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestReaderUser(t *testing.T) {
+func TestUserReader(t *testing.T) {
 	username := "bob21"
 	query := `SELECT username, password FROM users WHERE username = \$1`
 
-	t.Run("Err", func(t *testing.T) {
-		wantErr := errors.New("reader fatal error")
+	t.Run("Error", func(t *testing.T) {
+		wantErr := errors.New("user reader error")
 
-		db, mock, teardown := setupTest(t)
+		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
 
-		sut := NewReaderUser(db)
+		sut := NewUserReader(db)
 
 		_, err := sut.Read(username)
 		if err = assert.Equal(wantErr, err); err != nil {
@@ -29,17 +28,17 @@ func TestReaderUser(t *testing.T) {
 		}
 	})
 
-	t.Run("Res", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		wantPwd := "Myp4ssword!"
 
-		db, mock, teardown := setupTest(t)
+		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 			mock.NewRows([]string{"username", "password"}).AddRow(username, wantPwd),
 		)
 		mock.ExpectClose()
 
-		sut := NewReaderUser(db)
+		sut := NewUserReader(db)
 
 		user, err := sut.Read(username)
 		if err != nil {
@@ -54,39 +53,39 @@ func TestReaderUser(t *testing.T) {
 	})
 }
 
-func TestCreatorUser(t *testing.T) {
+func TestUserCreator(t *testing.T) {
 	username, password := "bob21", []byte("hashedpwd")
 	query := `INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`
 
-	t.Run("CreateOK", func(t *testing.T) {
-		db, mock, teardown := setupTest(t)
-		defer teardown()
-		mock.
-			ExpectExec(query).
-			WithArgs(username, string(password)).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-		sut := NewCreatorUser(db)
-
-		err := sut.Create(NewUser(username, password))
-
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
-	})
-
-	t.Run("CreateErr", func(t *testing.T) {
+	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, teardown := setupTest(t)
+		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.
 			ExpectExec(`INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`).
 			WithArgs(username, string(password)).
 			WillReturnError(wantErr)
-		sut := NewCreatorUser(db)
+		sut := NewUserCreator(db)
 
 		err := sut.Create(NewUser(username, password))
 
 		if err = assert.Equal(wantErr, err); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		db, mock, teardown := setUpDBMock(t)
+		defer teardown()
+		mock.
+			ExpectExec(query).
+			WithArgs(username, string(password)).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		sut := NewUserCreator(db)
+
+		err := sut.Create(NewUser(username, password))
+
+		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
 	})

@@ -2,55 +2,79 @@ package register
 
 import "regexp"
 
+const (
+	usnEmpty       = "Username cannot be empty."
+	usnTooShort    = "Username cannot be shorter than 5 characters."
+	usnTooLong     = "Username cannot be longer than 15 characters."
+	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
+	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
+
+	pwdEmpty     = "Password cannot be empty."
+	pwdTooShort  = "Password cannot be shorter than 8 characters."
+	pwdTooLong   = "Password cannot be longer than 64 characters."
+	pwdNoLower   = "Password must contain a lowercase letter (a-z)."
+	pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
+	pwdNoDigit   = "Password must contain a digit (0-9)."
+	pwdNoSpecial = "Password must contain one of the following special characters: " +
+		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+	pwdHasSpace = "Password cannot contain spaces."
+	pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+		"and the following special characters: " +
+		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+)
+
 // Validator represents a type that validates a *ReqBody and returns an
-// *Errs based on the validation errors that occur.
+// *ValidationErrs based on the validation errors that occur.
 type Validator interface {
-	Validate(req *ReqBody) (errs *Errs)
+	Validate(req *ReqBody) (errs *ValidationErrs)
 }
 
-// ValidatorReq is the request validator for the register route.
-type ValidatorReq struct {
-	ValidatorUsername ValidatorStr
-	ValidatorPassword ValidatorStr
+// RequestValidator is the request validator for the register route.
+type RequestValidator struct {
+	UsernameValidator StringValidator
+	PasswordValidator StringValidator
 }
 
-// NewValidatorReq is the constructor for ValidatorReq.
-func NewValidatorReq(validatorUsername, validatorPassword ValidatorStr) *ValidatorReq {
-	return &ValidatorReq{
-		ValidatorUsername: validatorUsername,
-		ValidatorPassword: validatorPassword,
+// NewRequestValidator is the constructor for RequestValidator.
+func NewRequestValidator(
+	usernameValidator,
+	passwordValidator StringValidator,
+) *RequestValidator {
+	return &RequestValidator{
+		UsernameValidator: usernameValidator,
+		PasswordValidator: passwordValidator,
 	}
 }
 
 // Validate uses individual field validation logic defined in the validation.go
 // file to validate requests sent the register route. It returns an errors
 // object if any of the individual validations fail. It implements the
-// Validator interface on the ValidatorReq struct.
-func (v *ValidatorReq) Validate(req *ReqBody) *Errs {
-	errs := &Errs{}
-	errs.Username = v.ValidatorUsername.Validate(req.Username)
-	errs.Password = v.ValidatorPassword.Validate(req.Password)
+// Validator interface on the RequestValidator struct.
+func (v *RequestValidator) Validate(req *ReqBody) *ValidationErrs {
+	errs := &ValidationErrs{}
+	errs.Username = v.UsernameValidator.Validate(req.Username)
+	errs.Password = v.PasswordValidator.Validate(req.Password)
 	if len(errs.Username) > 0 || len(errs.Password) > 0 {
 		return errs
 	}
 	return nil
 }
 
-// ValidatorStr represents a type that validates a string input and returns a
+// StringValidator represents a type that validates a string input and returns a
 // string slice containing validation error messages.
-type ValidatorStr interface {
+type StringValidator interface {
 	Validate(string) (errs []string)
 }
 
-// ValidatorUsername is the password field validator for the register route.
-type ValidatorUsername struct{}
+// UsernameValidator is the password field validator for the register route.
+type UsernameValidator struct{}
 
-// NewValidatorUsername is the constructor for ValidatorUsername.
-func NewValidatorUsername() *ValidatorUsername { return &ValidatorUsername{} }
+// NewUsernameValidator is the constructor for UsernameValidator.
+func NewUsernameValidator() *UsernameValidator { return &UsernameValidator{} }
 
 // Validate applies password validation rules to the Username string and returns
 // the error message if any fails.
-func (v *ValidatorUsername) Validate(username string) (errs []string) {
+func (v *UsernameValidator) Validate(username string) (errs []string) {
 	if username == "" {
 		errs = append(errs, "Username cannot be empty.")
 		// if password empty, further validation is pointless – return errors
@@ -71,15 +95,15 @@ func (v *ValidatorUsername) Validate(username string) (errs []string) {
 	return
 }
 
-// ValidatorPassword is the password field validator for the register route.
-type ValidatorPassword struct{}
+// PasswordValidator is the password field validator for the register route.
+type PasswordValidator struct{}
 
-// NewValidatorPassword is the constructor for ValidatorPassword.
-func NewValidatorPassword() *ValidatorPassword { return &ValidatorPassword{} }
+// NewPasswordValidator is the constructor for PasswordValidator.
+func NewPasswordValidator() *PasswordValidator { return &PasswordValidator{} }
 
 // Validate applies password validation rules to the Password string and returns
 // the error message if any fails.
-func (v *ValidatorPassword) Validate(password string) (errs []string) {
+func (v *PasswordValidator) Validate(password string) (errs []string) {
 	if password == "" {
 		errs = append(errs, "Password cannot be empty.")
 		// if password empty, further validation is pointless

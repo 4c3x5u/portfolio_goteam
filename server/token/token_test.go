@@ -1,4 +1,4 @@
-package auth
+package token
 
 import (
 	"testing"
@@ -9,11 +9,11 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func TestGeneratorToken(t *testing.T) {
+func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"
 		expiry   = time.Now().Add(1 * time.Hour)
-		sut      = NewGeneratorToken("d16889c5-5e2e-48ed-87c4-d29b8ee23fad", jwt.SigningMethodHS256)
+		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad", jwt.SigningMethodHS256)
 	)
 
 	tokenStr, err := sut.Generate(username, expiry)
