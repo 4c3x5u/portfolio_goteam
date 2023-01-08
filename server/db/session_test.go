@@ -19,8 +19,8 @@ func TestCreatorSession(t *testing.T) {
 	)
 
 	t.Run("CreateOK", func(t *testing.T) {
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(query).
 			WithArgs(id, username, expiry.String()).
@@ -36,8 +36,8 @@ func TestCreatorSession(t *testing.T) {
 
 	t.Run("CreateErr", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(query).
 			WithArgs(id, username, expiry.String()).
@@ -59,8 +59,8 @@ func TestUpserterSession(t *testing.T) {
 	)
 
 	t.Run("UpsertOK", func(t *testing.T) {
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(query).
 			WithArgs(session.ID, session.Username, session.Expiry.String()).
@@ -76,8 +76,8 @@ func TestUpserterSession(t *testing.T) {
 
 	t.Run("UpsertErr", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(query).
 			WithArgs(session.ID, session.Username, session.Expiry.String()).

@@ -16,8 +16,8 @@ func TestReaderUser(t *testing.T) {
 	t.Run("Err", func(t *testing.T) {
 		wantErr := errors.New("reader fatal error")
 
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
 
@@ -32,8 +32,8 @@ func TestReaderUser(t *testing.T) {
 	t.Run("Res", func(t *testing.T) {
 		wantPwd := "Myp4ssword!"
 
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 			mock.NewRows([]string{"username", "password"}).AddRow(username, wantPwd),
 		)
@@ -59,8 +59,8 @@ func TestCreatorUser(t *testing.T) {
 	query := `INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("CreateOK", func(t *testing.T) {
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(query).
 			WithArgs(username, string(password)).
@@ -76,8 +76,8 @@ func TestCreatorUser(t *testing.T) {
 
 	t.Run("CreateErr", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, def := setupTest(t)
-		defer def(db)
+		db, mock, teardown := setupTest(t)
+		defer teardown()
 		mock.
 			ExpectExec(`INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`).
 			WithArgs(username, string(password)).
