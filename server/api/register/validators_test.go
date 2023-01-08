@@ -17,25 +17,25 @@ func TestRequestValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name         string
-		reqBody      *ReqBody
+		reqBody      ReqBody
 		usernameErrs []string
 		passwordErrs []string
 	}{
 		{
 			name:         "UsnEmpty_PwdEmpty",
-			reqBody:      &ReqBody{Username: "", Password: ""},
+			reqBody:      ReqBody{Username: "", Password: ""},
 			usernameErrs: []string{usnEmpty},
 			passwordErrs: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort_UsnInvalidChar_PwdEmpty",
-			reqBody:      &ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+			reqBody:      ReqBody{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
 			usernameErrs: []string{usnTooShort, usnInvalidChar},
 			passwordErrs: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart_PwdTooLong_PwdNoDigit",
-			reqBody:      &ReqBody{Username: "1bobob", Password: "MyPass!"},
+			reqBody:      ReqBody{Username: "1bobob", Password: "MyPass!"},
 			usernameErrs: []string{usnDigitStart},
 			passwordErrs: []string{pwdTooShort, pwdNoDigit},
 		},
@@ -71,7 +71,7 @@ func TestValidatorUsername(t *testing.T) {
 		wantErrs []string
 	}{
 		// 1-error cases
-		{name: "Empty", username: "", wantErrs: []string{usnEmpty}},
+		{name: "Any", username: "", wantErrs: []string{usnEmpty}},
 		{name: "TooShort", username: "bob1", wantErrs: []string{usnTooShort}},
 		{name: "TooLong", username: "bobobobobobobobob", wantErrs: []string{usnTooLong}},
 		{name: "InvalidCharacter", username: "bobob!", wantErrs: []string{usnInvalidChar}},
@@ -107,7 +107,7 @@ func TestValidatorPassword(t *testing.T) {
 		wantErrs []string
 	}{
 		// 1-error cases
-		{name: "Empty", password: "", wantErrs: []string{pwdEmpty}},
+		{name: "Any", password: "", wantErrs: []string{pwdEmpty}},
 		{name: "TooShort", password: "Myp4ss!", wantErrs: []string{pwdTooShort}},
 		{name: "TooLong", password: "Myp4sswordwh!chislongandimeanreallylongforsomereasonohiknowwhytbh", wantErrs: []string{pwdTooLong}},
 		{name: "NoLower", password: "MY4LLUPPERPASSWORD!", wantErrs: []string{pwdNoLower}},

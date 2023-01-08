@@ -13,18 +13,18 @@ import (
 
 // Handler is the HTTP handler for the login route.
 type Handler struct {
-	userReader     db.Reader[*db.User]
+	userReader     db.Reader[db.User]
 	hashComparer   Comparer
 	tokenGenerator token.Generator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	userReader db.Reader[*db.User],
+	userReader db.Reader[db.User],
 	hashComparer Comparer,
 	tokenGenerator token.Generator,
-) *Handler {
-	return &Handler{
+) Handler {
+	return Handler{
 		userReader:     userReader,
 		hashComparer:   hashComparer,
 		tokenGenerator: tokenGenerator,
@@ -35,7 +35,7 @@ func NewHandler(
 // handler where we tell the user exactly what's wrong with their credentials,
 // we instead just want to return a 400 Bad Request, which the client should
 // use to display a boilerplate "Invalid credentials." error.
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST.
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -43,7 +43,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read and validate request.
-	reqBody := &ReqBody{}
+	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
 		return

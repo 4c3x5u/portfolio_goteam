@@ -2,13 +2,13 @@ package register
 
 // fakeValidator is a test fake for Validator.
 type fakeValidator struct {
-	inReqBody *ReqBody
-	outErrs   *ValidationErrs
+	inReqBody ReqBody
+	outErrs   ValidationErrs
 }
 
 // Validate implements the Validator interface on fakeValidator.
 // struct.
-func (f *fakeValidator) Validate(reqBody *ReqBody) *ValidationErrs {
+func (f *fakeValidator) Validate(reqBody ReqBody) ValidationErrs {
 	f.inReqBody = reqBody
 	return f.outErrs
 }

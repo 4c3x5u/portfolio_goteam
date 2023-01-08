@@ -14,21 +14,21 @@ import (
 // Handler is the http.Handler for the register route.
 type Handler struct {
 	validator      Validator
-	userReader     db.Reader[*db.User]
+	userReader     db.Reader[db.User]
 	hasher         Hasher
-	userCreator    db.Creator[*db.User]
+	userCreator    db.Creator[db.User]
 	tokenGenerator token.Generator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator Validator,
-	userReader db.Reader[*db.User],
+	userReader db.Reader[db.User],
 	hasher Hasher,
-	userCreator db.Creator[*db.User],
+	userCreator db.Creator[db.User],
 	tokenGenerator token.Generator,
-) *Handler {
-	return &Handler{
+) Handler {
+	return Handler{
 		validator:      validator,
 		userReader:     userReader,
 		hasher:         hasher,
@@ -38,7 +38,7 @@ func NewHandler(
 }
 
 // ServeHTTP responds to requests made to the register route.
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST.
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -46,12 +46,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read and validate request.
-	reqBody, resBody := &ReqBody{}, &ResBody{}
+	reqBody, resBody := ReqBody{}, ResBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	if errs := h.validator.Validate(reqBody); errs != nil {
+	if errs := h.validator.Validate(reqBody); errs.Any() {
 		resBody.ValidationErrs = errs
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
@@ -64,7 +64,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// the performance as hashing will then occur before exists checks.
 	// TODO: Test when deployed.
 	if _, err := h.userReader.Read(reqBody.Username); err == nil {
-		resBody.ValidationErrs = &ValidationErrs{Username: []string{strErrUsernameTaken}}
+		resBody.ValidationErrs = ValidationErrs{Username: []string{strErrUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	} else if err != sql.ErrNoRows {
@@ -84,7 +84,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Generate a JWT for the user and return it in a Set-Cookie header
 	expiry := time.Now().Add(1 * time.Hour)
 	if tokenStr, err := h.tokenGenerator.Generate(reqBody.Username, expiry); err != nil {
-		resBody.ValidationErrs = &ValidationErrs{Auth: errAuth}
+		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
 		relay.ClientErr(w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized)
 		return
 	} else {

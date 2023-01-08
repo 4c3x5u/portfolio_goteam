@@ -28,9 +28,9 @@ func TestHandler(t *testing.T) {
 	for _, c := range []struct {
 		name                 string
 		httpMethod           string
-		reqBody              *ReqBody
-		validatorOutErr      *ValidationErrs
-		userReaderOutRes     *db.User
+		reqBody              ReqBody
+		validatorOutErr      ValidationErrs
+		userReaderOutRes     db.User
 		userReaderOutErr     error
 		hasherOutRes         []byte
 		hasherOutErr         error
@@ -38,14 +38,14 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
 		wantStatusCode       int
-		wantFieldErrs        *ValidationErrs
+		wantFieldErrs        ValidationErrs
 	}{
 		{
 			name:                 "HttpMethodError",
 			httpMethod:           http.MethodGet,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -53,14 +53,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusMethodNotAllowed,
-			wantFieldErrs:        nil,
+			wantFieldErrs:        ValidationErrs{},
 		},
 		{
 			name:                 "ValidatorError",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			validatorOutErr:      &ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			validatorOutErr:      ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -68,14 +68,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantFieldErrs:        &ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			wantFieldErrs:        ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
 			name:                 "UsernameTaken",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -83,14 +83,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantFieldErrs:        &ValidationErrs{Username: []string{strErrUsernameTaken}},
+			wantFieldErrs:        ValidationErrs{Username: []string{strErrUsernameTaken}},
 		},
 		{
 			name:                 "UserReaderError",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     errors.New("user reader error"),
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -98,14 +98,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			wantFieldErrs:        nil,
+			wantFieldErrs:        ValidationErrs{},
 		},
 		{
 			name:                 "HasherError",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         errors.New("hasher fatal error"),
@@ -113,14 +113,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			wantFieldErrs:        nil,
+			wantFieldErrs:        ValidationErrs{},
 		},
 		{
 			name:                 "UserCreatorError",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -128,14 +128,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			wantFieldErrs:        nil,
+			wantFieldErrs:        ValidationErrs{},
 		},
 		{
 			name:                 "TokenGeneratorError",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -143,14 +143,14 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: errors.New("token generator error"),
 			wantStatusCode:       http.StatusUnauthorized,
-			wantFieldErrs:        &ValidationErrs{Auth: errAuth},
+			wantFieldErrs:        ValidationErrs{Auth: errAuth},
 		},
 		{
 			name:                 "Success",
 			httpMethod:           http.MethodPost,
-			reqBody:              &ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:      nil,
-			userReaderOutRes:     nil,
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
 			userReaderOutErr:     sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -158,7 +158,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
-			wantFieldErrs:        nil,
+			wantFieldErrs:        ValidationErrs{},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -198,7 +198,7 @@ func TestHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				if c.validatorOutErr == nil {
+				if !c.validatorOutErr.Any() {
 					// validator.Validate doesn't error – userReader.Exists is called.
 					if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
 						t.Error(err)
@@ -250,7 +250,7 @@ func TestHandler(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if c.wantFieldErrs != nil {
+			if c.wantFieldErrs.Any() {
 				// field errors - assert on them
 				if err = assert.EqualArr(c.wantFieldErrs.Username, resBody.ValidationErrs.Username); err != nil {
 					t.Error(err)

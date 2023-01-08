@@ -9,11 +9,11 @@ type Hasher interface{ Hash(string) ([]byte, error) }
 // PasswordHasher can be used to hash a given password.
 type PasswordHasher struct{}
 
-// NewPasswordHasher creates and returns a new *PasswordHasher.
-func NewPasswordHasher() *PasswordHasher { return &PasswordHasher{} }
+// NewPasswordHasher creates and returns a new password hasher.
+func NewPasswordHasher() PasswordHasher { return PasswordHasher{} }
 
 // Hash hashes a string password and returns the hashed bytes.
-func (h *PasswordHasher) Hash(plaintext string) ([]byte, error) {
+func (h PasswordHasher) Hash(plaintext string) ([]byte, error) {
 	// https://security.stackexchange.com/questions/17207/recommended-of-rounds-for-bcrypt
 	// A cost of 11 causes roughly 20,000 rounds, resulting in about 250ms of
 	// compute to generate the hash.

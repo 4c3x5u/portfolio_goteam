@@ -20,13 +20,13 @@ type JWTGenerator struct {
 }
 
 // NewJWTGenerator is the constructor for JWTGenerator.
-func NewJWTGenerator(key string, signingMethod jwt.SigningMethod) *JWTGenerator {
-	return &JWTGenerator{key: key, signingMethod: signingMethod}
+func NewJWTGenerator(key string, signingMethod jwt.SigningMethod) JWTGenerator {
+	return JWTGenerator{key: key, signingMethod: signingMethod}
 }
 
 // Generate generates a JWT for the user associated with a given username.
 // The sub argument is the subject ID (e.g. username), and exp is for expiry.
-func (g *JWTGenerator) Generate(sub string, exp time.Time) (string, error) {
+func (g JWTGenerator) Generate(sub string, exp time.Time) (string, error) {
 	return jwt.NewWithClaims(g.signingMethod, jwt.MapClaims{
 		"sub": sub,
 		"exp": exp.Unix(),

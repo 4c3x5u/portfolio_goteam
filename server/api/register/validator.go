@@ -23,10 +23,10 @@ const (
 		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
 )
 
-// Validator describes a type that validates a *ReqBody and returns
-// *ValidationErrs based on the validation errors that occur.
+// Validator describes a type that validates a request body and returns
+// validation errors that occur.
 type Validator interface {
-	Validate(req *ReqBody) (errs *ValidationErrs)
+	Validate(req ReqBody) (errs ValidationErrs)
 }
 
 // RequestValidator is the request validator for the register route.
@@ -37,10 +37,9 @@ type RequestValidator struct {
 
 // NewRequestValidator is the constructor for RequestValidator.
 func NewRequestValidator(
-	usernameValidator,
-	passwordValidator StringValidator,
-) *RequestValidator {
-	return &RequestValidator{
+	usernameValidator, passwordValidator StringValidator,
+) RequestValidator {
+	return RequestValidator{
 		UsernameValidator: usernameValidator,
 		PasswordValidator: passwordValidator,
 	}
@@ -50,14 +49,15 @@ func NewRequestValidator(
 // file to validate requests sent the register route. It returns an errors
 // object if any of the individual validations fail. It implements the
 // Validator interface on the RequestValidator struct.
-func (v *RequestValidator) Validate(req *ReqBody) *ValidationErrs {
-	errs := &ValidationErrs{}
-	errs.Username = v.UsernameValidator.Validate(req.Username)
-	errs.Password = v.PasswordValidator.Validate(req.Password)
+func (v RequestValidator) Validate(req ReqBody) ValidationErrs {
+	errs := ValidationErrs{
+		Username: v.UsernameValidator.Validate(req.Username),
+		Password: v.PasswordValidator.Validate(req.Password),
+	}
 	if len(errs.Username) > 0 || len(errs.Password) > 0 {
 		return errs
 	}
-	return nil
+	return ValidationErrs{}
 }
 
 // StringValidator describes a type that validates a string input and returns a
@@ -69,12 +69,12 @@ type StringValidator interface {
 // UsernameValidator is the password field validator for the register route.
 type UsernameValidator struct{}
 
-// NewUsernameValidator creates and returns a new *UsernameValidator.
-func NewUsernameValidator() *UsernameValidator { return &UsernameValidator{} }
+// NewUsernameValidator creates and returns a new username validator.
+func NewUsernameValidator() UsernameValidator { return UsernameValidator{} }
 
 // Validate applies password validation rules to the Username string and returns
 // the error message if any fails.
-func (v *UsernameValidator) Validate(username string) (errs []string) {
+func (v UsernameValidator) Validate(username string) (errs []string) {
 	if username == "" {
 		errs = append(errs, "Username cannot be empty.")
 		// if password empty, further validation is pointless – return errors
@@ -99,11 +99,11 @@ func (v *UsernameValidator) Validate(username string) (errs []string) {
 type PasswordValidator struct{}
 
 // NewPasswordValidator is the constructor for PasswordValidator.
-func NewPasswordValidator() *PasswordValidator { return &PasswordValidator{} }
+func NewPasswordValidator() PasswordValidator { return PasswordValidator{} }
 
 // Validate applies password validation rules to the Password string and returns
 // the error message if any fails.
-func (v *PasswordValidator) Validate(password string) (errs []string) {
+func (v PasswordValidator) Validate(password string) (errs []string) {
 	if password == "" {
 		errs = append(errs, "Password cannot be empty.")
 		// if password empty, further validation is pointless

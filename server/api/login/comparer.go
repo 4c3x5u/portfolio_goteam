@@ -10,11 +10,11 @@ type Comparer interface {
 // PasswordComparer is used to compare a plaintext password with a hashed password.
 type PasswordComparer struct{}
 
-// NewPasswordComparer creates and returns a new *PasswordComparer.
-func NewPasswordComparer() *PasswordComparer { return &PasswordComparer{} }
+// NewPasswordComparer creates and returns a new password comparer.
+func NewPasswordComparer() PasswordComparer { return PasswordComparer{} }
 
 // Compare compares a plaintext password with a hashed password.
-func (c *PasswordComparer) Compare(hash []byte, plaintext string) (bool, error) {
+func (c PasswordComparer) Compare(hash []byte, plaintext string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext))
 	if err == bcrypt.ErrMismatchedHashAndPassword {
 		return false, nil
