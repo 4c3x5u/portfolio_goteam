@@ -33,13 +33,13 @@ func TestPasswordHasher(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			sut := NewPasswordHasher()
+
 			hash, err := sut.Hash(c.inPlaintext)
+
 			if err = assert.Nil(err); err != nil {
 				t.Error(err)
 			}
-
 			err = bcrypt.CompareHashAndPassword(hash, c.matchPlaintext)
-
 			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
