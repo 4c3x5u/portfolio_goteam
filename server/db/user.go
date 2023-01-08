@@ -27,8 +27,7 @@ func NewCreatorUser(db *sql.DB) *CreatorUser { return &CreatorUser{db: db} }
 // Create creates a user in the database with the given Username and password.
 func (c *CreatorUser) Create(user *User) error {
 	_, err := c.db.Exec(
-		"INSERT INTO users(username, password) VALUES ($1, $2) "+
-			"ON CONFLICT (username) DO NOTHING",
+		"INSERT INTO users(username, password) VALUES ($1, $2)",
 		user.Username, string(user.Password),
 	)
 	return err

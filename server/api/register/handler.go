@@ -76,7 +76,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err := h.creatorUser.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
+	} else if err = h.creatorUser.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}

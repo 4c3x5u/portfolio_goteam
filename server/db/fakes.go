@@ -1,29 +1,5 @@
 package db
 
-// FakeCreatorSession is a test fake for Creator[*Session].
-type FakeCreatorSession struct {
-	InArg  *Session
-	OutErr error
-}
-
-// Create implements the Creator[*Session] interface on FakeCreatorSession.
-func (f *FakeCreatorSession) Create(session *Session) error {
-	f.InArg = session
-	return f.OutErr
-}
-
-// FakeUpserterSession is a test fake for Upserter[*Session].
-type FakeUpserterSession struct {
-	InArg  *Session
-	OutErr error
-}
-
-// Upsert implements the Upserter[*Session]  interface on FakeUpserterSession.
-func (f FakeUpserterSession) Upsert(session *Session) error {
-	f.InArg = session
-	return f.OutErr
-}
-
 // FakeCreatorUser is a test fake for Creator[*User].
 type FakeCreatorUser struct {
 	InArg  *User
