@@ -14,14 +14,14 @@ import (
 // Handler is the HTTP handler for the login route.
 type Handler struct {
 	userReader     db.Reader[*db.User]
-	hashComparer   HashComparer
+	hashComparer   Comparer
 	tokenGenerator token.Generator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	userReader db.Reader[*db.User],
-	hashComparer HashComparer,
+	hashComparer Comparer,
 	tokenGenerator token.Generator,
 ) *Handler {
 	return &Handler{

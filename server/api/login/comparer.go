@@ -2,23 +2,18 @@ package login
 
 import "golang.org/x/crypto/bcrypt"
 
-// HashComparer represents a type that compares the given bytes to the given
-// string value. The first return value should be true if they are a match and
-// no errors occur during the comparison process.
-type HashComparer interface {
+// Comparer descries a type that compares a string with a slice of bytes.
+type Comparer interface {
 	Compare([]byte, string) (bool, error)
 }
 
-// PasswordComparer is used to compare a given plaintext password with a hashed
-// password.
+// PasswordComparer is used to compare a plaintext password with a hashed password.
 type PasswordComparer struct{}
 
-// NewPasswordComparer is the constructor for PasswordComparer.
+// NewPasswordComparer creates and returns a new *PasswordComparer.
 func NewPasswordComparer() *PasswordComparer { return &PasswordComparer{} }
 
-// Compare compares the given hashed bytes with the given plaintext string. The
-// first return value communicates whether it was a match. The second return
-// value is for any errors that may ocur during comparison.
+// Compare compares a plaintext password with a hashed password.
 func (c *PasswordComparer) Compare(hash []byte, plaintext string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext))
 	if err == bcrypt.ErrMismatchedHashAndPassword {

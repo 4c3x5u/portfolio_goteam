@@ -7,7 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// Generator represents a type that can be used to generate a string token for
+// Generator describes a type that can be used to generate a string token for
 // a given subject and expiry time.
 type Generator interface {
 	Generate(sub string, exp time.Time) (string, error)

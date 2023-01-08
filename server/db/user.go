@@ -6,25 +6,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// User represents a row in the users table inside the database.
+// User represents a record in the users table.
 type User struct {
 	Username string
 	Password []byte
 }
 
-// NewUser is the constructor for User.
+// NewUser creates and returns a new *User.
 func NewUser(username string, password []byte) *User {
 	return &User{Username: username, Password: password}
 }
 
-// UserCreator is a type that creates a user in the database with the given
-// Username and password.
+// UserCreator can be used to create a new record in the users table.
 type UserCreator struct{ db *sql.DB }
 
-// NewUserCreator is the constructor for UserCreator.
+// NewUserCreator creates and returns a new *UserCreator.
 func NewUserCreator(db *sql.DB) *UserCreator { return &UserCreator{db: db} }
 
-// Create creates a user in the database with the given Username and password.
+// Create creates a new record in the users table.
 func (c *UserCreator) Create(user *User) error {
 	_, err := c.db.Exec(
 		"INSERT INTO users(username, password) VALUES ($1, $2)",
@@ -33,14 +32,13 @@ func (c *UserCreator) Create(user *User) error {
 	return err
 }
 
-// UserReader is a type that can be used to read users (i.e. records from users
-// table) from the database.
+// UserReader can be used to read records from the users table.
 type UserReader struct{ db *sql.DB }
 
-// NewUserReader is the constructor for UserReader.
+// NewUserReader creates and returns a new *UserReader.
 func NewUserReader(db *sql.DB) *UserReader { return &UserReader{db: db} }
 
-// Read uses the username of a user to read their password from the database.
+// Read reads a record from the users table with the given username.
 func (r *UserReader) Read(username string) (*User, error) {
 	user := NewUser("", []byte{})
 	err := r.db.

@@ -23,7 +23,7 @@ const (
 		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
 )
 
-// Validator represents a type that validates a *ReqBody and returns an
+// Validator describes a type that validates a *ReqBody and returns
 // *ValidationErrs based on the validation errors that occur.
 type Validator interface {
 	Validate(req *ReqBody) (errs *ValidationErrs)
@@ -60,7 +60,7 @@ func (v *RequestValidator) Validate(req *ReqBody) *ValidationErrs {
 	return nil
 }
 
-// StringValidator represents a type that validates a string input and returns a
+// StringValidator describes a type that validates a string input and returns a
 // string slice containing validation error messages.
 type StringValidator interface {
 	Validate(string) (errs []string)
@@ -69,7 +69,7 @@ type StringValidator interface {
 // UsernameValidator is the password field validator for the register route.
 type UsernameValidator struct{}
 
-// NewUsernameValidator is the constructor for UsernameValidator.
+// NewUsernameValidator creates and returns a new *UsernameValidator.
 func NewUsernameValidator() *UsernameValidator { return &UsernameValidator{} }
 
 // Validate applies password validation rules to the Username string and returns

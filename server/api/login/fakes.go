@@ -1,6 +1,6 @@
 package login
 
-// fakeHashComparer is a test fake for HashComparer.
+// fakeHashComparer is a test fake for Comparer.
 type fakeHashComparer struct {
 	inArgA []byte
 	inArgB string
@@ -8,7 +8,7 @@ type fakeHashComparer struct {
 	outErr error
 }
 
-// Compare implements the HashComparer interface on fakeHashComparer.
+// Compare implements the Comparer interface on fakeHashComparer.
 func (f *fakeHashComparer) Compare(hash []byte, plaintext string) (bool, error) {
 	f.inArgA, f.inArgB = hash, plaintext
 	return f.outRes, f.outErr
