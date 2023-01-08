@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"server/token"
 	"time"
 
 	"server/db"
 	"server/relay"
+	"server/token"
 )
 
 // Handler is the HTTP handler for the login route.

@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"server/token"
 
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
 	"server/db"
+	"server/token"
 
 	"github.com/golang-jwt/jwt/v4"
 )

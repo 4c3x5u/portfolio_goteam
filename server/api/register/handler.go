@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"server/token"
 	"time"
 
 	"server/db"
 	"server/relay"
+	"server/token"
 )
 
 // Handler is the http.Handler for the register route.

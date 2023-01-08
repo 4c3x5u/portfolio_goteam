@@ -7,11 +7,11 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"server/token"
 	"testing"
 
 	"server/assert"
 	"server/db"
+	"server/token"
 )
 
 func TestHandler(t *testing.T) {

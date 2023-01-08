@@ -2,10 +2,11 @@ package db
 
 import (
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
 	"testing"
 
 	"server/assert"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestUserReader(t *testing.T) {
