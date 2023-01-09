@@ -233,11 +233,9 @@ func TestHandler(t *testing.T) {
 				}
 			}
 
-			// Below are some dependency-input-based assertions to be run up to
-			// the point where handler stops execution. Conditionals serve to
-			// determine which dependencies must have received their inputs.
+			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If method was POST, validator must be called.
+			// If 405 isn't expected, validator must be called.
 			if c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}

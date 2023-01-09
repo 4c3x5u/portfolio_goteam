@@ -18,12 +18,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	jwtGenerator := cookie.NewJWTGenerator(os.Getenv("JWTSIGNATURE"))
 
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()
-
 	mux.Handle("/register", registerAPI.NewHandler(
 		registerAPI.NewRequestValidator(
 			registerAPI.NewUsernameValidator(),
@@ -34,14 +32,13 @@ func main() {
 		db.NewUserCreator(conn),
 		jwtGenerator,
 	))
-
 	mux.Handle("/login", loginAPI.NewHandler(
 		db.NewUserReader(conn),
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
 	))
 
-	// Serve the API routes using the ServeMux.
+	// Serve the app using the ServeMux.
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
 	}

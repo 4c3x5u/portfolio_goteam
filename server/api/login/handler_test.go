@@ -124,7 +124,7 @@ func TestHandler(t *testing.T) {
 			name:                  "WrongPassword",
 			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:      db.User{},
+			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
 			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
@@ -136,7 +136,7 @@ func TestHandler(t *testing.T) {
 			name:                  "HashComparerError",
 			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:      db.User{},
+			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
 			hashComparerOutRes:    true,
 			hashComparerOutErr:    errors.New("hash comparer error"),
@@ -148,7 +148,7 @@ func TestHandler(t *testing.T) {
 			name:                  "TokenGeneratorError",
 			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:      db.User{},
+			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
 			hashComparerOutRes:    true,
 			hashComparerOutErr:    nil,
@@ -160,7 +160,7 @@ func TestHandler(t *testing.T) {
 			name:               "Success",
 			httpMethod:         http.MethodPost,
 			reqBody:            ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:   db.User{},
+			userReaderOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:   nil,
 			hashComparerOutRes: true,
 			hashComparerOutErr: nil,
@@ -198,25 +198,58 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If 200 expected - auth token must be set.
-			if c.wantStatusCode != http.StatusOK {
-				return
-			}
-			authTokenFound := false
-			for _, ck := range w.Result().Cookies() {
-				if ck.Name == "authToken" {
-					authTokenFound = true
-					if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal(cookieExpiry, ck.Expires); err != nil {
-						t.Error(err)
+			// If 200 is expected - auth token must be set.
+			if c.wantStatusCode == http.StatusOK {
+				authTokenFound := false
+				for _, ck := range w.Result().Cookies() {
+					if ck.Name == "authToken" {
+						authTokenFound = true
+						if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
+							t.Error(err)
+						}
+						if err = assert.Equal(cookieExpiry, ck.Expires); err != nil {
+							t.Error(err)
+						}
 					}
 				}
+				if err = assert.True(authTokenFound); err != nil {
+					t.Error(err)
+				}
 			}
-			if err = assert.True(authTokenFound); err != nil {
+
+			// DEPENDENCY-INPUT-BASED ASSERTIONS
+
+			// If username and password weren't empty, user reader must be called.
+			if c.reqBody.Username == "" ||
+				c.reqBody.Password == "" ||
+				c.wantStatusCode == http.StatusMethodNotAllowed {
+				return
+			}
+			if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
 				t.Error(err)
 			}
+
+			// If no user reader error is expected, hash comparer must be called.
+			if userReader.OutErr != nil {
+				return
+			}
+			if err = assert.Equal(
+				string(c.userReaderOutRes.Password), string(hashComparer.inHash),
+			); err != nil {
+				t.Error(err)
+			}
+			if err = assert.Equal(c.reqBody.Password, hashComparer.inPlaintext); err != nil {
+				t.Error(err)
+			}
+
+			// If no hash comparer error is expected, cookie generator must be called.
+			if !hashComparer.outRes || hashComparer.outErr != nil {
+				return
+			}
+			if err = assert.Equal(c.reqBody.Username, cookieGenerator.InSub); err != nil {
+				t.Error(err)
+			}
+
 		})
 	}
 }
