@@ -15,8 +15,9 @@ func NewPasswordComparer() PasswordComparer { return PasswordComparer{} }
 
 // Compare compares a plaintext input with a hashed password.
 func (c PasswordComparer) Compare(hash []byte, plaintext string) (bool, error) {
-	err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext))
-	if err == bcrypt.ErrMismatchedHashAndPassword {
+	if err := bcrypt.CompareHashAndPassword(
+		hash, []byte(plaintext),
+	); err == bcrypt.ErrMismatchedHashAndPassword {
 		return false, nil
 	} else if err != nil {
 		return false, err

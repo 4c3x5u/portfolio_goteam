@@ -76,17 +76,22 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err = h.userCreator.Create(db.NewUser(reqBody.Username, pwdHash)); err != nil {
+	} else if err = h.userCreator.Create(
+		db.NewUser(reqBody.Username, pwdHash),
+	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
 
-	// Generate an authentication cookie for the user and return it in a
-	// Set-Cookie header.
-	expiry := time.Now().Add(1 * time.Hour)
-	if authCookie, err := h.authCookieGenerator.Generate(reqBody.Username, expiry); err != nil {
+	// Generate an authentication cookie for the user that expires in an hour
+	// and return it in a Set-Cookie header.
+	if authCookie, err := h.authCookieGenerator.Generate(
+		reqBody.Username, time.Now().Add(1*time.Hour),
+	); err != nil {
 		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
-		relay.ClientErr(w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized)
+		relay.ClientErr(
+			w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized,
+		)
 		return
 	} else {
 		http.SetCookie(w, authCookie)

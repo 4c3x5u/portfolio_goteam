@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"time"
-
 	"server/cookie"
 	"server/db"
 	"server/relay"
+	"time"
 )
 
 // Handler is the HTTP handler for the login route.
@@ -66,7 +65,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
-	if match, err := h.hashComparer.Compare(user.Password, reqBody.Password); err != nil {
+	if match, err := h.hashComparer.Compare(
+		user.Password, reqBody.Password,
+	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else if !match {
@@ -76,8 +77,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Generate an authentication cookie for the user and return it in a
 	// Set-Cookie header.
-	expiry := time.Now().Add(1 * time.Hour)
-	if authCookie, err := h.authCookieGenerator.Generate(reqBody.Username, expiry); err != nil {
+	if authCookie, err := h.authCookieGenerator.Generate(
+		reqBody.Username, time.Now().Add(1*time.Hour),
+	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else {

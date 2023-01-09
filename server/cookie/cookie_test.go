@@ -34,9 +34,10 @@ func TestJWTGenerator(t *testing.T) {
 		}
 		return []byte(sut.key), nil
 	})
-	if err = assert.Nil(err); err != nil {
+	if err != nil {
 		t.Error(err)
 	}
+
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if err = assert.True(ok); err != nil {
 		t.Error(err)
