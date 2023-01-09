@@ -23,7 +23,7 @@ type ValidationErrs struct {
 
 // Any checks whether there are any validation errors within the ValidationErrs.
 func (e ValidationErrs) Any() bool {
-	if len(e.Username) > 0 || len(e.Password) > 0 || e.Auth != "" {
+	if len(e.Username) > 0 || len(e.Password) > 0 || len(e.Auth) > 0 {
 		return true
 	}
 	return false

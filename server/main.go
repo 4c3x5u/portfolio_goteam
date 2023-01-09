@@ -8,10 +8,8 @@ import (
 
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
+	"server/cookie"
 	"server/db"
-	"server/token"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 func main() {
@@ -21,10 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	jwtGenerator := token.NewJWTGenerator(
-		os.Getenv("JWTSIGNATURE"),
-		jwt.SigningMethodHS256,
-	)
+	jwtGenerator := cookie.NewJWTGenerator(os.Getenv("JWTSIGNATURE"))
 
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()

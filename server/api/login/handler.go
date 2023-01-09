@@ -6,28 +6,28 @@ import (
 	"net/http"
 	"time"
 
+	"server/cookie"
 	"server/db"
 	"server/relay"
-	"server/token"
 )
 
 // Handler is the HTTP handler for the login route.
 type Handler struct {
-	userReader     db.Reader[db.User]
-	hashComparer   Comparer
-	tokenGenerator token.Generator
+	userReader          db.Reader[db.User]
+	hashComparer        Comparer
+	authCookieGenerator cookie.AuthGenerator
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
-	tokenGenerator token.Generator,
+	authCookieGenerator cookie.AuthGenerator,
 ) Handler {
 	return Handler{
-		userReader:     userReader,
-		hashComparer:   hashComparer,
-		tokenGenerator: tokenGenerator,
+		userReader:          userReader,
+		hashComparer:        hashComparer,
+		authCookieGenerator: authCookieGenerator,
 	}
 }
 
@@ -74,17 +74,14 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a JWT for the user and return it in a Set-Cookie header
+	// Generate an authentication cookie for the user and return it in a
+	// Set-Cookie header.
 	expiry := time.Now().Add(1 * time.Hour)
-	if tokenStr, err := h.tokenGenerator.Generate(reqBody.Username, expiry); err != nil {
+	if authCookie, err := h.authCookieGenerator.Generate(reqBody.Username, expiry); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:    "authToken",
-			Value:   tokenStr,
-			Expires: expiry.UTC(),
-		})
+		http.SetCookie(w, authCookie)
 		w.WriteHeader(http.StatusOK)
 		return
 	}

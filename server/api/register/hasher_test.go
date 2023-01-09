@@ -8,9 +8,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TestPasswordHasher tests both the PasswordHasher and ComparerHash by first hashing
-// a inPlaintext string with PasswordHasher and then comparing the original inPlaintext
-// to the hash with ComparerHash.
+// TestPasswordHasher tests the Hash method of the password hasher. It uses
+// bcrypt to ensure that the result was generated from the given plaintext.
 func TestPasswordHasher(t *testing.T) {
 	for _, c := range []struct {
 		name           string

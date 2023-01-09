@@ -1,4 +1,4 @@
-package token
+package cookie
 
 import (
 	"testing"
@@ -13,15 +13,21 @@ func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"
 		expiry   = time.Now().Add(1 * time.Hour)
-		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad", jwt.SigningMethodHS256)
+		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
 	)
 
-	tokenStr, err := sut.Generate(username, expiry)
+	cookie, err := sut.Generate(username, expiry)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	err = assert.Equal("authToken", cookie.Name)
+	err = assert.Equal(expiry.UTC(), cookie.Expires)
+	if err != nil {
+		t.Error(err)
+	}
+
+	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if err = assert.True(ok); err != nil {
 			t.Error(err)

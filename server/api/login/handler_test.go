@@ -8,161 +8,167 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"server/assert"
+	"server/cookie"
 	"server/db"
-	"server/token"
 )
 
 func TestHandler(t *testing.T) {
 	var (
-		userReader     = &db.FakeUserReader{}
-		hashComparer   = &fakeHashComparer{}
-		tokenGenerator = &token.FakeGenerator{}
+		userReader      = &db.FakeUserReader{}
+		hashComparer    = &fakeHashComparer{}
+		cookieGenerator = &cookie.FakeAuthGenerator{}
+		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
 	)
-	sut := NewHandler(userReader, hashComparer, tokenGenerator)
+	sut := NewHandler(userReader, hashComparer, cookieGenerator)
 
 	for _, c := range []struct {
-		name                 string
-		httpMethod           string
-		reqBody              ReqBody
-		userReaderOutRes     db.User
-		userReaderOutErr     error
-		hashComparerOutRes   bool
-		hashComparerOutErr   error
-		tokenGeneratorOutRes string
-		tokenGeneratorOutErr error
-		wantStatusCode       int
+		name                  string
+		httpMethod            string
+		reqBody               ReqBody
+		userReaderOutRes      db.User
+		userReaderOutErr      error
+		hashComparerOutRes    bool
+		hashComparerOutErr    error
+		cookieGeneratorOutRes *http.Cookie
+		tokenGeneratorOutErr  error
+		wantStatusCode        int
 	}{
 		{
-			name:                 "MethodNotAllowed",
-			httpMethod:           http.MethodGet,
-			reqBody:              ReqBody{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusMethodNotAllowed,
+			name:                  "MethodNotAllowed",
+			httpMethod:            http.MethodGet,
+			reqBody:               ReqBody{},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusMethodNotAllowed,
 		},
 		{
-			name:                 "NoUsername",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "NoUsername",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "UsernameEmpty",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: ""},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "UsernameEmpty",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: ""},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "UserNotFound",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "UserNotFound",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      sql.ErrNoRows,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "UserReaderError",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     errors.New("user reader error"),
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
+			name:                  "UserReaderError",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      errors.New("user reader error"),
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusInternalServerError,
 		},
 		{
-			name:                 "NoPassword",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "NoPassword",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "PasswordEmpty",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: ""},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "PasswordEmpty",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21", Password: ""},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "WrongPassword",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   false,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                  "WrongPassword",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    false,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusBadRequest,
 		},
 		{
-			name:                 "HashComparerError",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   true,
-			hashComparerOutErr:   errors.New("hash comparer error"),
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
+			name:                  "HashComparerError",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    true,
+			hashComparerOutErr:    errors.New("hash comparer error"),
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  nil,
+			wantStatusCode:        http.StatusInternalServerError,
 		},
 		{
-			name:                 "TokenGeneratorError",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   true,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: errors.New("token generator error"),
-			wantStatusCode:       http.StatusInternalServerError,
+			name:                  "TokenGeneratorError",
+			httpMethod:            http.MethodPost,
+			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			userReaderOutRes:      db.User{},
+			userReaderOutErr:      nil,
+			hashComparerOutRes:    true,
+			hashComparerOutErr:    nil,
+			cookieGeneratorOutRes: nil,
+			tokenGeneratorOutErr:  errors.New("token generator error"),
+			wantStatusCode:        http.StatusInternalServerError,
 		},
 		{
-			name:                 "Success",
-			httpMethod:           http.MethodPost,
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
-			hashComparerOutRes:   true,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			name:               "Success",
+			httpMethod:         http.MethodPost,
+			reqBody:            ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			userReaderOutRes:   db.User{},
+			userReaderOutErr:   nil,
+			hashComparerOutRes: true,
+			hashComparerOutErr: nil,
+			cookieGeneratorOutRes: &http.Cookie{
+				Name:    "authToken",
+				Value:   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+				Expires: cookieExpiry,
+			},
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
 		},
@@ -172,8 +178,8 @@ func TestHandler(t *testing.T) {
 			userReader.OutErr = c.userReaderOutErr
 			hashComparer.outRes = c.hashComparerOutRes
 			hashComparer.outErr = c.hashComparerOutErr
-			tokenGenerator.OutRes = c.tokenGeneratorOutRes
-			tokenGenerator.OutErr = c.tokenGeneratorOutErr
+			cookieGenerator.OutRes = c.cookieGeneratorOutRes
+			cookieGenerator.OutErr = c.tokenGeneratorOutErr
 
 			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {
@@ -191,20 +197,25 @@ func TestHandler(t *testing.T) {
 			if err = assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
 				t.Error(err)
 			}
-			if c.wantStatusCode == http.StatusOK {
-				// no field errors - assert on authToken
-				foundSessionToken := false
-				for _, cookie := range w.Result().Cookies() {
-					if cookie.Name == "authToken" {
-						foundSessionToken = true
-						if err = assert.Equal(c.tokenGeneratorOutRes, cookie.Value); err != nil {
-							t.Error(err)
-						}
+
+			// If 200 expected - auth token must be set.
+			if c.wantStatusCode != http.StatusOK {
+				return
+			}
+			authTokenFound := false
+			for _, ck := range w.Result().Cookies() {
+				if ck.Name == "authToken" {
+					authTokenFound = true
+					if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(cookieExpiry, ck.Expires); err != nil {
+						t.Error(err)
 					}
 				}
-				if err = assert.True(foundSessionToken); err != nil {
-					t.Error(err)
-				}
+			}
+			if err = assert.True(authTokenFound); err != nil {
+				t.Error(err)
 			}
 		})
 	}

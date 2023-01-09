@@ -7,13 +7,13 @@ type Comparer interface {
 	Compare([]byte, string) (bool, error)
 }
 
-// PasswordComparer is used to compare a plaintext password with a hashed password.
+// PasswordComparer is used to compare a plaintext input with a hashed password.
 type PasswordComparer struct{}
 
 // NewPasswordComparer creates and returns a new password comparer.
 func NewPasswordComparer() PasswordComparer { return PasswordComparer{} }
 
-// Compare compares a plaintext password with a hashed password.
+// Compare compares a plaintext input with a hashed password.
 func (c PasswordComparer) Compare(hash []byte, plaintext string) (bool, error) {
 	err := bcrypt.CompareHashAndPassword(hash, []byte(plaintext))
 	if err == bcrypt.ErrMismatchedHashAndPassword {

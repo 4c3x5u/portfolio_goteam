@@ -6,18 +6,18 @@ import (
 	"net/http"
 	"time"
 
+	"server/cookie"
 	"server/db"
 	"server/relay"
-	"server/token"
 )
 
 // Handler is the http.Handler for the register route.
 type Handler struct {
-	validator      Validator
-	userReader     db.Reader[db.User]
-	hasher         Hasher
-	userCreator    db.Creator[db.User]
-	tokenGenerator token.Generator
+	validator           Validator
+	userReader          db.Reader[db.User]
+	hasher              Hasher
+	userCreator         db.Creator[db.User]
+	authCookieGenerator cookie.AuthGenerator
 }
 
 // NewHandler is the constructor for Handler.
@@ -26,14 +26,14 @@ func NewHandler(
 	userReader db.Reader[db.User],
 	hasher Hasher,
 	userCreator db.Creator[db.User],
-	tokenGenerator token.Generator,
+	authCookieGenerator cookie.AuthGenerator,
 ) Handler {
 	return Handler{
-		validator:      validator,
-		userReader:     userReader,
-		hasher:         hasher,
-		userCreator:    userCreator,
-		tokenGenerator: tokenGenerator,
+		validator:           validator,
+		userReader:          userReader,
+		hasher:              hasher,
+		userCreator:         userCreator,
+		authCookieGenerator: authCookieGenerator,
 	}
 }
 
@@ -81,18 +81,15 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate a JWT for the user and return it in a Set-Cookie header
+	// Generate an authentication cookie for the user and return it in a
+	// Set-Cookie header.
 	expiry := time.Now().Add(1 * time.Hour)
-	if tokenStr, err := h.tokenGenerator.Generate(reqBody.Username, expiry); err != nil {
+	if authCookie, err := h.authCookieGenerator.Generate(reqBody.Username, expiry); err != nil {
 		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
 		relay.ClientErr(w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized)
 		return
 	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:    "authToken",
-			Value:   tokenStr,
-			Expires: expiry.UTC(),
-		})
+		http.SetCookie(w, authCookie)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -104,5 +101,5 @@ const strErrUsernameTaken = "Username is already taken."
 
 // errAuth is the error message returned from handlers when the token generator
 // throws an error
-const errAuth = "You have been registered successfuly but something went wrong. " +
+const errAuth = "You have been registered successfully but something went wrong. " +
 	"Please log in using the credentials you registered with."
