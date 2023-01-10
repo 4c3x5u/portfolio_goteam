@@ -25,8 +25,9 @@ func TestHandler(t *testing.T) {
 		hashComparer    = &fakeHashComparer{}
 		cookieGenerator = &cookie.FakeAuthGenerator{}
 		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
+		dbCloser        = &db.FakeCloser{}
 	)
-	sut := NewHandler(userReader, hashComparer, cookieGenerator)
+	sut := NewHandler(userReader, hashComparer, cookieGenerator, dbCloser)
 
 	for _, c := range []struct {
 		name                  string
@@ -210,13 +211,16 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If username and password weren't empty, user reader must be called.
+			// If username and password weren't empty, user reader and db closer must be called.
 			if c.reqBody.Username == "" ||
 				c.reqBody.Password == "" ||
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
 			if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
+				t.Error(err)
+			}
+			if err = assert.True(dbCloser.IsCalled); err != nil {
 				t.Error(err)
 			}
 

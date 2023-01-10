@@ -17,6 +17,7 @@ type Handler struct {
 	userReader          db.Reader[db.User]
 	hashComparer        Comparer
 	authCookieGenerator cookie.AuthGenerator
+	dbCloser            db.Closer
 }
 
 // NewHandler creates and returns a new Handler.
@@ -24,11 +25,13 @@ func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
 	authCookieGenerator cookie.AuthGenerator,
+	dbCloser db.Closer,
 ) Handler {
 	return Handler{
 		userReader:          userReader,
 		hashComparer:        hashComparer,
 		authCookieGenerator: authCookieGenerator,
+		dbCloser:            dbCloser,
 	}
 }
 
@@ -54,6 +57,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read the user in the database who owns the username that came in the
 	// request.
 	user, err := h.userReader.Read(reqBody.Username)
+	defer h.dbCloser.Close()
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusBadRequest)
 		return

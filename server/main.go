@@ -38,6 +38,7 @@ func main() {
 		db.NewUserReader(conn),
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
+		connCloser,
 	))
 
 	// Serve the app using the ServeMux.
