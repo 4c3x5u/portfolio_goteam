@@ -8,16 +8,18 @@ import (
 	"server/db"
 	"server/relay"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Handler is the HTTP handler for the login route.
+// Handler is the http.Handler for the login route.
 type Handler struct {
 	userReader          db.Reader[db.User]
 	hashComparer        Comparer
 	authCookieGenerator cookie.AuthGenerator
 }
 
-// NewHandler is the constructor for Handler.
+// NewHandler creates and returns a new Handler.
 func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
@@ -30,10 +32,7 @@ func NewHandler(
 	}
 }
 
-// ServeHTTP responds to requests made to the login route. Unlike the register
-// handler where we tell the user exactly what's wrong with their credentials,
-// we instead just want to return a 400 Bad Request, which the client should
-// use to display a boilerplate "Invalid credentials." error.
+// ServeHTTP responds to requests made to the login route.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST.
 	if r.Method != http.MethodPost {
@@ -65,13 +64,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
-	if match, err := h.hashComparer.Compare(
+	if err = h.hashComparer.Compare(
 		user.Password, reqBody.Password,
-	); err != nil {
-		relay.ServerErr(w, err.Error())
-		return
-	} else if !match {
+	); err == bcrypt.ErrMismatchedHashAndPassword {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else if err != nil {
+		relay.ServerErr(w, err.Error())
 		return
 	}
 

@@ -9,6 +9,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// TestJWTGenerator tests the JWTGenerator's Generate method to ensure that
+// the generated JWT is valid as well as the format of the returned
+// *http.Cookie.
 func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"

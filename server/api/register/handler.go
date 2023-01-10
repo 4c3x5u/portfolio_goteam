@@ -59,12 +59,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the username is taken. This db call can be removed by
 	// adding an "ON CONFLICT (username) DO NOTHING" clause to the query that
-	// user creator uses, and then returning strErrUsernameTaken if affected
+	// user creator uses, and then returning errUsernameTaken if affected
 	// rows come back 0. However, not sure if that would increase or decrease
 	// the performance as hashing will then occur before exists checks.
 	// TODO: Test when deployed.
 	if _, err := h.userReader.Read(reqBody.Username); err == nil {
-		resBody.ValidationErrs = ValidationErrs{Username: []string{strErrUsernameTaken}}
+		resBody.ValidationErrs = ValidationErrs{Username: []string{errUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
 	} else if err != sql.ErrNoRows {
@@ -89,9 +89,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reqBody.Username, time.Now().Add(1*time.Hour),
 	); err != nil {
 		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
-		relay.ClientErr(
-			w, resBody, resBody.ValidationErrs.Auth, http.StatusUnauthorized,
-		)
+		relay.ClientErr(w, resBody, errAuth, http.StatusUnauthorized)
 		return
 	} else {
 		http.SetCookie(w, authCookie)
@@ -100,9 +98,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// strErrUsernameTaken is the error message returned from the handler when the
+// errUsernameTaken is the error message returned from the handler when the
 // username given to it is already registered for another user.
-const strErrUsernameTaken = "Username is already taken."
+const errUsernameTaken = "Username is already taken."
 
 // errAuth is the error message returned from handlers when the token generator
 // throws an error

@@ -19,11 +19,11 @@ type AuthGenerator interface {
 // the expiry time for the given subject (i.e. username).
 type JWTGenerator struct{ key string }
 
-// NewJWTGenerator creates and returns a new JWT cookie generator.
+// NewJWTGenerator creates and returns a new JWTGenerator.
 func NewJWTGenerator(key string) JWTGenerator { return JWTGenerator{key: key} }
 
-// Generate generates a JWT token that is valid until the expiry time for the
-// given subject (i.e. username)
+// Generate generates a JWT token as a *http.Cookie that is valid until the
+// expiry time for the given subject (i.e. username)
 func (g JWTGenerator) Generate(sub string, exp time.Time) (*http.Cookie, error) {
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": sub,

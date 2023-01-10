@@ -15,6 +15,8 @@ import (
 	"server/db"
 )
 
+// TestHandler tests Handler to ensure that it behaves correctly on all
+// possible scenarios.
 func TestHandler(t *testing.T) {
 	var (
 		validator       = &fakeValidator{}
@@ -84,7 +86,7 @@ func TestHandler(t *testing.T) {
 			cookieGeneratorOutRes: nil,
 			cookieGeneratorOutErr: nil,
 			wantStatusCode:        http.StatusBadRequest,
-			wantValidationErrs:    ValidationErrs{Username: []string{strErrUsernameTaken}},
+			wantValidationErrs:    ValidationErrs{Username: []string{errUsernameTaken}},
 		},
 		{
 			name:                  "UserReaderError",

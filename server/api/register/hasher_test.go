@@ -9,7 +9,8 @@ import (
 )
 
 // TestPasswordHasher tests the Hash method of the password hasher. It uses
-// bcrypt to ensure that the result was generated from the given plaintext.
+// bcrypt.CompareHashAndPassword to ensure that the result was generated from
+// the given plaintext and doesn't match another plaintext string.
 func TestPasswordHasher(t *testing.T) {
 	for _, c := range []struct {
 		name           string
@@ -18,16 +19,16 @@ func TestPasswordHasher(t *testing.T) {
 		wantErr        error
 	}{
 		{
-			name:           "Match",
-			inPlaintext:    "password",
-			matchPlaintext: []byte("password"),
-			wantErr:        nil,
-		},
-		{
 			name:           "NoMatch",
 			inPlaintext:    "password",
 			matchPlaintext: []byte("different"),
 			wantErr:        bcrypt.ErrMismatchedHashAndPassword,
+		},
+		{
+			name:           "Match",
+			inPlaintext:    "password",
+			matchPlaintext: []byte("password"),
+			wantErr:        nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

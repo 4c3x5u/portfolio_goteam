@@ -8,6 +8,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// TestPasswordComparer tests the PasswordComparer's Compare method to ensure
+// that all it does is to call the bcrypt.CompareHashAndPassword and return
+// whatever error that returns.
 func TestPasswordComparer(t *testing.T) {
 	sut := NewPasswordComparer()
 
@@ -15,37 +18,31 @@ func TestPasswordComparer(t *testing.T) {
 		name        string
 		inHash      []byte
 		inPlaintext string
-		wantMatch   bool
 		wantErr     error
 	}{
 		{
-			name:        "Match",
-			inPlaintext: "password",
-			inHash:      []byte("$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS"),
-			wantMatch:   true,
-			wantErr:     nil,
-		},
-		{
-			name:        "NoMatch",
+			name:        "WrongPassword",
 			inPlaintext: "password",
 			inHash:      []byte("$2a$04$ngqMWrzBWyg8KO3MGk1cnOISt3wyeBwbFlkvghSHKBkSYOeO2.7XG"),
-			wantMatch:   false,
-			wantErr:     nil,
+			wantErr:     bcrypt.ErrMismatchedHashAndPassword,
 		},
 		{
-			name:        "Error",
+			name:        "BcryptError",
 			inPlaintext: "password",
 			inHash:      []byte("$2a$04$ngqMWrzBWyg8K"),
-			wantMatch:   false,
 			wantErr:     bcrypt.ErrHashTooShort,
+		},
+		{
+			name:        "Success",
+			inPlaintext: "password",
+			inHash:      []byte("$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS"),
+			wantErr:     nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			match, err := sut.Compare(c.inHash, c.inPlaintext)
-			if err = assert.Equal(c.wantErr, err); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(c.wantMatch, match); err != nil {
+			if err := assert.Equal(
+				c.wantErr, sut.Compare(c.inHash, c.inPlaintext),
+			); err != nil {
 				t.Error(err)
 			}
 		})

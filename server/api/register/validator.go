@@ -45,19 +45,15 @@ func NewRequestValidator(
 	}
 }
 
-// Validate uses individual field validation logic defined in the validation.go
-// file to validate requests sent the register route. It returns an errors
-// object if any of the individual validations fail. It implements the
-// Validator interface on the RequestValidator struct.
+// Validate uses UsernameValidator and PasswordValidator to validate requests
+// sent the register route. It returns an errors object if any of the individual
+// validations fail. It implements the Validator interface on the
+// RequestValidator struct.
 func (v RequestValidator) Validate(req ReqBody) ValidationErrs {
-	errs := ValidationErrs{
+	return ValidationErrs{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
 	}
-	if len(errs.Username) > 0 || len(errs.Password) > 0 {
-		return errs
-	}
-	return ValidationErrs{}
 }
 
 // StringValidator describes a type that validates a string input and returns a

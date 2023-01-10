@@ -39,10 +39,9 @@ type UserReader struct{ db *sql.DB }
 func NewUserReader(db *sql.DB) UserReader { return UserReader{db: db} }
 
 // Read reads a record from the users table with the given username.
-func (r UserReader) Read(username string) (User, error) {
-	user := NewUser("", []byte{})
-	err := r.db.
+func (r UserReader) Read(username string) (user User, err error) {
+	err = r.db.
 		QueryRow(`SELECT username, password FROM users WHERE username = $1`, username).
 		Scan(&user.Username, &user.Password)
-	return user, err
+	return
 }

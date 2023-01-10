@@ -13,8 +13,12 @@ import (
 	"server/assert"
 	"server/cookie"
 	"server/db"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
+// TestHandler tests Handler to ensure that it behaves correctly on all
+// possible scenarios.
 func TestHandler(t *testing.T) {
 	var (
 		userReader      = &db.FakeUserReader{}
@@ -30,7 +34,6 @@ func TestHandler(t *testing.T) {
 		reqBody               ReqBody
 		userReaderOutRes      db.User
 		userReaderOutErr      error
-		hashComparerOutRes    bool
 		hashComparerOutErr    error
 		cookieGeneratorOutRes *http.Cookie
 		tokenGeneratorOutErr  error
@@ -42,7 +45,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -54,7 +56,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -66,7 +67,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: ""},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -78,7 +78,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      sql.ErrNoRows,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -90,7 +89,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      errors.New("user reader error"),
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -102,7 +100,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -114,7 +111,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21", Password: ""},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -126,8 +122,7 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    false,
-			hashComparerOutErr:    nil,
+			hashComparerOutErr:    bcrypt.ErrMismatchedHashAndPassword,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
 			wantStatusCode:        http.StatusBadRequest,
@@ -138,7 +133,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    true,
 			hashComparerOutErr:    errors.New("hash comparer error"),
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  nil,
@@ -150,7 +144,6 @@ func TestHandler(t *testing.T) {
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
-			hashComparerOutRes:    true,
 			hashComparerOutErr:    nil,
 			cookieGeneratorOutRes: nil,
 			tokenGeneratorOutErr:  errors.New("token generator error"),
@@ -162,7 +155,6 @@ func TestHandler(t *testing.T) {
 			reqBody:            ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:   nil,
-			hashComparerOutRes: true,
 			hashComparerOutErr: nil,
 			cookieGeneratorOutRes: &http.Cookie{
 				Name:    "authToken",
@@ -176,7 +168,6 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			userReader.OutRes = c.userReaderOutRes
 			userReader.OutErr = c.userReaderOutErr
-			hashComparer.outRes = c.hashComparerOutRes
 			hashComparer.outErr = c.hashComparerOutErr
 			cookieGenerator.OutRes = c.cookieGeneratorOutRes
 			cookieGenerator.OutErr = c.tokenGeneratorOutErr
@@ -243,7 +234,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			// If no hash comparer error is expected, cookie generator must be called.
-			if !hashComparer.outRes || hashComparer.outErr != nil {
+			if hashComparer.outErr != nil {
 				return
 			}
 			if err = assert.Equal(c.reqBody.Username, cookieGenerator.InSub); err != nil {

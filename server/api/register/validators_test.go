@@ -6,9 +6,9 @@ import (
 	"server/assert"
 )
 
-// This suite of tests is only for ensuring valdator returns the correct ValidationErrs
-// object based on the errors that field validators return. Each possible
-// outcome from each field validator is tested in the following test suites.
+// TestRequestValidator tests the RequestValidator's Validate method to ensure
+// that it returns correctly whatever error is returned to it by
+// UsernameValidator and PasswordValidator.
 func TestRequestValidator(t *testing.T) {
 	fakeValidatorUsername := &fakeStringValidator{}
 	fakeValidatorPassword := &fakeStringValidator{}
