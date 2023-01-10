@@ -1,5 +1,15 @@
 package db
 
+// FakeCloser is a test fake for Closer.
+type FakeCloser struct {
+	IsCalled bool
+}
+
+// Close implements the Closer interface on FakeCloser.
+func (c *FakeCloser) Close() {
+	c.IsCalled = true
+}
+
 // FakeUserCreator is a test fake for Creator[User].
 type FakeUserCreator struct {
 	InArg  User

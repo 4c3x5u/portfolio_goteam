@@ -25,8 +25,11 @@ func TestHandler(t *testing.T) {
 		userCreator     = &db.FakeUserCreator{}
 		cookieGenerator = &cookie.FakeAuthGenerator{}
 		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
+		dbCloser        = &db.FakeCloser{}
 	)
-	sut := NewHandler(validator, userReader, hasher, userCreator, cookieGenerator)
+	sut := NewHandler(
+		validator, userReader, hasher, userCreator, cookieGenerator, dbCloser,
+	)
 
 	for _, c := range []struct {
 		name                  string
@@ -248,7 +251,7 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no validator error is expected, user reader must be called.
+			// If no validator error is expected, userReader and dbCloser must be called.
 			if c.validatorOutErr.Any() {
 				return
 			}
@@ -261,6 +264,9 @@ func TestHandler(t *testing.T) {
 				return
 			}
 			if err = assert.Equal(c.reqBody.Password, hasher.inPlaintext); err != nil {
+				t.Error(err)
+			}
+			if err = assert.True(dbCloser.IsCalled); err != nil {
 				t.Error(err)
 			}
 

@@ -18,6 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	connCloser := db.NewConnCloser(conn)
 	jwtGenerator := cookie.NewJWTGenerator(os.Getenv("JWTSIGNATURE"))
 
 	// Register handlers for API endpoints.
@@ -31,6 +32,7 @@ func main() {
 		registerAPI.NewPasswordHasher(),
 		db.NewUserCreator(conn),
 		jwtGenerator,
+		connCloser,
 	))
 	mux.Handle("/login", loginAPI.NewHandler(
 		db.NewUserReader(conn),

@@ -18,6 +18,7 @@ type Handler struct {
 	hasher              Hasher
 	userCreator         db.Creator[db.User]
 	authCookieGenerator cookie.AuthGenerator
+	dbCloser            db.Closer
 }
 
 // NewHandler is the constructor for Handler.
@@ -27,6 +28,7 @@ func NewHandler(
 	hasher Hasher,
 	userCreator db.Creator[db.User],
 	authCookieGenerator cookie.AuthGenerator,
+	dbCloser db.Closer,
 ) Handler {
 	return Handler{
 		validator:           validator,
@@ -34,6 +36,7 @@ func NewHandler(
 		hasher:              hasher,
 		userCreator:         userCreator,
 		authCookieGenerator: authCookieGenerator,
+		dbCloser:            dbCloser,
 	}
 }
 
@@ -63,7 +66,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// rows come back 0. However, not sure if that would increase or decrease
 	// the performance as hashing will then occur before exists checks.
 	// TODO: Test when deployed.
-	if _, err := h.userReader.Read(reqBody.Username); err == nil {
+	_, err := h.userReader.Read(reqBody.Username)
+	defer h.dbCloser.Close()
+	if err == nil {
 		resBody.ValidationErrs = ValidationErrs{Username: []string{errUsernameTaken}}
 		relay.ClientJSON(w, resBody, http.StatusBadRequest)
 		return
