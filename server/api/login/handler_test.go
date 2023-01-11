@@ -29,9 +29,30 @@ func TestHandler(t *testing.T) {
 	)
 	sut := NewHandler(userReader, hashComparer, cookieGenerator, dbCloser)
 
+	t.Run("MethodNotAllowed", func(t *testing.T) {
+		for _, httpMethod := range []string{
+			http.MethodConnect, http.MethodDelete, http.MethodGet,
+			http.MethodHead, http.MethodOptions, http.MethodPatch,
+			http.MethodPut, http.MethodTrace,
+		} {
+			t.Run(httpMethod, func(t *testing.T) {
+				req, err := http.NewRequest(httpMethod, "/login", nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				w := httptest.NewRecorder()
+
+				sut.ServeHTTP(w, req)
+
+				if err = assert.Equal(http.StatusMethodNotAllowed, w.Result().StatusCode); err != nil {
+					t.Error(err)
+				}
+			})
+		}
+	})
+
 	for _, c := range []struct {
 		name                  string
-		httpMethod            string
 		reqBody               ReqBody
 		userReaderOutRes      db.User
 		userReaderOutErr      error
@@ -41,19 +62,7 @@ func TestHandler(t *testing.T) {
 		wantStatusCode        int
 	}{
 		{
-			name:                  "MethodNotAllowed",
-			httpMethod:            http.MethodGet,
-			reqBody:               ReqBody{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      nil,
-			hashComparerOutErr:    nil,
-			cookieGeneratorOutRes: nil,
-			tokenGeneratorOutErr:  nil,
-			wantStatusCode:        http.StatusMethodNotAllowed,
-		},
-		{
 			name:                  "NoUsername",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
@@ -64,7 +73,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UsernameEmpty",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: ""},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
@@ -75,7 +83,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UserNotFound",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      sql.ErrNoRows,
@@ -86,7 +93,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UserReaderError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      errors.New("user reader error"),
@@ -97,7 +103,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "NoPassword",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21"},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
@@ -108,7 +113,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "PasswordEmpty",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: ""},
 			userReaderOutRes:      db.User{},
 			userReaderOutErr:      nil,
@@ -119,7 +123,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "WrongPassword",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
@@ -130,7 +133,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "HashComparerError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
@@ -141,7 +143,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "TokenGeneratorError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:      db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:      nil,
@@ -152,7 +153,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:               "Success",
-			httpMethod:         http.MethodPost,
 			reqBody:            ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			userReaderOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userReaderOutErr:   nil,
@@ -177,7 +177,7 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(c.httpMethod, "/login", bytes.NewReader(reqBodyJSON))
+			req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(reqBodyJSON))
 			if err != nil {
 				t.Fatal(err)
 			}
