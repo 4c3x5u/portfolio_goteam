@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	boardAPI "server/api/board"
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
 	"server/cookie"
@@ -20,6 +21,7 @@ func main() {
 	}
 	connCloser := db.NewConnCloser(conn)
 	jwtGenerator := cookie.NewJWTGenerator(os.Getenv("JWTSIGNATURE"))
+	userReader := db.NewUserReader(conn)
 
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()
@@ -28,18 +30,19 @@ func main() {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		db.NewUserReader(conn),
+		userReader,
 		registerAPI.NewPasswordHasher(),
 		db.NewUserCreator(conn),
 		jwtGenerator,
 		connCloser,
 	))
 	mux.Handle("/login", loginAPI.NewHandler(
-		db.NewUserReader(conn),
+		userReader,
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
 		connCloser,
 	))
+	mux.Handle("/board", boardAPI.NewHandler())
 
 	// Serve the app using the ServeMux.
 	if err := http.ListenAndServe(":8080", mux); err != nil {
