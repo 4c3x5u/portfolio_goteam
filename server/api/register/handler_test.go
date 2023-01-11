@@ -27,13 +27,32 @@ func TestHandler(t *testing.T) {
 		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
 		dbCloser        = &db.FakeCloser{}
 	)
-	sut := NewHandler(
-		validator, userReader, hasher, userCreator, cookieGenerator, dbCloser,
-	)
+	sut := NewHandler(validator, userReader, hasher, userCreator, cookieGenerator, dbCloser)
+
+	t.Run("MethodNotAllowed", func(t *testing.T) {
+		for _, httpMethod := range []string{
+			http.MethodConnect, http.MethodDelete, http.MethodGet,
+			http.MethodHead, http.MethodOptions, http.MethodPatch,
+			http.MethodPut, http.MethodTrace,
+		} {
+			t.Run(httpMethod, func(t *testing.T) {
+				req, err := http.NewRequest(httpMethod, "/register", nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				w := httptest.NewRecorder()
+
+				sut.ServeHTTP(w, req)
+
+				if err = assert.Equal(http.StatusMethodNotAllowed, w.Result().StatusCode); err != nil {
+					t.Error(err)
+				}
+			})
+		}
+	})
 
 	for _, c := range []struct {
 		name                  string
-		httpMethod            string
 		reqBody               ReqBody
 		validatorOutErr       ValidationErrs
 		userReaderOutRes      db.User
@@ -47,23 +66,7 @@ func TestHandler(t *testing.T) {
 		wantValidationErrs    ValidationErrs
 	}{
 		{
-			name:                  "HttpMethodError",
-			httpMethod:            http.MethodGet,
-			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      nil,
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusMethodNotAllowed,
-			wantValidationErrs:    ValidationErrs{},
-		},
-		{
 			name:                  "ValidatorError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			validatorOutErr:       ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			userReaderOutRes:      db.User{},
@@ -78,7 +81,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UsernameTaken",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			validatorOutErr:       ValidationErrs{},
 			userReaderOutRes:      db.User{},
@@ -93,7 +95,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UserReaderError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:       ValidationErrs{},
 			userReaderOutRes:      db.User{},
@@ -108,7 +109,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "HasherError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:       ValidationErrs{},
 			userReaderOutRes:      db.User{},
@@ -123,7 +123,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "UserCreatorError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:       ValidationErrs{},
 			userReaderOutRes:      db.User{},
@@ -138,7 +137,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                  "TokenGeneratorError",
-			httpMethod:            http.MethodPost,
 			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:       ValidationErrs{},
 			userReaderOutRes:      db.User{},
@@ -153,7 +151,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:              "Success",
-			httpMethod:        http.MethodPost,
 			reqBody:           ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:   ValidationErrs{},
 			userReaderOutRes:  db.User{},
@@ -187,7 +184,7 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(c.httpMethod, "/register", bytes.NewReader(reqBody))
+			req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewReader(reqBody))
 			if err != nil {
 				t.Fatal(err)
 			}

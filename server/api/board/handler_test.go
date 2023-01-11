@@ -17,7 +17,7 @@ func TestHandler(t *testing.T) {
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
 				sut := NewHandler()
-				req, err := http.NewRequest(httpMethod, "/login", nil)
+				req, err := http.NewRequest(httpMethod, "/board", nil)
 				if err != nil {
 					t.Fatal(err)
 				}
