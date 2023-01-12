@@ -1,4 +1,4 @@
-package cookie
+package auth
 
 import (
 	"testing"
@@ -9,14 +9,14 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// TestJWTGenerator tests the JWTGenerator's Generate method to ensure that
+// TestJWTGenerator tests the JWTCookieGenerator's Generate method to ensure that
 // the generated JWT is valid as well as the format of the returned
 // *http.Cookie.
 func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"
 		expiry   = time.Now().Add(1 * time.Hour)
-		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
+		sut      = NewJWTCookieGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
 	)
 
 	cookie, err := sut.Generate(username, expiry)

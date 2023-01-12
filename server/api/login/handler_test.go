@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"server/assert"
-	"server/cookie"
+	"server/auth"
 	"server/db"
 
 	"golang.org/x/crypto/bcrypt"
@@ -23,7 +23,7 @@ func TestHandler(t *testing.T) {
 	var (
 		userReader      = &db.FakeUserReader{}
 		hashComparer    = &fakeHashComparer{}
-		cookieGenerator = &cookie.FakeAuthGenerator{}
+		cookieGenerator = &auth.FakeCookieGenerator{}
 		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
 		dbCloser        = &db.FakeCloser{}
 	)

@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"server/cookie"
-	"server/db"
 	"server/relay"
 	"time"
+
+	"server/auth"
+	"server/db"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,7 +17,7 @@ import (
 type Handler struct {
 	userReader          db.Reader[db.User]
 	hashComparer        Comparer
-	authCookieGenerator cookie.AuthGenerator
+	authCookieGenerator auth.CookieGenerator
 	dbCloser            db.Closer
 }
 
@@ -24,7 +25,7 @@ type Handler struct {
 func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
-	authCookieGenerator cookie.AuthGenerator,
+	authCookieGenerator auth.CookieGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"server/cookie"
+	"server/auth"
 	"server/db"
 	"server/relay"
 )
@@ -17,7 +17,7 @@ type Handler struct {
 	userReader          db.Reader[db.User]
 	hasher              Hasher
 	userCreator         db.Creator[db.User]
-	authCookieGenerator cookie.AuthGenerator
+	authCookieGenerator auth.CookieGenerator
 	dbCloser            db.Closer
 }
 
@@ -27,7 +27,7 @@ func NewHandler(
 	userReader db.Reader[db.User],
 	hasher Hasher,
 	userCreator db.Creator[db.User],
-	authCookieGenerator cookie.AuthGenerator,
+	authCookieGenerator auth.CookieGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"server/assert"
-	"server/cookie"
+	"server/auth"
 	"server/db"
 )
 
@@ -23,7 +23,7 @@ func TestHandler(t *testing.T) {
 		userReader      = &db.FakeUserReader{}
 		hasher          = &fakeHasher{}
 		userCreator     = &db.FakeUserCreator{}
-		cookieGenerator = &cookie.FakeAuthGenerator{}
+		cookieGenerator = &auth.FakeCookieGenerator{}
 		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
 		dbCloser        = &db.FakeCloser{}
 	)

@@ -1,5 +1,5 @@
 // Package cookie contains code for working with HTTP cookies.
-package cookie
+package auth
 
 import (
 	"net/http"
@@ -8,23 +8,25 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// AuthGenerator describes a type that can be used to generate an
+// CookieGenerator describes a type that can be used to generate an
 // authentication cookie that is valid until the expiry time for the given
 // subject (i.e. username).
-type AuthGenerator interface {
+type CookieGenerator interface {
 	Generate(sub string, exp time.Time) (*http.Cookie, error)
 }
 
-// JWTGenerator can be used to generate a JWT token that is valid until
+// JWTCookieGenerator can be used to generate a JWT token that is valid until
 // the expiry time for the given subject (i.e. username).
-type JWTGenerator struct{ key string }
+type JWTCookieGenerator struct{ key string }
 
-// NewJWTGenerator creates and returns a new JWTGenerator.
-func NewJWTGenerator(key string) JWTGenerator { return JWTGenerator{key: key} }
+// NewJWTCookieGenerator creates and returns a new JWTCookieGenerator.
+func NewJWTCookieGenerator(key string) JWTCookieGenerator {
+	return JWTCookieGenerator{key: key}
+}
 
 // Generate generates a JWT token as a *http.Cookie that is valid until the
 // expiry time for the given subject (i.e. username)
-func (g JWTGenerator) Generate(sub string, exp time.Time) (*http.Cookie, error) {
+func (g JWTCookieGenerator) Generate(sub string, exp time.Time) (*http.Cookie, error) {
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": sub,
 		"exp": exp.Unix(),
