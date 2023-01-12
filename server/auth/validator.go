@@ -2,10 +2,9 @@ package auth
 
 import "github.com/golang-jwt/jwt/v4"
 
-// TokenValidator describes a type that can be used to validate an auth token.
-type TokenValidator interface {
-	Validate(string) (string, error)
-}
+// Validator describes a type that can be used to validate an
+// authentication string.
+type Validator interface{ Validate(string) (string, error) }
 
 // JWTValidator can be used to validate a JWT.
 type JWTValidator struct{ key []byte }

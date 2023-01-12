@@ -31,8 +31,7 @@ func NewJWTCookieGenerator(key string) JWTCookieGenerator {
 // expiry time for the given subject (i.e. username)
 func (g JWTCookieGenerator) Generate(sub string, exp time.Time) (*http.Cookie, error) {
 	if token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": sub,
-		"exp": exp.Unix(),
+		"sub": sub, "exp": exp.Unix(),
 	}).SignedString(g.key); err != nil {
 		return nil, err
 	} else {
