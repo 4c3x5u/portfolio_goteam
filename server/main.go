@@ -20,7 +20,8 @@ func main() {
 		log.Fatal(err)
 	}
 	connCloser := db.NewConnCloser(conn)
-	jwtGenerator := auth.NewJWTCookieGenerator(os.Getenv("JWTSIGNATURE"))
+	jwtKey := os.Getenv("JWTKEY")
+	jwtGenerator := auth.NewJWTCookieGenerator(jwtKey)
 	userReader := db.NewUserReader(conn)
 
 	// Register handlers for API endpoints.
@@ -42,7 +43,9 @@ func main() {
 		jwtGenerator,
 		connCloser,
 	))
-	mux.Handle("/board", boardAPI.NewHandler())
+	mux.Handle("/board", boardAPI.NewHandler(
+		auth.NewJWTValidator(jwtKey),
+	))
 
 	// Serve the app using the ServeMux.
 	if err := http.ListenAndServe(":8080", mux); err != nil {

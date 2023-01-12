@@ -1,15 +1,18 @@
 package board
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"server/assert"
+	"server/auth"
 )
 
 func TestHandler(t *testing.T) {
-	sut := NewHandler()
+	tokenValidator := &auth.FakeTokenValidator{}
+	sut := NewHandler(tokenValidator)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -33,17 +36,27 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("AuthCookieNotFound", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPost, "/board", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
+	for _, c := range []struct {
+		name                 string
+		tokenValidatorOutErr error
+	}{
+		{name: "NoAuthCookie", tokenValidatorOutErr: nil},
+		{name: "InvalidAuthCookie", tokenValidatorOutErr: errors.New("token validator error")},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			tokenValidator.OutErr = c.tokenValidatorOutErr
 
-		sut.ServeHTTP(w, req)
+			req, err := http.NewRequest(http.MethodPost, "/board", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
 
-		if err = assert.Equal(http.StatusUnauthorized, w.Result().StatusCode); err != nil {
-			t.Error(err)
-		}
-	})
+			sut.ServeHTTP(w, req)
+
+			if err = assert.Equal(http.StatusUnauthorized, w.Result().StatusCode); err != nil {
+				t.Error(err)
+			}
+		})
+	}
 }

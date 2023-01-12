@@ -18,3 +18,16 @@ func (f *FakeCookieGenerator) Generate(sub string, exp time.Time) (*http.Cookie,
 	f.InSub, f.InExp = sub, exp
 	return f.OutRes, f.OutErr
 }
+
+// FakeTokenValidator is a test fake for TokenValidator.
+type FakeTokenValidator struct {
+	InToken string
+	OutSub  string
+	OutErr  error
+}
+
+// Validate implements the TokenValidator interface on FakeTokenValidator.
+func (f FakeTokenValidator) Validate(token string) (string, error) {
+	f.InToken = token
+	return f.OutSub, f.OutErr
+}
