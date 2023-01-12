@@ -9,9 +9,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// TestJWTGenerator tests the JWTCookieGenerator's Generate method to ensure that
-// the generated JWT is valid as well as the format of the returned
-// *http.Cookie.
+// TestJWTGenerator tests the JWTCookieGenerator's Generate method to ensure
+// that the generated JWT and the format of the returned *http.Cookie are valid.
 func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"
@@ -24,34 +23,22 @@ func TestJWTGenerator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = assert.Equal("authToken", cookie.Name)
+	err = assert.Equal(CookieName, cookie.Name)
 	err = assert.Equal(expiry.UTC(), cookie.Expires)
 	if err != nil {
 		t.Error(err)
 	}
 
-	token, err := jwt.Parse(cookie.Value, func(token *jwt.Token) (interface{}, error) {
-		_, ok := token.Method.(*jwt.SigningMethodHMAC)
-		if err = assert.True(ok); err != nil {
-			t.Error(err)
-		}
-		return []byte(sut.key), nil
-	})
-	if err != nil {
+	claims := &jwt.RegisteredClaims{}
+	if _, err = jwt.ParseWithClaims(cookie.Value, claims, func(token *jwt.Token) (interface{}, error) {
+		return sut.key, nil
+	}); err != nil {
 		t.Error(err)
 	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if err = assert.True(ok); err != nil {
+	if err = assert.Equal(username, claims.Subject); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Nil(claims.Valid()); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(username, claims["sub"].(string)); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(float64(expiry.Unix()), claims["exp"].(float64)); err != nil {
+	if err = assert.Equal(expiry.Unix(), claims.ExpiresAt.Unix()); err != nil {
 		t.Error(err)
 	}
 }

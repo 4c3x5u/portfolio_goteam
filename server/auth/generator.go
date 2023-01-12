@@ -37,7 +37,7 @@ func (g JWTCookieGenerator) Generate(sub string, exp time.Time) (*http.Cookie, e
 		return nil, err
 	} else {
 		return &http.Cookie{
-			Name:    "authToken",
+			Name:    CookieName,
 			Value:   token,
 			Expires: exp.UTC(),
 		}, nil
