@@ -2,16 +2,15 @@ package auth
 
 import "github.com/golang-jwt/jwt/v4"
 
-// Validator describes a type that can be used to validate an auth token.
-type Validator interface {
+// TokenValidator describes a type that can be used to validate an auth token.
+type TokenValidator interface {
 	Validate(string) (string, error)
 }
 
 // JWTValidator can be used to validate a JWT.
 type JWTValidator struct{ key []byte }
 
-// NewJWTValidator creates and returns a new JWTValidator. It sets the
-// JWTValidator's key field as the []byte of the key string that's passed in.
+// NewJWTValidator creates and returns a new JWTValidator.
 func NewJWTValidator(key string) JWTValidator {
 	return JWTValidator{key: []byte(key)}
 }

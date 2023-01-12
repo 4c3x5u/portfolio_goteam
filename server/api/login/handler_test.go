@@ -158,7 +158,7 @@ func TestHandler(t *testing.T) {
 			userReaderOutErr:   nil,
 			hashComparerOutErr: nil,
 			cookieGeneratorOutRes: &http.Cookie{
-				Name:    "authToken",
+				Name:    auth.CookieName,
 				Value:   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 				Expires: cookieExpiry,
 			},
@@ -194,7 +194,7 @@ func TestHandler(t *testing.T) {
 			if c.wantStatusCode == http.StatusOK {
 				authTokenFound := false
 				for _, ck := range w.Result().Cookies() {
-					if ck.Name == "authToken" {
+					if ck.Name == auth.CookieName {
 						authTokenFound = true
 						if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
 							t.Error(err)

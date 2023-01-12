@@ -159,7 +159,7 @@ func TestHandler(t *testing.T) {
 			hasherOutErr:      nil,
 			userCreatorOutErr: nil,
 			cookieGeneratorOutRes: &http.Cookie{
-				Name:    "authToken",
+				Name:    auth.CookieName,
 				Value:   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 				Expires: cookieExpiry,
 			},
@@ -220,7 +220,7 @@ func TestHandler(t *testing.T) {
 				// 200 is expected - auth token must be set.
 				authTokenFound := false
 				for _, ck := range res.Cookies() {
-					if ck.Name == "authToken" {
+					if ck.Name == auth.CookieName {
 						authTokenFound = true
 						if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
 							t.Error(err)
