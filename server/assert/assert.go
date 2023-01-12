@@ -8,12 +8,12 @@ import (
 	"fmt"
 )
 
-// newErr formats and returns an assertion error.
+// newErr formats, creates, and returns an assertion error.
 func newErr(want, got any) error {
 	return errors.New(fmt.Sprintf("\nwant: %+v\ngot: %+v", want, got))
 }
 
-// Equal asserts that two given values are the same.
+// Equal asserts that two given values are equal.
 func Equal(want, got any) error {
 	if want != got {
 		return newErr(want, got)
