@@ -1,9 +1,11 @@
 package auth
 
 import (
-	"github.com/golang-jwt/jwt/v4"
-	"server/assert"
 	"testing"
+
+	"server/assert"
+
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func TestJWTValidator(t *testing.T) {

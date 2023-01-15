@@ -19,15 +19,14 @@ import (
 // possible scenarios.
 func TestHandler(t *testing.T) {
 	var (
-		validator       = &fakeValidator{}
-		userReader      = &db.FakeUserReader{}
-		hasher          = &fakeHasher{}
-		userCreator     = &db.FakeUserCreator{}
-		cookieGenerator = &auth.FakeCookieGenerator{}
-		cookieExpiry    = time.Now().Add(1 * time.Hour).Truncate(1 * time.Second).UTC()
-		dbCloser        = &db.FakeCloser{}
+		validator      = &fakeValidator{}
+		userReader     = &db.FakeUserReader{}
+		hasher         = &fakeHasher{}
+		userCreator    = &db.FakeUserCreator{}
+		tokenGenerator = &auth.FakeTokenGenerator{}
+		dbCloser       = &db.FakeCloser{}
 	)
-	sut := NewHandler(validator, userReader, hasher, userCreator, cookieGenerator, dbCloser)
+	sut := NewHandler(validator, userReader, hasher, userCreator, tokenGenerator, dbCloser)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -52,120 +51,116 @@ func TestHandler(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name                  string
-		reqBody               ReqBody
-		validatorOutErr       ValidationErrs
-		userReaderOutRes      db.User
-		userReaderOutErr      error
-		hasherOutRes          []byte
-		hasherOutErr          error
-		userCreatorOutErr     error
-		cookieGeneratorOutRes *http.Cookie
-		cookieGeneratorOutErr error
-		wantStatusCode        int
-		wantValidationErrs    ValidationErrs
+		name                 string
+		reqBody              ReqBody
+		validatorOutErr      ValidationErrs
+		userReaderOutRes     db.User
+		userReaderOutErr     error
+		hasherOutRes         []byte
+		hasherOutErr         error
+		userCreatorOutErr    error
+		tokenGeneratorOutRes string
+		tokenGeneratorOutErr error
+		wantStatusCode       int
+		wantValidationErrs   ValidationErrs
 	}{
 		{
-			name:                  "ValidatorError",
-			reqBody:               ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
-			validatorOutErr:       ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      nil,
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusBadRequest,
-			wantValidationErrs:    ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			name:                 "ValidatorError",
+			reqBody:              ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
+			validatorOutErr:      ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			wantValidationErrs:   ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 		},
 		{
-			name:                  "UsernameTaken",
-			reqBody:               ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      nil,
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusBadRequest,
-			wantValidationErrs:    ValidationErrs{Username: []string{errUsernameTaken}},
+			name:                 "UsernameTaken",
+			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			wantValidationErrs:   ValidationErrs{Username: []string{errUsernameTaken}},
 		},
 		{
-			name:                  "UserReaderError",
-			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      errors.New("user reader error"),
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusInternalServerError,
-			wantValidationErrs:    ValidationErrs{},
+			name:                 "UserReaderError",
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     errors.New("user reader error"),
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantValidationErrs:   ValidationErrs{},
 		},
 		{
-			name:                  "HasherError",
-			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      sql.ErrNoRows,
-			hasherOutRes:          nil,
-			hasherOutErr:          errors.New("hasher fatal error"),
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusInternalServerError,
-			wantValidationErrs:    ValidationErrs{},
+			name:                 "HasherError",
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         errors.New("hasher fatal error"),
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantValidationErrs:   ValidationErrs{},
 		},
 		{
-			name:                  "UserCreatorError",
-			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      sql.ErrNoRows,
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     errors.New("creator fatal error"),
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusInternalServerError,
-			wantValidationErrs:    ValidationErrs{},
+			name:                 "UserCreatorError",
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    errors.New("creator fatal error"),
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			wantValidationErrs:   ValidationErrs{},
 		},
 		{
-			name:                  "TokenGeneratorError",
-			reqBody:               ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:       ValidationErrs{},
-			userReaderOutRes:      db.User{},
-			userReaderOutErr:      sql.ErrNoRows,
-			hasherOutRes:          nil,
-			hasherOutErr:          nil,
-			userCreatorOutErr:     nil,
-			cookieGeneratorOutRes: nil,
-			cookieGeneratorOutErr: errors.New("token generator error"),
-			wantStatusCode:        http.StatusUnauthorized,
-			wantValidationErrs:    ValidationErrs{Auth: errAuth},
+			name:                 "TokenGeneratorError",
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: errors.New("token generator error"),
+			wantStatusCode:       http.StatusUnauthorized,
+			wantValidationErrs:   ValidationErrs{Auth: errAuth},
 		},
 		{
-			name:              "Success",
-			reqBody:           ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
-			validatorOutErr:   ValidationErrs{},
-			userReaderOutRes:  db.User{},
-			userReaderOutErr:  sql.ErrNoRows,
-			hasherOutRes:      nil,
-			hasherOutErr:      nil,
-			userCreatorOutErr: nil,
-			cookieGeneratorOutRes: &http.Cookie{
-				Name:    auth.CookieName,
-				Value:   "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-				Expires: cookieExpiry,
-			},
-			cookieGeneratorOutErr: nil,
-			wantStatusCode:        http.StatusOK,
-			wantValidationErrs:    ValidationErrs{},
+			name:                 "Success",
+			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			validatorOutErr:      ValidationErrs{},
+			userReaderOutRes:     db.User{},
+			userReaderOutErr:     sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userCreatorOutErr:    nil,
+			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusOK,
+			wantValidationErrs:   ValidationErrs{},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -176,8 +171,8 @@ func TestHandler(t *testing.T) {
 			hasher.outHash = c.hasherOutRes
 			hasher.outErr = c.hasherOutErr
 			userCreator.OutErr = c.userCreatorOutErr
-			cookieGenerator.OutRes = c.cookieGeneratorOutRes
-			cookieGenerator.OutErr = c.cookieGeneratorOutErr
+			tokenGenerator.OutRes = c.tokenGeneratorOutRes
+			tokenGenerator.OutErr = c.tokenGeneratorOutErr
 
 			// Parse request body.
 			reqBody, err := json.Marshal(c.reqBody)
@@ -222,10 +217,10 @@ func TestHandler(t *testing.T) {
 				for _, ck := range res.Cookies() {
 					if ck.Name == auth.CookieName {
 						authTokenFound = true
-						if err = assert.Equal(c.cookieGeneratorOutRes.Value, ck.Value); err != nil {
+						if err = assert.Equal(c.tokenGeneratorOutRes, ck.Value); err != nil {
 							t.Error(err)
 						}
-						if err = assert.Equal(c.cookieGeneratorOutRes.Expires, ck.Expires); err != nil {
+						if err = assert.True(ck.Expires.Unix() > time.Now().Unix()); err != nil {
 							t.Error(err)
 						}
 					}
@@ -282,7 +277,7 @@ func TestHandler(t *testing.T) {
 			if c.userCreatorOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, cookieGenerator.InSub); err != nil {
+			if err = assert.Equal(c.reqBody.Username, tokenGenerator.InSub); err != nil {
 				t.Error(err)
 			}
 		})

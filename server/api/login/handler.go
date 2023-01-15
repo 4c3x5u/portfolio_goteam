@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"server/relay"
 	"time"
 
 	"server/auth"
 	"server/db"
+	"server/relay"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,7 +17,7 @@ import (
 type Handler struct {
 	userReader          db.Reader[db.User]
 	hashComparer        Comparer
-	authCookieGenerator auth.CookieGenerator
+	authCookieGenerator auth.TokenGenerator
 	dbCloser            db.Closer
 }
 
@@ -25,7 +25,7 @@ type Handler struct {
 func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
-	authCookieGenerator auth.CookieGenerator,
+	authCookieGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
@@ -78,16 +78,20 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-
-	// Generate an authentication cookie for the user and return it in a
-	// Set-Cookie header.
-	if authCookie, err := h.authCookieGenerator.Generate(
-		reqBody.Username, time.Now().Add(1*time.Hour),
+	// Generate an authentication token for the user that is valid for an hour
+	// and return it within a Set-Cookie header.
+	expiry := time.Now().Add(1 * time.Hour).UTC()
+	if authToken, err := h.authCookieGenerator.Generate(
+		reqBody.Username, expiry,
 	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	} else {
-		http.SetCookie(w, authCookie)
+		http.SetCookie(w, &http.Cookie{
+			Name:    auth.CookieName,
+			Value:   authToken,
+			Expires: expiry,
+		})
 		w.WriteHeader(http.StatusOK)
 		return
 	}

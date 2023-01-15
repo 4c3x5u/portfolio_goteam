@@ -13,12 +13,12 @@ import (
 
 // Handler is the http.Handler for the register route.
 type Handler struct {
-	validator           Validator
-	userReader          db.Reader[db.User]
-	hasher              Hasher
-	userCreator         db.Creator[db.User]
-	authCookieGenerator auth.CookieGenerator
-	dbCloser            db.Closer
+	validator      Validator
+	userReader     db.Reader[db.User]
+	hasher         Hasher
+	userCreator    db.Creator[db.User]
+	tokenGenerator auth.TokenGenerator
+	dbCloser       db.Closer
 }
 
 // NewHandler is the constructor for Handler.
@@ -27,16 +27,16 @@ func NewHandler(
 	userReader db.Reader[db.User],
 	hasher Hasher,
 	userCreator db.Creator[db.User],
-	authCookieGenerator auth.CookieGenerator,
+	tokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
-		validator:           validator,
-		userReader:          userReader,
-		hasher:              hasher,
-		userCreator:         userCreator,
-		authCookieGenerator: authCookieGenerator,
-		dbCloser:            dbCloser,
+		validator:      validator,
+		userReader:     userReader,
+		hasher:         hasher,
+		userCreator:    userCreator,
+		tokenGenerator: tokenGenerator,
+		dbCloser:       dbCloser,
 	}
 }
 
@@ -90,14 +90,19 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Generate an authentication cookie for the user that expires in an hour
 	// and return it in a Set-Cookie header.
-	if authCookie, err := h.authCookieGenerator.Generate(
-		reqBody.Username, time.Now().Add(1*time.Hour),
+	expiry := time.Now().Add(1 * time.Hour).UTC()
+	if authToken, err := h.tokenGenerator.Generate(
+		reqBody.Username, expiry,
 	); err != nil {
 		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
 		relay.ClientErr(w, resBody, errAuth, http.StatusUnauthorized)
 		return
 	} else {
-		http.SetCookie(w, authCookie)
+		http.SetCookie(w, &http.Cookie{
+			Name:    auth.CookieName,
+			Value:   authToken,
+			Expires: expiry,
+		})
 		w.WriteHeader(http.StatusOK)
 		return
 	}

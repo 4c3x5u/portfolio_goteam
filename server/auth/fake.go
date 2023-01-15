@@ -1,20 +1,19 @@
 package auth
 
-import (
-	"net/http"
-	"time"
-)
+import "time"
 
-// FakeCookieGenerator is a test fake for CookieGenerator.
-type FakeCookieGenerator struct {
+// FakeTokenGenerator is a test fake for CookieGenerator.
+type FakeTokenGenerator struct {
 	InSub  string
 	InExp  time.Time
-	OutRes *http.Cookie
+	OutRes string
 	OutErr error
 }
 
 // Generate implements the CookieGenerator interface on FakeCookieGenerator.
-func (f *FakeCookieGenerator) Generate(sub string, exp time.Time) (*http.Cookie, error) {
+func (f *FakeTokenGenerator) Generate(
+	sub string, exp time.Time,
+) (string, error) {
 	f.InSub, f.InExp = sub, exp
 	return f.OutRes, f.OutErr
 }

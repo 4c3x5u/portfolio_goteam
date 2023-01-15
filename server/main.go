@@ -5,11 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"server/auth"
 
 	boardAPI "server/api/board"
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
+	"server/auth"
 	"server/db"
 )
 
@@ -21,7 +21,7 @@ func main() {
 	}
 	connCloser := db.NewConnCloser(conn)
 	jwtKey := os.Getenv("JWTKEY")
-	jwtGenerator := auth.NewJWTCookieGenerator(jwtKey)
+	jwtGenerator := auth.NewJWTGenerator(jwtKey)
 	userReader := db.NewUserReader(conn)
 
 	// Register handlers for API endpoints.

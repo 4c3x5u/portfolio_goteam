@@ -15,24 +15,26 @@ func TestJWTGenerator(t *testing.T) {
 	var (
 		username = "bob21"
 		expiry   = time.Now().Add(1 * time.Hour)
-		sut      = NewJWTCookieGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
+		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
 	)
 
-	cookie, err := sut.Generate(username, expiry)
+	token, err := sut.Generate(username, expiry)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = assert.Equal(CookieName, cookie.Name)
-	err = assert.Equal(expiry.UTC(), cookie.Expires)
-	if err != nil {
-		t.Error(err)
-	}
+	// err = assert.Equal(CookieName, cookie.Name)
+	// err = assert.Equal(expiry.UTC(), cookie.Expires)
+	// if err != nil {
+	// 	t.Error(err)
+	// }
 
 	claims := &jwt.RegisteredClaims{}
-	if _, err = jwt.ParseWithClaims(cookie.Value, claims, func(token *jwt.Token) (interface{}, error) {
-		return sut.key, nil
-	}); err != nil {
+	if _, err = jwt.ParseWithClaims(
+		token,
+		claims,
+		func(token *jwt.Token) (any, error) { return sut.key, nil },
+	); err != nil {
 		t.Error(err)
 	}
 	if err = assert.Equal(username, claims.Subject); err != nil {
