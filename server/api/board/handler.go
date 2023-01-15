@@ -3,7 +3,6 @@ package board
 import (
 	"net/http"
 
-	"server/api"
 	"server/auth"
 )
 
@@ -26,12 +25,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get and validate the authentication cookie.
 	authCookie, err := r.Cookie(auth.CookieName)
 	if err != nil {
-		w.Header().Set(api.WWWAuthenticate())
+		w.Header().Set(auth.WWWAuthenticate())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
 	if _, err = h.tokenValidator.Validate(authCookie.Value); err != nil {
-		w.Header().Set(api.WWWAuthenticate())
+		w.Header().Set(auth.WWWAuthenticate())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
