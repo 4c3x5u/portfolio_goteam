@@ -4,35 +4,35 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"server/relay"
 	"time"
 
 	"server/auth"
 	"server/db"
-	"server/relay"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Handler is the http.Handler for the login route.
 type Handler struct {
-	userReader          db.Reader[db.User]
-	hashComparer        Comparer
-	authCookieGenerator auth.TokenGenerator
-	dbCloser            db.Closer
+	userReader     db.Reader[db.User]
+	hashComparer   Comparer
+	tokenGenerator auth.TokenGenerator
+	dbCloser       db.Closer
 }
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
 	userReader db.Reader[db.User],
 	hashComparer Comparer,
-	authCookieGenerator auth.TokenGenerator,
+	tokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
-		userReader:          userReader,
-		hashComparer:        hashComparer,
-		authCookieGenerator: authCookieGenerator,
-		dbCloser:            dbCloser,
+		userReader:     userReader,
+		hashComparer:   hashComparer,
+		tokenGenerator: tokenGenerator,
+		dbCloser:       dbCloser,
 	}
 }
 
@@ -78,10 +78,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		relay.ServerErr(w, err.Error())
 		return
 	}
-	// Generate an authentication token for the user that is valid for an hour
-	// and return it within a Set-Cookie header.
-	expiry := time.Now().Add(1 * time.Hour).UTC()
-	if authToken, err := h.authCookieGenerator.Generate(
+
+	// Generate an authentication cookie for the user and return it within a
+	// Set-Cookie header.
+	expiry := time.Now().Add(auth.Duration).UTC()
+	if authToken, err := h.tokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
 		relay.ServerErr(w, err.Error())

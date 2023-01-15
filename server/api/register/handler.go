@@ -88,9 +88,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate an authentication cookie for the user that expires in an hour
-	// and return it in a Set-Cookie header.
-	expiry := time.Now().Add(1 * time.Hour).UTC()
+	// Generate an authentication token for the user that is valid for an hour and return it within a Set-Cookie header.
+	expiry := time.Now().Add(auth.Duration).UTC()
 	if authToken, err := h.tokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
