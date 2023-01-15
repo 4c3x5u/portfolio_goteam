@@ -232,7 +232,7 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no hash comparer error is expected, cookie generator must be called.
+			// If no hash comparer error is expected, token generator must be called.
 			if hashComparer.outErr != nil {
 				return
 			}

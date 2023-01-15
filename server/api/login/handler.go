@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"server/relay"
 	"time"
 
 	"server/auth"
 	"server/db"
+	"server/relay"
 
 	"golang.org/x/crypto/bcrypt"
 )

@@ -2,7 +2,7 @@ package auth
 
 import "time"
 
-// FakeTokenGenerator is a test fake for CookieGenerator.
+// FakeTokenGenerator is a test fake for TokenGenerator.
 type FakeTokenGenerator struct {
 	InSub  string
 	InExp  time.Time
@@ -10,7 +10,7 @@ type FakeTokenGenerator struct {
 	OutErr error
 }
 
-// Generate implements the CookieGenerator interface on FakeCookieGenerator.
+// Generate implements the CookieGenerator interface on FakeTokenGenerator.
 func (f *FakeTokenGenerator) Generate(
 	sub string, exp time.Time,
 ) (string, error) {

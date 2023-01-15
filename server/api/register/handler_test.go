@@ -273,7 +273,7 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no user creator error is expected, cookie generator must be called.
+			// If no user creator error is expected, token generator must be called.
 			if c.userCreatorOutErr != nil {
 				return
 			}

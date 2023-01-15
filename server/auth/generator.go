@@ -18,7 +18,7 @@ type TokenGenerator interface {
 // the expiry time for the given subject (i.e. username).
 type JWTGenerator struct{ key []byte }
 
-// NewJWTGenerator creates and returns a new JWTCookieGenerator.
+// NewJWTGenerator creates and returns a new JWTGenerator.
 func NewJWTGenerator(key string) JWTGenerator {
 	return JWTGenerator{key: []byte(key)}
 }
@@ -30,4 +30,3 @@ func (g JWTGenerator) Generate(sub string, exp time.Time) (string, error) {
 		"sub": sub, "exp": exp.Unix(),
 	}).SignedString(g.key)
 }
-
