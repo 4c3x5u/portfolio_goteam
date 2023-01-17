@@ -21,12 +21,12 @@ import (
 // possible scenarios.
 func TestHandler(t *testing.T) {
 	var (
-		userReader     = &db.FakeUserReader{}
+		userSelector   = &db.FakeUserSelector{}
 		hashComparer   = &fakeHashComparer{}
 		tokenGenerator = &auth.FakeTokenGenerator{}
 		dbCloser       = &db.FakeCloser{}
 	)
-	sut := NewHandler(userReader, hashComparer, tokenGenerator, dbCloser)
+	sut := NewHandler(userSelector, hashComparer, tokenGenerator, dbCloser)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -53,8 +53,8 @@ func TestHandler(t *testing.T) {
 	for _, c := range []struct {
 		name                 string
 		reqBody              ReqBody
-		userReaderOutRes     db.User
-		userReaderOutErr     error
+		userSelectorOutRes   db.User
+		userSelectorOutErr   error
 		hashComparerOutErr   error
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
@@ -63,8 +63,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "NoUsername",
 			reqBody:              ReqBody{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -73,8 +73,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "UsernameEmpty",
 			reqBody:              ReqBody{Username: ""},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -83,18 +83,18 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "UserNotFound",
 			reqBody:              ReqBody{Username: "bob21"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                 "UserReaderError",
+			name:                 "UserSelectorError",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     errors.New("user reader error"),
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   errors.New("user selector error"),
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -103,8 +103,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "NoPassword",
 			reqBody:              ReqBody{Username: "bob21"},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -113,8 +113,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "PasswordEmpty",
 			reqBody:              ReqBody{Username: "bob21", Password: ""},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -123,8 +123,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "WrongPassword",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   bcrypt.ErrMismatchedHashAndPassword,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -133,8 +133,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "HashComparerError",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   errors.New("hash comparer error"),
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
@@ -143,8 +143,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "TokenGeneratorError",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: errors.New("token generator error"),
@@ -153,8 +153,8 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "Success",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userReaderOutRes:     db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
-			userReaderOutErr:     nil,
+			userSelectorOutRes:   db.User{Username: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			tokenGeneratorOutErr: nil,
@@ -162,8 +162,8 @@ func TestHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userReader.OutRes = c.userReaderOutRes
-			userReader.OutErr = c.userReaderOutErr
+			userSelector.OutRes = c.userSelectorOutRes
+			userSelector.OutErr = c.userSelectorOutErr
 			hashComparer.outErr = c.hashComparerOutErr
 			tokenGenerator.OutRes = c.tokenGeneratorOutRes
 			tokenGenerator.OutErr = c.tokenGeneratorOutErr
@@ -206,25 +206,25 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If username and password weren't empty, user reader and db closer must be called.
+			// If username and password weren't empty, user selector and db closer must be called.
 			if c.reqBody.Username == "" ||
 				c.reqBody.Password == "" ||
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userSelector.InArg); err != nil {
 				t.Error(err)
 			}
 			if err = assert.True(dbCloser.IsCalled); err != nil {
 				t.Error(err)
 			}
 
-			// If no user reader error is expected, hash comparer must be called.
-			if userReader.OutErr != nil {
+			// If no user selector error is expected, hash comparer must be called.
+			if userSelector.OutErr != nil {
 				return
 			}
 			if err = assert.Equal(
-				string(c.userReaderOutRes.Password), string(hashComparer.inHash),
+				string(c.userSelectorOutRes.Password), string(hashComparer.inHash),
 			); err != nil {
 				t.Error(err)
 			}

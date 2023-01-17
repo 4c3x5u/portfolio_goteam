@@ -9,21 +9,21 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestUserReader(t *testing.T) {
+func TestUserSelector(t *testing.T) {
 	username := "bob21"
-	query := `SELECT username, password FROM users WHERE username = \$1`
+	query := `SELECT username, password FROM user WHERE username = \$1`
 
 	t.Run("Error", func(t *testing.T) {
-		wantErr := errors.New("user reader error")
+		wantErr := errors.New("user inserter error")
 
 		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
 
-		sut := NewUserReader(db)
+		sut := NewUserSelector(db)
 
-		_, err := sut.Read(username)
+		_, err := sut.Select(username)
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
 		}
@@ -39,9 +39,9 @@ func TestUserReader(t *testing.T) {
 		)
 		mock.ExpectClose()
 
-		sut := NewUserReader(db)
+		sut := NewUserSelector(db)
 
-		user, err := sut.Read(username)
+		user, err := sut.Select(username)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,21 +54,21 @@ func TestUserReader(t *testing.T) {
 	})
 }
 
-func TestUserCreator(t *testing.T) {
+func TestUserInserter(t *testing.T) {
 	username, password := "bob21", []byte("hashedpwd")
-	query := `INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`
+	query := `INSERT INTO user\(username, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
 		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.
-			ExpectExec(`INSERT INTO users\(username, password\) VALUES \(\$1, \$2\)`).
+			ExpectExec(`INSERT INTO user\(username, password\) VALUES \(\$1, \$2\)`).
 			WithArgs(username, string(password)).
 			WillReturnError(wantErr)
-		sut := NewUserCreator(db)
+		sut := NewUserInserter(db)
 
-		err := sut.Create(NewUser(username, password))
+		err := sut.Insert(NewUser(username, password))
 
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
@@ -82,9 +82,9 @@ func TestUserCreator(t *testing.T) {
 			ExpectExec(query).
 			WithArgs(username, string(password)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
-		sut := NewUserCreator(db)
+		sut := NewUserInserter(db)
 
-		err := sut.Create(NewUser(username, password))
+		err := sut.Insert(NewUser(username, password))
 
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)

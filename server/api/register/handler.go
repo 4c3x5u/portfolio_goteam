@@ -14,9 +14,9 @@ import (
 // Handler is the http.Handler for the register route.
 type Handler struct {
 	validator      Validator
-	userReader     db.Reader[db.User]
+	userSelector   db.Selector[db.User]
 	hasher         Hasher
-	userCreator    db.Creator[db.User]
+	userInserter   db.Inserter[db.User]
 	tokenGenerator auth.TokenGenerator
 	dbCloser       db.Closer
 }
@@ -24,17 +24,17 @@ type Handler struct {
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator Validator,
-	userReader db.Reader[db.User],
+	userSelector db.Selector[db.User],
 	hasher Hasher,
-	userCreator db.Creator[db.User],
+	userInserter db.Inserter[db.User],
 	tokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
 		validator:      validator,
-		userReader:     userReader,
+		userSelector:   userSelector,
 		hasher:         hasher,
-		userCreator:    userCreator,
+		userInserter:   userInserter,
 		tokenGenerator: tokenGenerator,
 		dbCloser:       dbCloser,
 	}
@@ -62,11 +62,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the username is taken. This db call can be removed by
 	// adding an "ON CONFLICT (username) DO NOTHING" clause to the query that
-	// user creator uses, and then returning errUsernameTaken if affected
+	// user inserter uses, and then returning errUsernameTaken if affected
 	// rows come back 0. However, not sure if that would increase or decrease
 	// the performance as hashing will then occur before exists checks.
 	// TODO: Test when deployed.
-	_, err := h.userReader.Read(reqBody.Username)
+	_, err := h.userSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == nil {
 		resBody.ValidationErrs = ValidationErrs{Username: []string{errUsernameTaken}}
@@ -81,14 +81,15 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err = h.userCreator.Create(
+	} else if err = h.userInserter.Insert(
 		db.NewUser(reqBody.Username, pwdHash),
 	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
 
-	// Generate an authentication token for the user that is valid for an hour and return it within a Set-Cookie header.
+	// Generate an authentication token for the user that is valid for an hour
+	// and return it within a Set-Cookie header.
 	expiry := time.Now().Add(auth.Duration).UTC()
 	if authToken, err := h.tokenGenerator.Generate(
 		reqBody.Username, expiry,

@@ -22,7 +22,7 @@ func main() {
 	connCloser := db.NewConnCloser(conn)
 	jwtKey := os.Getenv("JWTKEY")
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
-	userReader := db.NewUserReader(conn)
+	userSelector := db.NewUserSelector(conn)
 
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()
@@ -31,14 +31,14 @@ func main() {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		userReader,
+		userSelector,
 		registerAPI.NewPasswordHasher(),
-		db.NewUserCreator(conn),
+		db.NewUserInserter(conn),
 		jwtGenerator,
 		connCloser,
 	))
 	mux.Handle("/login", loginAPI.NewHandler(
-		userReader,
+		userSelector,
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
 		connCloser,

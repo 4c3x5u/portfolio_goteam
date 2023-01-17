@@ -20,13 +20,13 @@ import (
 func TestHandler(t *testing.T) {
 	var (
 		validator      = &fakeValidator{}
-		userReader     = &db.FakeUserReader{}
+		userSelector   = &db.FakeUserSelector{}
 		hasher         = &fakeHasher{}
-		userCreator    = &db.FakeUserCreator{}
+		userInserter   = &db.FakeUserInserter{}
 		tokenGenerator = &auth.FakeTokenGenerator{}
 		dbCloser       = &db.FakeCloser{}
 	)
-	sut := NewHandler(validator, userReader, hasher, userCreator, tokenGenerator, dbCloser)
+	sut := NewHandler(validator, userSelector, hasher, userInserter, tokenGenerator, dbCloser)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -54,11 +54,11 @@ func TestHandler(t *testing.T) {
 		name                 string
 		reqBody              ReqBody
 		validatorOutErr      ValidationErrs
-		userReaderOutRes     db.User
-		userReaderOutErr     error
+		userInserterOutRes   db.User
+		userSelectorOutErr   error
 		hasherOutRes         []byte
 		hasherOutErr         error
-		userCreatorOutErr    error
+		userInserterOutErr   error
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
 		wantStatusCode       int
@@ -68,11 +68,11 @@ func TestHandler(t *testing.T) {
 			name:                 "ValidatorError",
 			reqBody:              ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			validatorOutErr:      ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
@@ -82,25 +82,25 @@ func TestHandler(t *testing.T) {
 			name:                 "UsernameTaken",
 			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     nil,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			wantValidationErrs:   ValidationErrs{Username: []string{errUsernameTaken}},
 		},
 		{
-			name:                 "UserReaderError",
+			name:                 "UserSelectorError",
 			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     errors.New("user reader error"),
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   errors.New("user selector error"),
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
@@ -110,25 +110,25 @@ func TestHandler(t *testing.T) {
 			name:                 "HasherError",
 			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         errors.New("hasher fatal error"),
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			wantValidationErrs:   ValidationErrs{},
 		},
 		{
-			name:                 "UserCreatorError",
+			name:                 "UserInserterError",
 			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    errors.New("creator fatal error"),
+			userInserterOutErr:   errors.New("inserter fatal error"),
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
@@ -138,11 +138,11 @@ func TestHandler(t *testing.T) {
 			name:                 "TokenGeneratorError",
 			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: errors.New("token generator error"),
 			wantStatusCode:       http.StatusUnauthorized,
@@ -152,11 +152,11 @@ func TestHandler(t *testing.T) {
 			name:                 "Success",
 			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
-			userReaderOutRes:     db.User{},
-			userReaderOutErr:     sql.ErrNoRows,
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
-			userCreatorOutErr:    nil,
+			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
@@ -166,11 +166,11 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for Handler dependencies.
 			validator.outErrs = c.validatorOutErr
-			userReader.OutRes = c.userReaderOutRes
-			userReader.OutErr = c.userReaderOutErr
+			userSelector.OutRes = c.userInserterOutRes
+			userSelector.OutErr = c.userSelectorOutErr
 			hasher.outHash = c.hasherOutRes
 			hasher.outErr = c.hasherOutErr
-			userCreator.OutErr = c.userCreatorOutErr
+			userInserter.OutErr = c.userInserterOutErr
 			tokenGenerator.OutRes = c.tokenGeneratorOutRes
 			tokenGenerator.OutErr = c.tokenGeneratorOutErr
 
@@ -243,16 +243,16 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no validator error is expected, userReader and dbCloser must be called.
+			// If no validator error is expected, user selector and db closer must be called.
 			if c.validatorOutErr.Any() {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userReader.InArg); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userSelector.InArg); err != nil {
 				t.Error(err)
 			}
 
 			// If user is expected to not already exist, hasher must be called.
-			if c.userReaderOutErr != sql.ErrNoRows {
+			if c.userSelectorOutErr != sql.ErrNoRows {
 				return
 			}
 			if err = assert.Equal(c.reqBody.Password, hasher.inPlaintext); err != nil {
@@ -262,19 +262,19 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no hasher error is expected, user creator must be called.
+			// If no hasher error is expected, user inserter must be called.
 			if c.hasherOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userCreator.InArg.Username); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userInserter.InArg.Username); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(string(c.hasherOutRes), string(userCreator.InArg.Password)); err != nil {
+			if err = assert.Equal(string(c.hasherOutRes), string(userInserter.InArg.Password)); err != nil {
 				t.Error(err)
 			}
 
-			// If no user creator error is expected, token generator must be called.
-			if c.userCreatorOutErr != nil {
+			// If no user inserter error is expected, token generator must be called.
+			if c.userInserterOutErr != nil {
 				return
 			}
 			if err = assert.Equal(c.reqBody.Username, tokenGenerator.InSub); err != nil {
