@@ -11,7 +11,7 @@ import (
 
 func TestUserSelector(t *testing.T) {
 	username := "bob21"
-	query := `SELECT username, password FROM user WHERE username = \$1`
+	query := `SELECT username, password FROM app.\"user\" WHERE username = \$1`
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("user inserter error")
@@ -56,14 +56,14 @@ func TestUserSelector(t *testing.T) {
 
 func TestUserInserter(t *testing.T) {
 	username, password := "bob21", []byte("hashedpwd")
-	query := `INSERT INTO user\(username, password\) VALUES \(\$1, \$2\)`
+	query := `INSERT INTO app.\"user\"\(username, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
 		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
 		mock.
-			ExpectExec(`INSERT INTO user\(username, password\) VALUES \(\$1, \$2\)`).
+			ExpectExec(query).
 			WithArgs(username, string(password)).
 			WillReturnError(wantErr)
 		sut := NewUserInserter(db)

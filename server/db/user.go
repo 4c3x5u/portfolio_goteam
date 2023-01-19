@@ -26,7 +26,7 @@ func NewUserInserter(db *sql.DB) UserInserter { return UserInserter{db: db} }
 // Insert creates a new record in the user table.
 func (c UserInserter) Insert(user User) error {
 	_, err := c.db.Exec(
-		"INSERT INTO user(username, password) VALUES ($1, $2)",
+		`INSERT INTO app."user"(username, password) VALUES ($1, $2)`,
 		user.Username, string(user.Password),
 	)
 	return err
@@ -41,7 +41,7 @@ func NewUserSelector(db *sql.DB) UserSelector { return UserSelector{db: db} }
 // Select selects a record from the user table with the given username.
 func (r UserSelector) Select(username string) (user User, err error) {
 	err = r.db.QueryRow(
-		`SELECT username, password FROM user WHERE username = $1`,
+		`SELECT username, password FROM app."user" WHERE username = $1`,
 		username,
 	).Scan(&user.Username, &user.Password)
 	return
