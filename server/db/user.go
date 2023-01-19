@@ -8,13 +8,13 @@ import (
 
 // User represents a record in the user table.
 type User struct {
-	Username string
+	ID       string
 	Password []byte
 }
 
 // NewUser creates and returns a new User.
-func NewUser(username string, password []byte) User {
-	return User{Username: username, Password: password}
+func NewUser(id string, password []byte) User {
+	return User{ID: id, Password: password}
 }
 
 // UserInserter can be used to create a new record in the user table.
@@ -26,8 +26,8 @@ func NewUserInserter(db *sql.DB) UserInserter { return UserInserter{db: db} }
 // Insert creates a new record in the user table.
 func (c UserInserter) Insert(user User) error {
 	_, err := c.db.Exec(
-		`INSERT INTO app."user"(username, password) VALUES ($1, $2)`,
-		user.Username, string(user.Password),
+		`INSERT INTO app."user"(id, password) VALUES ($1, $2)`,
+		user.ID, string(user.Password),
 	)
 	return err
 }
@@ -41,8 +41,8 @@ func NewUserSelector(db *sql.DB) UserSelector { return UserSelector{db: db} }
 // Select selects a record from the user table with the given username.
 func (r UserSelector) Select(username string) (user User, err error) {
 	err = r.db.QueryRow(
-		`SELECT username, password FROM app."user" WHERE username = $1`,
+		`SELECT id, password FROM app."user" WHERE id = $1`,
 		username,
-	).Scan(&user.Username, &user.Password)
+	).Scan(&user.ID, &user.Password)
 	return
 }

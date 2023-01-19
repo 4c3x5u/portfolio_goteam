@@ -11,15 +11,24 @@ import (
 	registerAPI "server/api/register"
 	"server/auth"
 	"server/db"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	// Create dependencies that are shared by multiple handlers.
 	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	connCloser := db.NewConnCloser(conn)
+	defer connCloser.Close()
 	jwtKey := os.Getenv("JWTKEY")
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
 	userSelector := db.NewUserSelector(conn)

@@ -10,20 +10,20 @@ import (
 )
 
 func TestUserSelector(t *testing.T) {
-	username := "bob21"
-	query := `SELECT username, password FROM app.\"user\" WHERE username = \$1`
+	id := "bob21"
+	query := `SELECT id, password FROM app.\"user\" WHERE id = \$1`
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("user inserter error")
 
 		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
-		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
+		mock.ExpectQuery(query).WithArgs(id).WillReturnError(wantErr)
 		mock.ExpectClose()
 
 		sut := NewUserSelector(db)
 
-		_, err := sut.Select(username)
+		_, err := sut.Select(id)
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
 		}
@@ -34,18 +34,18 @@ func TestUserSelector(t *testing.T) {
 
 		db, mock, teardown := setUpDBMock(t)
 		defer teardown()
-		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
-			mock.NewRows([]string{"username", "password"}).AddRow(username, wantPwd),
+		mock.ExpectQuery(query).WithArgs(id).WillReturnRows(
+			mock.NewRows([]string{"id", "password"}).AddRow(id, wantPwd),
 		)
 		mock.ExpectClose()
 
 		sut := NewUserSelector(db)
 
-		user, err := sut.Select(username)
+		user, err := sut.Select(id)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err = assert.Equal(username, user.Username); err != nil {
+		if err = assert.Equal(id, user.ID); err != nil {
 			t.Error(err)
 		}
 		if err = assert.Equal(wantPwd, string(user.Password)); err != nil {
@@ -55,8 +55,8 @@ func TestUserSelector(t *testing.T) {
 }
 
 func TestUserInserter(t *testing.T) {
-	username, password := "bob21", []byte("hashedpwd")
-	query := `INSERT INTO app.\"user\"\(username, password\) VALUES \(\$1, \$2\)`
+	id, password := "bob21", []byte("hashedpwd")
+	query := `INSERT INTO app.\"user\"\(id, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
@@ -64,11 +64,11 @@ func TestUserInserter(t *testing.T) {
 		defer teardown()
 		mock.
 			ExpectExec(query).
-			WithArgs(username, string(password)).
+			WithArgs(id, string(password)).
 			WillReturnError(wantErr)
 		sut := NewUserInserter(db)
 
-		err := sut.Insert(NewUser(username, password))
+		err := sut.Insert(NewUser(id, password))
 
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
@@ -80,11 +80,11 @@ func TestUserInserter(t *testing.T) {
 		defer teardown()
 		mock.
 			ExpectExec(query).
-			WithArgs(username, string(password)).
+			WithArgs(id, string(password)).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewUserInserter(db)
 
-		err := sut.Insert(NewUser(username, password))
+		err := sut.Insert(NewUser(id, password))
 
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)

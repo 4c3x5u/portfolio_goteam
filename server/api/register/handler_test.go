@@ -266,7 +266,7 @@ func TestHandler(t *testing.T) {
 			if c.hasherOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userInserter.InArg.Username); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userInserter.InArg.ID); err != nil {
 				t.Error(err)
 			}
 			if err = assert.Equal(string(c.hasherOutRes), string(userInserter.InArg.Password)); err != nil {
