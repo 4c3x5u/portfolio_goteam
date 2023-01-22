@@ -1,6 +1,7 @@
 package board
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -8,11 +9,13 @@ import (
 
 	"server/assert"
 	"server/auth"
+	"server/db"
 )
 
 func TestHandler(t *testing.T) {
 	tokenValidator := &auth.FakeTokenValidator{}
-	sut := NewHandler(tokenValidator)
+	userBoardCounter := &db.FakeCounter{}
+	sut := NewHandler(tokenValidator, userBoardCounter)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -36,26 +39,65 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
+	authCookie := &http.Cookie{Name: auth.CookieName}
 	for _, c := range []struct {
-		name                 string
-		tokenValidatorOutErr error
+		name                   string
+		cookie                 *http.Cookie
+		tokenValidatorOutErr   error
+		userBoardCounterOutRes int
+		wantStatusCode         int
+		wantErr                string
 	}{
-		{name: "NoAuthCookie", tokenValidatorOutErr: nil},
-		{name: "InvalidAuthCookie", tokenValidatorOutErr: errors.New("token validator error")},
+		{
+			name:                   "NoAuthCookie",
+			cookie:                 nil,
+			tokenValidatorOutErr:   nil,
+			userBoardCounterOutRes: 3,
+			wantStatusCode:         http.StatusUnauthorized,
+			wantErr:                "",
+		},
+		{
+			name:                   "InvalidAuthCookie",
+			cookie:                 authCookie,
+			tokenValidatorOutErr:   errors.New("token validator error"),
+			userBoardCounterOutRes: 3,
+			wantStatusCode:         http.StatusUnauthorized,
+			wantErr:                "",
+		},
+		{
+			name:                   "MaxBoardsCreated",
+			cookie:                 authCookie,
+			tokenValidatorOutErr:   nil,
+			userBoardCounterOutRes: 3,
+			wantStatusCode:         http.StatusBadRequest,
+			wantErr:                errMaxBoards,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			tokenValidator.OutErr = c.tokenValidatorOutErr
-
+			userBoardCounter.OutRes = c.userBoardCounterOutRes
 			req, err := http.NewRequest(http.MethodPost, "/board", nil)
 			if err != nil {
 				t.Fatal(err)
+			}
+			if c.cookie != nil {
+				req.AddCookie(c.cookie)
 			}
 			w := httptest.NewRecorder()
 
 			sut.ServeHTTP(w, req)
 
-			if err = assert.Equal(http.StatusUnauthorized, w.Result().StatusCode); err != nil {
+			if err = assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
 				t.Error(err)
+			}
+			if c.wantErr != "" {
+				resBody := ResBody{}
+				if err := json.NewDecoder(w.Result().Body).Decode(&resBody); err != nil {
+					t.Error(err)
+				}
+				if err := assert.Equal(c.wantErr, resBody.Error); err != nil {
+					t.Error(err)
+				}
 			}
 		})
 	}

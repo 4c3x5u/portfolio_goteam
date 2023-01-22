@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	// Load environment variables from .env file.
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -24,17 +25,20 @@ func main() {
 
 	// Create dependencies that are shared by multiple handlers.
 	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
+	connCloser := db.NewConnCloser(conn)
+	defer connCloser.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-	connCloser := db.NewConnCloser(conn)
-	defer connCloser.Close()
+
 	jwtKey := os.Getenv("JWTKEY")
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
+
 	userSelector := db.NewUserSelector(conn)
 
 	// Register handlers for API endpoints.
 	mux := http.NewServeMux()
+
 	mux.Handle("/register", registerAPI.NewHandler(
 		registerAPI.NewRequestValidator(
 			registerAPI.NewUsernameValidator(),
@@ -46,14 +50,17 @@ func main() {
 		jwtGenerator,
 		connCloser,
 	))
+
 	mux.Handle("/login", loginAPI.NewHandler(
 		userSelector,
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
 		connCloser,
 	))
+
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewJWTValidator(jwtKey),
+		db.NewUserBoardCounter(conn),
 	))
 
 	// Serve the app using the ServeMux.

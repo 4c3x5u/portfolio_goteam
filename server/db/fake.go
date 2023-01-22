@@ -34,3 +34,15 @@ func (f *FakeUserSelector) Select(arg string) (User, error) {
 	f.InArg = arg
 	return f.OutRes, f.OutErr
 }
+
+// FakeCounter is a test fake for Counter.
+type FakeCounter struct {
+	InArg  string
+	OutRes int
+}
+
+// Count implements the Counter interface on FakeCounter.
+func (f *FakeCounter) Count(id string) int {
+	f.InArg = id
+	return f.OutRes
+}
