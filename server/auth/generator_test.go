@@ -23,12 +23,6 @@ func TestJWTGenerator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// err = assert.Equal(CookieName, cookie.Name)
-	// err = assert.Equal(expiry.UTC(), cookie.Expires)
-	// if err != nil {
-	// 	t.Error(err)
-	// }
-
 	claims := &jwt.RegisteredClaims{}
 	if _, err = jwt.ParseWithClaims(
 		token,

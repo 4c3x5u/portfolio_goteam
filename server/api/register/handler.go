@@ -59,12 +59,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check whether the username is taken. This db call can be removed by
-	// adding an "ON CONFLICT (username) DO NOTHING" clause to the query that
-	// user inserter uses, and then returning errUsernameTaken if affected
-	// rows come back 0. However, not sure if that would increase or decrease
-	// the performance as hashing will then occur before exists checks.
-	// TODO: Test when deployed.
+	// Check whether the username is taken.
+	// TODO: This db call can be removed by adding an "ON CONFLICT (username)
+	// DO NOTHING" clause to the query that user inserter uses, and then returning
+	// errUsernameTaken if affected rows come back 0. However, not sure if that
+	// would increase or decrease the performance as hashing will then occur
+	// before exists checks. Test when deployed or when you add integration tests.
 	_, err := h.userSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == nil {
