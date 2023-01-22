@@ -16,8 +16,7 @@ func ServerErr(w http.ResponseWriter, msg string) {
 
 // ClientErr relays a client error by logging a message to the console and
 // returning the given response to the user.
-func ClientErr(w http.ResponseWriter, res any, msg string, statusCode int) {
-	log.Printf("ERROR: %s", msg)
+func ClientErr(w http.ResponseWriter, statusCode int, res any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(res); err != nil {
@@ -27,7 +26,7 @@ func ClientErr(w http.ResponseWriter, res any, msg string, statusCode int) {
 
 // ClientJSON relays a JSON object to the client by writing it to the HTTP
 // response body as well as writing the specified status code into the header.
-func ClientJSON(w http.ResponseWriter, res any, statusCode int) {
+func ClientJSON(w http.ResponseWriter, statusCode int, res any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	if err := json.NewEncoder(w).Encode(res); err != nil {

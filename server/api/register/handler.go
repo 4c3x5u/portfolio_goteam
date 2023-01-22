@@ -49,14 +49,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read and validate request.
-	reqBody, resBody := ReqBody{}, ResBody{}
+	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
 	}
 	if errs := h.validator.Validate(reqBody); errs.Any() {
-		resBody.ValidationErrs = errs
-		relay.ClientJSON(w, resBody, http.StatusBadRequest)
+		relay.ClientJSON(w, http.StatusBadRequest, ResBody{ValidationErrs: errs})
 		return
 	}
 
@@ -69,8 +68,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err := h.userSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == nil {
-		resBody.ValidationErrs = ValidationErrs{Username: []string{errUsernameTaken}}
-		relay.ClientJSON(w, resBody, http.StatusBadRequest)
+		relay.ClientJSON(w, http.StatusBadRequest, ResBody{
+			ValidationErrs: ValidationErrs{Username: []string{errUsernameTaken}},
+		})
 		return
 	} else if err != sql.ErrNoRows {
 		relay.ServerErr(w, err.Error())
@@ -94,8 +94,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if authToken, err := h.tokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
-		resBody.ValidationErrs = ValidationErrs{Auth: errAuth}
-		relay.ClientErr(w, resBody, errAuth, http.StatusUnauthorized)
+		relay.ClientErr(w, http.StatusUnauthorized, ResBody{
+			ValidationErrs: ValidationErrs{Auth: errAuth},
+		})
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{

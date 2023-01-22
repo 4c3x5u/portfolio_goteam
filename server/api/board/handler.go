@@ -52,9 +52,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Validate that the user has less than 3 boards. This is done to limit the
 	// resources used by this demo app.
 	if boardCount := h.userBoardCounter.Count(userID); boardCount >= 3 {
-		relay.ClientErr(
-			w, ResBody{Error: errMaxBoards}, errMaxBoards, http.StatusBadRequest,
-		)
+		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
 		return
 	}
 }
