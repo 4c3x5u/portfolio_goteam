@@ -15,13 +15,13 @@ func (f *fakeValidator) Validate(reqBody ReqBody) ValidationErrs {
 
 // fakeStringValidator is a test fake for StringValidator.
 type fakeStringValidator struct {
-	inArg   string
+	inVal   string
 	outErrs []string
 }
 
 // Validate implements the StringValidator interface on fakeStringValidator.
-func (f *fakeStringValidator) Validate(arg string) (errs []string) {
-	f.inArg = arg
+func (f *fakeStringValidator) Validate(val string) (errs []string) {
+	f.inVal = val
 	return f.outErrs
 }
 

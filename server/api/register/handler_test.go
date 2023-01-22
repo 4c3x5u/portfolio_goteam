@@ -247,7 +247,7 @@ func TestHandler(t *testing.T) {
 			if c.validatorOutErr.Any() {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userSelector.InArg); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userSelector.InUserID); err != nil {
 				t.Error(err)
 			}
 
@@ -266,10 +266,10 @@ func TestHandler(t *testing.T) {
 			if c.hasherOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userInserter.InArg.ID); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userInserter.InUser.ID); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(string(c.hasherOutRes), string(userInserter.InArg.Password)); err != nil {
+			if err = assert.Equal(string(c.hasherOutRes), string(userInserter.InUser.Password)); err != nil {
 				t.Error(err)
 			}
 

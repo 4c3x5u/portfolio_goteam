@@ -46,10 +46,10 @@ func TestRequestValidator(t *testing.T) {
 
 			res := sut.Validate(c.reqBody)
 
-			if err := assert.Equal(c.reqBody.Username, fakeValidatorUsername.inArg); err != nil {
+			if err := assert.Equal(c.reqBody.Username, fakeValidatorUsername.inVal); err != nil {
 				t.Error(err)
 			}
-			if err := assert.Equal(c.reqBody.Password, fakeValidatorPassword.inArg); err != nil {
+			if err := assert.Equal(c.reqBody.Password, fakeValidatorPassword.inVal); err != nil {
 				t.Error(err)
 			}
 			if err := assert.EqualArr(c.usernameErrs, res.Username); err != nil {

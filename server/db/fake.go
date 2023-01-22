@@ -12,37 +12,37 @@ func (c *FakeCloser) Close() {
 
 // FakeUserInserter is a test fake for Inserter[User].
 type FakeUserInserter struct {
-	InArg  User
+	InUser User
 	OutErr error
 }
 
 // Insert implements the Inserter[User] interface on FakeUserInserter.
 func (f *FakeUserInserter) Insert(user User) error {
-	f.InArg = user
+	f.InUser = user
 	return f.OutErr
 }
 
 // FakeUserSelector is a test fake for Selector[User].
 type FakeUserSelector struct {
-	InArg  string
-	OutRes User
-	OutErr error
+	InUserID string
+	OutRes   User
+	OutErr   error
 }
 
 // Select implements the Selector[User] interface on FakeUserSelector.
-func (f *FakeUserSelector) Select(arg string) (User, error) {
-	f.InArg = arg
+func (f *FakeUserSelector) Select(userID string) (User, error) {
+	f.InUserID = userID
 	return f.OutRes, f.OutErr
 }
 
 // FakeCounter is a test fake for Counter.
 type FakeCounter struct {
-	InArg  string
+	InID   string
 	OutRes int
 }
 
 // Count implements the Counter interface on FakeCounter.
 func (f *FakeCounter) Count(id string) int {
-	f.InArg = id
+	f.InID = id
 	return f.OutRes
 }

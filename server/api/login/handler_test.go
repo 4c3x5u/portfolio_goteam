@@ -212,7 +212,7 @@ func TestHandler(t *testing.T) {
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userSelector.InArg); err != nil {
+			if err = assert.Equal(c.reqBody.Username, userSelector.InUserID); err != nil {
 				t.Error(err)
 			}
 			if err = assert.True(dbCloser.IsCalled); err != nil {
