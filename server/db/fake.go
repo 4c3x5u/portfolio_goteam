@@ -1,14 +1,10 @@
 package db
 
 // FakeCloser is a test fake for Closer.
-type FakeCloser struct {
-	IsCalled bool
-}
+type FakeCloser struct{ IsCalled bool }
 
 // Close implements the Closer interface on FakeCloser.
-func (c *FakeCloser) Close() {
-	c.IsCalled = true
-}
+func (c *FakeCloser) Close() { c.IsCalled = true }
 
 // FakeUserInserter is a test fake for Inserter[User].
 type FakeUserInserter struct {
@@ -45,4 +41,16 @@ type FakeCounter struct {
 func (f *FakeCounter) Count(id string) int {
 	f.InID = id
 	return f.OutRes
+}
+
+// FakeBoardInserter is a test fake for Inserter[Board].
+type FakeBoardInserter struct {
+	InBoard Board
+	OutErr  error
+}
+
+// Insert implements the Inserter[Board] interface on FakeBoardInserter.
+func (f *FakeBoardInserter) Insert(board Board) error {
+	f.InBoard = board
+	return f.OutErr
 }

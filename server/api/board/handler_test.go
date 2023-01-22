@@ -1,6 +1,7 @@
 package board
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -15,7 +16,8 @@ import (
 func TestHandler(t *testing.T) {
 	tokenValidator := &auth.FakeTokenValidator{}
 	userBoardCounter := &db.FakeCounter{}
-	sut := NewHandler(tokenValidator, userBoardCounter)
+	boardInserter := &db.FakeBoardInserter{}
+	sut := NewHandler(tokenValidator, userBoardCounter, boardInserter)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -42,62 +44,97 @@ func TestHandler(t *testing.T) {
 	authCookie := &http.Cookie{Name: auth.CookieName, Value: "ASDFJALSDFLAFSD"}
 	for _, c := range []struct {
 		name                   string
-		cookie                 *http.Cookie
+		authCookie             *http.Cookie
+		reqBody                ReqBody
 		tokenValidatorOutSub   string
 		tokenValidatorOutErr   error
 		userBoardCounterOutRes int
+		boardInserterOutErr    error
 		wantStatusCode         int
 		wantErr                string
 	}{
 		{
 			name:                   "NoAuthCookie",
-			cookie:                 nil,
+			authCookie:             nil,
+			reqBody:                ReqBody{},
 			tokenValidatorOutSub:   "",
 			tokenValidatorOutErr:   nil,
-			userBoardCounterOutRes: 3,
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    nil,
 			wantStatusCode:         http.StatusUnauthorized,
 			wantErr:                "",
 		},
 		{
 			name:                   "InvalidAuthCookie",
-			cookie:                 authCookie,
+			authCookie:             authCookie,
+			reqBody:                ReqBody{},
 			tokenValidatorOutSub:   "",
 			tokenValidatorOutErr:   errors.New("token validator error"),
-			userBoardCounterOutRes: 3,
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    nil,
 			wantStatusCode:         http.StatusUnauthorized,
 			wantErr:                "",
 		},
 		{
 			name:                   "MaxBoardsCreated",
-			cookie:                 authCookie,
+			authCookie:             authCookie,
+			reqBody:                ReqBody{},
 			tokenValidatorOutErr:   nil,
 			tokenValidatorOutSub:   "bob21",
 			userBoardCounterOutRes: 3,
+			boardInserterOutErr:    nil,
 			wantStatusCode:         http.StatusBadRequest,
 			wantErr:                errMaxBoards,
+		},
+		{
+			name:                   "BoardCreatorError",
+			authCookie:             authCookie,
+			reqBody:                ReqBody{Name: "someboard"},
+			tokenValidatorOutErr:   nil,
+			tokenValidatorOutSub:   "bob21",
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    errors.New("board creator error"),
+			wantStatusCode:         http.StatusInternalServerError,
+			wantErr:                "",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			tokenValidator.OutSub = c.tokenValidatorOutSub
 			tokenValidator.OutErr = c.tokenValidatorOutErr
 			userBoardCounter.OutRes = c.userBoardCounterOutRes
-			req, err := http.NewRequest(http.MethodPost, "/board", nil)
+			boardInserter.OutErr = c.boardInserterOutErr
+
+			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if c.cookie != nil {
-				req.AddCookie(c.cookie)
+			req, err := http.NewRequest(
+				http.MethodPost, "/board", bytes.NewReader(reqBodyJSON),
+			)
+			if err != nil {
+				t.Fatal(err)
 			}
+
+			if c.authCookie != nil {
+				req.AddCookie(c.authCookie)
+			}
+
 			w := httptest.NewRecorder()
 
 			sut.ServeHTTP(w, req)
 
-			if err = assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
+			if err = assert.Equal(
+				c.wantStatusCode, w.Result().StatusCode,
+			); err != nil {
 				t.Error(err)
 			}
-			if c.wantErr != "" {
+
+			// if 400 is expected - there must be a validation error in response body
+			if c.wantStatusCode == http.StatusBadRequest {
 				resBody := ResBody{}
-				if err := json.NewDecoder(w.Result().Body).Decode(&resBody); err != nil {
+				if err := json.NewDecoder(w.Result().Body).Decode(
+					&resBody,
+				); err != nil {
 					t.Error(err)
 				}
 				if err := assert.Equal(c.wantErr, resBody.Error); err != nil {
@@ -107,19 +144,34 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// if auth cookie was present, token validator must be called
-			if c.cookie == nil {
+			// if no auth cookie was present, token validator must be called
+			if c.authCookie == nil {
 				return
 			}
-			if err := assert.Equal(c.cookie.Value, tokenValidator.InToken); err != nil {
+			if err := assert.Equal(
+				c.authCookie.Value, tokenValidator.InToken,
+			); err != nil {
 				t.Error(err)
 			}
 
-			// if no validation error is expected, board counter must be called
-			if c.wantErr != "" {
+			// if no token validator error is expected, board counter must be called
+			if c.tokenValidatorOutErr != nil {
 				return
 			}
-			if err := assert.Equal(c.tokenValidatorOutSub, userBoardCounter.InID); err != nil {
+			if err := assert.Equal(
+				c.tokenValidatorOutSub, userBoardCounter.InID,
+			); err != nil {
+				t.Error(err)
+			}
+
+			// if max boards is not reached, board creator must be called
+			if c.userBoardCounterOutRes >= maxBoards {
+				return
+			}
+			if err := assert.Equal(
+				db.NewBoard(c.reqBody.Name, c.tokenValidatorOutSub),
+				boardInserter.InBoard,
+			); err != nil {
 				t.Error(err)
 			}
 		})

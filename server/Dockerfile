@@ -7,8 +7,8 @@ RUN go build -o /server .
 
 # Stage: Run
 FROM alpine:3.17
-WORKDIR /goteam
+WORKDIR /
 COPY --from=build-env /server .
 COPY --from=build-env /build/.env .
 EXPOSE 8080
-CMD ["/goteam/server"]
+CMD ["/server"]

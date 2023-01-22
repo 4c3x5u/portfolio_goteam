@@ -61,6 +61,8 @@ func main() {
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewJWTValidator(jwtKey),
 		db.NewUserBoardCounter(conn),
+		// TODO: replace with implementation
+		&db.FakeBoardInserter{},
 	))
 
 	// Serve the app using the ServeMux.
