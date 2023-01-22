@@ -53,17 +53,27 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate that the user has less than 3 boards. This is done to limit the
-	// resources used by this demo app.
-	if boardCount := h.userBoardCounter.Count(userID); boardCount >= maxBoards {
-		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
-		return
-	}
-
 	// Read the request body.
 	reqBody := ReqBody{}
 	if err = json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		relay.ServerErr(w, err.Error())
+		return
+	}
+
+	// Validate board name.
+	if reqBody.Name == "" {
+		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errNameEmpty})
+		return
+	}
+	if len(reqBody.Name) >= maxNameLength {
+		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errNameTooLong})
+		return
+	}
+
+	// Validate that the user has less than 3 boards. This is done to limit the
+	// resources used by this demo app.
+	if boardCount := h.userBoardCounter.Count(userID); boardCount >= maxBoards {
+		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
 		return
 	}
 
@@ -76,11 +86,25 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// maxBoards is the amount of boards that each user is allowed to own (i.e. be
-// the admin of).
-const maxBoards = 3
+const (
+	// maxBoards is the amount of boards that each user is allowed to own (i.e. be
+	// the admin of).
+	maxBoards = 3
 
-// errMaxBoards is the error message returned from the handler when the user
-// already owns the maximum amount of boards allowed per user.
-const errMaxBoards = "You have already created the maximum amount of boards " +
-	"allowed per user. Please delete one of your boards to create a new one."
+	// maxNameLength is the maximum amount of characters that a board name can
+	// have.
+	maxNameLength = 35
+
+	// errMaxBoards is the error message returned from the handler when the user
+	// already owns the maximum amount of boards allowed per user.
+	errMaxBoards = "You have already created the maximum amount of boards " +
+		"allowed per user. Please delete one of your boards to create a new one."
+
+	// errNameEmpty is the error message returned from the handler when the
+	// received board name is empty.
+	errNameEmpty = "Board name cannot be empty."
+
+	// errNameTooLong is the error message returned from the handler when the
+	// received board name is too long.
+	errNameTooLong = "Board name cannot be longer than 35 characters."
+)

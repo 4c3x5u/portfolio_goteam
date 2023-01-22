@@ -41,7 +41,7 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	authCookie := &http.Cookie{Name: auth.CookieName, Value: "ASDFJALSDFLAFSD"}
+	authCookie := &http.Cookie{Name: auth.CookieName, Value: "dummytoken"}
 	for _, c := range []struct {
 		name                   string
 		authCookie             *http.Cookie
@@ -76,9 +76,42 @@ func TestHandler(t *testing.T) {
 			wantErr:                "",
 		},
 		{
-			name:                   "MaxBoardsCreated",
+			name:                   "BoardNameNil",
 			authCookie:             authCookie,
 			reqBody:                ReqBody{},
+			tokenValidatorOutErr:   nil,
+			tokenValidatorOutSub:   "bob21",
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    nil,
+			wantStatusCode:         http.StatusBadRequest,
+			wantErr:                errNameEmpty,
+		},
+		{
+			name:                   "BoardNameEmpty",
+			authCookie:             authCookie,
+			reqBody:                ReqBody{Name: ""},
+			tokenValidatorOutErr:   nil,
+			tokenValidatorOutSub:   "bob21",
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    nil,
+			wantStatusCode:         http.StatusBadRequest,
+			wantErr:                errNameEmpty,
+		},
+		{
+			name:                   "BoardNameTooLong",
+			authCookie:             authCookie,
+			reqBody:                ReqBody{Name: "boardyboardsyboardkyboardishboardxyz"},
+			tokenValidatorOutErr:   nil,
+			tokenValidatorOutSub:   "bob21",
+			userBoardCounterOutRes: 0,
+			boardInserterOutErr:    nil,
+			wantStatusCode:         http.StatusBadRequest,
+			wantErr:                errNameTooLong,
+		},
+		{
+			name:                   "MaxBoardsCreated",
+			authCookie:             authCookie,
+			reqBody:                ReqBody{Name: "someboard"},
 			tokenValidatorOutErr:   nil,
 			tokenValidatorOutSub:   "bob21",
 			userBoardCounterOutRes: 3,
@@ -154,8 +187,11 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// if no token validator error is expected, board counter must be called
-			if c.tokenValidatorOutErr != nil {
+			// if no token validator or board name validation error is expected, board
+			// counter must be called
+			if c.tokenValidatorOutErr != nil ||
+				c.wantErr == errNameEmpty ||
+				c.wantErr == errNameTooLong {
 				return
 			}
 			if err := assert.Equal(
