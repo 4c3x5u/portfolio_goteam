@@ -16,7 +16,7 @@ func TestUserSelector(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("user inserter error")
 
-		db, mock, teardown := setUpDBMock(t)
+		db, mock, teardown := setUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(id).WillReturnError(wantErr)
 		mock.ExpectClose()
@@ -32,7 +32,7 @@ func TestUserSelector(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		wantPwd := "Myp4ssword!"
 
-		db, mock, teardown := setUpDBMock(t)
+		db, mock, teardown := setUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(id).WillReturnRows(
 			mock.NewRows([]string{"id", "password"}).AddRow(id, wantPwd),
@@ -60,7 +60,7 @@ func TestUserInserter(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, teardown := setUpDBMock(t)
+		db, mock, teardown := setUpDBTest(t)
 		defer teardown()
 		mock.
 			ExpectExec(query).
@@ -76,7 +76,7 @@ func TestUserInserter(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		db, mock, teardown := setUpDBMock(t)
+		db, mock, teardown := setUpDBTest(t)
 		defer teardown()
 		mock.
 			ExpectExec(query).

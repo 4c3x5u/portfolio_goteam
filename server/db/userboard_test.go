@@ -8,7 +8,7 @@ import (
 )
 
 func TestBoardUserSelector(t *testing.T) {
-	db, mock, teardown := setUpDBMock(t)
+	db, mock, teardown := setUpDBTest(t)
 	defer teardown()
 	sut := NewUserBoardCounter(db)
 	userID := "bob21"
