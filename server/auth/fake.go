@@ -26,7 +26,7 @@ type FakeTokenValidator struct {
 }
 
 // Validate implements the Validator interface on FakeTokenValidator.
-func (f FakeTokenValidator) Validate(token string) (string, error) {
+func (f *FakeTokenValidator) Validate(token string) (string, error) {
 	f.InToken = token
 	return f.OutSub, f.OutErr
 }

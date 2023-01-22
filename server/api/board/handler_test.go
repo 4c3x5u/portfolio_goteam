@@ -39,10 +39,11 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	authCookie := &http.Cookie{Name: auth.CookieName}
+	authCookie := &http.Cookie{Name: auth.CookieName, Value: "ASDFJALSDFLAFSD"}
 	for _, c := range []struct {
 		name                   string
 		cookie                 *http.Cookie
+		tokenValidatorOutSub   string
 		tokenValidatorOutErr   error
 		userBoardCounterOutRes int
 		wantStatusCode         int
@@ -51,6 +52,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "NoAuthCookie",
 			cookie:                 nil,
+			tokenValidatorOutSub:   "",
 			tokenValidatorOutErr:   nil,
 			userBoardCounterOutRes: 3,
 			wantStatusCode:         http.StatusUnauthorized,
@@ -59,6 +61,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "InvalidAuthCookie",
 			cookie:                 authCookie,
+			tokenValidatorOutSub:   "",
 			tokenValidatorOutErr:   errors.New("token validator error"),
 			userBoardCounterOutRes: 3,
 			wantStatusCode:         http.StatusUnauthorized,
@@ -68,12 +71,14 @@ func TestHandler(t *testing.T) {
 			name:                   "MaxBoardsCreated",
 			cookie:                 authCookie,
 			tokenValidatorOutErr:   nil,
+			tokenValidatorOutSub:   "bob21",
 			userBoardCounterOutRes: 3,
 			wantStatusCode:         http.StatusBadRequest,
 			wantErr:                errMaxBoards,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			tokenValidator.OutSub = c.tokenValidatorOutSub
 			tokenValidator.OutErr = c.tokenValidatorOutErr
 			userBoardCounter.OutRes = c.userBoardCounterOutRes
 			req, err := http.NewRequest(http.MethodPost, "/board", nil)
@@ -98,6 +103,24 @@ func TestHandler(t *testing.T) {
 				if err := assert.Equal(c.wantErr, resBody.Error); err != nil {
 					t.Error(err)
 				}
+			}
+
+			// DEPENDENCY-INPUT-BASED ASSERTIONS
+
+			// if auth cookie was present, token validator must be called
+			if c.cookie == nil {
+				return
+			}
+			if err := assert.Equal(c.cookie.Value, tokenValidator.InToken); err != nil {
+				t.Error(err)
+			}
+
+			// if no validation error is expected, board counter must be called
+			if c.wantErr != "" {
+				return
+			}
+			if err := assert.Equal(c.tokenValidatorOutSub, userBoardCounter.InID); err != nil {
+				t.Error(err)
 			}
 		})
 	}
