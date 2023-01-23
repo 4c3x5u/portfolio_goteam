@@ -50,6 +50,7 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
+	validReqBody := ReqBody{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
 		name                 string
 		reqBody              ReqBody
@@ -66,7 +67,6 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name:                 "ValidatorError",
-			reqBody:              ReqBody{Username: "bobobobobobobobob", Password: "myNOdigitPASSWORD!"},
 			validatorOutErr:      ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   nil,
@@ -80,7 +80,6 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "UsernameTaken",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   nil,
@@ -94,7 +93,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "UserSelectorError",
-			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   errors.New("user selector error"),
@@ -108,7 +107,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "HasherError",
-			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   sql.ErrNoRows,
@@ -122,7 +121,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "UserInserterError",
-			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   sql.ErrNoRows,
@@ -136,7 +135,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "TokenGeneratorError",
-			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   sql.ErrNoRows,
@@ -150,7 +149,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "Success",
-			reqBody:              ReqBody{Username: "bob2121", Password: "Myp4ssword!"},
+			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   sql.ErrNoRows,

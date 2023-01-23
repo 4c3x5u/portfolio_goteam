@@ -10,7 +10,7 @@ import (
 )
 
 func TestUserSelector(t *testing.T) {
-	id := "bob21"
+	id := "bob123"
 	query := `SELECT id, password FROM app.\"user\" WHERE id = \$1`
 
 	t.Run("Error", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestUserSelector(t *testing.T) {
 }
 
 func TestUserInserter(t *testing.T) {
-	id, password := "bob21", []byte("hashedpwd")
+	id, password := "bob123", []byte("hashedpwd")
 	query := `INSERT INTO app.\"user\"\(id, password\) VALUES \(\$1, \$2\)`
 
 	t.Run("Error", func(t *testing.T) {

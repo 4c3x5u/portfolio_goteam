@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "UserNotFound",
-			reqBody:              ReqBody{Username: "bob21"},
+			reqBody:              ReqBody{Username: "bob123"},
 			userSelectorOutRes:   db.User{},
 			userSelectorOutErr:   sql.ErrNoRows,
 			hashComparerOutErr:   nil,
@@ -92,7 +92,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "UserSelectorError",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
+			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
 			userSelectorOutRes:   db.User{},
 			userSelectorOutErr:   errors.New("user selector error"),
 			hashComparerOutErr:   nil,
@@ -102,7 +102,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "NoPassword",
-			reqBody:              ReqBody{Username: "bob21"},
+			reqBody:              ReqBody{Username: "bob123"},
 			userSelectorOutRes:   db.User{},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
@@ -112,7 +112,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "PasswordEmpty",
-			reqBody:              ReqBody{Username: "bob21", Password: ""},
+			reqBody:              ReqBody{Username: "bob123", Password: ""},
 			userSelectorOutRes:   db.User{},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
@@ -122,8 +122,8 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "WrongPassword",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
+			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   bcrypt.ErrMismatchedHashAndPassword,
 			tokenGeneratorOutRes: "",
@@ -132,8 +132,8 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "HashComparerError",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
+			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   errors.New("hash comparer error"),
 			tokenGeneratorOutRes: "",
@@ -142,8 +142,8 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "TokenGeneratorError",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
+			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
@@ -152,8 +152,8 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:                 "Success",
-			reqBody:              ReqBody{Username: "bob21", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob21", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
+			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",

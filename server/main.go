@@ -60,8 +60,10 @@ func main() {
 
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewJWTValidator(jwtKey),
-		db.NewUserBoardCounter(conn),
-		db.NewBoardInserter(conn),
+		boardAPI.NewPOSTHandler(
+			db.NewUserBoardCounter(conn),
+			db.NewBoardInserter(conn),
+		),
 	))
 
 	// Serve the app using the ServeMux.

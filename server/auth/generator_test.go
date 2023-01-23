@@ -13,7 +13,7 @@ import (
 // that the generated JWT and the format of the returned *http.Cookie are valid.
 func TestJWTGenerator(t *testing.T) {
 	var (
-		username = "bob21"
+		username = "bob123"
 		expiry   = time.Now().Add(1 * time.Hour)
 		sut      = NewJWTGenerator("d16889c5-5e2e-48ed-87c4-d29b8ee23fad")
 	)

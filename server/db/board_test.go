@@ -18,7 +18,7 @@ func TestBoardInserter(t *testing.T) {
 	// just need a generic error to be returned at different points in code and
 	// ansure the expected SQL is executed and the same error is returned.
 	wantErr := errors.New("error occured")
-	board := NewBoard("bob21", "someboard")
+	board := NewBoard("bob123", "someboard")
 
 	for _, c := range []struct {
 		name      string
