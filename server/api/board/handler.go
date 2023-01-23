@@ -52,6 +52,5 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		h.postHandler.Handle(w, r, sub)
-		return
 	}
 }

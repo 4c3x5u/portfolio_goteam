@@ -8,6 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// TestJWTValidator tests the Validate method of the JWTValidator to assert
+// that the correct errors get returned based on the token passed in.
 func TestJWTValidator(t *testing.T) {
 	validKey := "ASLDJFLASKDJFLAKSDJFALSDKJAFLSDK"
 	for _, c := range []struct {
