@@ -21,12 +21,14 @@ import (
 // possible scenarios.
 func TestHandler(t *testing.T) {
 	var (
-		userSelector   = &db.FakeUserSelector{}
-		hashComparer   = &fakeHashComparer{}
-		tokenGenerator = &auth.FakeTokenGenerator{}
-		dbCloser       = &db.FakeCloser{}
+		dbUserSelector     = &db.FakeUserSelector{}
+		passwordComparer   = &fakeHashComparer{}
+		authTokenGenerator = &auth.FakeTokenGenerator{}
+		dbCloser           = &db.FakeCloser{}
 	)
-	sut := NewHandler(userSelector, hashComparer, tokenGenerator, dbCloser)
+	sut := NewHandler(
+		dbUserSelector, passwordComparer, authTokenGenerator, dbCloser,
+	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -43,7 +45,9 @@ func TestHandler(t *testing.T) {
 
 				sut.ServeHTTP(w, req)
 
-				if err = assert.Equal(http.StatusMethodNotAllowed, w.Result().StatusCode); err != nil {
+				if err = assert.Equal(
+					http.StatusMethodNotAllowed, w.Result().StatusCode,
+				); err != nil {
 					t.Error(err)
 				}
 			})
@@ -121,9 +125,13 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                 "WrongPassword",
-			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			name: "WrongPassword",
+			reqBody: ReqBody{
+				Username: "bob123", Password: "Myp4ssword!",
+			},
+			userSelectorOutRes: db.User{
+				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+			},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   bcrypt.ErrMismatchedHashAndPassword,
 			tokenGeneratorOutRes: "",
@@ -131,9 +139,13 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusBadRequest,
 		},
 		{
-			name:                 "HashComparerError",
-			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			name: "HashComparerError",
+			reqBody: ReqBody{
+				Username: "bob123", Password: "Myp4ssword!",
+			},
+			userSelectorOutRes: db.User{
+				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+			},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   errors.New("hash comparer error"),
 			tokenGeneratorOutRes: "",
@@ -141,9 +153,13 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusInternalServerError,
 		},
 		{
-			name:                 "TokenGeneratorError",
-			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			name: "TokenGeneratorError",
+			reqBody: ReqBody{
+				Username: "bob123", Password: "Myp4ssword!",
+			},
+			userSelectorOutRes: db.User{
+				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+			},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "",
@@ -151,9 +167,13 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusInternalServerError,
 		},
 		{
-			name:                 "Success",
-			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh")},
+			name: "Success",
+			reqBody: ReqBody{
+				Username: "bob123", Password: "Myp4ssword!",
+			},
+			userSelectorOutRes: db.User{
+				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+			},
 			userSelectorOutErr:   nil,
 			hashComparerOutErr:   nil,
 			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -162,17 +182,19 @@ func TestHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.OutRes = c.userSelectorOutRes
-			userSelector.OutErr = c.userSelectorOutErr
-			hashComparer.outErr = c.hashComparerOutErr
-			tokenGenerator.OutRes = c.tokenGeneratorOutRes
-			tokenGenerator.OutErr = c.tokenGeneratorOutErr
+			dbUserSelector.OutRes = c.userSelectorOutRes
+			dbUserSelector.OutErr = c.userSelectorOutErr
+			passwordComparer.outErr = c.hashComparerOutErr
+			authTokenGenerator.OutRes = c.tokenGeneratorOutRes
+			authTokenGenerator.OutErr = c.tokenGeneratorOutErr
 
 			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(http.MethodPost, "/login", bytes.NewReader(reqBodyJSON))
+			req, err := http.NewRequest(
+				http.MethodPost, "/login", bytes.NewReader(reqBodyJSON),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -181,7 +203,9 @@ func TestHandler(t *testing.T) {
 
 			sut.ServeHTTP(w, req)
 
-			if err = assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
+			if err = assert.Equal(
+				c.wantStatusCode, w.Result().StatusCode,
+			); err != nil {
 				t.Error(err)
 			}
 
@@ -191,10 +215,16 @@ func TestHandler(t *testing.T) {
 				for _, ck := range w.Result().Cookies() {
 					if ck.Name == auth.CookieName {
 						authTokenFound = true
-						if err = assert.Equal(c.tokenGeneratorOutRes, ck.Value); err != nil {
+
+						if err = assert.Equal(
+							c.tokenGeneratorOutRes, ck.Value,
+						); err != nil {
 							t.Error(err)
 						}
-						if err = assert.True(ck.Expires.Unix() > time.Now().Unix()); err != nil {
+
+						if err = assert.True(
+							ck.Expires.Unix() > time.Now().Unix(),
+						); err != nil {
 							t.Error(err)
 						}
 					}
@@ -206,13 +236,16 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If username and password weren't empty, user selector and db closer must be called.
+			// If username and password weren't empty, user selector and db closer
+			// must be called.
 			if c.reqBody.Username == "" ||
 				c.reqBody.Password == "" ||
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userSelector.InUserID); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, dbUserSelector.InUserID,
+			); err != nil {
 				t.Error(err)
 			}
 			if err = assert.True(dbCloser.IsCalled); err != nil {
@@ -220,23 +253,27 @@ func TestHandler(t *testing.T) {
 			}
 
 			// If no user selector error is expected, hash comparer must be called.
-			if userSelector.OutErr != nil {
+			if dbUserSelector.OutErr != nil {
 				return
 			}
 			if err = assert.Equal(
-				string(c.userSelectorOutRes.Password), string(hashComparer.inHash),
+				string(c.userSelectorOutRes.Password), string(passwordComparer.inHash),
 			); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(c.reqBody.Password, hashComparer.inPlaintext); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Password, passwordComparer.inPlaintext,
+			); err != nil {
 				t.Error(err)
 			}
 
 			// If no hash comparer error is expected, token generator must be called.
-			if hashComparer.outErr != nil {
+			if passwordComparer.outErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, tokenGenerator.InSub); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, authTokenGenerator.InSub,
+			); err != nil {
 				t.Error(err)
 			}
 

@@ -26,7 +26,9 @@ func TestHandler(t *testing.T) {
 		tokenGenerator = &auth.FakeTokenGenerator{}
 		dbCloser       = &db.FakeCloser{}
 	)
-	sut := NewHandler(validator, userSelector, hasher, userInserter, tokenGenerator, dbCloser)
+	sut := NewHandler(
+		validator, userSelector, hasher, userInserter, tokenGenerator, dbCloser,
+	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -43,7 +45,9 @@ func TestHandler(t *testing.T) {
 
 				sut.ServeHTTP(w, req)
 
-				if err = assert.Equal(http.StatusMethodNotAllowed, w.Result().StatusCode); err != nil {
+				if err = assert.Equal(
+					http.StatusMethodNotAllowed, w.Result().StatusCode,
+				); err != nil {
 					t.Error(err)
 				}
 			})
@@ -66,8 +70,10 @@ func TestHandler(t *testing.T) {
 		wantValidationErrs   ValidationErrs
 	}{
 		{
-			name:                 "ValidatorError",
-			validatorOutErr:      ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			name: "ValidatorError",
+			validatorOutErr: ValidationErrs{
+				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
+			},
 			userInserterOutRes:   db.User{},
 			userSelectorOutErr:   nil,
 			hasherOutRes:         nil,
@@ -76,7 +82,9 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantValidationErrs:   ValidationErrs{Username: []string{usnTooLong}, Password: []string{pwdNoDigit}},
+			wantValidationErrs: ValidationErrs{
+				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
+			},
 		},
 		{
 			name:                 "UsernameTaken",
@@ -89,7 +97,9 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantValidationErrs:   ValidationErrs{Username: []string{errUsernameTaken}},
+			wantValidationErrs: ValidationErrs{
+				Username: []string{errUsernameTaken},
+			},
 		},
 		{
 			name:                 "UserSelectorError",
@@ -178,7 +188,9 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(http.MethodPost, "/register", bytes.NewReader(reqBody))
+			req, err := http.NewRequest(
+				http.MethodPost, "/register", bytes.NewReader(reqBody),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -201,13 +213,21 @@ func TestHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if err = assert.EqualArr(c.wantValidationErrs.Username, resBody.ValidationErrs.Username); err != nil {
+				if err = assert.EqualArr(
+					c.wantValidationErrs.Username, resBody.ValidationErrs.Username,
+				); err != nil {
 					t.Error(err)
 				}
-				if err = assert.EqualArr(c.wantValidationErrs.Password, resBody.ValidationErrs.Password); err != nil {
+
+				if err = assert.EqualArr(
+					c.wantValidationErrs.Password, resBody.ValidationErrs.Password,
+				); err != nil {
 					t.Error(err)
 				}
-				if err = assert.Equal(c.wantValidationErrs.Auth, resBody.ValidationErrs.Auth); err != nil {
+
+				if err = assert.Equal(
+					c.wantValidationErrs.Auth, resBody.ValidationErrs.Auth,
+				); err != nil {
 					t.Error(err)
 				}
 			} else if c.wantStatusCode == http.StatusOK {
@@ -216,10 +236,14 @@ func TestHandler(t *testing.T) {
 				for _, ck := range res.Cookies() {
 					if ck.Name == auth.CookieName {
 						authTokenFound = true
-						if err = assert.Equal(c.tokenGeneratorOutRes, ck.Value); err != nil {
+						if err = assert.Equal(
+							c.tokenGeneratorOutRes, ck.Value,
+						); err != nil {
 							t.Error(err)
 						}
-						if err = assert.True(ck.Expires.Unix() > time.Now().Unix()); err != nil {
+						if err = assert.True(
+							ck.Expires.Unix() > time.Now().Unix(),
+						); err != nil {
 							t.Error(err)
 						}
 					}
@@ -235,10 +259,14 @@ func TestHandler(t *testing.T) {
 			if c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, validator.inReqBody.Username); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, validator.inReqBody.Username,
+			); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(c.reqBody.Password, validator.inReqBody.Password); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Password, validator.inReqBody.Password,
+			); err != nil {
 				t.Error(err)
 			}
 
@@ -246,7 +274,9 @@ func TestHandler(t *testing.T) {
 			if c.validatorOutErr.Any() {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userSelector.InUserID); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, userSelector.InUserID,
+			); err != nil {
 				t.Error(err)
 			}
 
@@ -254,7 +284,9 @@ func TestHandler(t *testing.T) {
 			if c.userSelectorOutErr != sql.ErrNoRows {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Password, hasher.inPlaintext); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Password, hasher.inPlaintext,
+			); err != nil {
 				t.Error(err)
 			}
 			if err = assert.True(dbCloser.IsCalled); err != nil {
@@ -265,10 +297,14 @@ func TestHandler(t *testing.T) {
 			if c.hasherOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, userInserter.InUser.ID); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, userInserter.InUser.ID,
+			); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(string(c.hasherOutRes), string(userInserter.InUser.Password)); err != nil {
+			if err = assert.Equal(
+				string(c.hasherOutRes), string(userInserter.InUser.Password),
+			); err != nil {
 				t.Error(err)
 			}
 
@@ -276,7 +312,9 @@ func TestHandler(t *testing.T) {
 			if c.userInserterOutErr != nil {
 				return
 			}
-			if err = assert.Equal(c.reqBody.Username, tokenGenerator.InSub); err != nil {
+			if err = assert.Equal(
+				c.reqBody.Username, tokenGenerator.InSub,
+			); err != nil {
 				t.Error(err)
 			}
 		})

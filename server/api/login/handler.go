@@ -15,24 +15,24 @@ import (
 
 // Handler is the http.Handler for the login route.
 type Handler struct {
-	userSelector   db.Selector[db.User]
-	hashComparer   Comparer
-	tokenGenerator auth.TokenGenerator
-	dbCloser       db.Closer
+	dbUserSelector     db.Selector[db.User]
+	passwordComparer   Comparer
+	authTokenGenerator auth.TokenGenerator
+	dbCloser           db.Closer
 }
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
 	userSelector db.Selector[db.User],
 	hashComparer Comparer,
-	tokenGenerator auth.TokenGenerator,
+	authTokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
-		userSelector:   userSelector,
-		hashComparer:   hashComparer,
-		tokenGenerator: tokenGenerator,
-		dbCloser:       dbCloser,
+		dbUserSelector:     userSelector,
+		passwordComparer:   hashComparer,
+		authTokenGenerator: authTokenGenerator,
+		dbCloser:           dbCloser,
 	}
 }
 
@@ -57,7 +57,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userSelector.Select(reqBody.Username)
+	user, err := h.dbUserSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusBadRequest)
@@ -69,7 +69,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
-	if err = h.hashComparer.Compare(
+	if err = h.passwordComparer.Compare(
 		user.Password, reqBody.Password,
 	); err == bcrypt.ErrMismatchedHashAndPassword {
 		w.WriteHeader(http.StatusBadRequest)
@@ -82,7 +82,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Generate an authentication cookie for the user and return it within a
 	// Set-Cookie header.
 	expiry := time.Now().Add(auth.Duration).UTC()
-	if authToken, err := h.tokenGenerator.Generate(
+	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
 		relay.ServerErr(w, err.Error())

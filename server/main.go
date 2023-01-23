@@ -59,6 +59,7 @@ func main() {
 	))
 
 	mux.Handle("/board", boardAPI.NewHandler(
+		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		boardAPI.NewPOSTHandler(
 			db.NewUserBoardCounter(conn),

@@ -9,18 +9,21 @@ import (
 
 // Handler is the http.Handler for the boards route.
 type Handler struct {
-	tokenValidator auth.TokenValidator
-	postHandler    api.MethodHandler
+	authHeaderReader   auth.HeaderReader
+	authTokenValidator auth.TokenValidator
+	postHandler        api.MethodHandler
 }
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
-	tokenValidator auth.TokenValidator,
+	authHeaderReader auth.HeaderReader,
+	authTokenValidator auth.TokenValidator,
 	postHandler api.MethodHandler,
 ) Handler {
 	return Handler{
-		tokenValidator: tokenValidator,
-		postHandler:    postHandler,
+		authHeaderReader:   authHeaderReader,
+		authTokenValidator: authTokenValidator,
+		postHandler:        postHandler,
 	}
 }
 
@@ -32,16 +35,16 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the authentication cookie.
-	authCookie, err := r.Cookie(auth.CookieName)
-	if err != nil {
+	// Get auth token from Authorization header, validate it, and get the
+	// subject of the token.
+	authToken := h.authHeaderReader.Read(r.Header.Get("Authorization"))
+	if authToken == "" {
 		w.Header().Set(auth.WWWAuthenticate())
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	// Validate authentication cookie value and get sub.
-	sub, err := h.tokenValidator.Validate(authCookie.Value)
+	sub, err := h.authTokenValidator.Validate(authToken)
 	if err != nil {
 		w.Header().Set(auth.WWWAuthenticate())
 		w.WriteHeader(http.StatusUnauthorized)

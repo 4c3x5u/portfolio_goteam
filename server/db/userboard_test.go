@@ -12,7 +12,8 @@ func TestBoardUserSelector(t *testing.T) {
 	defer teardown()
 	sut := NewUserBoardCounter(db)
 	userID := "bob123"
-	query := `SELECT COUNT\(\*\) FROM app.user_board WHERE userID = \$1 AND isAdmin = \$2`
+	query := `SELECT COUNT\(\*\) FROM app.user_board ` +
+		`WHERE userID = \$1 AND isAdmin = \$2`
 
 	for _, wantCount := range []int{0, 1, 2, 3} {
 		t.Run(fmt.Sprintf("count: %d", wantCount), func(t *testing.T) {

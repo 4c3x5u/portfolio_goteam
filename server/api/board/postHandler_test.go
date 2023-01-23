@@ -14,8 +14,8 @@ import (
 
 func TestPOSTHandler(t *testing.T) {
 	userBoardCounter := &db.FakeCounter{}
-	boardInserter := &db.FakeBoardInserter{}
-	sut := NewPOSTHandler(userBoardCounter, boardInserter)
+	dbBoardInserter := &db.FakeBoardInserter{}
+	sut := NewPOSTHandler(userBoardCounter, dbBoardInserter)
 	sub := "bob123"
 
 	t.Run(http.MethodPost, func(t *testing.T) {
@@ -70,7 +70,7 @@ func TestPOSTHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
-				boardInserter.OutErr = c.boardInserterOutErr
+				dbBoardInserter.OutErr = c.boardInserterOutErr
 
 				reqBodyJSON, err := json.Marshal(c.reqBody)
 				if err != nil {
@@ -116,7 +116,7 @@ func TestPOSTHandler(t *testing.T) {
 				}
 				if err := assert.Equal(
 					db.NewBoard(c.reqBody.Name, sub),
-					boardInserter.InBoard,
+					dbBoardInserter.InBoard,
 				); err != nil {
 					t.Error(err)
 				}

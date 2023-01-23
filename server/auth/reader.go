@@ -2,6 +2,12 @@ package auth
 
 import "strings"
 
+// HeaderReader describes a type that can be used to read an Authorization
+// header value and return the auth token it contains.
+type HeaderReader interface {
+	Read(string) string
+}
+
 // BearerTokenReader can be used to read an Authorization header value that
 // contains a Bearer token.
 type BearerTokenReader struct{}

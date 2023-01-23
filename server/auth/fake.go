@@ -30,3 +30,14 @@ func (f *FakeTokenValidator) Validate(token string) (string, error) {
 	f.InToken = token
 	return f.OutSub, f.OutErr
 }
+
+// FakeHeaderReader is a test fake for HeaderReader.
+type FakeHeaderReader struct {
+	InHeaderValue string
+	OutToken      string
+}
+
+func (f *FakeHeaderReader) Read(headerValue string) string {
+	f.InHeaderValue = headerValue
+	return f.OutToken
+}

@@ -13,30 +13,30 @@ import (
 
 // Handler is the http.Handler for the register route.
 type Handler struct {
-	validator      Validator
-	userSelector   db.Selector[db.User]
-	hasher         Hasher
-	userInserter   db.Inserter[db.User]
-	tokenGenerator auth.TokenGenerator
-	dbCloser       db.Closer
+	validator          Validator
+	dbUserSelector     db.Selector[db.User]
+	hasher             Hasher
+	dbUserInserter     db.Inserter[db.User]
+	authTokenGenerator auth.TokenGenerator
+	dbCloser           db.Closer
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator Validator,
-	userSelector db.Selector[db.User],
+	dbUserSelector db.Selector[db.User],
 	hasher Hasher,
-	userInserter db.Inserter[db.User],
-	tokenGenerator auth.TokenGenerator,
+	dbUserInserter db.Inserter[db.User],
+	authTokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
 ) Handler {
 	return Handler{
-		validator:      validator,
-		userSelector:   userSelector,
-		hasher:         hasher,
-		userInserter:   userInserter,
-		tokenGenerator: tokenGenerator,
-		dbCloser:       dbCloser,
+		validator:          validator,
+		dbUserSelector:     dbUserSelector,
+		hasher:             hasher,
+		dbUserInserter:     dbUserInserter,
+		authTokenGenerator: authTokenGenerator,
+		dbCloser:           dbCloser,
 	}
 }
 
@@ -65,7 +65,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// errUsernameTaken if affected rows come back 0. However, not sure if that
 	// would increase or decrease the performance as hashing will then occur
 	// before exists checks. Test when deployed or when you add integration tests.
-	_, err := h.userSelector.Select(reqBody.Username)
+	_, err := h.dbUserSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == nil {
 		relay.ClientJSON(w, http.StatusBadRequest, ResBody{
@@ -81,7 +81,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
 		relay.ServerErr(w, err.Error())
 		return
-	} else if err = h.userInserter.Insert(
+	} else if err = h.dbUserInserter.Insert(
 		db.NewUser(reqBody.Username, pwdHash),
 	); err != nil {
 		relay.ServerErr(w, err.Error())
@@ -91,7 +91,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Generate an authentication token for the user that is valid for an hour
 	// and return it within a Set-Cookie header.
 	expiry := time.Now().Add(auth.Duration).UTC()
-	if authToken, err := h.tokenGenerator.Generate(
+	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
 		relay.ClientErr(w, http.StatusUnauthorized, ResBody{
@@ -115,5 +115,5 @@ const errUsernameTaken = "Username is already taken."
 
 // errAuth is the error message returned from handlers when the token generator
 // throws an error
-const errAuth = "You have been registered successfully but something went wrong. " +
-	"Please log in using the credentials you registered with."
+const errAuth = "You have been registered successfully but something went " +
+	"wrong. Please log in using the credentials you registered with."
