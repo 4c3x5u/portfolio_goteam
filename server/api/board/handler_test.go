@@ -2,7 +2,6 @@ package board
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,9 +19,8 @@ func TestHandler(t *testing.T) {
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
-			http.MethodConnect, http.MethodDelete, http.MethodGet,
-			http.MethodHead, http.MethodOptions, http.MethodPatch,
-			http.MethodPut, http.MethodTrace,
+			http.MethodConnect, http.MethodDelete, http.MethodGet, http.MethodHead,
+			http.MethodOptions, http.MethodPatch, http.MethodPut, http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
 				req, err := http.NewRequest(httpMethod, "/board", nil)
@@ -43,44 +41,26 @@ func TestHandler(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name                     string
-		reqBody                  ReqBody
-		authHeaderReaderOutToken string
-		tokenValidatorOutSub     string
-		wantStatusCode           int
+		name                 string
+		tokenValidatorOutSub string
+		wantStatusCode       int
 	}{
 		{
-			name:                     "AuthTokenEmpty",
-			reqBody:                  ReqBody{},
-			authHeaderReaderOutToken: "",
-			tokenValidatorOutSub:     "",
-			wantStatusCode:           http.StatusUnauthorized,
+			name:                 "InvalidAuthToken",
+			tokenValidatorOutSub: "",
+			wantStatusCode:       http.StatusUnauthorized,
 		},
 		{
-			name:                     "TokenValidatorErr",
-			reqBody:                  ReqBody{},
-			authHeaderReaderOutToken: "ABCDEFG",
-			tokenValidatorOutSub:     "",
-			wantStatusCode:           http.StatusUnauthorized,
-		},
-		{
-			name:                     "Success",
-			reqBody:                  ReqBody{Name: "someboard"},
-			authHeaderReaderOutToken: "ABCDEFG",
-			tokenValidatorOutSub:     "bob123",
-			wantStatusCode:           http.StatusOK,
+			name:                 "Success",
+			tokenValidatorOutSub: "bob123",
+			wantStatusCode:       http.StatusOK,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			authHeaderReader.OutToken = c.authHeaderReaderOutToken
 			authTokenValidator.OutSub = c.tokenValidatorOutSub
 
-			reqBodyJSON, err := json.Marshal(c.reqBody)
-			if err != nil {
-				t.Fatal(err)
-			}
 			req, err := http.NewRequest(
-				http.MethodPost, "/board", bytes.NewReader(reqBodyJSON),
+				http.MethodPost, "/board", bytes.NewReader([]byte{}),
 			)
 			if err != nil {
 				t.Fatal(err)

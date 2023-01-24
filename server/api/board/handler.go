@@ -38,12 +38,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Get auth token from Authorization header, validate it, and get the
 	// subject of the token.
 	authToken := h.authHeaderReader.Read(r.Header.Get("Authorization"))
-	if authToken == "" {
-		w.Header().Set(auth.WWWAuthenticate())
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
 	sub := h.authTokenValidator.Validate(authToken)
 	if sub == "" {
 		w.Header().Set(auth.WWWAuthenticate())
