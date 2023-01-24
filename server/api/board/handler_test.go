@@ -3,7 +3,6 @@ package board
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -48,7 +47,6 @@ func TestHandler(t *testing.T) {
 		reqBody                  ReqBody
 		authHeaderReaderOutToken string
 		tokenValidatorOutSub     string
-		tokenValidatorOutErr     error
 		wantStatusCode           int
 	}{
 		{
@@ -56,7 +54,6 @@ func TestHandler(t *testing.T) {
 			reqBody:                  ReqBody{},
 			authHeaderReaderOutToken: "",
 			tokenValidatorOutSub:     "",
-			tokenValidatorOutErr:     nil,
 			wantStatusCode:           http.StatusUnauthorized,
 		},
 		{
@@ -64,14 +61,12 @@ func TestHandler(t *testing.T) {
 			reqBody:                  ReqBody{},
 			authHeaderReaderOutToken: "ABCDEFG",
 			tokenValidatorOutSub:     "",
-			tokenValidatorOutErr:     errors.New("token validator error"),
 			wantStatusCode:           http.StatusUnauthorized,
 		},
 		{
 			name:                     "Success",
 			reqBody:                  ReqBody{Name: "someboard"},
 			authHeaderReaderOutToken: "ABCDEFG",
-			tokenValidatorOutErr:     nil,
 			tokenValidatorOutSub:     "bob123",
 			wantStatusCode:           http.StatusOK,
 		},
@@ -79,7 +74,6 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			authHeaderReader.OutToken = c.authHeaderReaderOutToken
 			authTokenValidator.OutSub = c.tokenValidatorOutSub
-			authTokenValidator.OutErr = c.tokenValidatorOutErr
 
 			reqBodyJSON, err := json.Marshal(c.reqBody)
 			if err != nil {

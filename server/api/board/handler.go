@@ -44,8 +44,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sub, err := h.authTokenValidator.Validate(authToken)
-	if err != nil {
+	sub := h.authTokenValidator.Validate(authToken)
+	if sub == "" {
 		w.Header().Set(auth.WWWAuthenticate())
 		w.WriteHeader(http.StatusUnauthorized)
 		return

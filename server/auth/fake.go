@@ -22,13 +22,12 @@ func (f *FakeTokenGenerator) Generate(
 type FakeTokenValidator struct {
 	InToken string
 	OutSub  string
-	OutErr  error
 }
 
 // Validate implements the Validator interface on FakeTokenValidator.
-func (f *FakeTokenValidator) Validate(token string) (string, error) {
+func (f *FakeTokenValidator) Validate(token string) string {
 	f.InToken = token
-	return f.OutSub, f.OutErr
+	return f.OutSub
 }
 
 // FakeHeaderReader is a test fake for HeaderReader.
