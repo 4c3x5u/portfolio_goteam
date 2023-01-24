@@ -17,8 +17,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TestHandler tests Handler to ensure that it behaves correctly on all
-// possible scenarios.
+// TestHandler tests the ServeHTTP method of Handler to assert that it behaves
+// correctly.
 func TestHandler(t *testing.T) {
 	var (
 		dbUserSelector     = &db.FakeUserSelector{}

@@ -12,6 +12,8 @@ import (
 	"server/db"
 )
 
+// TestPOSTHandler tests the Handle method of POSTHandler to assert that it
+// behaves correctly.
 func TestPOSTHandler(t *testing.T) {
 	userBoardCounter := &db.FakeCounter{}
 	dbBoardInserter := &db.FakeBoardInserter{}

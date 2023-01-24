@@ -1,7 +1,6 @@
 package board
 
 import (
-	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,6 +10,8 @@ import (
 	"server/auth"
 )
 
+// TestHandler tests the ServeHTTP method of Handler to assert that it behaves
+// correctly.
 func TestHandler(t *testing.T) {
 	authHeaderReader := &auth.FakeHeaderReader{}
 	authTokenValidator := &auth.FakeTokenValidator{}
@@ -83,9 +84,7 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			authTokenValidator.OutSub = c.tokenValidatorOutSub
 
-			req, err := http.NewRequest(
-				c.httpMethod, "/board", bytes.NewReader([]byte{}),
-			)
+			req, err := http.NewRequest(c.httpMethod, "/board", nil)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TestPasswordComparer tests the PasswordComparer's Compare method to ensure
+// TestPasswordComparer tests the PasswordComparer's Compare method to assert
 // that all it does is to call the bcrypt.CompareHashAndPassword and return
 // whatever error that returns.
 func TestPasswordComparer(t *testing.T) {

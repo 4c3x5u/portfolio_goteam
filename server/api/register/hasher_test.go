@@ -9,7 +9,7 @@ import (
 )
 
 // TestPasswordHasher tests the Hash method of the password hasher. It uses
-// bcrypt.CompareHashAndPassword to ensure that the result was generated from
+// bcrypt.CompareHashAndPassword to assert that the result was generated from
 // the given plaintext and doesn't match another plaintext string.
 func TestPasswordHasher(t *testing.T) {
 	for _, c := range []struct {
