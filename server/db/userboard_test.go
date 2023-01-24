@@ -1,10 +1,13 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"server/assert"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestUserBoardSelector(t *testing.T) {
@@ -15,16 +18,52 @@ func TestUserBoardSelector(t *testing.T) {
 	boardID := "123"
 	query := `SELECT isAdmin FROM app.user_board` +
 		` WHERE userID = \$1 AND boardID = \$2`
+	sqlErr := errors.New("postgres query error")
 
-	for _, wantIsAdmin := range []bool{true, false} {
-		t.Run(fmt.Sprintf("IsAdmin%v", wantIsAdmin), func(t *testing.T) {
-			mock.ExpectQuery(query).WithArgs(userID, boardID).WillReturnRows(
-				mock.NewRows([]string{"isAdmin"}).AddRow(wantIsAdmin),
-			)
+	for _, c := range []struct {
+		name        string
+		wantIsAdmin bool
+		wantErr     error
+		setUpMock   func(mock *sqlmock.ExpectedQuery)
+	}{
+		{
+			name:        "SqlErr",
+			wantIsAdmin: false,
+			wantErr:     sqlErr,
+			setUpMock: func(mock *sqlmock.ExpectedQuery) {
+				mock.WillReturnError(sqlErr)
+			},
+		},
+		{
+			name:        "IsNotAdmin",
+			wantIsAdmin: false,
+			wantErr:     nil,
+			setUpMock: func(mock *sqlmock.ExpectedQuery) {
+				mock.WillReturnRows(
+					sqlmock.NewRows([]string{"isAdmin"}).AddRow(false),
+				)
+			},
+		},
+		{
+			name:        "IsAdmin",
+			wantIsAdmin: true,
+			wantErr:     nil,
+			setUpMock: func(mock *sqlmock.ExpectedQuery) {
+				mock.WillReturnRows(
+					sqlmock.NewRows([]string{"isAdmin"}).AddRow(true),
+				).WillReturnError(nil)
+			},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			c.setUpMock(mock.ExpectQuery(query).WithArgs(userID, boardID))
 
-			isAdmin := sut.Select(userID, boardID)
+			isAdmin, err := sut.Select(userID, boardID)
 
-			if err := assert.Equal(wantIsAdmin, isAdmin); err != nil {
+			if err := assert.Equal(c.wantErr, err); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(c.wantIsAdmin, isAdmin); err != nil {
 				t.Error(err)
 			}
 		})

@@ -54,3 +54,17 @@ func (f *FakeBoardInserter) Insert(board Board) error {
 	f.InBoard = board
 	return f.OutErr
 }
+
+// FakeRelSelector is a test fake for RelSelector.
+type FakeRelSelector struct {
+	InIDA      string
+	InIDB      string
+	OutIsAdmin bool
+	OutErr     error
+}
+
+// Select implements the RelSelector interface on FakeRelSelector.
+func (f *FakeRelSelector) Select(idA, idB string) (bool, error) {
+	f.InIDA, f.InIDB = idA, idB
+	return f.OutIsAdmin, f.OutErr
+}

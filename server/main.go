@@ -65,7 +65,9 @@ func main() {
 			db.NewUserBoardCounter(conn),
 			db.NewBoardInserter(conn),
 		),
-		boardAPI.NewDELETEHandler(),
+		boardAPI.NewDELETEHandler(
+			db.NewUserBoardSelector(conn),
+		),
 	))
 
 	// Serve the app using the ServeMux.

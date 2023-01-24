@@ -12,8 +12,10 @@ func NewUserBoardSelector(db *sql.DB) UserBoardSelector {
 
 // Select selects a record from the user_board table. It only returns the
 // isAdmin field since that is the only piece of information
-func (s UserBoardSelector) Select(userID, boardID string) (isAdmin bool) {
-	s.db.QueryRow(
+func (s UserBoardSelector) Select(
+	userID, boardID string,
+) (isAdmin bool, err error) {
+	err = s.db.QueryRow(
 		"SELECT isAdmin FROM app.user_board WHERE userID = $1 AND boardID = $2",
 		userID,
 		boardID,
