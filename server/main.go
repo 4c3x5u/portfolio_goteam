@@ -67,6 +67,7 @@ func main() {
 		),
 		boardAPI.NewDELETEHandler(
 			db.NewUserBoardSelector(conn),
+			db.NewBoardDeleter(conn),
 		),
 	))
 

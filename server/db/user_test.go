@@ -9,9 +9,14 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
+// TestUserSelector tests the Select method of UserSelector to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
 func TestUserSelector(t *testing.T) {
-	id := "bob123"
-	query := `SELECT id, password FROM app.\"user\" WHERE id = \$1`
+	const (
+		id    = "bob123"
+		query = `SELECT id, password FROM app.\"user\" WHERE id = \$1`
+	)
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("user inserter error")
@@ -54,9 +59,15 @@ func TestUserSelector(t *testing.T) {
 	})
 }
 
+// TestUserInserter tests the Insert method of UserInserter to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
 func TestUserInserter(t *testing.T) {
-	id, password := "bob123", []byte("hashedpwd")
-	query := `INSERT INTO app.\"user\"\(id, password\) VALUES \(\$1, \$2\)`
+	const (
+		id      = "bob123"
+		pwdHash = "asd..fasdf.asdfa/sdf.asdfa.sdfa"
+		query   = `INSERT INTO app.\"user\"\(id, password\) VALUES \(\$1, \$2\)`
+	)
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
@@ -64,11 +75,11 @@ func TestUserInserter(t *testing.T) {
 		defer teardown()
 		mock.
 			ExpectExec(query).
-			WithArgs(id, string(password)).
+			WithArgs(id, pwdHash).
 			WillReturnError(wantErr)
 		sut := NewUserInserter(db)
 
-		err := sut.Insert(NewUser(id, password))
+		err := sut.Insert(NewUser(id, []byte(pwdHash)))
 
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
@@ -80,11 +91,11 @@ func TestUserInserter(t *testing.T) {
 		defer teardown()
 		mock.
 			ExpectExec(query).
-			WithArgs(id, string(password)).
+			WithArgs(id, pwdHash).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewUserInserter(db)
 
-		err := sut.Insert(NewUser(id, password))
+		err := sut.Insert(NewUser(id, []byte(pwdHash)))
 
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)

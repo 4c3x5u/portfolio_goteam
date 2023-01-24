@@ -11,7 +11,7 @@ import (
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
-// correctly.
+// correctly in all possible scenarios.
 func TestHandler(t *testing.T) {
 	authHeaderReader := &auth.FakeHeaderReader{}
 	authTokenValidator := &auth.FakeTokenValidator{}

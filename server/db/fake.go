@@ -68,3 +68,15 @@ func (f *FakeRelSelector) Select(idA, idB string) (bool, error) {
 	f.InIDA, f.InIDB = idA, idB
 	return f.OutIsAdmin, f.OutErr
 }
+
+// FakeDeleter is a test fake for Deleter.
+type FakeDeleter struct {
+	InID   string
+	OutErr error
+}
+
+// Delete implements the Deleter interface on FakeDeleter.
+func (f *FakeDeleter) Delete(id string) error {
+	f.InID = id
+	return f.OutErr
+}
