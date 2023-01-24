@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"server/api"
 	"server/auth"
 	"server/db"
 	"server/relay"
@@ -44,6 +45,7 @@ func NewHandler(
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST.
 	if r.Method != http.MethodPost {
+		w.Header().Add(api.AllowedMethods(http.MethodPost))
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

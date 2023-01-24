@@ -31,6 +31,7 @@ func NewHandler(
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept the HTTP methods that are handled.
 	if r.Method != http.MethodPost {
+		w.Header().Add(api.AllowedMethods(http.MethodPost))
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}

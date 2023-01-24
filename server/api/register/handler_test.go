@@ -50,6 +50,13 @@ func TestHandler(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
+
+				if err := assert.Equal(
+					http.MethodPost,
+					w.Result().Header.Get("Access-Control-Allow-Methods"),
+				); err != nil {
+					t.Error(err)
+				}
 			})
 		}
 	})
