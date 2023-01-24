@@ -27,7 +27,9 @@ func NewPOSTHandler(
 }
 
 // Handle handles the POST requests sent to the board endpoint.
-func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, sub string) {
+func (h POSTHandler) Handle(
+	w http.ResponseWriter, r *http.Request, sub string,
+) {
 	// Read the request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {

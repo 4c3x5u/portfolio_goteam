@@ -2,6 +2,25 @@ package db
 
 import "database/sql"
 
+// UserBoardSelector can be used to select a record from the user_board table.
+type UserBoardSelector struct{ db *sql.DB }
+
+// NewUserBoardSelector creates and returns a new UserBoardSelector.
+func NewUserBoardSelector(db *sql.DB) UserBoardSelector {
+	return UserBoardSelector{db: db}
+}
+
+// Select selects a record from the user_board table. It only returns the
+// isAdmin field since that is the only piece of information
+func (s UserBoardSelector) Select(userID, boardID string) (isAdmin bool) {
+	s.db.QueryRow(
+		"SELECT isAdmin FROM app.user_board WHERE userID = $1 AND boardID = $2",
+		userID,
+		boardID,
+	).Scan(&isAdmin)
+	return
+}
+
 // UserBoardCounter can be used to count the number of boards in the database
 // that a certain user is the admin to.
 type UserBoardCounter struct{ db *sql.DB }
