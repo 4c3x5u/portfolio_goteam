@@ -12,6 +12,7 @@ type Handler struct {
 	authHeaderReader   auth.HeaderReader
 	authTokenValidator auth.TokenValidator
 	postHandler        api.MethodHandler
+	deleteHandler      api.MethodHandler
 }
 
 // NewHandler creates and returns a new Handler.
@@ -19,18 +20,20 @@ func NewHandler(
 	authHeaderReader auth.HeaderReader,
 	authTokenValidator auth.TokenValidator,
 	postHandler api.MethodHandler,
+	deleteHandler api.MethodHandler,
 ) Handler {
 	return Handler{
 		authHeaderReader:   authHeaderReader,
 		authTokenValidator: authTokenValidator,
 		postHandler:        postHandler,
+		deleteHandler:      deleteHandler,
 	}
 }
 
 // ServeHTTP responds to requests made to the board route.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only accept the HTTP methods that are handled.
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
 		w.Header().Add(api.AllowedMethods(http.MethodPost))
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -50,5 +53,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		h.postHandler.Handle(w, r, sub)
+	case http.MethodDelete:
+		h.deleteHandler.Handle(w, r, sub)
 	}
 }

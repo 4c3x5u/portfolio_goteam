@@ -37,11 +37,15 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, sub string) 
 
 	// Validate board name.
 	if reqBody.Name == "" {
-		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errNameEmpty})
+		relay.ClientErr(
+			w, http.StatusBadRequest, ResBody{Error: errNameEmpty},
+		)
 		return
 	}
 	if len(reqBody.Name) >= maxNameLength {
-		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errNameTooLong})
+		relay.ClientErr(
+			w, http.StatusBadRequest, ResBody{Error: errNameTooLong},
+		)
 		return
 	}
 
@@ -62,8 +66,8 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, sub string) 
 }
 
 const (
-	// maxBoards is the amount of boards that each user is allowed to own (i.e. be
-	// the admin of).
+	// maxBoards is the amount of boards that each user is allowed to own (i.e.
+	// be the admin of).
 	maxBoards = 3
 
 	// maxNameLength is the maximum amount of characters that a board name can
@@ -72,8 +76,8 @@ const (
 
 	// errMaxBoards is the error message returned from the handler when the user
 	// already owns the maximum amount of boards allowed per user.
-	errMaxBoards = "You have already created the maximum amount of boards " +
-		"allowed per user. Please delete one of your boards to create a new one."
+	errMaxBoards = "You have already created the maximum amount of boards all" +
+		"owed per user. Please delete one of your boards to create a new one."
 
 	// errNameEmpty is the error message returned from the handler when the
 	// received board name is empty.

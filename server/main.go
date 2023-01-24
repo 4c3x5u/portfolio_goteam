@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"server/api"
 	boardAPI "server/api/board"
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
@@ -65,6 +66,8 @@ func main() {
 			db.NewUserBoardCounter(conn),
 			db.NewBoardInserter(conn),
 		),
+		// TODO: implement
+		&api.FakeMethodHandler{},
 	))
 
 	// Serve the app using the ServeMux.

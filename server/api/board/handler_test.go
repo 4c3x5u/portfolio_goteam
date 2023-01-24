@@ -15,12 +15,16 @@ func TestHandler(t *testing.T) {
 	authHeaderReader := &auth.FakeHeaderReader{}
 	authTokenValidator := &auth.FakeTokenValidator{}
 	postHandler := &api.FakeMethodHandler{}
-	sut := NewHandler(authHeaderReader, authTokenValidator, postHandler)
+	deleteHandler := &api.FakeMethodHandler{}
+	sut := NewHandler(
+		authHeaderReader, authTokenValidator, postHandler, deleteHandler,
+	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
-			http.MethodConnect, http.MethodDelete, http.MethodGet, http.MethodHead,
-			http.MethodOptions, http.MethodPatch, http.MethodPut, http.MethodTrace,
+			http.MethodConnect, http.MethodGet, http.MethodHead,
+			http.MethodOptions, http.MethodPatch, http.MethodPut,
+			http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
 				req, err := http.NewRequest(httpMethod, "/board", nil)
@@ -49,17 +53,30 @@ func TestHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name                 string
+		httpMethod           string
 		tokenValidatorOutSub string
+		wantMethodHandler    *api.FakeMethodHandler
 		wantStatusCode       int
 	}{
 		{
 			name:                 "InvalidAuthToken",
+			httpMethod:           http.MethodPost,
 			tokenValidatorOutSub: "",
+			wantMethodHandler:    nil,
 			wantStatusCode:       http.StatusUnauthorized,
 		},
 		{
-			name:                 "Success",
+			name:                 "Success" + http.MethodPost,
+			httpMethod:           http.MethodPost,
 			tokenValidatorOutSub: "bob123",
+			wantMethodHandler:    postHandler,
+			wantStatusCode:       http.StatusOK,
+		},
+		{
+			name:                 "Success" + http.MethodDelete,
+			httpMethod:           http.MethodDelete,
+			tokenValidatorOutSub: "bob123",
+			wantMethodHandler:    deleteHandler,
 			wantStatusCode:       http.StatusOK,
 		},
 	} {
@@ -67,7 +84,7 @@ func TestHandler(t *testing.T) {
 			authTokenValidator.OutSub = c.tokenValidatorOutSub
 
 			req, err := http.NewRequest(
-				http.MethodPost, "/board", bytes.NewReader([]byte{}),
+				c.httpMethod, "/board", bytes.NewReader([]byte{}),
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -83,26 +100,28 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If 401 is expected, WWWAuthenticated cookie must be set.
 			if c.wantStatusCode == http.StatusUnauthorized {
+				// 401 is expected - WWWAuthenticated cookie must be set.
 				name, value := auth.WWWAuthenticate()
-				if err = assert.Equal(value, w.Result().Header.Get(name)); err != nil {
+				if err = assert.Equal(
+					value, w.Result().Header.Get(name),
+				); err != nil {
 					t.Error(err)
 				}
-			}
-
-			// DEPENDENCY-INPUT-BASED ASSERTIONS
-
-			// If 200 is expected, postHandler must be called.
-			if c.wantStatusCode == http.StatusOK {
-				if err := assert.Equal(w, postHandler.InResponseWriter); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(req, postHandler.InReq); err != nil {
+			} else {
+				// 401 is NOT expected - a method handler must be called.
+				if err := assert.Equal(
+					w, c.wantMethodHandler.InResponseWriter,
+				); err != nil {
 					t.Error(err)
 				}
 				if err := assert.Equal(
-					c.tokenValidatorOutSub, postHandler.InSub,
+					req, c.wantMethodHandler.InReq,
+				); err != nil {
+					t.Error(err)
+				}
+				if err := assert.Equal(
+					c.tokenValidatorOutSub, c.wantMethodHandler.InSub,
 				); err != nil {
 					t.Error(err)
 				}

@@ -44,8 +44,10 @@ func TestPOSTHandler(t *testing.T) {
 				wantErr:                errNameEmpty,
 			},
 			{
-				name:                   "BoardNameTooLong",
-				reqBody:                ReqBody{Name: "boardyboardsyboardkyboardishboardxyz"},
+				name: "BoardNameTooLong",
+				reqBody: ReqBody{
+					Name: "boardyboardsyboardkyboardishboardxyz",
+				},
 				userBoardCounterOutRes: 0,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
@@ -93,7 +95,8 @@ func TestPOSTHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				// if 400 is expected - there must be a validation error in response body
+				// if 400 is expected - there must be a validation error in
+				// response body
 				if c.wantStatusCode == http.StatusBadRequest {
 					resBody := ResBody{}
 					if err := json.NewDecoder(w.Result().Body).Decode(
@@ -101,7 +104,10 @@ func TestPOSTHandler(t *testing.T) {
 					); err != nil {
 						t.Error(err)
 					}
-					if err := assert.Equal(c.wantErr, resBody.Error); err != nil {
+
+					if err := assert.Equal(
+						c.wantErr, resBody.Error,
+					); err != nil {
 						t.Error(err)
 					}
 				}
