@@ -28,7 +28,7 @@ func NewPOSTHandler(
 
 // Handle handles the POST requests sent to the board endpoint.
 func (h POSTHandler) Handle(
-	w http.ResponseWriter, r *http.Request, sub string,
+	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Read the request body.
 	reqBody := ReqBody{}
@@ -53,14 +53,14 @@ func (h POSTHandler) Handle(
 
 	// Validate that the user has less than 3 boards. This is done to limit the
 	// resources used by this demo app.
-	if boardCount := h.userBoardCounter.Count(sub); boardCount >= maxBoards {
+	if boardCount := h.userBoardCounter.Count(username); boardCount >= maxBoards {
 		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
 		return
 	}
 
 	// Create a new board.
 	if err := h.boardInserter.Insert(
-		db.NewBoard(reqBody.Name, sub),
+		db.NewBoard(reqBody.Name, username),
 	); err != nil {
 		relay.ServerErr(w, err.Error())
 		return

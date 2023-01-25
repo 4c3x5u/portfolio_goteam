@@ -7,11 +7,11 @@ package api
 import "net/http"
 
 // MethodHandler describes a type that can be used to serve a certain part of an
-// API route that corresponds to a specific HTTP method(s). The sub argument is
-// the subject of an authentication token (i.e. username) that is validated
-// prior.
+// API route that corresponds to a specific HTTP method. It is intended for the
+// Handle method to be called after authentication, and with the authenticated
+// user's username as the third argument.
 type MethodHandler interface {
-	Handle(w http.ResponseWriter, r *http.Request, sub string)
+	Handle(w http.ResponseWriter, r *http.Request, username string)
 }
 
 // AllowedMethods takes in a slice of allowed HTTP methods and returns the key

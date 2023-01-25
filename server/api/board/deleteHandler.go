@@ -28,14 +28,14 @@ func NewDELETEHandler(
 
 // Handle handles the DELETE requests sent to the board endpoint.
 func (h DELETEHandler) Handle(
-	w http.ResponseWriter, r *http.Request, sub string,
+	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.
 	boardID := r.URL.Query().Get("id")
 
 	// Validate that the user making the request is the admin of the board to be
 	// deleted.
-	isAdmin, err := h.userBoardSelector.Select(sub, boardID)
+	isAdmin, err := h.userBoardSelector.Select(username, boardID)
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusNotFound)
 		return

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"server/api"
 	boardAPI "server/api/board"
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
@@ -61,14 +62,16 @@ func main() {
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
-		boardAPI.NewPOSTHandler(
-			db.NewUserBoardCounter(conn),
-			db.NewBoardInserter(conn),
-		),
-		boardAPI.NewDELETEHandler(
-			db.NewUserBoardSelector(conn),
-			db.NewBoardDeleter(conn),
-		),
+		map[string]api.MethodHandler{
+			http.MethodPost: boardAPI.NewPOSTHandler(
+				db.NewUserBoardCounter(conn),
+				db.NewBoardInserter(conn),
+			),
+			http.MethodDelete: boardAPI.NewDELETEHandler(
+				db.NewUserBoardSelector(conn),
+				db.NewBoardDeleter(conn),
+			),
+		},
 	))
 
 	// Serve the app using the ServeMux.
