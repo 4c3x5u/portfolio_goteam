@@ -35,12 +35,13 @@ func (f *FakeUserSelector) Select(userID string) (User, error) {
 type FakeCounter struct {
 	InID   string
 	OutRes int
+	OutErr error
 }
 
 // Count implements the Counter interface on FakeCounter.
-func (f *FakeCounter) Count(id string) int {
+func (f *FakeCounter) Count(id string) (int, error) {
 	f.InID = id
-	return f.OutRes
+	return f.OutRes, f.OutErr
 }
 
 // FakeBoardInserter is a test fake for Inserter[Board].

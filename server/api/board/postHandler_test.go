@@ -2,6 +2,7 @@ package board
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -25,6 +26,7 @@ func TestPOSTHandler(t *testing.T) {
 			name                   string
 			reqBody                ReqBody
 			userBoardCounterOutRes int
+			userBoardCounterOutErr error
 			boardInserterOutErr    error
 			wantStatusCode         int
 			wantErr                string
@@ -33,6 +35,7 @@ func TestPOSTHandler(t *testing.T) {
 				name:                   "BoardNameNil",
 				reqBody:                ReqBody{},
 				userBoardCounterOutRes: 0,
+				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
 				wantErr:                errNameEmpty,
@@ -41,6 +44,7 @@ func TestPOSTHandler(t *testing.T) {
 				name:                   "BoardNameEmpty",
 				reqBody:                ReqBody{Name: ""},
 				userBoardCounterOutRes: 0,
+				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
 				wantErr:                errNameEmpty,
@@ -51,14 +55,25 @@ func TestPOSTHandler(t *testing.T) {
 					Name: "boardyboardsyboardkyboardishboardxyz",
 				},
 				userBoardCounterOutRes: 0,
+				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
 				wantErr:                errNameTooLong,
 			},
 			{
+				name:                   "UserBoardCounterErr",
+				reqBody:                ReqBody{Name: "someboard"},
+				userBoardCounterOutRes: 3,
+				userBoardCounterOutErr: sql.ErrConnDone,
+				boardInserterOutErr:    nil,
+				wantStatusCode:         http.StatusBadRequest,
+				wantErr:                errMaxBoards,
+			},
+			{
 				name:                   "MaxBoardsCreated",
 				reqBody:                ReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 3,
+				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
 				wantErr:                errMaxBoards,
@@ -67,8 +82,18 @@ func TestPOSTHandler(t *testing.T) {
 				name:                   "BoardCreatorError",
 				reqBody:                ReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 0,
+				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    errors.New("board inserter error"),
 				wantStatusCode:         http.StatusInternalServerError,
+				wantErr:                "",
+			},
+			{
+				name:                   "Success",
+				reqBody:                ReqBody{Name: "someboard"},
+				userBoardCounterOutRes: 0,
+				userBoardCounterOutErr: sql.ErrNoRows,
+				boardInserterOutErr:    nil,
+				wantStatusCode:         http.StatusOK,
 				wantErr:                "",
 			},
 		} {

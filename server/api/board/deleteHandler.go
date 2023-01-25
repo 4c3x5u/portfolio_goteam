@@ -54,6 +54,7 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// All went well. Return 200.
 	w.WriteHeader(http.StatusOK)
 	return
 }

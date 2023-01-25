@@ -1,6 +1,7 @@
 package board
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -53,7 +54,12 @@ func (h POSTHandler) Handle(
 
 	// Validate that the user has less than 3 boards. This is done to limit the
 	// resources used by this demo app.
-	if boardCount := h.userBoardCounter.Count(username); boardCount >= maxBoards {
+	if boardCount, err := h.userBoardCounter.Count(
+		username,
+	); err != nil && err != sql.ErrNoRows {
+		relay.ServerErr(w, err.Error())
+		return
+	} else if boardCount >= maxBoards {
 		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
 		return
 	}
@@ -65,6 +71,10 @@ func (h POSTHandler) Handle(
 		relay.ServerErr(w, err.Error())
 		return
 	}
+
+	// All went well. Return 200.
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 const (

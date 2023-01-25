@@ -11,7 +11,7 @@ type Selector[T any] interface{ Select(id string) (T, error) }
 type Deleter interface{ Delete(id string) error }
 
 // Counter describes a type counts records in the database.
-type Counter interface{ Count(id string) int }
+type Counter interface{ Count(id string) (int, error) }
 
 // RelSelector describes a type that selects a record from a many-to-many
 // relationship table from the database. It uses the two IDs - one for each

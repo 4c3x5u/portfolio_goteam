@@ -34,9 +34,10 @@ func NewUserBoardCounter(db *sql.DB) UserBoardCounter {
 
 // Count counts the number of boards in the database that the user with the
 // given userID is the admin to.
-func (c UserBoardCounter) Count(userID string) (count int) {
-	c.db.QueryRow(
-		"SELECT COUNT(*) FROM app.user_board WHERE userID = $1 AND isAdmin = $2",
+func (c UserBoardCounter) Count(userID string) (count int, err error) {
+	err = c.db.QueryRow(
+		"SELECT COUNT(*) FROM app.user_board "+
+			"WHERE userID = $1 AND isAdmin = $2",
 		userID,
 		true,
 	).Scan(&count)

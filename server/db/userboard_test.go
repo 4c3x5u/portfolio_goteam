@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"testing"
@@ -72,7 +73,7 @@ func TestUserBoardSelector(t *testing.T) {
 
 // TestUserBoardCounter tests the Count method of UserBoardCounter to assert
 // that it executes the correct SQL query with the correct arguments, and
-// returns the count back.
+// returns the count back alongside any sql error occured.
 func TestUserBoardCounter(t *testing.T) {
 	db, mock, teardown := setUpDBTest(t)
 	defer teardown()
@@ -81,16 +82,26 @@ func TestUserBoardCounter(t *testing.T) {
 	query := `SELECT COUNT\(\*\) FROM app.user_board ` +
 		`WHERE userID = \$1 AND isAdmin = \$2`
 
-	for _, wantCount := range []int{0, 1, 2, 3} {
-		t.Run(fmt.Sprintf("Count%d", wantCount), func(t *testing.T) {
+	for wantCount, wantErr := range map[int]error{
+		0: sql.ErrConnDone,
+		3: sql.ErrNoRows,
+		6: nil,
+	} {
+		t.Run(fmt.Sprintf("Count[%d]", wantCount), func(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(userID, true).WillReturnRows(
 				mock.NewRows([]string{"count"}).AddRow(wantCount),
-			)
+			).WillReturnError(wantErr)
 
-			gotCount := sut.Count(userID)
+			count, errCount := sut.Count(userID)
 
-			if err := assert.Equal(wantCount, gotCount); err != nil {
+			if err := assert.Equal(wantErr, errCount); err != nil {
 				t.Error(err)
+			}
+
+			if wantErr == nil {
+				if err := assert.Equal(wantCount, count); err != nil {
+					t.Error(err)
+				}
 			}
 		})
 	}
