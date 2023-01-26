@@ -11,6 +11,7 @@ import (
 
 	"server/assert"
 	"server/db"
+	"server/log"
 )
 
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
@@ -18,8 +19,11 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	userBoardCounter := &db.FakeCounter{}
 	dbBoardInserter := &db.FakeBoardInserter{}
-	sut := NewPOSTHandler(userBoardCounter, dbBoardInserter)
+	logger := &log.FakeLogger{}
+	sut := NewPostHandler(userBoardCounter, dbBoardInserter, logger)
 	sub := "bob123"
+
+	boardInserterErr := errors.New("create board error")
 
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
@@ -52,7 +56,7 @@ func TestPOSTHandler(t *testing.T) {
 			{
 				name: "BoardNameTooLong",
 				reqBody: ReqBody{
-					Name: "boardyboardsyboardkyboardishboardxyz",
+					Name: "boardyboardsyboardkyboardishboardxyza",
 				},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
@@ -63,10 +67,10 @@ func TestPOSTHandler(t *testing.T) {
 			{
 				name:                   "UserBoardCounterErr",
 				reqBody:                ReqBody{Name: "someboard"},
-				userBoardCounterOutRes: 3,
+				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusBadRequest,
+				wantStatusCode:         http.StatusInternalServerError,
 				wantErr:                errMaxBoards,
 			},
 			{
@@ -79,13 +83,13 @@ func TestPOSTHandler(t *testing.T) {
 				wantErr:                errMaxBoards,
 			},
 			{
-				name:                   "BoardCreatorError",
+				name:                   "BoardInserterErr",
 				reqBody:                ReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
-				boardInserterOutErr:    errors.New("board inserter error"),
+				boardInserterOutErr:    boardInserterErr,
 				wantStatusCode:         http.StatusInternalServerError,
-				wantErr:                "",
+				wantErr:                boardInserterErr.Error(),
 			},
 			{
 				name:                   "Success",
@@ -99,6 +103,7 @@ func TestPOSTHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
+				userBoardCounter.OutErr = c.userBoardCounterOutErr
 				dbBoardInserter.OutErr = c.boardInserterOutErr
 
 				reqBodyJSON, err := json.Marshal(c.reqBody)
@@ -140,6 +145,32 @@ func TestPOSTHandler(t *testing.T) {
 				}
 
 				// DEPENDENCY-INPUT-BASED ASSERTIONS
+
+				if c.wantStatusCode == http.StatusInternalServerError {
+					errFound := false
+					for _, err := range []error{
+						c.userBoardCounterOutErr, c.boardInserterOutErr,
+					} {
+						if err != nil && err != sql.ErrNoRows {
+							errFound = true
+							if err := assert.Equal(
+								log.LevelError, logger.InLevel,
+							); err != nil {
+								t.Error(err)
+							}
+							if err := assert.Equal(err.Error(), logger.InMessage); err != nil {
+								t.Error(err)
+							}
+						}
+					}
+					if !errFound {
+						t.Errorf(
+							"c.wantStatusCode was %d but no errors were logged.",
+							http.StatusInternalServerError,
+						)
+					}
+					return
+				}
 
 				// if max boards is not reached, board creator must be called
 				if c.userBoardCounterOutRes >= maxBoards ||

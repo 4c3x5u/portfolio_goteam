@@ -18,7 +18,9 @@ func TestHandler(t *testing.T) {
 	postHandler := &api.FakeMethodHandler{}
 	deleteHandler := &api.FakeMethodHandler{}
 	sut := NewHandler(
-		authHeaderReader, authTokenValidator, map[string]api.MethodHandler{
+		authHeaderReader,
+		authTokenValidator,
+		map[string]api.MethodHandler{
 			http.MethodPost:   postHandler,
 			http.MethodDelete: deleteHandler,
 		},

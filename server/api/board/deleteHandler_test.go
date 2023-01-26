@@ -9,6 +9,7 @@ import (
 
 	"server/assert"
 	"server/db"
+	"server/log"
 )
 
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
@@ -16,11 +17,12 @@ import (
 func TestDELETEHandler(t *testing.T) {
 	userBoardSelector := &db.FakeRelSelector{}
 	userBoardDeleter := &db.FakeDeleter{}
+	logger := &log.FakeLogger{}
 	// sub is inconsequential since errors returned from dependencies are
 	// directly manipulated
 	sub := ""
 	url := "/board?id=123"
-	sut := NewDELETEHandler(userBoardSelector, userBoardDeleter)
+	sut := NewDeleteHandler(userBoardSelector, userBoardDeleter, logger)
 
 	for _, c := range []struct {
 		name                        string
@@ -81,6 +83,32 @@ func TestDELETEHandler(t *testing.T) {
 
 			if err := assert.Equal(c.wantStatusCode, w.Result().StatusCode); err != nil {
 				t.Error(err)
+			}
+
+			if c.wantStatusCode == http.StatusInternalServerError {
+				errFound := false
+				for _, err := range []error{
+					c.userBoardSelectorOutErr,
+					c.boardDeleterOutErr,
+				} {
+					if err != nil {
+						errFound = true
+						if err := assert.Equal(
+							log.LevelError, logger.InLevel,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(err.Error(), logger.InMessage); err != nil {
+							t.Error(err)
+						}
+					}
+				}
+				if !errFound {
+					t.Errorf(
+						"c.wantStatusCode was %d but no errors were logged.",
+						http.StatusInternalServerError,
+					)
+				}
 			}
 		})
 	}

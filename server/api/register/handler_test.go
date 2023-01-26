@@ -13,6 +13,7 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/db"
+	"server/log"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it
@@ -25,9 +26,11 @@ func TestHandler(t *testing.T) {
 		userInserter   = &db.FakeUserInserter{}
 		tokenGenerator = &auth.FakeTokenGenerator{}
 		dbCloser       = &db.FakeCloser{}
+		logger         = &log.FakeLogger{}
 	)
 	sut := NewHandler(
-		validator, userSelector, hasher, userInserter, tokenGenerator, dbCloser,
+		validator, userSelector, hasher, userInserter,
+		tokenGenerator, dbCloser, logger,
 	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {

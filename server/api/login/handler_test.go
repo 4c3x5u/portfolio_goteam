@@ -13,6 +13,7 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/db"
+	"server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,9 +26,10 @@ func TestHandler(t *testing.T) {
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
 		dbCloser           = &db.FakeCloser{}
+		logger             = &log.FakeLogger{}
 	)
 	sut := NewHandler(
-		dbUserSelector, passwordComparer, authTokenGenerator, dbCloser,
+		dbUserSelector, passwordComparer, authTokenGenerator, dbCloser, logger,
 	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
@@ -70,6 +72,7 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
 		wantStatusCode       int
+		wantErr              string
 	}{
 		{
 			name:                 "NoUsername",
@@ -216,7 +219,7 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If 200 is expected - auth token must be set.
+			// If 200 was expected, auth token must be set.
 			if c.wantStatusCode == http.StatusOK {
 				authTokenFound := false
 				for _, ck := range w.Result().Cookies() {
@@ -239,6 +242,35 @@ func TestHandler(t *testing.T) {
 				if err = assert.True(authTokenFound); err != nil {
 					t.Error(err)
 				}
+			}
+
+			// If 500 was expected, logger must be called.
+			if c.wantStatusCode == http.StatusInternalServerError {
+				errFound := false
+				for _, err := range []error{
+					c.userSelectorOutErr,
+					c.hashComparerOutErr,
+					c.tokenGeneratorOutErr,
+				} {
+					if err != nil {
+						errFound = true
+						if err := assert.Equal(
+							log.LevelError, logger.InLevel,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(err.Error(), logger.InMessage); err != nil {
+							t.Error(err)
+						}
+					}
+				}
+				if !errFound {
+					t.Errorf(
+						"c.wantStatusCode was %d but no errors were logged.",
+						http.StatusInternalServerError,
+					)
+				}
+				return
 			}
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS

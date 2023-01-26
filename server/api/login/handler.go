@@ -9,7 +9,7 @@ import (
 	"server/api"
 	"server/auth"
 	"server/db"
-	"server/relay"
+	"server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,6 +20,7 @@ type Handler struct {
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
 	dbCloser           db.Closer
+	logger             log.Logger
 }
 
 // NewHandler creates and returns a new Handler.
@@ -28,12 +29,14 @@ func NewHandler(
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
+	logger log.Logger,
 ) Handler {
 	return Handler{
 		dbUserSelector:     userSelector,
 		passwordComparer:   hashComparer,
 		authTokenGenerator: authTokenGenerator,
 		dbCloser:           dbCloser,
+		logger:             logger,
 	}
 }
 
@@ -49,7 +52,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read and validate request.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if reqBody.Username == "" || reqBody.Password == "" {
@@ -65,7 +69,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -77,7 +82,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -87,7 +93,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{

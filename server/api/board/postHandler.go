@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"server/db"
-	"server/relay"
+	"server/log"
 )
 
 // POSTHandler can be used to handle the POST requests sent to the board
@@ -14,16 +14,19 @@ import (
 type POSTHandler struct {
 	userBoardCounter db.Counter
 	boardInserter    db.Inserter[db.Board]
+	logger           log.Logger
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
-func NewPOSTHandler(
+func NewPostHandler(
 	userBoardCounter db.Counter,
 	boardInserter db.Inserter[db.Board],
+	logger log.Logger,
 ) POSTHandler {
 	return POSTHandler{
 		userBoardCounter: userBoardCounter,
 		boardInserter:    boardInserter,
+		logger:           logger,
 	}
 }
 
@@ -34,21 +37,31 @@ func (h POSTHandler) Handle(
 	// Read the request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// Validate board name.
 	if reqBody.Name == "" {
-		relay.ClientErr(
-			w, http.StatusBadRequest, ResBody{Error: errNameEmpty},
-		)
-		return
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: errNameEmpty},
+		); err != nil {
+			h.logger.Log(log.LevelError, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	}
 	if len(reqBody.Name) >= maxNameLength {
-		relay.ClientErr(
-			w, http.StatusBadRequest, ResBody{Error: errNameTooLong},
-		)
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: errNameTooLong},
+		); err != nil {
+			h.logger.Log(log.LevelError, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -57,10 +70,18 @@ func (h POSTHandler) Handle(
 	if boardCount, err := h.userBoardCounter.Count(
 		username,
 	); err != nil && err != sql.ErrNoRows {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if boardCount >= maxBoards {
-		relay.ClientErr(w, http.StatusBadRequest, ResBody{Error: errMaxBoards})
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: errMaxBoards},
+		); err != nil {
+			h.logger.Log(log.LevelError, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -68,7 +89,8 @@ func (h POSTHandler) Handle(
 	if err := h.boardInserter.Insert(
 		db.NewBoard(reqBody.Name, username),
 	); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

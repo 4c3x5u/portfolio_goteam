@@ -5,29 +5,32 @@ import (
 	"net/http"
 
 	"server/db"
-	"server/relay"
+	"server/log"
 )
 
-// DELETEHandler can be used to handle the DELETE requests sent to the board
-// endpoint.
-type DELETEHandler struct {
+// DeleteHandler is a MethodHandler that is intended to handle DELETE requests
+// sent to the board endpoint.
+type DeleteHandler struct {
 	userBoardSelector db.RelSelector[bool]
 	boardDeleter      db.Deleter
+	logger            log.Logger
 }
 
-// NewDELETEHandler creates and returns a new DELETEHandler.
-func NewDELETEHandler(
+// NewDeleteHandler creates and returns a new DeleteHandler.
+func NewDeleteHandler(
 	userBoardSelector db.RelSelector[bool],
 	boardDeleter db.Deleter,
-) DELETEHandler {
-	return DELETEHandler{
+	logger log.Logger,
+) DeleteHandler {
+	return DeleteHandler{
 		userBoardSelector: userBoardSelector,
 		boardDeleter:      boardDeleter,
+		logger:            logger,
 	}
 }
 
 // Handle handles the DELETE requests sent to the board endpoint.
-func (h DELETEHandler) Handle(
+func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.
@@ -40,7 +43,8 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusNotFound)
 		return
 	} else if err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if isAdmin == false {
@@ -50,7 +54,8 @@ func (h DELETEHandler) Handle(
 
 	// Delete the board.
 	if err = h.boardDeleter.Delete(boardID); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 

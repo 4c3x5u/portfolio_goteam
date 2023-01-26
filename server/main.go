@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"log"
 	"net/http"
 	"os"
 
@@ -12,16 +11,19 @@ import (
 	registerAPI "server/api/register"
 	"server/auth"
 	"server/db"
+	"server/log"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 func main() {
+	logger := log.NewBasicLogger()
+
 	// Load environment variables from .env file.
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		logger.Log(log.LevelFatal, err.Error())
 	}
 
 	// Create dependencies that are shared by multiple handlers.
@@ -29,7 +31,7 @@ func main() {
 	connCloser := db.NewConnCloser(conn)
 	defer connCloser.Close()
 	if err != nil {
-		log.Fatal(err)
+		logger.Log(log.LevelFatal, err.Error())
 	}
 
 	jwtKey := os.Getenv("JWTKEY")
@@ -50,6 +52,7 @@ func main() {
 		db.NewUserInserter(conn),
 		jwtGenerator,
 		connCloser,
+		logger,
 	))
 
 	mux.Handle("/login", loginAPI.NewHandler(
@@ -57,25 +60,29 @@ func main() {
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
 		connCloser,
+		logger,
 	))
 
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPOSTHandler(
+			http.MethodPost: boardAPI.NewPostHandler(
 				db.NewUserBoardCounter(conn),
 				db.NewBoardInserter(conn),
+				logger,
 			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
+			http.MethodDelete: boardAPI.NewDeleteHandler(
 				db.NewUserBoardSelector(conn),
 				db.NewBoardDeleter(conn),
+				logger,
 			),
 		},
 	))
 
 	// Serve the app using the ServeMux.
 	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatal(err)
+		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(1)
 	}
 }

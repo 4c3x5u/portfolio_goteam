@@ -9,7 +9,7 @@ import (
 	"server/api"
 	"server/auth"
 	"server/db"
-	"server/relay"
+	"server/log"
 )
 
 // Handler is the http.Handler for the register route.
@@ -20,6 +20,7 @@ type Handler struct {
 	dbUserInserter     db.Inserter[db.User]
 	authTokenGenerator auth.TokenGenerator
 	dbCloser           db.Closer
+	logger             log.Logger
 }
 
 // NewHandler is the constructor for Handler.
@@ -30,6 +31,7 @@ func NewHandler(
 	dbUserInserter db.Inserter[db.User],
 	authTokenGenerator auth.TokenGenerator,
 	dbCloser db.Closer,
+	logger log.Logger,
 ) Handler {
 	return Handler{
 		validator:          validator,
@@ -38,6 +40,7 @@ func NewHandler(
 		dbUserInserter:     dbUserInserter,
 		authTokenGenerator: authTokenGenerator,
 		dbCloser:           dbCloser,
+		logger:             logger,
 	}
 }
 
@@ -53,11 +56,20 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read and validate request.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if errs := h.validator.Validate(reqBody); errs.Any() {
-		relay.ClientJSON(w, http.StatusBadRequest, ResBody{ValidationErrs: errs})
+
+	// Validate request, return errors if any occur.
+	if validationErrs := h.validator.Validate(reqBody); validationErrs.Any() {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{ValidationErrs: validationErrs},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.logger.Log(log.LevelError, err.Error())
+		}
 		return
 	}
 
@@ -70,23 +82,32 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err := h.dbUserSelector.Select(reqBody.Username)
 	defer h.dbCloser.Close()
 	if err == nil {
-		relay.ClientJSON(w, http.StatusBadRequest, ResBody{
-			ValidationErrs: ValidationErrs{Username: []string{errUsernameTaken}},
-		})
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{ValidationErrs: ValidationErrs{
+				Username: []string{errUsernameTaken},
+			}},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.logger.Log(log.LevelError, err.Error())
+		}
 		return
 	} else if err != sql.ErrNoRows {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// Hash password and create user.
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if err = h.dbUserInserter.Insert(
 		db.NewUser(reqBody.Username, pwdHash),
 	); err != nil {
-		relay.ServerErr(w, err.Error())
+		h.logger.Log(log.LevelError, err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -96,9 +117,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
-		relay.ClientErr(w, http.StatusUnauthorized, ResBody{
-			ValidationErrs: ValidationErrs{Auth: errAuth},
-		})
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{ValidationErrs: ValidationErrs{Auth: errAuth}},
+		); err != nil {
+			h.logger.Log(log.LevelError, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	} else {
 		http.SetCookie(w, &http.Cookie{
