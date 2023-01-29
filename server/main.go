@@ -24,6 +24,7 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(1)
 	}
 
 	// Create dependencies that are shared by multiple handlers.
@@ -32,6 +33,7 @@ func main() {
 	defer connCloser.Close()
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(1)
 	}
 
 	jwtKey := os.Getenv("JWTKEY")
