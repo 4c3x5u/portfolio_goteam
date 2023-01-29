@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	logger := log.NewBasicLogger()
+	logger := log.NewAppLogger()
 
 	// Load environment variables from .env file.
 	err := godotenv.Load()

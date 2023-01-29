@@ -80,7 +80,7 @@ func TestHandler(t *testing.T) {
 		wantValidationErrs   ValidationErrs
 	}{
 		{
-			name: "ValidatorError",
+			name: "ValidatorErr",
 			validatorOutErr: ValidationErrs{
 				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
 			},

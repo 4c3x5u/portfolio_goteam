@@ -20,15 +20,15 @@ const (
 // levels.
 type Logger interface{ Log(Level, string) }
 
-// BasicLogger can be used to logs messages of different log levels across
+// AppLogger can be used to logs messages of different log levels across
 // the project.
-type BasicLogger struct{}
+type AppLogger struct{}
 
-// NewBasicLogger creates and returns a new BasicLogger.
-func NewBasicLogger() BasicLogger { return BasicLogger{} }
+// NewAppLogger creates and returns a new BasicLogger.
+func NewAppLogger() AppLogger { return AppLogger{} }
 
 // Log formats a message based on LogLevel and logs the resulting string.
-func (l BasicLogger) Log(level Level, message string) {
+func (l AppLogger) Log(level Level, message string) {
 	switch level {
 	case LevelError:
 		log.Println("[ERROR]" + message)
