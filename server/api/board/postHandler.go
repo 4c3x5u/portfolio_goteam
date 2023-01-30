@@ -17,7 +17,7 @@ type POSTHandler struct {
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
-func NewPostHandler(
+func NewPOSTHandler(
 	userBoardCounter db.Counter,
 	boardInserter db.Inserter[db.Board],
 	logger log.Logger,
@@ -34,7 +34,7 @@ func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Read the request body.
-	reqBody := ReqBody{}
+	reqBody := POSTReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -45,7 +45,7 @@ func (h POSTHandler) Handle(
 	if reqBody.Name == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: errNameEmpty},
+			POSTResBody{Error: msgNameEmpty},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -55,7 +55,7 @@ func (h POSTHandler) Handle(
 	if len(reqBody.Name) >= maxNameLength {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: errNameTooLong},
+			POSTResBody{Error: msgNameTooLong},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -75,7 +75,7 @@ func (h POSTHandler) Handle(
 	} else if boardCount >= maxBoards {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: errMaxBoards},
+			POSTResBody{Error: msgMaxBoards},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -107,16 +107,16 @@ const (
 	// have.
 	maxNameLength = 35
 
-	// errMaxBoards is the error message returned from the handler when the user
+	// msgMaxBoards is the error message returned from the handler when the user
 	// already owns the maximum amount of boards allowed per user.
-	errMaxBoards = "You have already created the maximum amount of boards all" +
+	msgMaxBoards = "You have already created the maximum amount of boards all" +
 		"owed per user. Please delete one of your boards to create a new one."
 
-	// errNameEmpty is the error message returned from the handler when the
+	// msgNameEmpty is the error message returned from the handler when the
 	// received board name is empty.
-	errNameEmpty = "Board name cannot be empty."
+	msgNameEmpty = "Board name cannot be empty."
 
-	// errNameTooLong is the error message returned from the handler when the
+	// msgNameTooLong is the error message returned from the handler when the
 	// received board name is too long.
-	errNameTooLong = "Board name cannot be longer than 35 characters."
+	msgNameTooLong = "Board name cannot be longer than 35 characters."
 )

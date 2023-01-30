@@ -70,12 +70,12 @@ func main() {
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPostHandler(
+			http.MethodPost: boardAPI.NewPOSTHandler(
 				db.NewUserBoardCounter(conn),
 				db.NewBoardInserter(conn),
 				logger,
 			),
-			http.MethodDelete: boardAPI.NewDeleteHandler(
+			http.MethodDelete: boardAPI.NewDELETEHandler(
 				db.NewUserBoardSelector(conn),
 				db.NewBoardDeleter(conn),
 				logger,

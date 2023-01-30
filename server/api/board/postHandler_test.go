@@ -20,7 +20,7 @@ func TestPOSTHandler(t *testing.T) {
 	userBoardCounter := &db.FakeCounter{}
 	dbBoardInserter := &db.FakeBoardInserter{}
 	logger := &log.FakeLogger{}
-	sut := NewPostHandler(userBoardCounter, dbBoardInserter, logger)
+	sut := NewPOSTHandler(userBoardCounter, dbBoardInserter, logger)
 	sub := "bob123"
 
 	boardInserterErr := errors.New("create board error")
@@ -28,77 +28,77 @@ func TestPOSTHandler(t *testing.T) {
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                   string
-			reqBody                ReqBody
+			reqBody                POSTReqBody
 			userBoardCounterOutRes int
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
 			wantStatusCode         int
-			wantErr                string
+			wantErrMsg             string
 		}{
 			{
 				name:                   "BoardNameNil",
-				reqBody:                ReqBody{},
+				reqBody:                POSTReqBody{},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErr:                errNameEmpty,
+				wantErrMsg:             msgNameEmpty,
 			},
 			{
 				name:                   "BoardNameEmpty",
-				reqBody:                ReqBody{Name: ""},
+				reqBody:                POSTReqBody{Name: ""},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErr:                errNameEmpty,
+				wantErrMsg:             msgNameEmpty,
 			},
 			{
 				name: "BoardNameTooLong",
-				reqBody: ReqBody{
+				reqBody: POSTReqBody{
 					Name: "boardyboardsyboardkyboardishboardxyza",
 				},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErr:                errNameTooLong,
+				wantErrMsg:             msgNameTooLong,
 			},
 			{
 				name:                   "UserBoardCounterErr",
-				reqBody:                ReqBody{Name: "someboard"},
+				reqBody:                POSTReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusInternalServerError,
-				wantErr:                errMaxBoards,
+				wantErrMsg:             msgMaxBoards,
 			},
 			{
 				name:                   "MaxBoardsCreated",
-				reqBody:                ReqBody{Name: "someboard"},
+				reqBody:                POSTReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 3,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErr:                errMaxBoards,
+				wantErrMsg:             msgMaxBoards,
 			},
 			{
 				name:                   "BoardInserterErr",
-				reqBody:                ReqBody{Name: "someboard"},
+				reqBody:                POSTReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    boardInserterErr,
 				wantStatusCode:         http.StatusInternalServerError,
-				wantErr:                boardInserterErr.Error(),
+				wantErrMsg:             boardInserterErr.Error(),
 			},
 			{
 				name:                   "Success",
-				reqBody:                ReqBody{Name: "someboard"},
+				reqBody:                POSTReqBody{Name: "someboard"},
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusOK,
-				wantErr:                "",
+				wantErrMsg:             "",
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -130,7 +130,7 @@ func TestPOSTHandler(t *testing.T) {
 				// if 400 is expected - there must be a validation error in
 				// response body
 				if c.wantStatusCode == http.StatusBadRequest {
-					resBody := ResBody{}
+					resBody := POSTResBody{}
 					if err := json.NewDecoder(w.Result().Body).Decode(
 						&resBody,
 					); err != nil {
@@ -138,7 +138,7 @@ func TestPOSTHandler(t *testing.T) {
 					}
 
 					if err := assert.Equal(
-						c.wantErr, resBody.Error,
+						c.wantErrMsg, resBody.Error,
 					); err != nil {
 						t.Error(err)
 					}

@@ -1,12 +1,13 @@
 package login
 
-// RequestValidator describes a type that can be used to validate requests sent
+// ReqValidator describes a type that can be used to validate requests sent
 // to the login route.
-type RequestValidator interface{ Validate(ReqBody) bool }
+type ReqValidator interface{ Validate(ReqBody) bool }
 
-// Validator is the RequestValidator for the login route.
+// Validator is the ReqValidator for the login route.
 type Validator struct{}
 
+// NewValidator creates and returns a new Validator.
 func NewValidator() Validator { return Validator{} }
 
 // Validate validates the request body sent to the login route.

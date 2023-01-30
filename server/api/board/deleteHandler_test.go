@@ -22,7 +22,7 @@ func TestDELETEHandler(t *testing.T) {
 	// directly manipulated
 	sub := ""
 	url := "/board?id=123"
-	sut := NewDeleteHandler(userBoardSelector, userBoardDeleter, logger)
+	sut := NewDELETEHandler(userBoardSelector, userBoardDeleter, logger)
 
 	for _, c := range []struct {
 		name                        string

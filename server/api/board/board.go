@@ -2,12 +2,12 @@
 // board API route.
 package board
 
-// ReqBody defines the request body for Handler.
-type ReqBody struct {
+// POSTReqBody defines the request body for POST requests handled by Handler.
+type POSTReqBody struct {
 	Name string `json:"name"`
 }
 
-// ResBody defines the response body for Handler.
-type ResBody struct {
+// POSTResBody defines the response body for POST requests handled by Handler.
+type POSTResBody struct {
 	Error string `json:"error"`
 }

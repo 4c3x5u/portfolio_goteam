@@ -2,13 +2,11 @@ package register
 
 import "regexp"
 
-// RequestValidator describes a type that validates a request body and returns
+// ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
-type RequestValidator interface {
-	Validate(req ReqBody) (errs ValidationErrs)
-}
+type ReqValidator interface{ Validate(ReqBody) ValidationErrs }
 
-// Validator is the RequestValidator for the register route.
+// Validator is the ReqValidator for the register route.
 type Validator struct {
 	UsernameValidator StringValidator
 	PasswordValidator StringValidator
@@ -27,7 +25,7 @@ func NewValidator(
 // Validate uses UsernameValidator and PasswordValidator to validate requests
 // sent the register route. It returns an errors object if any of the individual
 // validations fail. It implements the Validator interface on the
-// RequestValidator struct.
+// ReqValidator struct.
 func (v Validator) Validate(req ReqBody) ValidationErrs {
 	return ValidationErrs{
 		Username: v.UsernameValidator.Validate(req.Username),

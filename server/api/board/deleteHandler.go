@@ -8,21 +8,21 @@ import (
 	"server/log"
 )
 
-// DeleteHandler is a MethodHandler that is intended to handle DELETE requests
+// DELETEHandler is a MethodHandler that is intended to handle DELETE requests
 // sent to the board route.
-type DeleteHandler struct {
+type DELETEHandler struct {
 	userBoardSelector db.RelSelector[bool]
 	boardDeleter      db.Deleter
 	logger            log.Logger
 }
 
-// NewDeleteHandler creates and returns a new DeleteHandler.
-func NewDeleteHandler(
+// NewDELETEHandler creates and returns a new DELETEHandler.
+func NewDELETEHandler(
 	userBoardSelector db.RelSelector[bool],
 	boardDeleter db.Deleter,
 	logger log.Logger,
-) DeleteHandler {
-	return DeleteHandler{
+) DELETEHandler {
+	return DELETEHandler{
 		userBoardSelector: userBoardSelector,
 		boardDeleter:      boardDeleter,
 		logger:            logger,
@@ -30,7 +30,7 @@ func NewDeleteHandler(
 }
 
 // Handle handles the DELETE requests sent to the board route.
-func (h DeleteHandler) Handle(
+func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.

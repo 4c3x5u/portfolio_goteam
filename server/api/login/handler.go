@@ -16,7 +16,7 @@ import (
 
 // Handler is the http.Handler for the login route.
 type Handler struct {
-	validator          RequestValidator
+	validator          ReqValidator
 	dbUserSelector     db.Selector[db.User]
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
@@ -26,7 +26,7 @@ type Handler struct {
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
-	validator RequestValidator,
+	validator ReqValidator,
 	userSelector db.Selector[db.User],
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
