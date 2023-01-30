@@ -16,6 +16,7 @@ import (
 
 // Handler is the http.Handler for the login route.
 type Handler struct {
+	validator          RequestValidator
 	dbUserSelector     db.Selector[db.User]
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
@@ -25,6 +26,7 @@ type Handler struct {
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
+	validator RequestValidator,
 	userSelector db.Selector[db.User],
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
@@ -32,6 +34,7 @@ func NewHandler(
 	logger log.Logger,
 ) Handler {
 	return Handler{
+		validator:          validator,
 		dbUserSelector:     userSelector,
 		passwordComparer:   hashComparer,
 		authTokenGenerator: authTokenGenerator,
@@ -56,7 +59,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if reqBody.Username == "" || reqBody.Password == "" {
+	if ok := h.validator.Validate(reqBody); !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

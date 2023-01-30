@@ -1,5 +1,17 @@
 package login
 
+// fakeValidator is a test fake for Validator.
+type fakeValidator struct {
+	inReqBody ReqBody
+	outOK     bool
+}
+
+// Validate implements the Validator interface on fakeValidator.
+func (f *fakeValidator) Validate(reqBody ReqBody) bool {
+	f.inReqBody = reqBody
+	return f.outOK
+}
+
 // fakeHashComparer is a test fake for Comparer.
 type fakeHashComparer struct {
 	inHash      []byte

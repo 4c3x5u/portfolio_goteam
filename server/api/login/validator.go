@@ -1,5 +1,9 @@
 package login
 
+// RequestValidator describes a type that can be used to validate requests sent
+// to the login route.
+type RequestValidator interface{ Validate(ReqBody) bool }
+
 // Validator is the RequestValidator for the login route.
 type Validator struct{}
 

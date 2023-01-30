@@ -22,6 +22,7 @@ import (
 // correctly.
 func TestHandler(t *testing.T) {
 	var (
+		validator          = &fakeValidator{}
 		dbUserSelector     = &db.FakeUserSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
@@ -29,7 +30,8 @@ func TestHandler(t *testing.T) {
 		logger             = &log.FakeLogger{}
 	)
 	sut := NewHandler(
-		dbUserSelector, passwordComparer, authTokenGenerator, dbCloser, logger,
+		validator, dbUserSelector, passwordComparer, authTokenGenerator,
+		dbCloser, logger,
 	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
@@ -64,141 +66,107 @@ func TestHandler(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name                 string
-		reqBody              ReqBody
-		userSelectorOutRes   db.User
-		userSelectorOutErr   error
-		hashComparerOutErr   error
-		tokenGeneratorOutRes string
-		tokenGeneratorOutErr error
-		wantStatusCode       int
-		wantErr              string
+		name                   string
+		validatorOutOK         bool
+		userSelectorOutUser    db.User
+		userSelectorOutErr     error
+		hashComparerOutErr     error
+		tokenGeneratorOutToken string
+		tokenGeneratorOutErr   error
+		wantStatusCode         int
+		wantErr                string
 	}{
 		{
-			name:                 "NoUsername",
-			reqBody:              ReqBody{},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                   "InvalidRequest",
+			validatorOutOK:         false,
+			userSelectorOutUser:    db.User{},
+			userSelectorOutErr:     nil,
+			hashComparerOutErr:     nil,
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusBadRequest,
 		},
 		{
-			name:                 "UsernameEmpty",
-			reqBody:              ReqBody{Username: ""},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                   "UserNotFound",
+			validatorOutOK:         true,
+			userSelectorOutUser:    db.User{},
+			userSelectorOutErr:     sql.ErrNoRows,
+			hashComparerOutErr:     nil,
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusBadRequest,
 		},
 		{
-			name:                 "UserNotFound",
-			reqBody:              ReqBody{Username: "bob123"},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   sql.ErrNoRows,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:                   "UserSelectorError",
+			validatorOutOK:         true,
+			userSelectorOutUser:    db.User{},
+			userSelectorOutErr:     errors.New("user selector error"),
+			hashComparerOutErr:     nil,
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusInternalServerError,
 		},
 		{
-			name:                 "UserSelectorError",
-			reqBody:              ReqBody{Username: "bob123", Password: "Myp4ssword!"},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   errors.New("user selector error"),
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
-		},
-		{
-			name:                 "NoPassword",
-			reqBody:              ReqBody{Username: "bob123"},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
-		},
-		{
-			name:                 "PasswordEmpty",
-			reqBody:              ReqBody{Username: "bob123", Password: ""},
-			userSelectorOutRes:   db.User{},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
-		},
-		{
-			name: "WrongPassword",
-			reqBody: ReqBody{
-				Username: "bob123", Password: "Myp4ssword!",
-			},
-			userSelectorOutRes: db.User{
+			name:           "WrongPassword",
+			validatorOutOK: true,
+			userSelectorOutUser: db.User{
 				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   bcrypt.ErrMismatchedHashAndPassword,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			userSelectorOutErr:     nil,
+			hashComparerOutErr:     bcrypt.ErrMismatchedHashAndPassword,
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusBadRequest,
 		},
 		{
-			name: "HashComparerError",
-			reqBody: ReqBody{
-				Username: "bob123", Password: "Myp4ssword!",
-			},
-			userSelectorOutRes: db.User{
+			name:           "HashComparerError",
+			validatorOutOK: true,
+			userSelectorOutUser: db.User{
 				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   errors.New("hash comparer error"),
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
+			userSelectorOutErr:     nil,
+			hashComparerOutErr:     errors.New("hash comparer error"),
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusInternalServerError,
 		},
 		{
-			name: "TokenGeneratorError",
-			reqBody: ReqBody{
-				Username: "bob123", Password: "Myp4ssword!",
-			},
-			userSelectorOutRes: db.User{
+			name:           "TokenGeneratorError",
+			validatorOutOK: true,
+			userSelectorOutUser: db.User{
 				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: errors.New("token generator error"),
-			wantStatusCode:       http.StatusInternalServerError,
+			userSelectorOutErr:     nil,
+			hashComparerOutErr:     nil,
+			tokenGeneratorOutToken: "",
+			tokenGeneratorOutErr:   errors.New("token generator error"),
+			wantStatusCode:         http.StatusInternalServerError,
 		},
 		{
-			name: "Success",
-			reqBody: ReqBody{
-				Username: "bob123", Password: "Myp4ssword!",
-			},
-			userSelectorOutRes: db.User{
+			name:           "Success",
+			validatorOutOK: true,
+			userSelectorOutUser: db.User{
 				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:   nil,
-			hashComparerOutErr:   nil,
-			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusOK,
+			userSelectorOutErr:     nil,
+			hashComparerOutErr:     nil,
+			tokenGeneratorOutToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorOutErr:   nil,
+			wantStatusCode:         http.StatusOK,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dbUserSelector.OutRes = c.userSelectorOutRes
+			validator.outOK = c.validatorOutOK
+			dbUserSelector.OutRes = c.userSelectorOutUser
 			dbUserSelector.OutErr = c.userSelectorOutErr
 			passwordComparer.outErr = c.hashComparerOutErr
-			authTokenGenerator.OutRes = c.tokenGeneratorOutRes
+			authTokenGenerator.OutRes = c.tokenGeneratorOutToken
 			authTokenGenerator.OutErr = c.tokenGeneratorOutErr
 
-			reqBodyJSON, err := json.Marshal(c.reqBody)
+			reqBody := ReqBody{
+				Username: "bob123", Password: "Myp4ssword!",
+			}
+			reqBodyJSON, err := json.Marshal(reqBody)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -227,7 +195,7 @@ func TestHandler(t *testing.T) {
 						authTokenFound = true
 
 						if err = assert.Equal(
-							c.tokenGeneratorOutRes, ck.Value,
+							c.tokenGeneratorOutToken, ck.Value,
 						); err != nil {
 							t.Error(err)
 						}
@@ -254,12 +222,16 @@ func TestHandler(t *testing.T) {
 				} {
 					if err != nil {
 						errFound = true
+
 						if err := assert.Equal(
 							log.LevelError, logger.InLevel,
 						); err != nil {
 							t.Error(err)
 						}
-						if err := assert.Equal(err.Error(), logger.InMessage); err != nil {
+
+						if err := assert.Equal(
+							err.Error(), logger.InMessage,
+						); err != nil {
 							t.Error(err)
 						}
 					}
@@ -275,15 +247,14 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If username and password weren't empty, user selector and db closer
+			// If request and HTTP method was valid, user selector and db closer
 			// must be called.
-			if c.reqBody.Username == "" ||
-				c.reqBody.Password == "" ||
+			if !c.validatorOutOK ||
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
 			}
 			if err = assert.Equal(
-				c.reqBody.Username, dbUserSelector.InUserID,
+				reqBody.Username, dbUserSelector.InUserID,
 			); err != nil {
 				t.Error(err)
 			}
@@ -291,31 +262,33 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no user selector error is expected, hash comparer must be called.
+			// If no user selector error is expected, hash comparer must be
+			// called.
 			if dbUserSelector.OutErr != nil {
 				return
 			}
 			if err = assert.Equal(
-				string(c.userSelectorOutRes.Password), string(passwordComparer.inHash),
+				string(c.userSelectorOutUser.Password),
+				string(passwordComparer.inHash),
 			); err != nil {
 				t.Error(err)
 			}
 			if err = assert.Equal(
-				c.reqBody.Password, passwordComparer.inPlaintext,
+				reqBody.Password, passwordComparer.inPlaintext,
 			); err != nil {
 				t.Error(err)
 			}
 
-			// If no hash comparer error is expected, token generator must be called.
+			// If no hash comparer error is expected, token generator must be
+			// called.
 			if passwordComparer.outErr != nil {
 				return
 			}
 			if err = assert.Equal(
-				c.reqBody.Username, authTokenGenerator.InSub,
+				reqBody.Username, authTokenGenerator.InSub,
 			); err != nil {
 				t.Error(err)
 			}
-
 		})
 	}
 }
