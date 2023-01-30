@@ -14,29 +14,36 @@ func TestDELETEValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name    string
-		boardID url.Values
+		qParams url.Values
+		wantID  string
 		wantErr error
 	}{
 		{
 			name:    "NoBoardID",
-			boardID: url.Values{},
+			qParams: url.Values{},
+			wantID:  "",
 			wantErr: errEmptyBoardID,
 		},
 		{
 			name:    "EmptyBoardID",
-			boardID: url.Values{"id": []string{""}},
+			qParams: url.Values{"id": []string{""}},
+			wantID:  "",
 			wantErr: errEmptyBoardID,
 		},
 		{
 			name:    "Valid",
-			boardID: url.Values{"id": []string{"12"}},
+			qParams: url.Values{"id": []string{"12"}},
+			wantID:  "12",
 			wantErr: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			err := sut.Validate(c.boardID)
+			id, err := sut.Validate(c.qParams)
 
 			if err = assert.Equal(c.wantErr, err); err != nil {
+				t.Error(err)
+			}
+			if err = assert.Equal(c.wantID, id); err != nil {
 				t.Error(err)
 			}
 		})

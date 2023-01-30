@@ -11,3 +11,8 @@ type POSTReqBody struct {
 type POSTResBody struct {
 	Error string `json:"error"`
 }
+
+// DELETERes defines the response body for DELETE requests handled by Handler.
+type DELETEResBody struct {
+	Error string `json:"error"`
+}

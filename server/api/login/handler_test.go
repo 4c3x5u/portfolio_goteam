@@ -238,8 +238,7 @@ func TestHandler(t *testing.T) {
 				}
 				if !errFound {
 					t.Errorf(
-						"c.wantStatusCode was %d but no errors were logged.",
-						http.StatusInternalServerError,
+						"c.wantStatusCode was 500 but no errors were logged.",
 					)
 				}
 				return

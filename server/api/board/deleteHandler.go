@@ -2,6 +2,7 @@ package board
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 
 	"server/db"
@@ -11,6 +12,7 @@ import (
 // DELETEHandler is a MethodHandler that is intended to handle DELETE requests
 // sent to the board route.
 type DELETEHandler struct {
+	validator         DELETEReqValidator
 	userBoardSelector db.RelSelector[bool]
 	boardDeleter      db.Deleter
 	logger            log.Logger
@@ -18,11 +20,13 @@ type DELETEHandler struct {
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
+	validator DELETEReqValidator,
 	userBoardSelector db.RelSelector[bool],
 	boardDeleter db.Deleter,
 	logger log.Logger,
 ) DELETEHandler {
 	return DELETEHandler{
+		validator:         validator,
 		userBoardSelector: userBoardSelector,
 		boardDeleter:      boardDeleter,
 		logger:            logger,
@@ -34,7 +38,17 @@ func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.
-	boardID := r.URL.Query().Get("id")
+	boardID, err := h.validator.Validate(r.URL.Query())
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			DELETEResBody{Error: err.Error()},
+		); err != nil {
+			h.logger.Log(log.LevelError, err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
 
 	// Validate that the user making the request is the admin of the board to be
 	// deleted.

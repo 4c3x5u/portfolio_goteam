@@ -5,6 +5,12 @@ import (
 	"net/url"
 )
 
+// POSTValidator describes a type that can be used to validate the URL query
+// parameters sent to the board route on DELETE requests.
+type DELETEReqValidator interface {
+	Validate(url.Values) (string, error)
+}
+
 // POSTValidator can be used to validate the URL query parameters sent to the
 // board route on DELETE requests.
 type DELETEValidator struct{}
@@ -14,11 +20,12 @@ func NewDELETEValidator() DELETEValidator { return DELETEValidator{} }
 
 // Validate validates the URL query parameters sent to the board route on DELETE
 // requests.
-func (v DELETEValidator) Validate(qParams url.Values) error {
-	if qParams.Get("id") == "" {
-		return errEmptyBoardID
+func (v DELETEValidator) Validate(qParams url.Values) (string, error) {
+	id := qParams.Get("id")
+	if id == "" {
+		return "", errEmptyBoardID
 	}
-	return nil
+	return id, nil
 }
 
 // ErrEmptyBoardID is the error that the Validate method of DELETEValidator

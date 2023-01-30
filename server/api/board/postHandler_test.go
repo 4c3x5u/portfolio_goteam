@@ -113,17 +113,24 @@ func TestPOSTHandler(t *testing.T) {
 				// if 400 is expected - there must be a validation error in
 				// response body
 				if c.wantStatusCode == http.StatusBadRequest {
-					resBody := POSTResBody{}
-					if err := json.NewDecoder(w.Result().Body).Decode(
-						&resBody,
-					); err != nil {
-						t.Error(err)
-					}
+					if c.wantErrMsg == "" {
+						t.Error(
+							"status was 400 but no error messages were " +
+								"expected",
+						)
+					} else {
+						resBody := POSTResBody{}
+						if err := json.NewDecoder(w.Result().Body).Decode(
+							&resBody,
+						); err != nil {
+							t.Error(err)
+						}
 
-					if err := assert.Equal(
-						c.wantErrMsg, resBody.Error,
-					); err != nil {
-						t.Error(err)
+						if err := assert.Equal(
+							c.wantErrMsg, resBody.Error,
+						); err != nil {
+							t.Error(err)
+						}
 					}
 				}
 

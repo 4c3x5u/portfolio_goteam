@@ -77,6 +77,7 @@ func main() {
 				logger,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
+				boardAPI.NewDELETEValidator(),
 				db.NewUserBoardSelector(conn),
 				db.NewBoardDeleter(conn),
 				logger,
