@@ -17,10 +17,11 @@ import (
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
+	validator := &fakePOSTReqValidator{}
 	userBoardCounter := &db.FakeCounter{}
 	dbBoardInserter := &db.FakeBoardInserter{}
 	logger := &log.FakeLogger{}
-	sut := NewPOSTHandler(userBoardCounter, dbBoardInserter, logger)
+	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, logger)
 	sub := "bob123"
 
 	boardInserterErr := errors.New("create board error")
@@ -28,7 +29,7 @@ func TestPOSTHandler(t *testing.T) {
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                   string
-			reqBody                POSTReqBody
+			validatorOutErr        error
 			userBoardCounterOutRes int
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
@@ -36,37 +37,17 @@ func TestPOSTHandler(t *testing.T) {
 			wantErrMsg             string
 		}{
 			{
-				name:                   "BoardNameNil",
-				reqBody:                POSTReqBody{},
+				name:                   "InvalidRequest",
+				validatorOutErr:        errNameEmpty,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             msgNameEmpty,
-			},
-			{
-				name:                   "BoardNameEmpty",
-				reqBody:                POSTReqBody{Name: ""},
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: nil,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             msgNameEmpty,
-			},
-			{
-				name: "BoardNameTooLong",
-				reqBody: POSTReqBody{
-					Name: "boardyboardsyboardkyboardishboardxyza",
-				},
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: nil,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             msgNameTooLong,
+				wantErrMsg:             errNameEmpty.Error(),
 			},
 			{
 				name:                   "UserBoardCounterErr",
-				reqBody:                POSTReqBody{Name: "someboard"},
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
@@ -75,7 +56,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "MaxBoardsCreated",
-				reqBody:                POSTReqBody{Name: "someboard"},
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 3,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
@@ -84,7 +65,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "BoardInserterErr",
-				reqBody:                POSTReqBody{Name: "someboard"},
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    boardInserterErr,
@@ -93,7 +74,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "Success",
-				reqBody:                POSTReqBody{Name: "someboard"},
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
@@ -102,11 +83,13 @@ func TestPOSTHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
+				validator.OutErr = c.validatorOutErr
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
 				userBoardCounter.OutErr = c.userBoardCounterOutErr
 				dbBoardInserter.OutErr = c.boardInserterOutErr
 
-				reqBodyJSON, err := json.Marshal(c.reqBody)
+				reqBody := POSTReqBody{Name: "My Board"}
+				reqBodyJSON, err := json.Marshal(reqBody)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -153,20 +136,25 @@ func TestPOSTHandler(t *testing.T) {
 					} {
 						if err != nil && err != sql.ErrNoRows {
 							errFound = true
+
 							if err := assert.Equal(
 								log.LevelError, logger.InLevel,
 							); err != nil {
 								t.Error(err)
 							}
-							if err := assert.Equal(err.Error(), logger.InMessage); err != nil {
+
+							if err := assert.Equal(
+								err.Error(),
+								logger.InMessage,
+							); err != nil {
 								t.Error(err)
 							}
 						}
 					}
 					if !errFound {
-						t.Errorf(
-							"c.wantStatusCode was %d but no errors were logged.",
-							http.StatusInternalServerError,
+						t.Error(
+							"c.wantStatusCode was 500 but no errors were " +
+								"logged.",
 						)
 					}
 					return
@@ -174,12 +162,11 @@ func TestPOSTHandler(t *testing.T) {
 
 				// if max boards is not reached, board creator must be called
 				if c.userBoardCounterOutRes >= maxBoards ||
-					c.reqBody.Name == "" ||
-					len(c.reqBody.Name) > maxNameLength {
+					c.validatorOutErr != nil {
 					return
 				}
 				if err := assert.Equal(
-					db.NewBoard(c.reqBody.Name, sub),
+					db.NewBoard(reqBody.Name, sub),
 					dbBoardInserter.InBoard,
 				); err != nil {
 					t.Error(err)

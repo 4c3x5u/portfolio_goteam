@@ -22,7 +22,7 @@ import (
 // correctly.
 func TestHandler(t *testing.T) {
 	var (
-		validator          = &fakeValidator{}
+		validator          = &fakeReqValidator{}
 		dbUserSelector     = &db.FakeUserSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}

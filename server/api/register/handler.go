@@ -53,7 +53,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read and validate request.
+	// Read and validate request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.logger.Log(log.LevelError, err.Error())

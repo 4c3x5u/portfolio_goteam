@@ -32,7 +32,7 @@ func TestValidator(t *testing.T) {
 			wantOK:  false,
 		},
 		{
-			name:    "NoEmpty",
+			name:    "IsValid",
 			reqBody: ReqBody{Username: "bob123", Password: "asdqwe123"},
 			wantOK:  true,
 		},

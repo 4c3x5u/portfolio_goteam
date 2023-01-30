@@ -2,6 +2,10 @@ package board
 
 import "errors"
 
+// POSTReqValidator describes a type that can be used to validate POST requests
+// sent to the board route.
+type POSTReqValidator interface{ Validate(POSTReqBody) error }
+
 // POSTValidator is the ReqValidator for POSTHandler.
 type POSTValidator struct{}
 
@@ -19,14 +23,12 @@ func (v POSTValidator) Validate(reqBody POSTReqBody) error {
 	return nil
 }
 
-var (
-	// errNameEmpty is the error returned from the POSTValidator when the
-	// received board name is empty.
-	errNameEmpty = errors.New("Board name cannot be empty.")
+// errNameEmpty is the error returned from the POSTValidator when the
+// received board name is empty.
+var errNameEmpty = errors.New("Board name cannot be empty.")
 
-	// errNameTooLong is the error returned from the POSTValidator when the
-	// received board name is too long.
-	errNameTooLong = errors.New(
-		"Board name cannot be longer than 35 characters.",
-	)
+// errNameTooLong is the error returned from the POSTValidator when the
+// received board name is too long.
+var errNameTooLong = errors.New(
+	"Board name cannot be longer than 35 characters.",
 )

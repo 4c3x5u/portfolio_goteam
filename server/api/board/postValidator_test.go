@@ -26,8 +26,8 @@ func TestPOSTValidator(t *testing.T) {
 			wantErr: errNameTooLong,
 		},
 		{
-			name:    "NameValid",
-			reqBody: POSTReqBody{Name: "myboard"},
+			name:    "IsValid",
+			reqBody: POSTReqBody{Name: "My Board"},
 			wantErr: nil,
 		},
 	} {

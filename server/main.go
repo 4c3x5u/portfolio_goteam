@@ -71,6 +71,7 @@ func main() {
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
+				boardAPI.NewPOSTValidator(),
 				db.NewUserBoardCounter(conn),
 				db.NewBoardInserter(conn),
 				logger,

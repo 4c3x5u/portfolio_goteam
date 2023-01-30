@@ -11,6 +11,7 @@ import (
 
 // POSTHandler can be used to handle the POST requests sent to the board route.
 type POSTHandler struct {
+	validator        POSTReqValidator
 	userBoardCounter db.Counter
 	boardInserter    db.Inserter[db.Board]
 	logger           log.Logger
@@ -18,11 +19,13 @@ type POSTHandler struct {
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
+	validator POSTReqValidator,
 	userBoardCounter db.Counter,
 	boardInserter db.Inserter[db.Board],
 	logger log.Logger,
 ) POSTHandler {
 	return POSTHandler{
+		validator:        validator,
 		userBoardCounter: userBoardCounter,
 		boardInserter:    boardInserter,
 		logger:           logger,
@@ -33,33 +36,20 @@ func NewPOSTHandler(
 func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Read the request body.
+	// Read and validate request body.
 	reqBody := POSTReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// Validate board name.
-	if reqBody.Name == "" {
+	if err := h.validator.Validate(reqBody); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			POSTResBody{Error: msgNameEmpty},
+			POSTResBody{Error: err.Error()},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
-	if len(reqBody.Name) >= maxNameLength {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			POSTResBody{Error: msgNameTooLong},
-		); err != nil {
-			h.logger.Log(log.LevelError, err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 		return
 	}
@@ -79,7 +69,6 @@ func (h POSTHandler) Handle(
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
 		return
 	}

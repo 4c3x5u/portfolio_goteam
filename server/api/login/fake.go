@@ -1,13 +1,13 @@
 package login
 
-// fakeValidator is a test fake for Validator.
-type fakeValidator struct {
+// fakeReqValidator is a test fake for ReqValidator.
+type fakeReqValidator struct {
 	inReqBody ReqBody
 	outOK     bool
 }
 
-// Validate implements the Validator interface on fakeValidator.
-func (f *fakeValidator) Validate(reqBody ReqBody) bool {
+// Validate implements the ReqValidator interface on fakeReqValidator.
+func (f *fakeReqValidator) Validate(reqBody ReqBody) bool {
 	f.inReqBody = reqBody
 	return f.outOK
 }
