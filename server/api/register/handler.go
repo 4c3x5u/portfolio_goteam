@@ -14,7 +14,7 @@ import (
 
 // Handler is the http.Handler for the register route.
 type Handler struct {
-	validator          Validator
+	validator          RequestValidator
 	dbUserSelector     db.Selector[db.User]
 	hasher             Hasher
 	dbUserInserter     db.Inserter[db.User]
@@ -25,7 +25,7 @@ type Handler struct {
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	validator Validator,
+	validator RequestValidator,
 	dbUserSelector db.Selector[db.User],
 	hasher Hasher,
 	dbUserInserter db.Inserter[db.User],

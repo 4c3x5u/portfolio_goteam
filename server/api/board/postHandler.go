@@ -9,8 +9,7 @@ import (
 	"server/log"
 )
 
-// POSTHandler can be used to handle the POST requests sent to the board
-// endpoint.
+// POSTHandler can be used to handle the POST requests sent to the board route.
 type POSTHandler struct {
 	userBoardCounter db.Counter
 	boardInserter    db.Inserter[db.Board]
@@ -30,7 +29,7 @@ func NewPostHandler(
 	}
 }
 
-// Handle handles the POST requests sent to the board endpoint.
+// Handle handles the POST requests sent to the board route.
 func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {

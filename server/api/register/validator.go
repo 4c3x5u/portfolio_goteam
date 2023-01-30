@@ -2,44 +2,23 @@ package register
 
 import "regexp"
 
-const (
-	usnEmpty       = "Username cannot be empty."
-	usnTooShort    = "Username cannot be shorter than 5 characters."
-	usnTooLong     = "Username cannot be longer than 15 characters."
-	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
-	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
-
-	pwdEmpty     = "Password cannot be empty."
-	pwdTooShort  = "Password cannot be shorter than 8 characters."
-	pwdTooLong   = "Password cannot be longer than 64 characters."
-	pwdNoLower   = "Password must contain a lowercase letter (a-z)."
-	pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
-	pwdNoDigit   = "Password must contain a digit (0-9)."
-	pwdNoSpecial = "Password must contain one of the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-	pwdHasSpace = "Password cannot contain spaces."
-	pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
-		"and the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-)
-
-// Validator describes a type that validates a request body and returns
+// RequestValidator describes a type that validates a request body and returns
 // validation errors that occur.
-type Validator interface {
+type RequestValidator interface {
 	Validate(req ReqBody) (errs ValidationErrs)
 }
 
-// RequestValidator is the request validator for the register route.
-type RequestValidator struct {
+// Validator is the RequestValidator for the register route.
+type Validator struct {
 	UsernameValidator StringValidator
 	PasswordValidator StringValidator
 }
 
-// NewRequestValidator is the constructor for RequestValidator.
-func NewRequestValidator(
+// NewValidator is the constructor for Validator.
+func NewValidator(
 	usernameValidator, passwordValidator StringValidator,
-) RequestValidator {
-	return RequestValidator{
+) Validator {
+	return Validator{
 		UsernameValidator: usernameValidator,
 		PasswordValidator: passwordValidator,
 	}
@@ -49,7 +28,7 @@ func NewRequestValidator(
 // sent the register route. It returns an errors object if any of the individual
 // validations fail. It implements the Validator interface on the
 // RequestValidator struct.
-func (v RequestValidator) Validate(req ReqBody) ValidationErrs {
+func (v Validator) Validate(req ReqBody) ValidationErrs {
 	return ValidationErrs{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
@@ -135,3 +114,24 @@ func (v PasswordValidator) Validate(password string) (errs []string) {
 
 	return
 }
+
+const (
+	usnEmpty       = "Username cannot be empty."
+	usnTooShort    = "Username cannot be shorter than 5 characters."
+	usnTooLong     = "Username cannot be longer than 15 characters."
+	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
+	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
+
+	pwdEmpty     = "Password cannot be empty."
+	pwdTooShort  = "Password cannot be shorter than 8 characters."
+	pwdTooLong   = "Password cannot be longer than 64 characters."
+	pwdNoLower   = "Password must contain a lowercase letter (a-z)."
+	pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
+	pwdNoDigit   = "Password must contain a digit (0-9)."
+	pwdNoSpecial = "Password must contain one of the following special characters: " +
+		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+	pwdHasSpace = "Password cannot contain spaces."
+	pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
+		"and the following special characters: " +
+		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
+)

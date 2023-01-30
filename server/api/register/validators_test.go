@@ -6,14 +6,14 @@ import (
 	"server/assert"
 )
 
-// TestRequestValidator tests the RequestValidator's Validate method to ensure
-// that it returns correctly whatever error is returned to it by
-// UsernameValidator and PasswordValidator.
-func TestRequestValidator(t *testing.T) {
+// TestValidator tests the Validator's Validate method to ensure that it returns
+// correctly whatever error is returned to it by UsernameValidator and
+// PasswordValidator.
+func TestValidator(t *testing.T) {
 	fakeValidatorUsername := &fakeStringValidator{}
 	fakeValidatorPassword := &fakeStringValidator{}
 
-	sut := NewRequestValidator(fakeValidatorUsername, fakeValidatorPassword)
+	sut := NewValidator(fakeValidatorUsername, fakeValidatorPassword)
 
 	for _, c := range []struct {
 		name         string

@@ -41,11 +41,11 @@ func main() {
 
 	userSelector := db.NewUserSelector(conn)
 
-	// Register handlers for API endpoints.
+	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
 	mux.Handle("/register", registerAPI.NewHandler(
-		registerAPI.NewRequestValidator(
+		registerAPI.NewValidator(
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),

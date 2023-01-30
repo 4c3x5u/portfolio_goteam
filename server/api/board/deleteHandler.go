@@ -9,7 +9,7 @@ import (
 )
 
 // DeleteHandler is a MethodHandler that is intended to handle DELETE requests
-// sent to the board endpoint.
+// sent to the board route.
 type DeleteHandler struct {
 	userBoardSelector db.RelSelector[bool]
 	boardDeleter      db.Deleter
@@ -29,7 +29,7 @@ func NewDeleteHandler(
 	}
 }
 
-// Handle handles the DELETE requests sent to the board endpoint.
+// Handle handles the DELETE requests sent to the board route.
 func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
