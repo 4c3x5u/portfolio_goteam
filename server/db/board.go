@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 )
 
 // Board represents a record in the board table.
@@ -36,26 +37,24 @@ func (i BoardInserter) Insert(board Board) error {
 	if _, err = tx.ExecContext(
 		ctx, "INSERT INTO app.board(name) VALUES ($1)", board.name,
 	); err != nil {
-		// TODO: return both errors?
-		if errRollback := tx.Rollback(); errRollback != nil {
-			return errRollback
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return wrapRollbackErr(err, rollbackErr)
 		}
 		return err
 	}
 
-	// Insert a column into the user_board table withe the given user and board
-	// ID, and an isAdmin field of true.
-	// i.e. Make the user admin of the board.
+	// Insert a column into the user_board table with the given user and board
+	// ID, and an isAdmin field of true (i.e. make the user admin of the board).
 	if _, err = tx.ExecContext(
 		ctx,
-		"INSERT INTO app.user_board(userID, boardID, isAdmin) VALUES($1, $2, $3)",
+		"INSERT INTO app.user_board(userID, boardID, isAdmin) "+
+			"VALUES($1, $2, $3)",
 		board.adminID,
 		board.name,
 		true,
 	); err != nil {
-		// TODO: return both errors?
-		if errRollback := tx.Rollback(); errRollback != nil {
-			return errRollback
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return wrapRollbackErr(err, rollbackErr)
 		}
 		return err
 	}
@@ -88,9 +87,8 @@ func (d BoardDeleter) Delete(id string) error {
 	if _, err = tx.ExecContext(
 		ctx, "DELETE FROM app.user_board WHERE boardID = $1", id,
 	); err != nil {
-		// TODO: return both errors?
-		if errRollback := tx.Rollback(); errRollback != nil {
-			return errRollback
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return wrapRollbackErr(err, rollbackErr)
 		}
 		return err
 	}
@@ -100,12 +98,21 @@ func (d BoardDeleter) Delete(id string) error {
 	if _, err = tx.ExecContext(
 		ctx, "DELETE FROM app.user WHERE boardID = $1", id,
 	); err != nil {
-		// TODO: return both errors?
-		if errRollback := tx.Rollback(); errRollback != nil {
-			return errRollback
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return wrapRollbackErr(err, rollbackErr)
 		}
 		return err
 	}
 
 	return nil
+}
+
+// wrapRollbackErr is a helper function to standardise the message for cases
+// where a rollback error occurs alongside the error that causes the rollback.
+func wrapRollbackErr(err, rollbackErr error) error {
+	return errors.New(
+		"multiple errors occured:" +
+			"\n  (0) err: " + err.Error() +
+			"\n  (1) rollbackErr: " + rollbackErr.Error(),
+	)
 }

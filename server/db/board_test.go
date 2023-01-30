@@ -175,3 +175,20 @@ func TestBoardDeleter(t *testing.T) {
 		})
 	}
 }
+
+// TestWrapRollbackErr tests the wrapRollbackErr helper function to assert
+// that it constructs a sensible error string when called with two different
+// errors.
+func TestWrapRollbackErr(t *testing.T) {
+	err := errors.New("something went wrong")
+	rollbackErr := errors.New("rollback error")
+	wantErrStr := "multiple errors occured:" +
+		"\n  (0) err: " + err.Error() +
+		"\n  (1) rollbackErr: " + rollbackErr.Error()
+
+	got := wrapRollbackErr(err, rollbackErr)
+
+	if err := assert.Equal(wantErrStr, got.Error()); err != nil {
+		t.Error(err)
+	}
+}
