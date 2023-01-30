@@ -100,12 +100,4 @@ const (
 	// already owns the maximum amount of boards allowed per user.
 	msgMaxBoards = "You have already created the maximum amount of boards all" +
 		"owed per user. Please delete one of your boards to create a new one."
-
-	// msgNameEmpty is the error message returned from the handler when the
-	// received board name is empty.
-	msgNameEmpty = "Board name cannot be empty."
-
-	// msgNameTooLong is the error message returned from the handler when the
-	// received board name is too long.
-	msgNameTooLong = "Board name cannot be longer than 35 characters."
 )

@@ -33,7 +33,7 @@ func (v Validator) Validate(req ReqBody) ValidationErrs {
 	}
 }
 
-// StringValidator describes a type that validates a string input and returns a
+// StringValidator describes a type that validates a string arg and returns a
 // string slice containing validation error messages.
 type StringValidator interface {
 	Validate(string) (errs []string)

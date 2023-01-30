@@ -6,15 +6,21 @@ import (
 	"server/assert"
 )
 
-// TestPOSTValidato tests the Validate method of Validator to assert that it
+// TestPOSTValidato tests the Validate method of POSTValidator to assert that it
 // returns the correct boolean value based on the fields of the ReqBody.
 func TestPOSTValidator(t *testing.T) {
 	sut := NewPOSTValidator()
+
 	for _, c := range []struct {
 		name    string
 		reqBody POSTReqBody
 		wantErr error
 	}{
+		{
+			name:    "NoName",
+			reqBody: POSTReqBody{},
+			wantErr: errNameEmpty,
+		},
 		{
 			name:    "NameEmpty",
 			reqBody: POSTReqBody{Name: ""},
