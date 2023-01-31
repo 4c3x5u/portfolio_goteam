@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	// Create a logger for the app.
 	logger := log.NewAppLogger()
 
 	// Load environment variables from .env file.
@@ -29,7 +30,7 @@ func main() {
 
 	// Create dependencies that are shared by multiple handlers.
 	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
-	connCloser := db.NewConnCloser(conn)
+	connCloser := db.NewConnCloser(conn, logger)
 	defer connCloser.Close()
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
