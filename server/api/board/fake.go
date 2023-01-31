@@ -20,14 +20,14 @@ func (f *fakePOSTReqValidator) Validate(reqBody POSTReqBody) error {
 type fakeDELETEReqValidator struct {
 	InQParams url.Values
 	OutID     string
-	OutErr    error
+	OutOK     bool
 }
 
 // Validate implements the DELETEReqValidator interface on
 // fakeDELETEReqValidator. It assigns the parameters passed into it to
 // their corresponding In... fields on the fake instance and returns its Out..
 // fields as per function signature.
-func (f *fakeDELETEReqValidator) Validate(qParams url.Values) (string, error) {
+func (f *fakeDELETEReqValidator) Validate(qParams url.Values) (string, bool) {
 	f.InQParams = qParams
-	return f.OutID, f.OutErr
+	return f.OutID, f.OutOK
 }

@@ -2,7 +2,6 @@ package board
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -24,70 +23,63 @@ func TestDELETEHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name                        string
-		validatorOutErr             error
+		validatorOutOK              bool
 		userBoardSelectorOutIsAdmin bool
 		userBoardSelectorOutErr     error
 		boardDeleterOutErr          error
 		wantStatusCode              int
-		wantErrMsg                  string
 	}{
 		{
 			name:                        "ValidatorErr",
-			validatorOutErr:             errEmptyBoardID,
+			validatorOutOK:              false,
 			userBoardSelectorOutIsAdmin: true,
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
-			wantErrMsg:                  errEmptyBoardID.Error(),
 		},
 		{
 			name:                        "NoRows",
-			validatorOutErr:             nil,
+			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusNotFound,
-			wantErrMsg:                  "",
 		},
 		{
 			name:                        "ConnDone",
-			validatorOutErr:             nil,
+			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			wantErrMsg:                  "",
 		},
 		{
 			name:                        "NotAdmin",
-			validatorOutErr:             nil,
+			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			wantErrMsg:                  "",
 		},
 		{
 			name:                        "DeleteErr",
-			validatorOutErr:             nil,
+			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: true,
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          errors.New("delete board error"),
 			wantStatusCode:              http.StatusInternalServerError,
-			wantErrMsg:                  "",
 		},
 		{
 			name:                        "Success",
-			validatorOutErr:             nil,
+			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: true,
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusOK,
-			wantErrMsg:                  "",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			validator.OutErr = c.validatorOutErr
+			validator.OutOK = c.validatorOutOK
 			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
 			userBoardDeleter.OutErr = c.boardDeleterOutErr
@@ -105,27 +97,6 @@ func TestDELETEHandler(t *testing.T) {
 				c.wantStatusCode, w.Result().StatusCode,
 			); err != nil {
 				t.Error(err)
-			}
-
-			if c.wantStatusCode == http.StatusBadRequest {
-				if c.wantErrMsg == "" {
-					t.Error(
-						"status was 400 but no error messages were expected",
-					)
-				} else {
-					resBody := DELETEResBody{}
-					if err := json.NewDecoder(w.Result().Body).Decode(
-						&resBody,
-					); err != nil {
-						t.Error(err)
-					}
-
-					if err := assert.Equal(
-						c.wantErrMsg, resBody.Error,
-					); err != nil {
-						t.Error(err)
-					}
-				}
 			}
 
 			if c.wantStatusCode == http.StatusInternalServerError {

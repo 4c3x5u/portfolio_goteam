@@ -1,14 +1,14 @@
 package board
 
 import (
-	"errors"
 	"net/url"
+	"strconv"
 )
 
 // POSTValidator describes a type that can be used to validate the URL query
 // parameters sent to the board route on DELETE requests.
 type DELETEReqValidator interface {
-	Validate(url.Values) (string, error)
+	Validate(url.Values) (string, bool)
 }
 
 // POSTValidator can be used to validate the URL query parameters sent to the
@@ -20,14 +20,13 @@ func NewDELETEValidator() DELETEValidator { return DELETEValidator{} }
 
 // Validate validates the URL query parameters sent to the board route on DELETE
 // requests.
-func (v DELETEValidator) Validate(qParams url.Values) (string, error) {
-	id := qParams.Get("id")
-	if id == "" {
-		return "", errEmptyBoardID
+func (v DELETEValidator) Validate(qParams url.Values) (string, bool) {
+	idStr := qParams.Get("id")
+	if idStr == "" {
+		return "", false
 	}
-	return id, nil
+	if _, err := strconv.Atoi(idStr); err != nil {
+		return "", false
+	}
+	return idStr, true
 }
-
-// ErrEmptyBoardID is the error that the Validate method of DELETEValidator
-// returns when the id URL query parameter is empty.
-var errEmptyBoardID = errors.New("Board ID cannot be empty.")

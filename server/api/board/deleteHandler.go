@@ -2,7 +2,6 @@ package board
 
 import (
 	"database/sql"
-	"encoding/json"
 	"net/http"
 
 	"server/db"
@@ -38,15 +37,9 @@ func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.
-	boardID, err := h.validator.Validate(r.URL.Query())
-	if err != nil {
+	boardID, ok := h.validator.Validate(r.URL.Query())
+	if !ok {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			DELETEResBody{Error: err.Error()},
-		); err != nil {
-			h.logger.Log(log.LevelError, err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-		}
 		return
 	}
 
