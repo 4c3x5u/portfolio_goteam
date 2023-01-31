@@ -7,7 +7,9 @@ type fakeValidator struct {
 }
 
 // Validate implements the Validator interface on fakeValidator.
-// struct.
+// struct. It assigns the parameters passed into it to their corresponding In...
+// fields on the fake instance and returns its Out.. fields as per function
+// signature.
 func (f *fakeValidator) Validate(reqBody ReqBody) ValidationErrs {
 	f.inReqBody = reqBody
 	return f.outErrs
@@ -20,6 +22,8 @@ type fakeStringValidator struct {
 }
 
 // Validate implements the StringValidator interface on fakeStringValidator.
+// It assigns the parameters passed into it to their corresponding In... fields
+// on the fake instance and returns its Out.. fields as per function signature.
 func (f *fakeStringValidator) Validate(val string) (errs []string) {
 	f.inVal = val
 	return f.outErrs
@@ -32,7 +36,9 @@ type fakeHasher struct {
 	outErr      error
 }
 
-// Hash implements the Hasher interface on fakeHasher.
+// Hash implements the Hasher interface on fakeHasher. It assigns the parameters
+// passed into it to their corresponding In... fields on the fake instance and
+// returns its Out.. fields as per function signature.
 func (f *fakeHasher) Hash(plaintext string) ([]byte, error) {
 	f.inPlaintext = plaintext
 	return f.outHash, f.outErr

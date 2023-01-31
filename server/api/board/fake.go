@@ -9,6 +9,8 @@ type fakePOSTReqValidator struct {
 }
 
 // Validate implements the POSTReqValidator interface on fakePOSTReqValidator.
+// It assigns the parameters passed into it to their corresponding In... fields
+// on the fake instance and returns its Out.. fields as per function signature.
 func (f *fakePOSTReqValidator) Validate(reqBody POSTReqBody) error {
 	f.InReqBody = reqBody
 	return f.OutErr
@@ -22,7 +24,9 @@ type fakeDELETEReqValidator struct {
 }
 
 // Validate implements the DELETEReqValidator interface on
-// fakeDELETEReqValidator.
+// fakeDELETEReqValidator. It assigns the parameters passed into it to
+// their corresponding In... fields on the fake instance and returns its Out..
+// fields as per function signature.
 func (f *fakeDELETEReqValidator) Validate(qParams url.Values) (string, error) {
 	f.InQParams = qParams
 	return f.OutID, f.OutErr

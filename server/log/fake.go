@@ -6,7 +6,8 @@ type FakeLogger struct {
 	InMessage string
 }
 
-// Log implements the Logger interface on FakeLogger.
+// Log implements the Logger interface on FakeLogger. It assigns the parameters
+// passed into it to their corresponding In... fields on the fake instance.
 func (f *FakeLogger) Log(level Level, message string) {
 	f.InLevel, f.InMessage = level, message
 }

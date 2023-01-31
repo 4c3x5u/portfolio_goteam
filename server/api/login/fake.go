@@ -6,7 +6,9 @@ type fakeReqValidator struct {
 	outOK     bool
 }
 
-// Validate implements the ReqValidator interface on fakeReqValidator.
+// Validate implements the ReqValidator interface on fakeReqValidator. It
+// assigns the parameters passed into it to their corresponding In... fields on
+// the fake instance and returns its Out.. fields as per function signature.
 func (f *fakeReqValidator) Validate(reqBody ReqBody) bool {
 	f.inReqBody = reqBody
 	return f.outOK

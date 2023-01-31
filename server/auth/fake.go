@@ -11,6 +11,8 @@ type FakeTokenGenerator struct {
 }
 
 // Generate implements the CookieGenerator interface on FakeTokenGenerator.
+// It assigns the parameters passed into it to their corresponding In... fields
+// on the fake instance and returns its Out.. fields as per function signature.
 func (f *FakeTokenGenerator) Generate(
 	sub string, exp time.Time,
 ) (string, error) {
@@ -24,7 +26,9 @@ type FakeTokenValidator struct {
 	OutSub  string
 }
 
-// Validate implements the Validator interface on FakeTokenValidator.
+// Validate implements the Validator interface on FakeTokenValidator. It assigns
+// the parameters passed into it to their corresponding In... fields on the fake
+// instance and returns its Out.. fields as per function signature.
 func (f *FakeTokenValidator) Validate(token string) string {
 	f.InToken = token
 	return f.OutSub
@@ -36,6 +40,9 @@ type FakeHeaderReader struct {
 	OutToken      string
 }
 
+// Read implements the HeaderReader interface on FakeHeaderReader. It assigns
+// the parameters passed into it to their corresponding In... fields on the fake
+// instance and returns its Out.. fields as per function signature.
 func (f *FakeHeaderReader) Read(headerValue string) string {
 	f.InHeaderValue = headerValue
 	return f.OutToken

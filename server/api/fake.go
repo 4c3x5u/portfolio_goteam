@@ -9,7 +9,9 @@ type FakeMethodHandler struct {
 	InSub            string
 }
 
-// Handle implements the MethodHandler interface on FakeMethodHandler.
+// Handle implements the MethodHandler interface on FakeMethodHandler. It
+// assigns the parameters passed into it to their corresponding In... fields on
+// the fake instance and returns its Out.. fields as per function signature.
 func (f *FakeMethodHandler) Handle(
 	w http.ResponseWriter, r *http.Request, sub string,
 ) {
