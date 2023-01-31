@@ -86,7 +86,9 @@ func main() {
 	))
 
 	// Serve the app using the ServeMux.
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	port := os.Getenv("PORT")
+	logger.Log(log.LevelInfo, "running server at port "+port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
 	}

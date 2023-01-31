@@ -11,4 +11,4 @@ WORKDIR /
 COPY --from=build-env /server .
 COPY --from=build-env /build/.env .
 EXPOSE 8080
-CMD ["/server"]
+ENTRYPOINT ["/server"]
