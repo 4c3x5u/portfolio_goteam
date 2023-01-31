@@ -6,9 +6,12 @@ import "log"
 type Level int8
 
 const (
+	// LevelError is a log Level that should be for logging messages that are not
+	// errors.
+	LevelInfo Level = iota
 	// LevelError is a log Level that should be used when logging runtime errors
 	// that are recoverable.
-	LevelError Level = iota
+	LevelError
 	// LevelFatal is a log level that should be used when logging runtime errors
 	// that are not recoverable where the app terminates after logging.
 	LevelFatal
@@ -27,6 +30,8 @@ func NewAppLogger() AppLogger { return AppLogger{} }
 // Log formats a message based on LogLevel and logs the resulting string.
 func (l AppLogger) Log(level Level, message string) {
 	switch level {
+	case LevelInfo:
+		log.Println("--[INFO]-- " + message)
 	case LevelError:
 		log.Println("--[ERROR]-- " + message)
 	case LevelFatal:

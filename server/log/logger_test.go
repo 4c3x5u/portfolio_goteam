@@ -20,6 +20,12 @@ func TestAppLogger(t *testing.T) {
 		wantLog string
 	}{
 		{
+			name:    "LevelInfo",
+			level:   LevelInfo,
+			message: "some information",
+			wantLog: "--[INFO]-- some information\n",
+		},
+		{
 			name:    "LevelError",
 			level:   LevelError,
 			message: "an error occured",
