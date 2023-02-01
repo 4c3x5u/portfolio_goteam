@@ -25,12 +25,10 @@ func TestHandler(t *testing.T) {
 		hasher         = &fakeHasher{}
 		userInserter   = &db.FakeUserInserter{}
 		tokenGenerator = &auth.FakeTokenGenerator{}
-		dbCloser       = &db.FakeCloser{}
 		logger         = &log.FakeLogger{}
 	)
 	sut := NewHandler(
-		validator, userSelector, hasher, userInserter,
-		tokenGenerator, dbCloser, logger,
+		validator, userSelector, hasher, userInserter, tokenGenerator, logger,
 	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
@@ -212,25 +210,32 @@ func TestHandler(t *testing.T) {
 
 			// Assert on status code.
 			res := w.Result()
-			if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
 				t.Error(err)
 			}
 
 			if c.wantStatusCode == http.StatusBadRequest {
-				// 400 is expected - there must be validation errors in request body.
+				// 400 is expected - there must be validation errors in response
+				// body.
 				resBody := &ResBody{}
-				if err = json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+				if err = json.NewDecoder(res.Body).Decode(
+					&resBody,
+				); err != nil {
 					t.Fatal(err)
 				}
 
 				if err = assert.EqualArr(
-					c.wantValidationErrs.Username, resBody.ValidationErrs.Username,
+					c.wantValidationErrs.Username,
+					resBody.ValidationErrs.Username,
 				); err != nil {
 					t.Error(err)
 				}
 
 				if err = assert.EqualArr(
-					c.wantValidationErrs.Password, resBody.ValidationErrs.Password,
+					c.wantValidationErrs.Password,
+					resBody.ValidationErrs.Password,
 				); err != nil {
 					t.Error(err)
 				}
@@ -280,7 +285,8 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no validator error is expected, user selector and db closer must be called.
+			// If no validator error is expected, user selector and db closer
+			// must be called.
 			if c.validatorOutErr.Any() {
 				return
 			}
@@ -299,9 +305,6 @@ func TestHandler(t *testing.T) {
 			); err != nil {
 				t.Error(err)
 			}
-			if err = assert.True(dbCloser.IsCalled); err != nil {
-				t.Error(err)
-			}
 
 			// If no hasher error is expected, user inserter must be called.
 			if c.hasherOutErr != nil {
@@ -318,7 +321,8 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If no user inserter error is expected, token generator must be called.
+			// If no user inserter error is expected, token generator must be
+			// called.
 			if c.userInserterOutErr != nil {
 				return
 			}

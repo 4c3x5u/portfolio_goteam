@@ -19,7 +19,6 @@ type Handler struct {
 	hasher             Hasher
 	dbUserInserter     db.Inserter[db.User]
 	authTokenGenerator auth.TokenGenerator
-	dbCloser           db.Closer
 	logger             log.Logger
 }
 
@@ -30,7 +29,6 @@ func NewHandler(
 	hasher Hasher,
 	dbUserInserter db.Inserter[db.User],
 	authTokenGenerator auth.TokenGenerator,
-	dbCloser db.Closer,
 	logger log.Logger,
 ) Handler {
 	return Handler{
@@ -39,7 +37,6 @@ func NewHandler(
 		hasher:             hasher,
 		dbUserInserter:     dbUserInserter,
 		authTokenGenerator: authTokenGenerator,
-		dbCloser:           dbCloser,
 		logger:             logger,
 	}
 }
@@ -81,7 +78,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// then occur before exists checks. Test when deployed or when you add
 	// integration tests.
 	_, err := h.dbUserSelector.Select(reqBody.Username)
-	defer h.dbCloser.Close()
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(

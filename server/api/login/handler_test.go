@@ -26,12 +26,10 @@ func TestHandler(t *testing.T) {
 		dbUserSelector     = &db.FakeUserSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
-		dbCloser           = &db.FakeCloser{}
 		logger             = &log.FakeLogger{}
 	)
 	sut := NewHandler(
-		validator, dbUserSelector, passwordComparer, authTokenGenerator,
-		dbCloser, logger,
+		validator, dbUserSelector, passwordComparer, authTokenGenerator, logger,
 	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
@@ -246,8 +244,7 @@ func TestHandler(t *testing.T) {
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If request and HTTP method was valid, user selector and db closer
-			// must be called.
+			// If request and HTTP method was valid, user selector must be called.
 			if !c.validatorOutOK ||
 				c.wantStatusCode == http.StatusMethodNotAllowed {
 				return
@@ -255,9 +252,6 @@ func TestHandler(t *testing.T) {
 			if err = assert.Equal(
 				reqBody.Username, dbUserSelector.InUserID,
 			); err != nil {
-				t.Error(err)
-			}
-			if err = assert.True(dbCloser.IsCalled); err != nil {
 				t.Error(err)
 			}
 

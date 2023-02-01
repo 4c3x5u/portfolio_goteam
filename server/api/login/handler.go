@@ -20,7 +20,6 @@ type Handler struct {
 	dbUserSelector     db.Selector[db.User]
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
-	dbCloser           db.Closer
 	logger             log.Logger
 }
 
@@ -30,7 +29,6 @@ func NewHandler(
 	userSelector db.Selector[db.User],
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
-	dbCloser db.Closer,
 	logger log.Logger,
 ) Handler {
 	return Handler{
@@ -38,7 +36,6 @@ func NewHandler(
 		dbUserSelector:     userSelector,
 		passwordComparer:   hashComparer,
 		authTokenGenerator: authTokenGenerator,
-		dbCloser:           dbCloser,
 		logger:             logger,
 	}
 }
@@ -67,7 +64,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read the user in the database who owns the username that came in the
 	// request.
 	user, err := h.dbUserSelector.Select(reqBody.Username)
-	defer h.dbCloser.Close()
 	if err == sql.ErrNoRows {
 		w.WriteHeader(http.StatusBadRequest)
 		return

@@ -19,14 +19,11 @@ import (
 
 // Server represents the goteam server as a whole and contains the top-level
 // application logic.
-type Server struct {
-	routeHandlers map[string]http.Handler
-}
+type Server struct{ routeHandlers map[string]http.Handler }
 
 // NewDefaultServer constructs and returns a Server with default dependencies.
 func NewDefaultServer(
 	dbPool *sql.DB,
-	dbCloser db.Closer,
 	jwtKey string,
 	logger log.Logger,
 ) Server {
@@ -43,7 +40,6 @@ func NewDefaultServer(
 				registerAPI.NewPasswordHasher(),
 				db.NewUserInserter(dbPool),
 				jwtGenerator,
-				dbCloser,
 				logger,
 			),
 			"/login": loginAPI.NewHandler(
@@ -51,7 +47,6 @@ func NewDefaultServer(
 				userSelector,
 				loginAPI.NewPasswordComparer(),
 				jwtGenerator,
-				dbCloser,
 				logger,
 			),
 			"/board": boardAPI.NewHandler(
@@ -76,7 +71,7 @@ func NewDefaultServer(
 	}
 }
 
-// Run serves the app using the Server's route handlers.
+// Run serves the  API routes using the Server's route handlers.
 func (s Server) Run(port string) error {
 	mux := http.NewServeMux()
 	for route, handler := range s.routeHandlers {
@@ -86,7 +81,7 @@ func (s Server) Run(port string) error {
 }
 
 func main() {
-	// Create a logger to be used throughout the application.
+	// Create a logger to be used throughout the app.
 	logger := log.NewAppLogger()
 
 	// Load environment variables from .env file.
@@ -96,16 +91,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create dependencies that are shared by multiple handlers.
+	// Create a database connection pool to be used throughout the app.
 	dbPool, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
-	dbPool.Close()
-	dbCloser := db.NewConnCloser(dbPool, logger)
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
 	}
 
-	server := NewDefaultServer(dbPool, dbCloser, os.Getenv("JWTKEY"), logger)
+	server := NewDefaultServer(dbPool, os.Getenv("JWTKEY"), logger)
 
 	port := os.Getenv("PORT")
 	logger.Log(log.LevelInfo, "running server at port "+port)
