@@ -6,4 +6,4 @@
 // Each of the test files correspond to an API route that the app serves, except
 // the main_test.go file which handles setup for the integration tests and runs
 // them.
-package test
+package itest
