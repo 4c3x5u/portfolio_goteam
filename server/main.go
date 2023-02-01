@@ -17,8 +17,76 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Server represents the goteam server as a whole and contains the top-level
+// application logic.
+type Server struct {
+	routeHandlers map[string]http.Handler
+}
+
+// NewDefaultServer constructs and returns a Server with default dependencies.
+func NewDefaultServer(
+	dbPool *sql.DB,
+	dbCloser db.Closer,
+	jwtKey string,
+	logger log.Logger,
+) Server {
+	userSelector := db.NewUserSelector(dbPool)
+	jwtGenerator := auth.NewJWTGenerator(jwtKey)
+	return Server{
+		routeHandlers: map[string]http.Handler{
+			"/register": registerAPI.NewHandler(
+				registerAPI.NewValidator(
+					registerAPI.NewUsernameValidator(),
+					registerAPI.NewPasswordValidator(),
+				),
+				userSelector,
+				registerAPI.NewPasswordHasher(),
+				db.NewUserInserter(dbPool),
+				jwtGenerator,
+				dbCloser,
+				logger,
+			),
+			"/login": loginAPI.NewHandler(
+				loginAPI.NewValidator(),
+				userSelector,
+				loginAPI.NewPasswordComparer(),
+				jwtGenerator,
+				dbCloser,
+				logger,
+			),
+			"/board": boardAPI.NewHandler(
+				auth.NewBearerTokenReader(),
+				auth.NewJWTValidator(jwtKey),
+				map[string]api.MethodHandler{
+					http.MethodPost: boardAPI.NewPOSTHandler(
+						boardAPI.NewPOSTValidator(),
+						db.NewUserBoardCounter(dbPool),
+						db.NewBoardInserter(dbPool),
+						logger,
+					),
+					http.MethodDelete: boardAPI.NewDELETEHandler(
+						boardAPI.NewDELETEValidator(),
+						db.NewUserBoardSelector(dbPool),
+						db.NewBoardDeleter(dbPool),
+						logger,
+					),
+				},
+			),
+		},
+	}
+}
+
+// Run serves the app using the Server's route handlers.
+func (s Server) Run(port string) error {
+	mux := http.NewServeMux()
+	for route, handler := range s.routeHandlers {
+		mux.Handle(route, handler)
+	}
+	return http.ListenAndServe(":"+port, mux)
+}
+
 func main() {
-	// Create a logger for the app.
+	// Create a logger to be used throughout the application.
 	logger := log.NewAppLogger()
 
 	// Load environment variables from .env file.
@@ -29,67 +97,19 @@ func main() {
 	}
 
 	// Create dependencies that are shared by multiple handlers.
-	conn, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
-	connCloser := db.NewConnCloser(conn, logger)
-	defer connCloser.Close()
+	dbPool, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
+	dbPool.Close()
+	dbCloser := db.NewConnCloser(dbPool, logger)
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
 	}
 
-	jwtKey := os.Getenv("JWTKEY")
-	jwtGenerator := auth.NewJWTGenerator(jwtKey)
+	server := NewDefaultServer(dbPool, dbCloser, os.Getenv("JWTKEY"), logger)
 
-	userSelector := db.NewUserSelector(conn)
-
-	// Register handlers for API routes.
-	mux := http.NewServeMux()
-
-	mux.Handle("/register", registerAPI.NewHandler(
-		registerAPI.NewValidator(
-			registerAPI.NewUsernameValidator(),
-			registerAPI.NewPasswordValidator(),
-		),
-		userSelector,
-		registerAPI.NewPasswordHasher(),
-		db.NewUserInserter(conn),
-		jwtGenerator,
-		connCloser,
-		logger,
-	))
-
-	mux.Handle("/login", loginAPI.NewHandler(
-		loginAPI.NewValidator(),
-		userSelector,
-		loginAPI.NewPasswordComparer(),
-		jwtGenerator,
-		connCloser,
-		logger,
-	))
-
-	mux.Handle("/board", boardAPI.NewHandler(
-		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(jwtKey),
-		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewPOSTValidator(),
-				db.NewUserBoardCounter(conn),
-				db.NewBoardInserter(conn),
-				logger,
-			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewDELETEValidator(),
-				db.NewUserBoardSelector(conn),
-				db.NewBoardDeleter(conn),
-				logger,
-			),
-		},
-	))
-
-	// Serve the app using the ServeMux.
 	port := os.Getenv("PORT")
 	logger.Log(log.LevelInfo, "running server at port "+port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	if err := server.Run(port); err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
 	}
