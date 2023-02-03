@@ -19,17 +19,41 @@ import (
 
 // Server represents the goteam server as a whole and contains the top-level
 // application logic.
-type Server struct{ routeHandlers map[string]http.Handler }
+type Server struct {
+	port          string
+	logger        log.Logger
+	routeHandlers map[string]http.Handler
+}
 
-// NewDefaultServer constructs and returns a Server with default dependencies.
-func NewDefaultServer(
-	dbPool *sql.DB,
-	jwtKey string,
-	logger log.Logger,
-) Server {
+// NewServer constructs and returns a Server with default dependencies.
+func NewServer(logger log.Logger) Server {
+	// Get environment variables and ensure they're not empty.
+	dbConnStr := os.Getenv("DBCONNSTR")
+	jwtKey := os.Getenv("JWTKEY")
+	port := os.Getenv("PORT")
+	for description, value := range map[string]string{
+		"database connection string": dbConnStr,
+		"jwt signature key":          jwtKey,
+		"port variable":              port,
+	} {
+		if value == "" {
+			logger.Log(log.LevelFatal, description+" was empty")
+			os.Exit(1)
+		}
+	}
+
+	// Create dependencies needed by multiple route handlers.
+	dbPool, err := sql.Open("postgres", dbConnStr)
+	if err != nil {
+		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(1)
+	}
 	userSelector := db.NewUserSelector(dbPool)
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
+
+	// Return the server with the port to run and route handlers.
 	return Server{
+		port: port,
 		routeHandlers: map[string]http.Handler{
 			"/register": registerAPI.NewHandler(
 				registerAPI.NewValidator(
@@ -71,13 +95,14 @@ func NewDefaultServer(
 	}
 }
 
-// Run serves the  API routes using the Server's route handlers.
-func (s Server) Run(port string) error {
+// Run serves API routes using the Server's route handlers.
+func (s Server) Run() error {
+	s.logger.Log(log.LevelInfo, "running server at port "+s.port)
 	mux := http.NewServeMux()
 	for route, handler := range s.routeHandlers {
 		mux.Handle(route, handler)
 	}
-	return http.ListenAndServe(":"+port, mux)
+	return http.ListenAndServe(":"+s.port, mux)
 }
 
 func main() {
@@ -91,18 +116,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create a database connection pool to be used throughout the app.
-	dbPool, err := sql.Open("postgres", os.Getenv("DBCONNSTR"))
-	if err != nil {
-		logger.Log(log.LevelFatal, err.Error())
-		os.Exit(1)
-	}
-
-	server := NewDefaultServer(dbPool, os.Getenv("JWTKEY"), logger)
-
-	port := os.Getenv("PORT")
-	logger.Log(log.LevelInfo, "running server at port "+port)
-	if err := server.Run(port); err != nil {
+	// Create a new server and run it.
+	if err := NewServer(logger).Run(); err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
 	}

@@ -16,9 +16,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// dbConnStr is the connection string for the database used in integration tests.
-var dbConnStr string
-
 // TestMain does setup for and runs the tests in this package.
 func TestMain(m *testing.M) {
 	logger := log.NewAppLogger()
@@ -56,7 +53,7 @@ func TestMain(m *testing.M) {
 	}
 
 	hostPort := resource.GetHostPort("5432/tcp")
-	dbConnStr = "postgres://postgres:postgres@" +
+	dbConnStr := "postgres://postgres:postgres@" +
 		hostPort + "/dbname?sslmode=disable"
 
 	resource.Expire(120)
@@ -72,6 +69,10 @@ func TestMain(m *testing.M) {
 		logger.Log(log.LevelFatal, "could not connect to Docker: "+err.Error())
 		os.Exit(1)
 	}
+
+	os.Setenv("DBCONNSTR", dbConnStr)
+	os.Setenv("PORT", "8081")
+	os.Setenv("JWTKEY", "ZMXNCVBASDOFGIQPEGJBASDKLVNBZXMFNAWEFQWEI")
 
 	code := m.Run()
 
