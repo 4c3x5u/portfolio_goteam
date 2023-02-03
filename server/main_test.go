@@ -1,4 +1,6 @@
-package itest
+//go:build itest
+
+package main
 
 import (
 	"database/sql"
@@ -54,15 +56,16 @@ func TestMain(m *testing.M) {
 	}
 
 	hostPort := resource.GetHostPort("5432/tcp")
-	dbConnStr = "postgres://postgres:postgres@" + hostPort + "/dbname?sslmode=disable"
+	dbConnStr = "postgres://postgres:postgres@" +
+		hostPort + "/dbname?sslmode=disable"
 
 	resource.Expire(120)
 
 	pool.MaxWait = 120 * time.Second
 	if err = pool.Retry(func() error {
-		db, err := sql.Open("postgres", dbConnStr)
-		if err != nil {
-			return err
+		db, sqlErr := sql.Open("postgres", dbConnStr)
+		if sqlErr != nil {
+			return sqlErr
 		}
 		return db.Ping()
 	}); err != nil {
