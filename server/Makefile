@@ -10,4 +10,5 @@ utest:
 	go test -tags=utest ./...
 itest:
 	go test -tags=itest ./itest
-
+itest.v:
+	go test -v -tags=itest ./itest

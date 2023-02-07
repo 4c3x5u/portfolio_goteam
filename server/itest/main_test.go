@@ -5,6 +5,7 @@ package itest
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -75,9 +76,14 @@ func runDBContainer(logger log.Logger) (string, func()) {
 
 	resource.Expire(300)
 	pool.MaxWait = 180 * time.Second
+	try := 0
 	if err = pool.Retry(func() error {
+		try++
 		db, sqlErr := sql.Open("postgres", dbConnStr)
 		if sqlErr != nil {
+			logger.Log(log.LevelInfo, fmt.Sprintf(
+				"err for try #%d is %+v", try, sqlErr,
+			))
 			return sqlErr
 		}
 		return db.Ping()
@@ -108,15 +114,20 @@ func runServerContainer(dbConnStr string, logger log.Logger) func() {
 	}
 
 	resource, err := pool.BuildAndRunWithOptions(
-		"../Dockerfile.itest",
+		"../Dockerfile",
 		&dockertest.RunOptions{
 			Name: "goteam-server-itest",
 			Env: []string{
-				"PORT=8081",
+				"PORT=" + serverPort,
 				"DBCONNSTR=" + dbConnStr,
 				"JWTKEY=QWERTYQWERTYQWERTYQWERTYQWERTY",
 			},
-			ExposedPorts: []string{"8081"},
+			ExposedPorts: []string{serverPort},
+			PortBindings: map[docker.Port][]docker.PortBinding{
+				docker.Port(serverPort): {
+					{HostIP: serverHost, HostPort: serverPort},
+				},
+			},
 		},
 		func(cfg *docker.HostConfig) {
 			cfg.AutoRemove = true
@@ -127,14 +138,20 @@ func runServerContainer(dbConnStr string, logger log.Logger) func() {
 		os.Exit(1)
 	}
 
-	serverURL = "http://" + resource.GetHostPort("8081/tcp")
-
 	resource.Expire(180)
-	pool.MaxWait = 180 * time.Second
+	pool.MaxWait = 120 * time.Second
+	try := 0
 	if err = pool.Retry(func() error {
+		try++
 		if res, errGet := http.Get(serverURL); errGet != nil {
+			logger.Log(log.LevelInfo, fmt.Sprintf(
+				"err for try #%d is %+v", try, errGet,
+			))
 			return errGet
 		} else if res.StatusCode != 200 {
+			logger.Log(log.LevelInfo, fmt.Sprintf(
+				"status for try #%d is %s", try, res.Status,
+			))
 			return errors.New("status: " + res.Status)
 		}
 		return nil

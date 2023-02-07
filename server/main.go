@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"net/http"
 	"os"
 
@@ -23,16 +22,10 @@ func main() {
 	logger := log.NewAppLogger()
 
 	// Load environment variables from .env file.
-	if _, err := os.Stat(".env"); errors.Is(err, os.ErrNotExist) {
-		// Environment variables might also be set elsewhere (i.e. in the case
-		// of integration tests)
-		logger.Log(log.LevelInfo, ".env file was not found")
-	} else {
-		err := godotenv.Load()
-		if err != nil {
-			logger.Log(log.LevelFatal, err.Error())
-			os.Exit(1)
-		}
+	err := godotenv.Load()
+	if err != nil {
+		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(1)
 	}
 
 	// Ensure that the necessary env vars were set.
@@ -63,7 +56,9 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {})
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	mux.Handle("/register", registerAPI.NewHandler(
 		registerAPI.NewValidator(
