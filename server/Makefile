@@ -1,3 +1,4 @@
+.PHONY: default build run utest itest
 default:
 	@echo "please specify a target\n - build\n - run\
 		\n - utest (unit tests)\n - itest (integration tests)"
@@ -8,5 +9,5 @@ run:
 utest:
 	go test -tags=utest ./...
 itest:
-	go test -tags=itest ./...
+	go test -tags=itest ./itest
 

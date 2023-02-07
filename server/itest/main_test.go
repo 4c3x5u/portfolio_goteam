@@ -1,6 +1,6 @@
 //go:build itest
 
-package main
+package itest
 
 import (
 	"database/sql"
@@ -59,9 +59,9 @@ func runDBContainer(logger log.Logger) (string, func()) {
 				"listen_addresses = '*'",
 			},
 		},
-		func(config *docker.HostConfig) {
-			config.AutoRemove = true
-			config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+		func(cfg *docker.HostConfig) {
+			cfg.AutoRemove = true
+			cfg.RestartPolicy = docker.RestartPolicy{Name: "no"}
 		},
 	)
 	if err != nil {
@@ -108,7 +108,7 @@ func runServerContainer(dbConnStr string, logger log.Logger) func() {
 	}
 
 	resource, err := pool.BuildAndRunWithOptions(
-		"./Dockerfile.itest",
+		"../Dockerfile.itest",
 		&dockertest.RunOptions{
 			Name: "goteam-server-itest",
 			Env: []string{
@@ -118,18 +118,21 @@ func runServerContainer(dbConnStr string, logger log.Logger) func() {
 			},
 			ExposedPorts: []string{"8081"},
 		},
-		func(*docker.HostConfig) {})
+		func(cfg *docker.HostConfig) {
+			cfg.AutoRemove = true
+			cfg.RestartPolicy = docker.RestartPolicy{Name: "no"}
+		})
 	if err != nil {
 		logger.Log(log.LevelFatal, "could not start resource: "+err.Error())
 		os.Exit(1)
 	}
 
+	serverURL = "http://" + resource.GetHostPort("8081/tcp")
+
 	resource.Expire(180)
 	pool.MaxWait = 180 * time.Second
 	if err = pool.Retry(func() error {
-		if res, errGet := http.Get(
-			"http://localhost:" + resource.GetPort("8081/tcp"),
-		); errGet != nil {
+		if res, errGet := http.Get(serverURL); errGet != nil {
 			return errGet
 		} else if res.StatusCode != 200 {
 			return errors.New("status: " + res.Status)
