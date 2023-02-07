@@ -4,6 +4,8 @@ package main
 
 import (
 	"database/sql"
+	"errors"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -19,6 +21,21 @@ import (
 // TestMain does setup for and runs the tests in this package.
 func TestMain(m *testing.M) {
 	logger := log.NewAppLogger()
+
+	// Use a single pool for both containers?
+	dbConnStr, tearDownDB := runDBContainer(logger)
+	tearDownServer := runServerContainer(dbConnStr, logger)
+
+	code := m.Run()
+
+	tearDownDB()
+	tearDownServer()
+
+	os.Exit(code)
+}
+
+func runDBContainer(logger log.Logger) (string, func()) {
+	logger.Log(log.LevelInfo, "setting up database container...")
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
@@ -52,13 +69,12 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	hostPort := resource.GetHostPort("5432/tcp")
 	dbConnStr := "postgres://postgres:postgres@" +
-		hostPort + "/dbname?sslmode=disable"
+		resource.GetHostPort("5432/tcp") +
+		"/goteam?sslmode=disable"
 
-	resource.Expire(120)
-
-	pool.MaxWait = 120 * time.Second
+	resource.Expire(300)
+	pool.MaxWait = 180 * time.Second
 	if err = pool.Retry(func() error {
 		db, sqlErr := sql.Open("postgres", dbConnStr)
 		if sqlErr != nil {
@@ -70,15 +86,63 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	os.Setenv("DBCONNSTR", dbConnStr)
-	os.Setenv("PORT", "8081")
-	os.Setenv("JWTKEY", "ZMXNCVBASDOFGIQPEGJBASDKLVNBZXMFNAWEFQWEI")
+	return dbConnStr, func() {
+		if err := pool.Purge(resource); err != nil {
+			logger.Log(log.LevelFatal, "could not purge resource: "+err.Error())
+		}
+	}
+}
 
-	code := m.Run()
+func runServerContainer(dbConnStr string, logger log.Logger) func() {
+	logger.Log(log.LevelInfo, "setting up server container...")
 
-	if err = pool.Purge(resource); err != nil {
-		logger.Log(log.LevelFatal, "could not purge resource: "+err.Error())
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		logger.Log(log.LevelFatal, "could not construct pool: "+err.Error())
+		os.Exit(1)
 	}
 
-	os.Exit(code)
+	if err = pool.Client.Ping(); err != nil {
+		logger.Log(log.LevelFatal, "could not connect to Docker: "+err.Error())
+		os.Exit(1)
+	}
+
+	resource, err := pool.BuildAndRunWithOptions(
+		"./Dockerfile.itest",
+		&dockertest.RunOptions{
+			Name: "goteam-server-itest",
+			Env: []string{
+				"PORT=8081",
+				"DBCONNSTR=" + dbConnStr,
+				"JWTKEY=QWERTYQWERTYQWERTYQWERTYQWERTY",
+			},
+			ExposedPorts: []string{"8081"},
+		},
+		func(*docker.HostConfig) {})
+	if err != nil {
+		logger.Log(log.LevelFatal, "could not start resource: "+err.Error())
+		os.Exit(1)
+	}
+
+	resource.Expire(180)
+	pool.MaxWait = 180 * time.Second
+	if err = pool.Retry(func() error {
+		if res, errGet := http.Get(
+			"http://localhost:" + resource.GetPort("8081/tcp"),
+		); errGet != nil {
+			return errGet
+		} else if res.StatusCode != 200 {
+			return errors.New("status: " + res.Status)
+		}
+		return nil
+	}); err != nil {
+		logger.Log(log.LevelFatal, "could not connect to Docker: "+err.Error())
+		os.Exit(1)
+	}
+
+	return func() {
+		if err := pool.Purge(resource); err != nil {
+			logger.Log(log.LevelFatal, "could not purge resource: "+err.Error())
+		}
+	}
 }
