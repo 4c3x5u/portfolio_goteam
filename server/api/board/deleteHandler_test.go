@@ -110,16 +110,16 @@ func TestDELETEHandler(t *testing.T) {
 					if err != nil {
 						errFound = true
 
-						if err := assert.Equal(
+						if levelErr := assert.Equal(
 							log.LevelError, logger.InLevel,
-						); err != nil {
-							t.Error(err)
+						); levelErr != nil {
+							t.Error(levelErr)
 						}
 
-						if err := assert.Equal(
+						if msgErr := assert.Equal(
 							err.Error(), logger.InMessage,
-						); err != nil {
-							t.Error(err)
+						); msgErr != nil {
+							t.Error(msgErr)
 						}
 					}
 				}

@@ -54,7 +54,7 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if isAdmin == false {
+	if !isAdmin {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -68,5 +68,4 @@ func (h DELETEHandler) Handle(
 
 	// All went well. Return 200.
 	w.WriteHeader(http.StatusOK)
-	return
 }

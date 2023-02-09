@@ -53,5 +53,4 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// h.methodHandlers for the HTTP method of the request.
 	w.Header().Add(api.AllowedMethods(http.MethodPost))
 	w.WriteHeader(http.StatusMethodNotAllowed)
-	return
 }

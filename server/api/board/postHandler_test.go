@@ -31,7 +31,7 @@ func TestPOSTHandler(t *testing.T) {
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                   string
-			validatorOutErr        error
+			validatorOutErrMsg     string
 			userBoardCounterOutRes int
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
@@ -40,16 +40,16 @@ func TestPOSTHandler(t *testing.T) {
 		}{
 			{
 				name:                   "InvalidRequest",
-				validatorOutErr:        errNameEmpty,
+				validatorOutErrMsg:     msgNameEmpty,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             errNameEmpty.Error(),
+				wantErrMsg:             msgNameEmpty,
 			},
 			{
 				name:                   "UserBoardCounterErr",
-				validatorOutErr:        nil,
+				validatorOutErrMsg:     "",
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
@@ -58,7 +58,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "MaxBoardsCreated",
-				validatorOutErr:        nil,
+				validatorOutErrMsg:     "",
 				userBoardCounterOutRes: 3,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
@@ -67,7 +67,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "BoardInserterErr",
-				validatorOutErr:        nil,
+				validatorOutErrMsg:     "",
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    boardInserterErr,
@@ -76,7 +76,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "Success",
-				validatorOutErr:        nil,
+				validatorOutErrMsg:     "",
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
@@ -85,7 +85,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				validator.OutErr = c.validatorOutErr
+				validator.OutErrMsg = c.validatorOutErrMsg
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
 				userBoardCounter.OutErr = c.userBoardCounterOutErr
 				dbBoardInserter.OutErr = c.boardInserterOutErr
@@ -146,17 +146,17 @@ func TestPOSTHandler(t *testing.T) {
 						if err != nil && err != sql.ErrNoRows {
 							errFound = true
 
-							if err := assert.Equal(
+							if levelErr := assert.Equal(
 								log.LevelError, logger.InLevel,
-							); err != nil {
-								t.Error(err)
+							); levelErr != nil {
+								t.Error(levelErr)
 							}
 
-							if err := assert.Equal(
+							if msgErr := assert.Equal(
 								err.Error(),
 								logger.InMessage,
-							); err != nil {
-								t.Error(err)
+							); msgErr != nil {
+								t.Error(msgErr)
 							}
 						}
 					}
@@ -171,7 +171,7 @@ func TestPOSTHandler(t *testing.T) {
 
 				// if max boards is not reached, board creator must be called
 				if c.userBoardCounterOutRes >= maxBoards ||
-					c.validatorOutErr != nil {
+					c.validatorOutErrMsg != "" {
 					return
 				}
 				if err := assert.Equal(

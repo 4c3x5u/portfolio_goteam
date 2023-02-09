@@ -43,12 +43,12 @@ func (h POSTHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := h.validator.Validate(reqBody); err != nil {
+	if errMsg := h.validator.Validate(reqBody); errMsg != "" {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			POSTResBody{Error: err.Error()},
-		); err != nil {
-			h.logger.Log(log.LevelError, err.Error())
+		if encodeErr := json.NewEncoder(w).Encode(
+			POSTResBody{Error: errMsg},
+		); encodeErr != nil {
+			h.logger.Log(log.LevelError, encodeErr.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -84,7 +84,6 @@ func (h POSTHandler) Handle(
 
 	// All went well. Return 200.
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 const (
