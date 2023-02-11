@@ -178,7 +178,7 @@ func TestValidatorPassword(t *testing.T) {
 	}{
 		// 1-error cases
 		{
-			name:     "Any",
+			name:     "Empty",
 			password: "", wantErrs: []string{pwdEmpty},
 		},
 		{
