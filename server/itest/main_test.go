@@ -24,8 +24,8 @@ func TestMain(m *testing.M) {
 	logger := log.NewAppLogger()
 
 	// Use a single pool for both containers?
-	dbConnStr, tearDownDB := runDBContainer(logger)
-	tearDownServer := runServerContainer(dbConnStr, logger)
+	dbConnStr, tearDownDB := runTestDB(logger)
+	tearDownServer := runTestServer(dbConnStr, logger)
 
 	code := m.Run()
 
@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func runDBContainer(logger log.Logger) (string, func()) {
+func runTestDB(logger log.Logger) (string, func()) {
 	logger.Log(log.LevelInfo, "setting up database container...")
 
 	pool, err := dockertest.NewPool("")
@@ -99,7 +99,7 @@ func runDBContainer(logger log.Logger) (string, func()) {
 	}
 }
 
-func runServerContainer(dbConnStr string, logger log.Logger) func() {
+func runTestServer(dbConnStr string, logger log.Logger) func() {
 	logger.Log(log.LevelInfo, "setting up server container...")
 
 	pool, err := dockertest.NewPool("")

@@ -218,7 +218,8 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			if c.wantStatusCode == http.StatusBadRequest {
+			switch c.wantStatusCode {
+			case http.StatusBadRequest:
 				// 400 is expected - there must be validation errors in response
 				// body.
 				resBody := &ResBody{}
@@ -247,7 +248,7 @@ func TestHandler(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
-			} else if c.wantStatusCode == http.StatusOK {
+			case http.StatusOK:
 				// 200 is expected - auth token must be set.
 				authTokenFound := false
 				for _, ck := range res.Cookies() {
@@ -268,14 +269,14 @@ func TestHandler(t *testing.T) {
 				if err = assert.Equal(true, authTokenFound); err != nil {
 					t.Error(err)
 				}
+			case http.StatusMethodNotAllowed:
+				// 405 is expcted, skip dependecy-input-based assertions.
+				return
 			}
 
 			// DEPENDENCY-INPUT-BASED ASSERTIONS
 
-			// If 405 isn't expected, validator must be called.
-			if c.wantStatusCode == http.StatusMethodNotAllowed {
-				return
-			}
+			// Validator must be called.
 			if err = assert.Equal(
 				c.reqBody.Username, validator.inReqBody.Username,
 			); err != nil {

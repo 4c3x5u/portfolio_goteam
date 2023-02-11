@@ -112,24 +112,3 @@ func (v PasswordValidator) Validate(password string) (errs []string) {
 
 	return
 }
-
-const (
-	usnEmpty       = "Username cannot be empty."
-	usnTooShort    = "Username cannot be shorter than 5 characters."
-	usnTooLong     = "Username cannot be longer than 15 characters."
-	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
-	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
-
-	pwdEmpty     = "Password cannot be empty."
-	pwdTooShort  = "Password cannot be shorter than 8 characters."
-	pwdTooLong   = "Password cannot be longer than 64 characters."
-	pwdNoLower   = "Password must contain a lowercase letter (a-z)."
-	pwdNoUpper   = "Password must contain an uppercase letter (A-Z)."
-	pwdNoDigit   = "Password must contain a digit (0-9)."
-	pwdNoSpecial = "Password must contain one of the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-	pwdHasSpace = "Password cannot contain spaces."
-	pwdNonASCII = "Password can contain only letters (a-z/A-Z), digits (0-9), " +
-		"and the following special characters: " +
-		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
-)

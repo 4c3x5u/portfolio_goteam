@@ -80,13 +80,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err := h.dbUserSelector.Select(reqBody.Username)
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
+		if errEncode := json.NewEncoder(w).Encode(
 			ResBody{ValidationErrs: ValidationErrs{
 				Username: []string{errUsernameTaken},
 			}},
-		); err != nil {
+		); errEncode != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.logger.Log(log.LevelError, err.Error())
+			h.logger.Log(log.LevelError, errEncode.Error())
 		}
 		return
 	} else if err != sql.ErrNoRows {
