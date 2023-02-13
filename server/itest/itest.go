@@ -3,12 +3,9 @@
 // Package itest contains integration tests for the application.
 package itest
 
-// serverHost is the host that the server runs on in the test container.
-const serverHost = "localhost"
-
-// serverPort is the port that the server runs on in test container.
-const serverPort = "8081"
-
 // serverURL is the url that is used to send requests to the server running in
-// the test container. It is set during setup in main_test.go/TestMain.
-var serverURL = "http://" + serverHost + ":" + serverPort
+// the test container. It is used during setup in main_test.go/TestMain.
+const serverURL = "http://localhost:8081"
+
+// dbConnStr is the connection string for the test db.
+const dbConnStr = "postgres://itestuser:itestpwd@localhost:5432/itestdb?sslmode=disable"

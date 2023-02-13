@@ -18,6 +18,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// envPORT is the name of the environment variable used for deciding what port
+// to run the server on.
+const envPORT = "PORT"
+
+// envDBCONNSTR is the name of the environment variable used for connecting to
+// the database.
+const envDBCONNSTR = "DBCONNSTR"
+
+// envJWTKEY is the name of the environment variable used for signing JWTs.
+const envJWTKEY = "JWTKEY"
+
 func main() {
 	// Create a logger for the app.
 	logger := log.NewAppLogger()
@@ -30,13 +41,13 @@ func main() {
 	}
 
 	// Ensure that the necessary env vars were set.
-	port := os.Getenv("PORT")
-	dbConnStr := os.Getenv("DBCONNSTR")
-	jwtKey := os.Getenv("JWTKEY")
+	port := os.Getenv(envPORT)
+	dbConnStr := os.Getenv(envDBCONNSTR)
+	jwtKey := os.Getenv(envJWTKEY)
 	for name, value := range map[string]string{
-		"PORT":      port,
-		"DBCONNSTR": dbConnStr,
-		"JWTKEY":    jwtKey,
+		envPORT:      port,
+		envDBCONNSTR: dbConnStr,
+		envJWTKEY:    jwtKey,
 	} {
 		if value == "" {
 			logger.Log(log.LevelFatal, name+" env var was empty")
@@ -49,6 +60,10 @@ func main() {
 	if err != nil {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(1)
+	}
+	if err = conn.Ping(); err != nil {
+		logger.Log(log.LevelFatal, err.Error())
+		os.Exit(2)
 	}
 
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)

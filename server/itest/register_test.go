@@ -4,6 +4,7 @@ package itest
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -18,6 +19,24 @@ func TestRegister(t *testing.T) {
 	url := serverURL + "/register"
 
 	t.Run("ValidationErrs", func(t *testing.T) {
+		t.Log("dbConnStr: " + dbConnStr)
+
+		db, err := sql.Open(
+			"postgres",
+			"postgres://itestuser:itestpwd@localhost:5432/itestdb?sslmode=disable",
+		)
+		if err != nil {
+			t.Fatal(err.Error())
+		}
+		existingUserID := "bob123"
+		_, err = db.Exec(
+			`INSERT INTO app."user"(id, password) VALUES ($1, $2)`,
+			existingUserID, "somepassword",
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		for _, c := range []struct {
 			name         string
 			username     string
@@ -70,6 +89,13 @@ func TestRegister(t *testing.T) {
 						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ " +
 						"_ ` { | } ~.",
 				},
+			},
+			{
+				name:         "UsnTaken",
+				username:     existingUserID,
+				password:     "Myp4ssw0rd!",
+				usernameErrs: []string{"Username is already taken."},
+				passwordErrs: []string{},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
