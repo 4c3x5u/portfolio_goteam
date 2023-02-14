@@ -4,13 +4,12 @@
 package assert
 
 import (
-	"errors"
 	"fmt"
 )
 
 // newErr formats, creates, and returns an assertion error.
 func newErr(want, got any) error {
-	return errors.New(fmt.Sprintf("\nwant: %+v\ngot: %+v", want, got))
+	return fmt.Errorf("\nwant: %+v\ngot: %+v", want, got)
 }
 
 // Equal asserts that two given values are equal.

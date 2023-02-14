@@ -5,37 +5,25 @@ package itest
 import (
 	"database/sql"
 	"io/ioutil"
+	"log"
 	"os"
-	"server/log"
 	"testing"
+
+	_ "github.com/lib/pq"
 )
 
 func TestMain(m *testing.M) {
-	logger := log.NewAppLogger()
-
-	// Initialise the database with schema/tables.
-	db, err := sql.Open(
-		"postgres",
-		"postgres://itestuser:itestpwd@localhost:5432/itestdb?sslmode=disable",
-	)
+	// Initialise the database.
+	db, err := sql.Open("postgres", dbConnStr)
 	if err != nil {
-		logger.Log(log.LevelFatal, err.Error())
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	qInitBytes, err := ioutil.ReadFile("init.sql")
 	if err != nil {
-		logger.Log(
-			log.LevelFatal,
-			"could not read db init script: "+err.Error(),
-		)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 	if _, err := db.Exec(string(qInitBytes)); err != nil {
-		logger.Log(
-			log.LevelFatal,
-			"could not execute db init script: "+err.Error(),
-		)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	os.Exit(m.Run())

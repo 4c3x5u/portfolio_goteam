@@ -12,7 +12,7 @@ services:
       POSTGRES_PASSWORD: itestpwd
       POSTGRES_DB: itestdb
     ports:
-      - "5432:5432"
+      - "5433:5432"
     expose:
       - "5432"
     command: postgres -c listen_addresses='*'

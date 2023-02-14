@@ -9,8 +9,7 @@ import (
 	"net/http"
 	"testing"
 
-	registerAPI "server/api/register"
-	"server/assert"
+	_ "github.com/lib/pq"
 )
 
 // TestRegister tests the /register route to assert that it behaves correctly
@@ -18,13 +17,25 @@ import (
 func TestRegister(t *testing.T) {
 	url := serverURL + "/register"
 
+	// Redeclare contract to not depend on server/api/register.
+	type ReqBody struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	type ValidationErrs struct {
+		Username []string `json:"username"`
+		Password []string `json:"password"`
+		Auth     string   `json:"auth"`
+	}
+	type ResBody struct {
+		Msg  string         `json:"message"`
+		Errs ValidationErrs `json:"errors"`
+	}
+
 	t.Run("ValidationErrs", func(t *testing.T) {
 		t.Log("dbConnStr: " + dbConnStr)
 
-		db, err := sql.Open(
-			"postgres",
-			"postgres://itestuser:itestpwd@localhost:5432/itestdb?sslmode=disable",
-		)
+		db, err := sql.Open("postgres", dbConnStr)
 		if err != nil {
 			t.Fatal(err.Error())
 		}
@@ -99,42 +110,43 @@ func TestRegister(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBody := registerAPI.ReqBody{
+				reqBody, err := json.Marshal(ReqBody{
 					Username: c.username,
 					Password: c.password,
-				}
-				reqBodyJSON, err := json.Marshal(reqBody)
+				})
 				if err != nil {
 					t.Fatal(err)
 				}
 				res, err := http.Post(
-					url, "application/json", bytes.NewBuffer(reqBodyJSON),
+					url, "application/json", bytes.NewBuffer(reqBody),
 				)
 				if err != nil {
 					t.Fatal(err)
 				}
 
-				if err := assert.Equal(
+				if err := assertEqual(
 					http.StatusBadRequest, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
 
-				resBody := registerAPI.ResBody{}
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(
+					&resBody,
+				); err != nil {
 					t.Fatal(err)
 				}
 
-				if err := assert.EqualArr(
+				if err := assertEqualArr(
 					c.usernameErrs,
-					resBody.ValidationErrs.Username,
+					resBody.Errs.Username,
 				); err != nil {
 					t.Error(err)
 				}
 
-				if err := assert.EqualArr(
+				if err := assertEqualArr(
 					c.passwordErrs,
-					resBody.ValidationErrs.Password,
+					resBody.Errs.Password,
 				); err != nil {
 					t.Error(err)
 				}
