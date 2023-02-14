@@ -4,44 +4,42 @@ package itest
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	_ "github.com/lib/pq"
+	registerAPI "server/api/register"
+	"server/assert"
+	"server/auth"
+	"server/db"
+	"server/log"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
-// TestRegister tests the /register route to assert that it behaves correctly
-// basesd on the request sent.
 func TestRegister(t *testing.T) {
-	url := serverURL + "/register"
+	const jwtKey = "itest-jwt-key-register-api"
 
-	// Redeclare contract to not depend on server/api/register.
-	type ReqBody struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-	type ValidationErrs struct {
-		Username []string `json:"username"`
-		Password []string `json:"password"`
-		Auth     string   `json:"auth"`
-	}
-	type ResBody struct {
-		Msg  string         `json:"message"`
-		Errs ValidationErrs `json:"errors"`
-	}
+	sut := registerAPI.NewHandler(
+		registerAPI.NewValidator(
+			registerAPI.NewUsernameValidator(),
+			registerAPI.NewPasswordValidator(),
+		),
+		db.NewUserSelector(dbConnPool),
+		registerAPI.NewPasswordHasher(),
+		db.NewUserInserter(dbConnPool),
+		auth.NewJWTGenerator(jwtKey),
+		log.NewAppLogger(),
+	)
+
+	// to validate the JWT returned in the HTTP response
+	jwtValidator := auth.NewJWTValidator(jwtKey)
 
 	t.Run("ValidationErrs", func(t *testing.T) {
-		db, err := sql.Open("postgres", dbConnStr)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-
 		// insert a user into the database for the UsnTaken test case
 		existingUserID := "bob123"
-		_, err = db.Exec(
+		_, err := dbConnPool.Exec(
 			`INSERT INTO app."user"(id, password) VALUES ($1, $2)`,
 			existingUserID, "somepassword",
 		)
@@ -124,21 +122,26 @@ func TestRegister(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBody, err := json.Marshal(ReqBody{
+				reqBody, err := json.Marshal(registerAPI.ReqBody{
 					Username: c.username,
 					Password: c.password,
 				})
 				if err != nil {
 					t.Fatal(err)
 				}
-				res, err := http.Post(
-					url, "application/json", bytes.NewBuffer(reqBody),
+				req, err := http.NewRequest(
+					http.MethodPost, "", bytes.NewReader(reqBody),
 				)
 				if err != nil {
 					t.Fatal(err)
 				}
+				w := httptest.NewRecorder()
 
-				if err = assertEqual(
+				sut.ServeHTTP(w, req)
+
+				res := w.Result()
+
+				if err = assert.Equal(
 					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
@@ -146,15 +149,17 @@ func TestRegister(t *testing.T) {
 
 				switch c.wantStatusCode {
 				case http.StatusOK:
+					// assert that a new user is inserted into the database with
+					// the correct credentials
 					var userID, password string
-					err = db.QueryRow(
+					err = dbConnPool.QueryRow(
 						`SELECT id, password FROM app."user" WHERE id = $1`,
 						c.username,
 					).Scan(&userID, &password)
 					if err != nil {
 						t.Fatal(err)
 					}
-					if err = assertEqual(c.username, userID); err != nil {
+					if err = assert.Equal(c.username, userID); err != nil {
 						t.Error(err)
 					}
 					if err = bcrypt.CompareHashAndPassword(
@@ -162,22 +167,36 @@ func TestRegister(t *testing.T) {
 					); err != nil {
 						t.Error(err)
 					}
+
+					// assert that the returned JWT is valid and has the correct
+					// subject
+					var jwt string
+					for _, ck := range res.Cookies() {
+						if ck.Name == "auth-token" {
+							jwt = ck.Value
+						}
+					}
+					sub := jwtValidator.Validate(jwt)
+					if err = assert.Equal(c.username, sub); err != nil {
+						t.Error(err)
+					}
 				case http.StatusBadRequest:
-					var resBody ResBody
+					// assert that the correct validation errors are returned
+					var resBody registerAPI.ResBody
 					if err := json.NewDecoder(res.Body).Decode(
 						&resBody,
 					); err != nil {
 						t.Fatal(err)
 					}
-					if err := assertEqualArr(
+					if err := assert.EqualArr(
 						c.wantUsernameErrs,
-						resBody.Errs.Username,
+						resBody.ValidationErrs.Username,
 					); err != nil {
 						t.Error(err)
 					}
-					if err := assertEqualArr(
+					if err := assert.EqualArr(
 						c.wantPasswordErrs,
-						resBody.Errs.Password,
+						resBody.ValidationErrs.Password,
 					); err != nil {
 						t.Error(err)
 					}
