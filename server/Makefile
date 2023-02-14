@@ -1,4 +1,4 @@
-.PHONY: default build run utest itest.setup itest.teardown itest itest.v
+.PHONY: default build run utest itest.u itest.d itest itest.v
 
 default:
 	@echo "ERROR: target not specified"
@@ -23,12 +23,12 @@ itest.d:
 
 # run integration tests
 itest:
-	@make itest.setup
+	@make itest.u
 	go test -tags=itest ./itest
-	@make itest.teardown
+	@make itest.d
 
 # run integration tests in [v]erbose mode
 itest.v:
-	@make itest.setup
+	@make itest.u
 	go test -v -tags=itest ./itest
-	@make itest.teardown
+	@make itest.d
