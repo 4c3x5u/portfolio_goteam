@@ -43,6 +43,12 @@ func TestLogin(t *testing.T) {
 			password:       "",
 			wantStatusCode: http.StatusBadRequest,
 		},
+		{
+			name:           "UsnIncorrect",
+			username:       "bob321",
+			password:       "P4ssw@rd123",
+			wantStatusCode: http.StatusBadRequest,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			reqBody, err := json.Marshal(loginAPI.ReqBody{
