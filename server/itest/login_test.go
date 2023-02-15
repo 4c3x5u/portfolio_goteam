@@ -106,7 +106,7 @@ func TestLogin(t *testing.T) {
 						return []byte(jwtKey), nil
 					},
 				); err != nil {
-					t.Error(err)
+					t.Fatal(err)
 				}
 				if err = assert.Equal(c.username, claims.Subject); err != nil {
 					t.Error(err)
