@@ -15,6 +15,7 @@ import (
 	"server/db"
 	"server/log"
 
+	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,9 +31,6 @@ func TestRegister(t *testing.T) {
 		auth.NewJWTGenerator(jwtKey),
 		log.NewAppLogger(),
 	)
-
-	// To validate the JWT returned in the HTTP response.
-	jwtValidator := auth.NewJWTValidator(jwtKey)
 
 	for _, c := range []struct {
 		name             string
@@ -177,14 +175,22 @@ func TestRegister(t *testing.T) {
 
 				// assert that the returned JWT is valid and has the correct
 				// subject
-				var jwt string
+				var token string
 				for _, ck := range res.Cookies() {
 					if ck.Name == "auth-token" {
-						jwt = ck.Value
+						token = ck.Value
 					}
 				}
-				sub := jwtValidator.Validate(jwt)
-				if err = assert.Equal(c.username, sub); err != nil {
+
+				claims := jwt.RegisteredClaims{}
+				if _, err = jwt.ParseWithClaims(
+					token, &claims, func(token *jwt.Token) (any, error) {
+						return []byte(jwtKey), nil
+					},
+				); err != nil {
+					t.Error(err)
+				}
+				if err = assert.Equal(c.username, claims.Subject); err != nil {
 					t.Error(err)
 				}
 			}
