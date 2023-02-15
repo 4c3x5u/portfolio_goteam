@@ -38,3 +38,8 @@ CREATE TABLE app.subtask (
   title  VARCHAR(50) NOT NULL,
   isDone BOOLEAN     NOT NULL
 );
+
+INSERT INTO app."user"(id, password) VALUES (
+  'bob123',
+  '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO'
+);

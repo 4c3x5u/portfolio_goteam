@@ -16,10 +16,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// dbConnPool is the database connection pool used during integration testing.
-// It is set in main_test.go/TestMain.
-var dbConnPool *sql.DB
-
 func TestMain(m *testing.M) {
 	// create a new pool to run the resource (i.e. test db) in
 	pool, err := dockertest.NewPool("")
