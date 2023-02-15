@@ -1,98 +1,58 @@
 package db
 
 // FakeCloser is a test fake for Closer.
-type FakeCloser struct{ IsCalled bool }
+type FakeCloser struct{}
 
-// Close implements the Closer interface on FakeCloser. It assigns the
-// parameters passed into it to their corresponding In... fields on the fake
-// instance.
-func (c *FakeCloser) Close() { c.IsCalled = true }
+// Close implements the Closer interface on FakeCloser.
+func (c *FakeCloser) Close() {}
 
 // FakeUserInserter is a test fake for Inserter[User].
-type FakeUserInserter struct {
-	InUser User
-	OutErr error
-}
+type FakeUserInserter struct{ OutErr error }
 
-// Insert implements the Inserter[User] interface on FakeUserInserter. It
-// assigns the parameters passed into it to their corresponding In... fields on
-// the fake instance and returns its Out.. fields as per function signature.
-
-func (f *FakeUserInserter) Insert(user User) error {
-	f.InUser = user
-	return f.OutErr
-}
+// Insert implements the Inserter[User] interface on FakeUserInserter.
+func (f *FakeUserInserter) Insert(_ User) error { return f.OutErr }
 
 // FakeUserSelector is a test fake for Selector[User].
 type FakeUserSelector struct {
-	InUserID string
-	OutRes   User
-	OutErr   error
+	OutRes User
+	OutErr error
 }
 
-// Select implements the Selector[User] interface on FakeUserSelector. It
-// assigns the parameters passed into it to their corresponding In... fields on
-// the fake instance and returns its Out.. fields as per function signature.
-func (f *FakeUserSelector) Select(userID string) (User, error) {
-	f.InUserID = userID
+// Select implements the Selector[User] interface on FakeUserSelector.
+func (f *FakeUserSelector) Select(_ string) (User, error) {
 	return f.OutRes, f.OutErr
 }
 
 // FakeCounter is a test fake for Counter.
 type FakeCounter struct {
-	InID   string
 	OutRes int
 	OutErr error
 }
 
-// Count implements the Counter interface on FakeCounter. It assigns the
-// parameters passed into it to their corresponding In... fields on the fake
-// instance and returns its Out.. fields as per function signature.
-func (f *FakeCounter) Count(id string) (int, error) {
-	f.InID = id
+// Count implements the Counter interface on FakeCounter.
+func (f *FakeCounter) Count(_ string) (int, error) {
 	return f.OutRes, f.OutErr
 }
 
 // FakeBoardInserter is a test fake for Inserter[Board].
-type FakeBoardInserter struct {
-	InBoard Board
-	OutErr  error
-}
+type FakeBoardInserter struct{ OutErr error }
 
-// Insert implements the Inserter[Board] interface on FakeBoardInserter. It
-// assigns the parameters passed into it to their corresponding In... fields on
-// the fake instance and returns its Out.. fields as per function signature.
-func (f *FakeBoardInserter) Insert(board Board) error {
-	f.InBoard = board
-	return f.OutErr
-}
+// Insert implements the Inserter[Board] interface on FakeBoardInserter.
+func (f *FakeBoardInserter) Insert(_ Board) error { return f.OutErr }
 
 // FakeRelSelector is a test fake for RelSelector.
 type FakeRelSelector struct {
-	InIDA      string
-	InIDB      string
 	OutIsAdmin bool
 	OutErr     error
 }
 
-// Select implements the RelSelector interface on FakeRelSelector. It assigns
-// the parameters passed into it to their corresponding In... fields on the fake
-// instance and returns its Out.. fields as per function signature.
-func (f *FakeRelSelector) Select(idA, idB string) (bool, error) {
-	f.InIDA, f.InIDB = idA, idB
+// Select implements the RelSelector interface on FakeRelSelector.
+func (f *FakeRelSelector) Select(_, _ string) (bool, error) {
 	return f.OutIsAdmin, f.OutErr
 }
 
 // FakeDeleter is a test fake for Deleter.
-type FakeDeleter struct {
-	InID   string
-	OutErr error
-}
+type FakeDeleter struct{ OutErr error }
 
-// Delete implements the Deleter interface on FakeDeleter. It assigns the
-// parameters passed into it to their corresponding In... fields on the fake
-// instance and returns its Out.. fields as per function signature.
-func (f *FakeDeleter) Delete(id string) error {
-	f.InID = id
-	return f.OutErr
-}
+// Delete implements the Deleter interface on FakeDeleter.
+func (f *FakeDeleter) Delete(_ string) error { return f.OutErr }

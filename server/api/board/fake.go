@@ -3,31 +3,21 @@ package board
 import "net/url"
 
 // fakePOSTReqValidator is a test fake for POSTReqValidator.
-type fakePOSTReqValidator struct {
-	InReqBody POSTReqBody
-	OutErrMsg string
-}
+type fakePOSTReqValidator struct{ OutErrMsg string }
 
 // Validate implements the POSTReqValidator interface on fakePOSTReqValidator.
-// It assigns the parameters passed into it to their corresponding In... fields
-// on the fake instance and returns its Out.. fields as per function signature.
-func (f *fakePOSTReqValidator) Validate(reqBody POSTReqBody) string {
-	f.InReqBody = reqBody
+func (f *fakePOSTReqValidator) Validate(_ POSTReqBody) string {
 	return f.OutErrMsg
 }
 
 // fakeDELETEReqValidator is a test fake for DELETEReqValidator.
 type fakeDELETEReqValidator struct {
-	InQParams url.Values
-	OutID     string
-	OutOK     bool
+	OutID string
+	OutOK bool
 }
 
 // Validate implements the DELETEReqValidator interface on
-// fakeDELETEReqValidator. It assigns the parameters passed into it to
-// their corresponding In... fields on the fake instance and returns its Out..
-// fields as per function signature.
-func (f *fakeDELETEReqValidator) Validate(qParams url.Values) (string, bool) {
-	f.InQParams = qParams
+// fakeDELETEReqValidator.
+func (f *fakeDELETEReqValidator) Validate(_ url.Values) (string, bool) {
 	return f.OutID, f.OutOK
 }
