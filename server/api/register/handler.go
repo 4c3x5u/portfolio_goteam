@@ -12,7 +12,7 @@ import (
 	"server/log"
 )
 
-// Handler is the http.Handler for the register route.
+// Handler is a http.Handler that can be used to handle register requests.
 type Handler struct {
 	validator          ReqValidator
 	dbUserSelector     db.Selector[db.User]
@@ -50,7 +50,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read and validate request body.
+	// Read request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.logger.Log(log.LevelError, err.Error())
@@ -58,7 +58,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate request, return errors if any occur.
+	// Validate request body, write errors if any occur.
 	if validationErrs := h.validator.Validate(reqBody); validationErrs.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(

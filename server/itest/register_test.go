@@ -148,6 +148,26 @@ func TestRegister(t *testing.T) {
 				}
 
 				switch c.wantStatusCode {
+				case http.StatusBadRequest:
+					// assert that the correct validation errors are returned
+					var resBody registerAPI.ResBody
+					if err = json.NewDecoder(res.Body).Decode(
+						&resBody,
+					); err != nil {
+						t.Fatal(err)
+					}
+					if err = assert.EqualArr(
+						c.wantUsernameErrs,
+						resBody.ValidationErrs.Username,
+					); err != nil {
+						t.Error(err)
+					}
+					if err = assert.EqualArr(
+						c.wantPasswordErrs,
+						resBody.ValidationErrs.Password,
+					); err != nil {
+						t.Error(err)
+					}
 				case http.StatusOK:
 					// assert that a new user is inserted into the database with
 					// the correct credentials
@@ -178,26 +198,6 @@ func TestRegister(t *testing.T) {
 					}
 					sub := jwtValidator.Validate(jwt)
 					if err = assert.Equal(c.username, sub); err != nil {
-						t.Error(err)
-					}
-				case http.StatusBadRequest:
-					// assert that the correct validation errors are returned
-					var resBody registerAPI.ResBody
-					if err := json.NewDecoder(res.Body).Decode(
-						&resBody,
-					); err != nil {
-						t.Fatal(err)
-					}
-					if err := assert.EqualArr(
-						c.wantUsernameErrs,
-						resBody.ValidationErrs.Username,
-					); err != nil {
-						t.Error(err)
-					}
-					if err := assert.EqualArr(
-						c.wantPasswordErrs,
-						resBody.ValidationErrs.Password,
-					); err != nil {
 						t.Error(err)
 					}
 				}

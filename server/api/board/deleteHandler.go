@@ -8,8 +8,8 @@ import (
 	"server/log"
 )
 
-// DELETEHandler is a MethodHandler that is intended to handle DELETE requests
-// sent to the board route.
+// DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
+// requests.
 type DELETEHandler struct {
 	validator         DELETEReqValidator
 	userBoardSelector db.RelSelector[bool]

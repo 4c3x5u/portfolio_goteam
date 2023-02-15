@@ -7,7 +7,7 @@ import (
 	"server/auth"
 )
 
-// Handler is the http.Handler for the boards route.
+// Handler is a http.Handler that can be used to handle board requests.
 type Handler struct {
 	authHeaderReader   auth.HeaderReader
 	authTokenValidator auth.TokenValidator
@@ -43,8 +43,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			// Token sub is used as the username in Handle and this function is
-			// returned from.
+			// Token sub is used as the username in methodHandler.Handle.
 			methodHandler.Handle(w, r, sub)
 			return
 		}

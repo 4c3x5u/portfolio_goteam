@@ -89,28 +89,31 @@ func TestHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			// Set pre-determinate return values for sut's dependencies.
 			authTokenValidator.OutSub = c.tokenValidatorOutSub
 
-			req, err := http.NewRequest(c.httpMethod, "/board", nil)
+			// Prepare request and response recorder.
+			req, err := http.NewRequest(c.httpMethod, "", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
-
 			w := httptest.NewRecorder()
 
+			// Handle request with sut and get the result.
 			sut.ServeHTTP(w, req)
+			res := w.Result()
 
 			if err = assert.Equal(
-				c.wantStatusCode, w.Result().StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
 			if c.wantStatusCode == http.StatusUnauthorized {
-				// 401 is expected - WWWAuthenticated cookie must be set.
+				// 401 is expected - WWWAuthenticate cookie must be set.
 				name, value := auth.WWWAuthenticate()
 				if err = assert.Equal(
-					value, w.Result().Header.Get(name),
+					value, res.Header.Get(name),
 				); err != nil {
 					t.Error(err)
 				}

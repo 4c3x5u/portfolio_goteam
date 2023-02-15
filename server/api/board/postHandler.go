@@ -9,7 +9,8 @@ import (
 	"server/log"
 )
 
-// POSTHandler can be used to handle the POST requests sent to the board route.
+// POSTHandler is an api.MethodHandler that can be used to handle POST board
+// requests.
 type POSTHandler struct {
 	validator        POSTReqValidator
 	userBoardCounter db.Counter

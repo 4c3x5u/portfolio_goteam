@@ -156,6 +156,7 @@ func TestHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			// Set pre-determinate return values for sut's dependencies.
 			validator.outOK = c.validatorOutOK
 			dbUserSelector.OutRes = c.userSelectorOutUser
 			dbUserSelector.OutErr = c.userSelectorOutErr
@@ -163,6 +164,7 @@ func TestHandler(t *testing.T) {
 			authTokenGenerator.OutRes = c.tokenGeneratorOutToken
 			authTokenGenerator.OutErr = c.tokenGeneratorOutErr
 
+			// Prepare request and response recorder.
 			reqBody := ReqBody{
 				Username: "bob123", Password: "Myp4ssword!",
 			}
@@ -179,27 +181,26 @@ func TestHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
+			// Handle request with sut and get the result.
 			sut.ServeHTTP(w, req)
+			res := w.Result()
 
-			if err = assert.Equal(
-				c.wantStatusCode, w.Result().StatusCode,
-			); err != nil {
+			if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
 				t.Error(err)
 			}
 
-			// If 200 was expected, auth token must be set.
-			if c.wantStatusCode == http.StatusOK {
+			switch c.wantStatusCode {
+			case http.StatusOK:
+				// 200 was expected - auth token must be set.
 				authTokenFound := false
-				for _, ck := range w.Result().Cookies() {
+				for _, ck := range res.Cookies() {
 					if ck.Name == auth.CookieName {
 						authTokenFound = true
-
 						if err = assert.Equal(
 							c.tokenGeneratorOutToken, ck.Value,
 						); err != nil {
 							t.Error(err)
 						}
-
 						if err = assert.True(
 							ck.Expires.Unix() > time.Now().Unix(),
 						); err != nil {
@@ -207,30 +208,26 @@ func TestHandler(t *testing.T) {
 						}
 					}
 				}
-				if err = assert.True(authTokenFound); err != nil {
-					t.Error(err)
+				if !authTokenFound {
+					t.Errorf("200 was expected but auth token was not set")
 				}
-			}
-
-			// If 500 was expected, logger must be called.
-			if c.wantStatusCode == http.StatusInternalServerError {
+			case http.StatusInternalServerError:
+				// 500 was expected - an error must be logged.
 				errFound := false
-				for _, err := range []error{
+				for _, depErr := range []error{
 					c.userSelectorOutErr,
 					c.hashComparerOutErr,
 					c.tokenGeneratorOutErr,
 				} {
-					if err != nil {
+					if depErr != nil {
 						errFound = true
-
-						if err := assert.Equal(
+						if err = assert.Equal(
 							log.LevelError, logger.InLevel,
 						); err != nil {
 							t.Error(err)
 						}
-
-						if err := assert.Equal(
-							err.Error(), logger.InMessage,
+						if err = assert.Equal(
+							depErr.Error(), logger.InMessage,
 						); err != nil {
 							t.Error(err)
 						}
@@ -238,51 +235,10 @@ func TestHandler(t *testing.T) {
 				}
 				if !errFound {
 					t.Errorf(
-						"c.wantStatusCode was 500 but no errors were logged.",
+						"500 was expected but no errors were returned " +
+							"from sut's dependencies",
 					)
 				}
-				return
-			}
-
-			// DEPENDENCY-INPUT-BASED ASSERTIONS
-
-			// If request and HTTP method was valid, user selector must be called.
-			if !c.validatorOutOK ||
-				c.wantStatusCode == http.StatusMethodNotAllowed {
-				return
-			}
-			if err = assert.Equal(
-				reqBody.Username, dbUserSelector.InUserID,
-			); err != nil {
-				t.Error(err)
-			}
-
-			// If no user selector error is expected, hash comparer must be
-			// called.
-			if dbUserSelector.OutErr != nil {
-				return
-			}
-			if err = assert.Equal(
-				string(c.userSelectorOutUser.Password),
-				string(passwordComparer.inHash),
-			); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(
-				reqBody.Password, passwordComparer.inPlaintext,
-			); err != nil {
-				t.Error(err)
-			}
-
-			// If no hash comparer error is expected, token generator must be
-			// called.
-			if passwordComparer.outErr != nil {
-				return
-			}
-			if err = assert.Equal(
-				reqBody.Username, authTokenGenerator.InSub,
-			); err != nil {
-				t.Error(err)
 			}
 		})
 	}

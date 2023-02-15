@@ -33,8 +33,7 @@ const (
 )
 
 // TestValidator tests the Validator's Validate method to ensure that it returns
-// correctly whatever error is returned to it by UsernameValidator and
-// PasswordValidator.
+// whatever error is returned to it by UsernameValidator and PasswordValidator.
 func TestValidator(t *testing.T) {
 	fakeValidatorUsername := &fakeStringValidator{}
 	fakeValidatorPassword := &fakeStringValidator{}
@@ -92,7 +91,9 @@ func TestValidator(t *testing.T) {
 	}
 }
 
-func TestValidatorUsername(t *testing.T) {
+// TestUsernameValidator tests the UsernameValidator to assert that it returns
+// the correct error strings based on the username passed to it.
+func TestUsernameValidator(t *testing.T) {
 	sut := NewUsernameValidator()
 
 	for _, c := range []struct {
@@ -168,6 +169,8 @@ func TestValidatorUsername(t *testing.T) {
 	}
 }
 
+// TestPasswordValidator tests the PasswordValidator to assert that it returns
+// the correct error strings based on the password passed to it.
 func TestValidatorPassword(t *testing.T) {
 	sut := NewPasswordValidator()
 

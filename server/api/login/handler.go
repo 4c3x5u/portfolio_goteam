@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Handler is the http.Handler for the login route.
+// Handler is a http.Handler that can be used to handle login requests.
 type Handler struct {
 	validator          ReqValidator
 	dbUserSelector     db.Selector[db.User]

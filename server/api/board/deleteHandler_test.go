@@ -81,26 +81,31 @@ func TestDELETEHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			// Set pre-determinate return values for sut's dependencies.
 			validator.OutOK = c.validatorOutOK
 			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
 			userBoardDeleter.OutErr = c.boardDeleterOutErr
 
-			req, err := http.NewRequest(http.MethodPost, "/board?id=123", nil)
+			// Prepare request and response recorder.
+			req, err := http.NewRequest(http.MethodPost, "?id=123", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
-
 			w := httptest.NewRecorder()
 
+			// Handle request with sut and get the result.
 			sut.Handle(w, req, "")
+			res := w.Result()
 
+			// Assert on the status code.
 			if err := assert.Equal(
-				c.wantStatusCode, w.Result().StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
+			// If 500 was expected - an error must be logged.
 			if c.wantStatusCode == http.StatusInternalServerError {
 				errFound := false
 				for _, err := range []error{
