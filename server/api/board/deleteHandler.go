@@ -45,22 +45,22 @@ func (h DELETEHandler) Handle(
 
 	// Validate that the user making the request is the admin of the board to be
 	// deleted.
-	isAdmin, err := h.userBoardSelector.Select(username, boardID)
-	if err == sql.ErrNoRows {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
+	if isAdmin, err := h.userBoardSelector.Select(
+		username, boardID,
+	); err != nil && err != sql.ErrNoRows {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	}
-	if !isAdmin {
+	} else if err == sql.ErrNoRows || !isAdmin {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	// Delete the board.
-	if err = h.boardDeleter.Delete(boardID); err != nil {
+	if err := h.boardDeleter.Delete(boardID); err == sql.ErrNoRows {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

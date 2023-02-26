@@ -40,12 +40,12 @@ func TestDELETEHandler(t *testing.T) {
 			wantStatusCode:              http.StatusBadRequest,
 		},
 		{
-			name:                        "NoRows",
+			name:                        "NoRowsInUserBoardTable",
 			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusNotFound,
+			wantStatusCode:              http.StatusUnauthorized,
 		},
 		{
 			name:                        "ConnDone",
@@ -70,6 +70,14 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          errors.New("delete board error"),
 			wantStatusCode:              http.StatusInternalServerError,
+		},
+		{
+			name:                        "BoardNotFound",
+			validatorOutOK:              true,
+			userBoardSelectorOutIsAdmin: true,
+			userBoardSelectorOutErr:     nil,
+			boardDeleterOutErr:          sql.ErrNoRows,
+			wantStatusCode:              http.StatusNotFound,
 		},
 		{
 			name:                        "Success",
