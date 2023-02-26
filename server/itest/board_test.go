@@ -65,6 +65,13 @@ func TestBoard(t *testing.T) {
 			boardName:      "",
 			wantStatusCode: http.StatusBadRequest,
 		},
+		{
+			name: "TooLongBoardName",
+			authHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+			boardName:      "A Board Whose Name Is Just Too Long!",
+			wantStatusCode: http.StatusBadRequest,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			reqBody, err := json.Marshal(boardAPI.POSTReqBody{
