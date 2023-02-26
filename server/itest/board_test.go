@@ -40,19 +40,35 @@ func TestBoard(t *testing.T) {
 	)
 
 	for _, c := range []struct {
-		name       string
-		authHeader string
+		name           string
+		authHeader     string
+		boardName      string
+		wantStatusCode int
 	}{
-		{name: "NoAuthHeader", authHeader: ""},
+		{
+			name:           "NoAuthHeader",
+			authHeader:     "",
+			boardName:      "",
+			wantStatusCode: http.StatusUnauthorized,
+		},
 		{
 			name: "InvalidAuthHeader",
 			authHeader: "eyJhbGciOiJIUzI1NiNowAsEtqKSQauaqow1.eyJzdWIiOiJib2I" +
 				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+			boardName:      "",
+			wantStatusCode: http.StatusUnauthorized,
+		},
+		{
+			name: "EmptyBoardName",
+			authHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+			boardName:      "",
+			wantStatusCode: http.StatusBadRequest,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			reqBody, err := json.Marshal(boardAPI.POSTReqBody{
-				Name: "New Board",
+				Name: c.boardName,
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -73,20 +89,21 @@ func TestBoard(t *testing.T) {
 			res := w.Result()
 
 			if err = assert.Equal(
-				http.StatusUnauthorized, res.StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
-			wantAuthHeaderName, wantAuthHeaderValue := auth.WWWAuthenticate()
-			gotAuthHeaderValue := res.Header.Values(wantAuthHeaderName)[0]
-			if err := assert.Equal(
-				wantAuthHeaderValue,
-				gotAuthHeaderValue,
-			); err != nil {
-				t.Error(err)
+			if c.authHeader == "" {
+				wantAuthHeaderName, wantAuthHeaderValue := auth.WWWAuthenticate()
+				gotAuthHeaderValue := res.Header.Values(wantAuthHeaderName)[0]
+				if err := assert.Equal(
+					wantAuthHeaderValue,
+					gotAuthHeaderValue,
+				); err != nil {
+					t.Error(err)
+				}
 			}
-
 		})
 	}
 }
