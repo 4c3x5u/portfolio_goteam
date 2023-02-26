@@ -44,12 +44,14 @@ func TestBoard(t *testing.T) {
 		authHeader     string
 		boardName      string
 		wantStatusCode int
+		wantErrMsg     string
 	}{
 		{
 			name:           "NoAuthHeader",
 			authHeader:     "",
 			boardName:      "",
 			wantStatusCode: http.StatusUnauthorized,
+			wantErrMsg:     "",
 		},
 		{
 			name: "InvalidAuthHeader",
@@ -57,6 +59,7 @@ func TestBoard(t *testing.T) {
 				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
 			boardName:      "",
 			wantStatusCode: http.StatusUnauthorized,
+			wantErrMsg:     "",
 		},
 		{
 			name: "EmptyBoardName",
@@ -64,6 +67,7 @@ func TestBoard(t *testing.T) {
 				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
 			boardName:      "",
 			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Board name cannot be empty.",
 		},
 		{
 			name: "TooLongBoardName",
@@ -71,6 +75,17 @@ func TestBoard(t *testing.T) {
 				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
 			boardName:      "A Board Whose Name Is Just Too Long!",
 			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Board name cannot be longer than 35 characters.",
+		},
+		{
+			name: "TooManyBoards",
+			authHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+			boardName:      "bob123's new board",
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg: "You have already created the maximum amount of " +
+				"boards allowed per user. Please delete one of your boards " +
+				"to create a new one.",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -101,13 +116,22 @@ func TestBoard(t *testing.T) {
 				t.Error(err)
 			}
 
-			if c.authHeader == "" {
-				wantAuthHeaderName, wantAuthHeaderValue := auth.WWWAuthenticate()
-				gotAuthHeaderValue := res.Header.Values(wantAuthHeaderName)[0]
-				if err := assert.Equal(
-					wantAuthHeaderValue,
-					gotAuthHeaderValue,
+			if c.wantStatusCode == http.StatusBadRequest {
+				resBody := boardAPI.POSTResBody{}
+				if err = json.NewDecoder(w.Result().Body).Decode(
+					&resBody,
 				); err != nil {
+					t.Error(err)
+				}
+				if err = assert.Equal(
+					c.wantErrMsg, resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			}
+			if c.authHeader == "" {
+				authResHeader := res.Header.Values("WWW-Authenticate")[0]
+				if err := assert.Equal("Bearer", authResHeader); err != nil {
 					t.Error(err)
 				}
 			}
