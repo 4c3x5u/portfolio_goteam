@@ -60,6 +60,8 @@ func (h POSTHandler) Handle(
 	if boardCount, err := h.userBoardCounter.Count(
 		username,
 	); err != nil && err != sql.ErrNoRows {
+		// sql.ErrNoRows is OK here. It just means the user hasn't created any
+		// boards yet.
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
