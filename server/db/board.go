@@ -96,7 +96,7 @@ func (d BoardDeleter) Delete(id string) error {
 	// Delete the row from the board table that corresponds to the board ID.
 	// i.e. Delete board.
 	if _, err = tx.ExecContext(
-		ctx, "DELETE FROM app.user WHERE boardID = $1", id,
+		ctx, "DELETE FROM app.board WHERE boardID = $1", id,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return wrapRollbackErr(err, rollbackErr)

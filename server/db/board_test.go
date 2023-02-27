@@ -91,7 +91,7 @@ func TestBoardInserter(t *testing.T) {
 
 			err := sut.Insert(board)
 
-			if err := assert.Equal(c.wantErr, err); err != nil {
+			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
 		})
@@ -101,7 +101,7 @@ func TestBoardInserter(t *testing.T) {
 func TestBoardDeleter(t *testing.T) {
 	const (
 		sqlDeleteRel   = `DELETE FROM app.user_board WHERE boardID = \$1`
-		sqlDeleteBoard = `DELETE FROM app.user WHERE boardID = \$1`
+		sqlDeleteBoard = `DELETE FROM app.board WHERE boardID = \$1`
 		boardID        = "123"
 	)
 
