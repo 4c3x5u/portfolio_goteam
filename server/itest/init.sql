@@ -40,11 +40,13 @@ CREATE TABLE app.subtask (
 );
 
 INSERT INTO app."user"(id, password) 
-VALUES ('bob123', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO');
+VALUES 
+  ('bob123', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO'),
+  ('bob124', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO');
 
 INSERT INTO app.board(name) 
 VALUES ('Board #1'), ('Board #2'), ('Board #3');
 
 INSERT INTO app.user_board(userID, boardID, isAdmin) 
-VALUES ('bob123', 1, true), ('bob123', 2, true), ('bob123', 3, true);
+VALUES ('bob123', 1, TRUE), ('bob123', 2, TRUE), ('bob123', 3, TRUE);
 

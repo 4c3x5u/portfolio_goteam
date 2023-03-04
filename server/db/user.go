@@ -1,10 +1,6 @@
 package db
 
-import (
-	"database/sql"
-
-	_ "github.com/lib/pq"
-)
+import "database/sql"
 
 // User represents a record in the user table.
 type User struct {

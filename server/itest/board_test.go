@@ -45,13 +45,16 @@ func TestBoard(t *testing.T) {
 		boardName      string
 		wantStatusCode int
 		wantErrMsg     string
+		userID         string // only used for board count on POST success
 	}{
+		// Auth Cases
 		{
 			name:           "NoAuthHeader",
 			authHeader:     "",
 			boardName:      "",
 			wantStatusCode: http.StatusUnauthorized,
 			wantErrMsg:     "",
+			userID:         "",
 		},
 		{
 			name: "InvalidAuthHeader",
@@ -60,7 +63,10 @@ func TestBoard(t *testing.T) {
 			boardName:      "",
 			wantStatusCode: http.StatusUnauthorized,
 			wantErrMsg:     "",
+			userID:         "",
 		},
+
+		// POST Cases
 		{
 			name: "EmptyBoardName",
 			authHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
@@ -68,6 +74,7 @@ func TestBoard(t *testing.T) {
 			boardName:      "",
 			wantStatusCode: http.StatusBadRequest,
 			wantErrMsg:     "Board name cannot be empty.",
+			userID:         "",
 		},
 		{
 			name: "TooLongBoardName",
@@ -76,6 +83,7 @@ func TestBoard(t *testing.T) {
 			boardName:      "A Board Whose Name Is Just Too Long!",
 			wantStatusCode: http.StatusBadRequest,
 			wantErrMsg:     "Board name cannot be longer than 35 characters.",
+			userID:         "",
 		},
 		{
 			name: "TooManyBoards",
@@ -86,6 +94,16 @@ func TestBoard(t *testing.T) {
 			wantErrMsg: "You have already created the maximum amount of " +
 				"boards allowed per user. Please delete one of your boards " +
 				"to create a new one.",
+			userID: "",
+		},
+		{
+			name: "Succeess",
+			authHeader: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+				"xMjQifQ.LqENrj9APUHgQ3X0HRN6-IFMIg6nyo0_n74KfoxA0qI",
+			boardName:      "bob124's new board",
+			wantStatusCode: http.StatusOK,
+			wantErrMsg:     "",
+			userID:         "bob124",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -116,7 +134,13 @@ func TestBoard(t *testing.T) {
 				t.Error(err)
 			}
 
-			if c.wantStatusCode == http.StatusBadRequest {
+			switch c.wantStatusCode {
+			case http.StatusUnauthorized:
+				authResHeader := res.Header.Values("WWW-Authenticate")[0]
+				if err = assert.Equal("Bearer", authResHeader); err != nil {
+					t.Error(err)
+				}
+			case http.StatusBadRequest:
 				resBody := boardAPI.POSTResBody{}
 				if err = json.NewDecoder(w.Result().Body).Decode(
 					&resBody,
@@ -128,10 +152,17 @@ func TestBoard(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
-			}
-			if c.authHeader == "" {
-				authResHeader := res.Header.Values("WWW-Authenticate")[0]
-				if err := assert.Equal("Bearer", authResHeader); err != nil {
+			case http.StatusOK:
+				var boardCount int
+				err = dbConnPool.QueryRow(
+					"SELECT COUNT(*) FROM app.user_board "+
+						"WHERE userID = $1 AND isAdmin = TRUE",
+					c.userID,
+				).Scan(&boardCount)
+				if err != nil {
+					t.Error(err)
+				}
+				if err = assert.Equal(1, boardCount); err != nil {
 					t.Error(err)
 				}
 			}

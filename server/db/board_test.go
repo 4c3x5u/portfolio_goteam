@@ -18,14 +18,14 @@ func TestBoardInserter(t *testing.T) {
 	const (
 		sqlInsertBoard     = `INSERT INTO app.board\(name\) VALUES \(\$1\)`
 		sqlInsertUserBoard = `INSERT INTO app.user_board\(userID, boardID, ` +
-			`isAdmin\) VALUES\(\$1, \$2, \$3\)`
+			`isAdmin\) VALUES\(\$1, \$2, TRUE\)`
 	)
 
 	// Since we're doing pointer comparison for errors in test cases below, we
 	// just need a generic error to be returned at different points in code and
 	// ansure the expected SQL is executed and the same error is returned.
 	someErr := errors.New("some error occured")
-	board := NewBoard("bob123", "someboard")
+	board := NewBoard("someboard", "bob123")
 
 	for _, c := range []struct {
 		name      string
@@ -44,7 +44,7 @@ func TestBoardInserter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlInsertBoard).
+					ExpectQuery(sqlInsertBoard).
 					WithArgs(board.name).
 					WillReturnError(someErr)
 				mock.ExpectRollback()
@@ -56,12 +56,14 @@ func TestBoardInserter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlInsertBoard).
+					ExpectQuery(sqlInsertBoard).
 					WithArgs(board.name).
-					WillReturnResult(sqlmock.NewResult(0, 1))
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
 				mock.
 					ExpectExec(sqlInsertUserBoard).
-					WithArgs(board.adminID, board.name, true).
+					WithArgs(board.adminID, 1).
 					WillReturnError(someErr)
 				mock.ExpectRollback()
 			},
@@ -72,13 +74,16 @@ func TestBoardInserter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlInsertBoard).
+					ExpectQuery(sqlInsertBoard).
 					WithArgs(board.name).
-					WillReturnResult(sqlmock.NewResult(0, 1))
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
 				mock.
 					ExpectExec(sqlInsertUserBoard).
-					WithArgs(board.adminID, board.name, true).
+					WithArgs(board.adminID, 1).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit()
 			},
 			wantErr: nil,
 		},
@@ -170,8 +175,7 @@ func TestBoardDeleter(t *testing.T) {
 			sut := NewBoardDeleter(db)
 
 			err := sut.Delete(boardID)
-
-			if err := assert.Equal(c.wantErr, err); err != nil {
+			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
 		})

@@ -32,7 +32,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Find the MethodHandler for the HTTP method of the received request.
 	for method, methodHandler := range h.methodHandlers {
 		// If found, authenticate and handle with MethodHandler.
-		if method == r.Method {
+		if r.Method == method {
 			// Get auth token from Authorization header, validate it, and get
 			// the subject of the token.
 			authToken := h.authHeaderReader.Read(r.Header.Get("Authorization"))

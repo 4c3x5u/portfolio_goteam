@@ -89,7 +89,7 @@ func TestUserBoardCounter(t *testing.T) {
 		3: sql.ErrNoRows,
 		6: nil,
 	} {
-		t.Run(fmt.Sprintf("Count[%d]", wantCount), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Count%d", wantCount), func(t *testing.T) {
 			mock.ExpectQuery(query).WithArgs(userID, true).WillReturnRows(
 				mock.NewRows([]string{"count"}).AddRow(wantCount),
 			).WillReturnError(wantErr)

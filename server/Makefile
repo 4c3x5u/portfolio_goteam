@@ -9,6 +9,11 @@ build:
 run:
 	go run .
 
+# all tests
+test:
+	make utest
+	make itest
+
 # unit tests
 utest:
 	go test -tags=utest ./...
@@ -20,3 +25,4 @@ itest:
 # integration tests [v]erbose
 itest.v:
 	go test -v -tags=itest ./itest
+

@@ -34,9 +34,11 @@ func (i BoardInserter) Insert(board Board) error {
 
 	// Insert the new board into the board table.
 	// i.e. Create board.
-	if _, err = tx.ExecContext(
-		ctx, "INSERT INTO app.board(name) VALUES ($1)", board.name,
-	); err != nil {
+	var boardID int64
+	err = tx.QueryRowContext(
+		ctx, "INSERT INTO app.board(name) VALUES ($1) RETURNING id", board.name,
+	).Scan(&boardID)
+	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return wrapRollbackErr(err, rollbackErr)
 		}
@@ -48,16 +50,17 @@ func (i BoardInserter) Insert(board Board) error {
 	if _, err = tx.ExecContext(
 		ctx,
 		"INSERT INTO app.user_board(userID, boardID, isAdmin) "+
-			"VALUES($1, $2, $3)",
+			"VALUES($1, $2, TRUE)",
 		board.adminID,
-		board.name,
-		true,
+		boardID,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return wrapRollbackErr(err, rollbackErr)
 		}
 		return err
 	}
+
+	tx.Commit()
 
 	return nil
 }
