@@ -203,11 +203,17 @@ func TestBoard(t *testing.T) {
 
 	t.Run("DELETE", func(t *testing.T) {
 		for _, c := range []struct {
-			name string
-			id   string
+			name           string
+			id             string
+			wantStatusCode int
 		}{
-			{name: "EmptyID", id: ""},
-			{name: "NonIntID", id: "qwerty"},
+			{name: "EmptyID", id: "", wantStatusCode: http.StatusBadRequest},
+			{name: "NonIntID", id: "qwerty", wantStatusCode: http.StatusBadRequest},
+			{
+				name:           "UserBoardNotFound",
+				id:             "123",
+				wantStatusCode: http.StatusUnauthorized,
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				req, err := http.NewRequest(
@@ -226,7 +232,7 @@ func TestBoard(t *testing.T) {
 				res := w.Result()
 
 				if err = assert.Equal(
-					http.StatusBadRequest, res.StatusCode,
+					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
