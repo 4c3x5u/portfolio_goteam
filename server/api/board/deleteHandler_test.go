@@ -21,7 +21,26 @@ func TestDELETEHandler(t *testing.T) {
 	userBoardSelector := &db.FakeRelSelector{}
 	userBoardDeleter := &db.FakeDeleter{}
 	logger := &log.FakeLogger{}
-	sut := NewDELETEHandler(validator, userBoardSelector, userBoardDeleter, logger)
+	sut := NewDELETEHandler(
+		validator, userBoardSelector, userBoardDeleter, logger,
+	)
+
+	// used in 500 error cases to assert on the logged error message
+	assertOnLoggedErr := func(wantErrMsg string) func(*testing.T) {
+		return func(t *testing.T) {
+			if levelErr := assert.Equal(
+				log.LevelError, logger.InLevel,
+			); levelErr != nil {
+				t.Error(levelErr)
+			}
+
+			if msgErr := assert.Equal(
+				wantErrMsg, logger.InMessage,
+			); msgErr != nil {
+				t.Error(msgErr)
+			}
+		}
+	}
 
 	for _, c := range []struct {
 		name                        string
@@ -30,6 +49,7 @@ func TestDELETEHandler(t *testing.T) {
 		userBoardSelectorOutErr     error
 		boardDeleterOutErr          error
 		wantStatusCode              int
+		assertFunc                  func(*testing.T)
 	}{
 		{
 			name:                        "ValidatorErr",
@@ -38,6 +58,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
+			assertFunc:                  func(t *testing.T) {},
 		},
 		{
 			name:                        "NoRowsInUserBoardTable",
@@ -46,6 +67,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
+			assertFunc:                  func(t *testing.T) {},
 		},
 		{
 			name:                        "ConnDone",
@@ -54,6 +76,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
+			assertFunc:                  assertOnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
 			name:                        "NotAdmin",
@@ -62,6 +85,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
+			assertFunc:                  func(t *testing.T) {},
 		},
 		{
 			name:                        "DeleteErr",
@@ -70,6 +94,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          errors.New("delete board error"),
 			wantStatusCode:              http.StatusInternalServerError,
+			assertFunc:                  assertOnLoggedErr("delete board error"),
 		},
 		{
 			name:                        "Success",
@@ -78,6 +103,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusOK,
+			assertFunc:                  func(t *testing.T) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -105,36 +131,8 @@ func TestDELETEHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If 500 was expected - an error must be logged.
-			if c.wantStatusCode == http.StatusInternalServerError {
-				errFound := false
-				for _, err := range []error{
-					c.userBoardSelectorOutErr,
-					c.boardDeleterOutErr,
-				} {
-					if err != nil {
-						errFound = true
-
-						if levelErr := assert.Equal(
-							log.LevelError, logger.InLevel,
-						); levelErr != nil {
-							t.Error(levelErr)
-						}
-
-						if msgErr := assert.Equal(
-							err.Error(), logger.InMessage,
-						); msgErr != nil {
-							t.Error(msgErr)
-						}
-					}
-				}
-				if !errFound {
-					t.Errorf(
-						"c.wantStatusCode was %d but no errors were logged.",
-						http.StatusInternalServerError,
-					)
-				}
-			}
+			// Run case-specific assertions.
+			c.assertFunc(t)
 		})
 	}
 }

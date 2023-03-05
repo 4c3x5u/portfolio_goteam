@@ -33,11 +33,10 @@ func TestRegister(t *testing.T) {
 	)
 
 	// used in 400 error cases to assert on username and password error messages
-	assert400 := func(
+	assertOnValidationErrs := func(
 		wantUsernameErrs, wantPasswordErrs []string,
 	) func(*testing.T, *http.Response) {
 		return func(t *testing.T, res *http.Response) {
-			// assert that the correct validation errors are returned
 			var resBody registerAPI.ResBody
 			if err := json.NewDecoder(res.Body).Decode(
 				&resBody,
@@ -71,7 +70,7 @@ func TestRegister(t *testing.T) {
 			username:       "",
 			password:       "",
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc: assert400(
+			assertFunc: assertOnValidationErrs(
 				[]string{"Username cannot be empty."},
 				[]string{"Password cannot be empty."},
 			),
@@ -82,7 +81,7 @@ func TestRegister(t *testing.T) {
 			username:       "bob!",
 			password:       "PASSSSS",
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc: assert400(
+			assertFunc: assertOnValidationErrs(
 				[]string{
 					"Username cannot be shorter than 5 characters.",
 					"Username can contain only letters (a-z/A-Z) and digits " +
@@ -105,7 +104,7 @@ func TestRegister(t *testing.T) {
 			password: "p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p" +
 				"£$ 123p£$ 123p£$ 123p£",
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc: assert400(
+			assertFunc: assertOnValidationErrs(
 				[]string{
 					"Username cannot be longer than 15 characters.",
 					"Username can start only with a letter (a-z/A-Z).",
@@ -126,7 +125,7 @@ func TestRegister(t *testing.T) {
 			username:       "bob123",
 			password:       "Myp4ssw0rd!",
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc: assert400(
+			assertFunc: assertOnValidationErrs(
 				[]string{"Username is already taken."}, []string{},
 			),
 		},
@@ -204,6 +203,7 @@ func TestRegister(t *testing.T) {
 				t.Error(err)
 			}
 
+			// Run case-specific assertions.
 			c.assertFunc(t, res)
 		})
 	}

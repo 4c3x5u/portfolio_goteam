@@ -197,6 +197,7 @@ func TestBoard(t *testing.T) {
 					t.Error(err)
 				}
 
+				// Run case-specific assertions.
 				c.assertFunc(t, w)
 			})
 		}
@@ -276,6 +277,7 @@ func TestBoard(t *testing.T) {
 					t.Error(err)
 				}
 
+				// Run case-specific assertions.
 				c.assertFunc(t)
 			})
 		}

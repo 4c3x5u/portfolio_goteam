@@ -115,6 +115,7 @@ func TestLogin(t *testing.T) {
 				t.Error(err)
 			}
 
+			// Run case-specific assertions.
 			c.assertFunc(t, res)
 		})
 	}
