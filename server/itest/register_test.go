@@ -32,21 +32,49 @@ func TestRegister(t *testing.T) {
 		log.NewAppLogger(),
 	)
 
+	// used in 400 error cases to assert on username and password error messages
+	assert400 := func(
+		wantUsernameErrs, wantPasswordErrs []string,
+	) func(*testing.T, *http.Response) {
+		return func(t *testing.T, res *http.Response) {
+			// assert that the correct validation errors are returned
+			var resBody registerAPI.ResBody
+			if err := json.NewDecoder(res.Body).Decode(
+				&resBody,
+			); err != nil {
+				t.Fatal(err)
+			}
+			if err := assert.EqualArr(
+				wantUsernameErrs,
+				resBody.ValidationErrs.Username,
+			); err != nil {
+				t.Error(err)
+			}
+			if err := assert.EqualArr(
+				wantPasswordErrs,
+				resBody.ValidationErrs.Password,
+			); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	for _, c := range []struct {
-		name             string
-		username         string
-		password         string
-		wantStatusCode   int
-		wantUsernameErrs []string
-		wantPasswordErrs []string
+		name           string
+		username       string
+		password       string
+		wantStatusCode int
+		assertFunc     func(*testing.T, *http.Response)
 	}{
 		{
-			name:             "UsnEmpty,PwdEmpty",
-			username:         "",
-			password:         "",
-			wantStatusCode:   http.StatusBadRequest,
-			wantUsernameErrs: []string{"Username cannot be empty."},
-			wantPasswordErrs: []string{"Password cannot be empty."},
+			name:           "UsnEmpty,PwdEmpty",
+			username:       "",
+			password:       "",
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc: assert400(
+				[]string{"Username cannot be empty."},
+				[]string{"Password cannot be empty."},
+			),
 		},
 		{
 			name: "UsnTooShort,UsnInvalidChar,PwdTooShort,PwdNoLower," +
@@ -54,19 +82,21 @@ func TestRegister(t *testing.T) {
 			username:       "bob!",
 			password:       "PASSSSS",
 			wantStatusCode: http.StatusBadRequest,
-			wantUsernameErrs: []string{
-				"Username cannot be shorter than 5 characters.",
-				"Username can contain only letters (a-z/A-Z) and digits " +
-					"(0-9).",
-			},
-			wantPasswordErrs: []string{
-				"Password cannot be shorter than 8 characters.",
-				"Password must contain a lowercase letter (a-z).",
-				"Password must contain a digit (0-9).",
-				"Password must contain one of the following special " +
-					"characters: ! \" # $ % & ' ( ) * + , - . / : ; < = " +
-					"> ? [ \\ ] ^ _ ` { | } ~.",
-			},
+			assertFunc: assert400(
+				[]string{
+					"Username cannot be shorter than 5 characters.",
+					"Username can contain only letters (a-z/A-Z) and digits " +
+						"(0-9).",
+				},
+				[]string{
+					"Password cannot be shorter than 8 characters.",
+					"Password must contain a lowercase letter (a-z).",
+					"Password must contain a digit (0-9).",
+					"Password must contain one of the following special " +
+						"characters: ! \" # $ % & ' ( ) * + , - . / : ; < = " +
+						"> ? [ \\ ] ^ _ ` { | } ~.",
+				},
+			),
 		},
 		{
 			name: "UsnTooLong,UsnDigitStart,PwdTooLong,PwdNoUpper," +
@@ -75,35 +105,77 @@ func TestRegister(t *testing.T) {
 			password: "p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p£$ 123p" +
 				"£$ 123p£$ 123p£$ 123p£",
 			wantStatusCode: http.StatusBadRequest,
-			wantUsernameErrs: []string{
-				"Username cannot be longer than 15 characters.",
-				"Username can start only with a letter (a-z/A-Z).",
-			},
-			wantPasswordErrs: []string{
-				"Password cannot be longer than 64 characters.",
-				"Password must contain an uppercase letter (A-Z).",
-				"Password cannot contain spaces.",
-				"Password can contain only letters (a-z/A-Z), digits " +
-					"(0-9), and the following special characters: " +
-					"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ " +
-					"_ ` { | } ~.",
-			},
+			assertFunc: assert400(
+				[]string{
+					"Username cannot be longer than 15 characters.",
+					"Username can start only with a letter (a-z/A-Z).",
+				},
+				[]string{
+					"Password cannot be longer than 64 characters.",
+					"Password must contain an uppercase letter (A-Z).",
+					"Password cannot contain spaces.",
+					"Password can contain only letters (a-z/A-Z), digits " +
+						"(0-9), and the following special characters: " +
+						"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ " +
+						"_ ` { | } ~.",
+				},
+			),
 		},
 		{
-			name:             "UsnTaken",
-			username:         "bob123",
-			password:         "Myp4ssw0rd!",
-			wantStatusCode:   http.StatusBadRequest,
-			wantUsernameErrs: []string{"Username is already taken."},
-			wantPasswordErrs: []string{},
+			name:           "UsnTaken",
+			username:       "bob123",
+			password:       "Myp4ssw0rd!",
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc: assert400(
+				[]string{"Username is already taken."}, []string{},
+			),
 		},
 		{
-			name:             "Success",
-			username:         "bob321",
-			password:         "Myp4ssw0rd!",
-			wantStatusCode:   http.StatusOK,
-			wantUsernameErrs: []string{},
-			wantPasswordErrs: []string{},
+			name:           "Success",
+			username:       "bob321",
+			password:       "Myp4ssw0rd!",
+			wantStatusCode: http.StatusOK,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				// assert that a new user is inserted into the database with
+				// the correct credentials
+				var userID, password string
+				err := dbConn.QueryRow(
+					`SELECT id, password FROM app."user" WHERE id = $1`,
+					"bob321",
+				).Scan(&userID, &password)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err = assert.Equal("bob321", userID); err != nil {
+					t.Error(err)
+				}
+				if err = bcrypt.CompareHashAndPassword(
+					[]byte(password), []byte("Myp4ssw0rd!"),
+				); err != nil {
+					t.Error(err)
+				}
+
+				// assert that the returned JWT is valid and has the correct
+				// subject
+				var token string
+				for _, ck := range res.Cookies() {
+					if ck.Name == "auth-token" {
+						token = ck.Value
+					}
+				}
+
+				claims := jwt.RegisteredClaims{}
+				if _, err = jwt.ParseWithClaims(
+					token, &claims, func(token *jwt.Token) (any, error) {
+						return []byte(jwtKey), nil
+					},
+				); err != nil {
+					t.Fatal(err)
+				}
+				if err = assert.Equal("bob321", claims.Subject); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -132,68 +204,7 @@ func TestRegister(t *testing.T) {
 				t.Error(err)
 			}
 
-			switch c.wantStatusCode {
-			case http.StatusBadRequest:
-				// assert that the correct validation errors are returned
-				var resBody registerAPI.ResBody
-				if err = json.NewDecoder(res.Body).Decode(
-					&resBody,
-				); err != nil {
-					t.Fatal(err)
-				}
-				if err = assert.EqualArr(
-					c.wantUsernameErrs,
-					resBody.ValidationErrs.Username,
-				); err != nil {
-					t.Error(err)
-				}
-				if err = assert.EqualArr(
-					c.wantPasswordErrs,
-					resBody.ValidationErrs.Password,
-				); err != nil {
-					t.Error(err)
-				}
-			case http.StatusOK:
-				// assert that a new user is inserted into the database with
-				// the correct credentials
-				var userID, password string
-				err = dbConn.QueryRow(
-					`SELECT id, password FROM app."user" WHERE id = $1`,
-					c.username,
-				).Scan(&userID, &password)
-				if err != nil {
-					t.Fatal(err)
-				}
-				if err = assert.Equal(c.username, userID); err != nil {
-					t.Error(err)
-				}
-				if err = bcrypt.CompareHashAndPassword(
-					[]byte(password), []byte(c.password),
-				); err != nil {
-					t.Error(err)
-				}
-
-				// assert that the returned JWT is valid and has the correct
-				// subject
-				var token string
-				for _, ck := range res.Cookies() {
-					if ck.Name == "auth-token" {
-						token = ck.Value
-					}
-				}
-
-				claims := jwt.RegisteredClaims{}
-				if _, err = jwt.ParseWithClaims(
-					token, &claims, func(token *jwt.Token) (any, error) {
-						return []byte(jwtKey), nil
-					},
-				); err != nil {
-					t.Fatal(err)
-				}
-				if err = assert.Equal(c.username, claims.Subject); err != nil {
-					t.Error(err)
-				}
-			}
+			c.assertFunc(t, res)
 		})
 	}
 }
