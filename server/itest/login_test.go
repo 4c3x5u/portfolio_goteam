@@ -32,36 +32,61 @@ func TestLogin(t *testing.T) {
 		username       string
 		password       string
 		wantStatusCode int
+		assertFunc     func(*testing.T, *http.Response)
 	}{
 		{
 			name:           "UsnEmpty",
 			username:       "",
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     func(*testing.T, *http.Response) {},
 		},
 		{
 			name:           "PwdEmpty",
 			username:       "bob123",
 			password:       "",
 			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     func(*testing.T, *http.Response) {},
 		},
 		{
 			name:           "UsnIncorrect",
 			username:       "bob321",
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     func(*testing.T, *http.Response) {},
 		},
 		{
 			name:           "PwdIncorrect",
 			username:       "bob123",
 			password:       "P4ssw@rd321",
 			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     func(*testing.T, *http.Response) {},
 		},
 		{
 			name:           "Success",
 			username:       "bob123",
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusOK,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var token string
+				for _, ck := range res.Cookies() {
+					if ck.Name == "auth-token" {
+						token = ck.Value
+					}
+				}
+
+				claims := jwt.RegisteredClaims{}
+				if _, err := jwt.ParseWithClaims(
+					token, &claims, func(token *jwt.Token) (any, error) {
+						return []byte(jwtKey), nil
+					},
+				); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal("bob123", claims.Subject); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -90,28 +115,7 @@ func TestLogin(t *testing.T) {
 				t.Error(err)
 			}
 
-			if c.wantStatusCode == http.StatusOK {
-				// assert that the returned JWT is valid and has the correct
-				// subject
-				var token string
-				for _, ck := range res.Cookies() {
-					if ck.Name == "auth-token" {
-						token = ck.Value
-					}
-				}
-
-				claims := jwt.RegisteredClaims{}
-				if _, err = jwt.ParseWithClaims(
-					token, &claims, func(token *jwt.Token) (any, error) {
-						return []byte(jwtKey), nil
-					},
-				); err != nil {
-					t.Fatal(err)
-				}
-				if err = assert.Equal(c.username, claims.Subject); err != nil {
-					t.Error(err)
-				}
-			}
+			c.assertFunc(t, res)
 		})
 	}
 }
