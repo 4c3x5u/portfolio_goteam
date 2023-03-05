@@ -45,8 +45,12 @@ VALUES
   ('bob124', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO');
 
 INSERT INTO app.board(name) 
-VALUES ('Board #1'), ('Board #2'), ('Board #3');
+VALUES ('Board #1'), ('Board #2'), ('Board #3'), ('Board #4');
 
 INSERT INTO app.user_board(userID, boardID, isAdmin) 
-VALUES ('bob123', 1, TRUE), ('bob123', 2, TRUE), ('bob123', 3, TRUE);
+VALUES 
+  ('bob123', 1, TRUE), 
+  ('bob123', 2, TRUE), 
+  ('bob123', 3, TRUE), 
+  ('bob123', 4, FALSE);
 

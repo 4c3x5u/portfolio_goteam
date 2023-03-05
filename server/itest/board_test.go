@@ -214,6 +214,11 @@ func TestBoard(t *testing.T) {
 				id:             "123",
 				wantStatusCode: http.StatusUnauthorized,
 			},
+			{
+				name:           "UserNotAdmin",
+				id:             "4",
+				wantStatusCode: http.StatusUnauthorized,
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				req, err := http.NewRequest(
