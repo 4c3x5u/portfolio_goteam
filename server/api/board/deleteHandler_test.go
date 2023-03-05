@@ -72,14 +72,6 @@ func TestDELETEHandler(t *testing.T) {
 			wantStatusCode:              http.StatusInternalServerError,
 		},
 		{
-			name:                        "BoardNotFound",
-			validatorOutOK:              true,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardDeleterOutErr:          sql.ErrNoRows,
-			wantStatusCode:              http.StatusNotFound,
-		},
-		{
 			name:                        "Success",
 			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: true,

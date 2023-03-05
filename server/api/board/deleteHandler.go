@@ -57,10 +57,7 @@ func (h DELETEHandler) Handle(
 	}
 
 	// Delete the board.
-	if err := h.boardDeleter.Delete(boardID); err == sql.ErrNoRows {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
+	if err := h.boardDeleter.Delete(boardID); err != nil {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
