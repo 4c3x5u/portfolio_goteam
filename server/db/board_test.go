@@ -106,7 +106,7 @@ func TestBoardInserter(t *testing.T) {
 func TestBoardDeleter(t *testing.T) {
 	const (
 		sqlDeleteRel   = `DELETE FROM app.user_board WHERE boardID = \$1`
-		sqlDeleteBoard = `DELETE FROM app.board WHERE boardID = \$1`
+		sqlDeleteBoard = `DELETE FROM app.board WHERE id = \$1`
 		boardID        = "123"
 	)
 
@@ -164,6 +164,7 @@ func TestBoardDeleter(t *testing.T) {
 					ExpectExec(sqlDeleteBoard).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit()
 			},
 			wantErr: nil,
 		},

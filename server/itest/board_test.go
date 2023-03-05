@@ -4,6 +4,7 @@ package itest
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -71,7 +72,7 @@ func TestBoard(t *testing.T) {
 			authFunc func(*http.Request)
 		}{
 			// Auth Cases
-			{name: "HeaderEmpty", authFunc: func(_ *http.Request) {}},
+			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
 			{name: "HeaderInvalid", authFunc: addBearerAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -156,7 +157,7 @@ func TestBoard(t *testing.T) {
 				),
 				boardName:      "bob124's new board",
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(_ *testing.T, _ *httptest.ResponseRecorder) {
+				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
 					var boardCount int
 					err := dbConnPool.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
@@ -206,18 +207,51 @@ func TestBoard(t *testing.T) {
 			name           string
 			id             string
 			wantStatusCode int
+			assertFunc     func(*testing.T)
 		}{
-			{name: "EmptyID", id: "", wantStatusCode: http.StatusBadRequest},
-			{name: "NonIntID", id: "qwerty", wantStatusCode: http.StatusBadRequest},
+			{
+				name:           "EmptyID",
+				id:             "",
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     func(*testing.T) {},
+			},
+			{
+				name:           "NonIntID",
+				id:             "qwerty",
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     func(*testing.T) {},
+			},
 			{
 				name:           "UserBoardNotFound",
 				id:             "123",
 				wantStatusCode: http.StatusUnauthorized,
+				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "UserNotAdmin",
 				id:             "4",
 				wantStatusCode: http.StatusUnauthorized,
+				assertFunc:     func(*testing.T) {},
+			},
+			{
+				name:           "Success",
+				id:             "1",
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(t *testing.T) {
+					var boardID int
+					err := dbConnPool.QueryRow(
+						"SELECT boardID FROM app.user_board WHERE boardID = 1",
+					).Scan(&boardID)
+					if err != sql.ErrNoRows {
+						t.Error("user_board row was not deleted")
+					}
+					err = dbConnPool.QueryRow(
+						"SELECT id FROM app.board WHERE id = 1",
+					).Scan(&boardID)
+					if err != sql.ErrNoRows {
+						t.Error("board row was not deleted")
+					}
+				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -241,6 +275,8 @@ func TestBoard(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
+
+				c.assertFunc(t)
 			})
 		}
 	})
