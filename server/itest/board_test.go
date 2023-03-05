@@ -202,27 +202,35 @@ func TestBoard(t *testing.T) {
 	})
 
 	t.Run("DELETE", func(t *testing.T) {
-		t.Run("EmptyID", func(t *testing.T) {
-			req, err := http.NewRequest(
-				http.MethodDelete, "?id=", nil,
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-			addBearerAuth(
-				"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-					"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-			)(req)
-			w := httptest.NewRecorder()
+		for _, c := range []struct {
+			name string
+			id   string
+		}{
+			{name: "EmptyID", id: ""},
+			{name: "NonIntID", id: "qwerty"},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				req, err := http.NewRequest(
+					http.MethodDelete, "?id="+c.id, nil,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+				addBearerAuth(
+					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+				)(req)
+				w := httptest.NewRecorder()
 
-			sut.ServeHTTP(w, req)
-			res := w.Result()
+				sut.ServeHTTP(w, req)
+				res := w.Result()
 
-			if err = assert.Equal(
-				http.StatusBadRequest, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
-		})
+				if err = assert.Equal(
+					http.StatusBadRequest, res.StatusCode,
+				); err != nil {
+					t.Error(err)
+				}
+			})
+		}
 	})
 }
