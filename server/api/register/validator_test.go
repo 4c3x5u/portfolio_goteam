@@ -1358,9 +1358,9 @@ func TestValidatorPassword(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			gotErrs := sut.Validate(c.password)
+			errs := sut.Validate(c.password)
 
-			if err := assert.EqualArr(c.wantErrs, gotErrs); err != nil {
+			if err := assert.EqualArr(c.wantErrs, errs); err != nil {
 				t.Error(err)
 			}
 		})

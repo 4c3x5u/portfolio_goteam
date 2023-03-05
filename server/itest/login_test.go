@@ -21,7 +21,7 @@ import (
 func TestLogin(t *testing.T) {
 	sut := loginAPI.NewHandler(
 		loginAPI.NewValidator(),
-		db.NewUserSelector(dbConnPool),
+		db.NewUserSelector(dbConn),
 		loginAPI.NewPasswordComparer(),
 		auth.NewJWTGenerator(jwtKey),
 		log.NewAppLogger(),

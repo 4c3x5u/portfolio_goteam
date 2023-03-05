@@ -25,9 +25,9 @@ func TestRegister(t *testing.T) {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		db.NewUserSelector(dbConnPool),
+		db.NewUserSelector(dbConn),
 		registerAPI.NewPasswordHasher(),
-		db.NewUserInserter(dbConnPool),
+		db.NewUserInserter(dbConn),
 		auth.NewJWTGenerator(jwtKey),
 		log.NewAppLogger(),
 	)
@@ -157,7 +157,7 @@ func TestRegister(t *testing.T) {
 				// assert that a new user is inserted into the database with
 				// the correct credentials
 				var userID, password string
-				err = dbConnPool.QueryRow(
+				err = dbConn.QueryRow(
 					`SELECT id, password FROM app."user" WHERE id = $1`,
 					c.username,
 				).Scan(&userID, &password)

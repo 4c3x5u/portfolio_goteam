@@ -185,7 +185,9 @@ func TestHandler(t *testing.T) {
 			sut.ServeHTTP(w, req)
 			res := w.Result()
 
-			if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
 				t.Error(err)
 			}
 

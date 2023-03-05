@@ -29,8 +29,10 @@ func TestPOSTValidator(t *testing.T) {
 			wantErrMsg: msgNameEmpty,
 		},
 		{
-			name:       "NameTooLong",
-			reqBody:    POSTReqBody{Name: "boardyboardsyboardkyboardishboardxyz"},
+			name: "NameTooLong",
+			reqBody: POSTReqBody{
+				Name: "boardyboardsyboardkyboardishboardxyz",
+			},
 			wantErrMsg: msgNameTooLong,
 		},
 		{
@@ -39,10 +41,10 @@ func TestPOSTValidator(t *testing.T) {
 			wantErrMsg: "",
 		},
 	} {
-		msg := sut.Validate(c.reqBody)
+		errMsg := sut.Validate(c.reqBody)
 
-		if err := assert.Equal(c.wantErrMsg, msg); err != nil {
-			t.Error(msg)
+		if err := assert.Equal(c.wantErrMsg, errMsg); err != nil {
+			t.Error(err)
 		}
 	}
 }

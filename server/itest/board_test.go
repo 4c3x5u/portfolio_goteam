@@ -27,14 +27,14 @@ func TestBoard(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewPOSTValidator(),
-				db.NewUserBoardCounter(dbConnPool),
-				db.NewBoardInserter(dbConnPool),
+				db.NewUserBoardCounter(dbConn),
+				db.NewBoardInserter(dbConn),
 				logger,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewDELETEValidator(),
-				db.NewUserBoardSelector(dbConnPool),
-				db.NewBoardDeleter(dbConnPool),
+				db.NewUserBoardSelector(dbConn),
+				db.NewBoardDeleter(dbConn),
 				logger,
 			),
 		},
@@ -159,7 +159,7 @@ func TestBoard(t *testing.T) {
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
 					var boardCount int
-					err := dbConnPool.QueryRow(
+					err := dbConn.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
 							"WHERE userID = 'bob124' AND isAdmin = TRUE",
 					).Scan(&boardCount)
@@ -239,13 +239,13 @@ func TestBoard(t *testing.T) {
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
 					var boardID int
-					err := dbConnPool.QueryRow(
+					err := dbConn.QueryRow(
 						"SELECT boardID FROM app.user_board WHERE boardID = 1",
 					).Scan(&boardID)
 					if err != sql.ErrNoRows {
 						t.Error("user_board row was not deleted")
 					}
-					err = dbConnPool.QueryRow(
+					err = dbConn.QueryRow(
 						"SELECT id FROM app.board WHERE id = 1",
 					).Scan(&boardID)
 					if err != sql.ErrNoRows {

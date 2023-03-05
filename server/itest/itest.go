@@ -5,13 +5,11 @@
 // application to serve an API endpoint.
 package itest
 
-import (
-	"database/sql"
-)
+import "database/sql"
 
-// dbConnPool is the database connection pool used during integration testing.
+// dbConn is the database connection pool used during integration testing.
 // It is set in main_test.go/TestMain.
-var dbConnPool *sql.DB
+var dbConn *sql.DB
 
 // jwtKey is the JWT key used for signing and validating JWTs during integration
 // testing.

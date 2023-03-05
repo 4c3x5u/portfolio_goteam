@@ -25,8 +25,10 @@ func TestPasswordComparer(t *testing.T) {
 		{
 			name:        "WrongPassword",
 			inPlaintext: "password",
-			inHash:      []byte("$2a$04$ngqMWrzBWyg8KO3MGk1cnOISt3wyeBwbFlkvghSHKBkSYOeO2.7XG"),
-			wantErr:     bcrypt.ErrMismatchedHashAndPassword,
+			inHash: []byte(
+				"$2a$04$ngqMWrzBWyg8KO3MGk1cnOISt3wyeBwbFlkvghSHKBkSYOeO2.7XG",
+			),
+			wantErr: bcrypt.ErrMismatchedHashAndPassword,
 		},
 		{
 			name:        "BcryptError",
@@ -37,14 +39,16 @@ func TestPasswordComparer(t *testing.T) {
 		{
 			name:        "Success",
 			inPlaintext: "password",
-			inHash:      []byte("$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS"),
-			wantErr:     nil,
+			inHash: []byte(
+				"$2a$04$W4ABZofxx5uoJVgTlYS1wuFHz1LLQaBfoO0iwz/04WWmg9LQdCPsS",
+			),
+			wantErr: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			if err := assert.Equal(
-				c.wantErr, sut.Compare(c.inHash, c.inPlaintext),
-			); err != nil {
+			err := sut.Compare(c.inHash, c.inPlaintext)
+
+			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
 		})

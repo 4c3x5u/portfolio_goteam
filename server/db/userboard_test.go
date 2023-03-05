@@ -63,7 +63,7 @@ func TestUserBoardSelector(t *testing.T) {
 
 			isAdmin, err := sut.Select(userID, boardID)
 
-			if err := assert.Equal(c.wantErr, err); err != nil {
+			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
 			if err := assert.Equal(c.wantIsAdmin, isAdmin); err != nil {
