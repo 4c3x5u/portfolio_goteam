@@ -28,6 +28,26 @@ func TestHandler(t *testing.T) {
 		},
 	)
 
+	// Used in success cases to assert on the parameters received by the method
+	// handler.
+	assertOnMethodHandler := func(
+		h *api.FakeMethodHandler, sub string,
+	) func(*testing.T, *http.Request, *httptest.ResponseRecorder) {
+		return func(
+			t *testing.T, r *http.Request, w *httptest.ResponseRecorder,
+		) {
+			if err := assert.Equal(w, h.InResponseWriter); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(r, h.InReq); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(sub, h.InSub); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodGet, http.MethodHead,
@@ -63,29 +83,42 @@ func TestHandler(t *testing.T) {
 		name                 string
 		httpMethod           string
 		tokenValidatorOutSub string
-		wantMethodHandler    *api.FakeMethodHandler
 		wantStatusCode       int
+		assertFunc           func(
+			*testing.T, *http.Request, *httptest.ResponseRecorder,
+		)
 	}{
 		{
 			name:                 "InvalidAuthToken",
 			httpMethod:           http.MethodPost,
 			tokenValidatorOutSub: "",
-			wantMethodHandler:    nil,
 			wantStatusCode:       http.StatusUnauthorized,
+			assertFunc: func(
+				t *testing.T, _ *http.Request, w *httptest.ResponseRecorder,
+			) {
+				name, value := auth.WWWAuthenticate()
+				if err := assert.Equal(
+					value, w.Result().Header.Get(name),
+				); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 		{
 			name:                 "Success" + http.MethodPost,
 			httpMethod:           http.MethodPost,
 			tokenValidatorOutSub: "bob123",
-			wantMethodHandler:    postHandler,
 			wantStatusCode:       http.StatusOK,
+			assertFunc:           assertOnMethodHandler(postHandler, "bob123"),
 		},
 		{
 			name:                 "Success" + http.MethodDelete,
 			httpMethod:           http.MethodDelete,
 			tokenValidatorOutSub: "bob123",
-			wantMethodHandler:    deleteHandler,
 			wantStatusCode:       http.StatusOK,
+			assertFunc: assertOnMethodHandler(
+				deleteHandler, "bob123",
+			),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -103,38 +136,15 @@ func TestHandler(t *testing.T) {
 			sut.ServeHTTP(w, req)
 			res := w.Result()
 
+			// Assert on the status code.
 			if err = assert.Equal(
 				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
-			if c.wantStatusCode == http.StatusUnauthorized {
-				// 401 is expected - WWWAuthenticate cookie must be set.
-				name, value := auth.WWWAuthenticate()
-				if err = assert.Equal(
-					value, res.Header.Get(name),
-				); err != nil {
-					t.Error(err)
-				}
-			} else {
-				// 401 is NOT expected - a method handler must be called.
-				if err := assert.Equal(
-					w, c.wantMethodHandler.InResponseWriter,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					req, c.wantMethodHandler.InReq,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					c.tokenValidatorOutSub, c.wantMethodHandler.InSub,
-				); err != nil {
-					t.Error(err)
-				}
-			}
+			// Run case-specific assertions.
+			c.assertFunc(t, req, w)
 		})
 	}
 }
