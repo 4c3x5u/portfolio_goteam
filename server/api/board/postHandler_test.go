@@ -132,12 +132,12 @@ func TestPOSTHandler(t *testing.T) {
 				dbBoardInserter.OutErr = c.boardInserterOutErr
 
 				// Prepare request and response recorder.
-				reqBodyJSON, err := json.Marshal(POSTReqBody{})
+				reqBody, err := json.Marshal(POSTReqBody{})
 				if err != nil {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(reqBodyJSON),
+					http.MethodPost, "", bytes.NewReader(reqBody),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -145,7 +145,7 @@ func TestPOSTHandler(t *testing.T) {
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.
-				sut.Handle(w, req, "bob123")
+				sut.Handle(w, req, "")
 				res := w.Result()
 
 				// Assert on the status code.
@@ -155,6 +155,7 @@ func TestPOSTHandler(t *testing.T) {
 					t.Error(err)
 				}
 
+				// Run case-specific assertions.
 				c.assertFunc(t, logger, w.Result().Body)
 			})
 		}

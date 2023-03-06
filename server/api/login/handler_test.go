@@ -34,6 +34,43 @@ func TestHandler(t *testing.T) {
 		validator, dbUserSelector, passwordComparer, authTokenGenerator, logger,
 	)
 
+	// Used in 500 error cases to assert on the logged error message.
+	assertOnLoggedErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *log.FakeLogger, *http.Response) {
+		return func(t *testing.T, l *log.FakeLogger, _ *http.Response) {
+			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	// Used in success cases to assert on the auth token set on response cookie.
+	assertOnAuthToken := func(t *testing.T, _ *log.FakeLogger, r *http.Response) {
+		authTokenFound := false
+		for _, ck := range r.Cookies() {
+			if ck.Name == "auth-token" {
+				authTokenFound = true
+				if err := assert.Equal(
+					"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...", ck.Value,
+				); err != nil {
+					t.Error(err)
+				}
+				if err := assert.True(
+					ck.Expires.Unix() > time.Now().Unix(),
+				); err != nil {
+					t.Error(err)
+				}
+			}
+		}
+		if !authTokenFound {
+			t.Errorf("auth token was not found")
+		}
+	}
+
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodDelete, http.MethodGet,
@@ -75,6 +112,7 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutErr   error
 		wantStatusCode         int
 		wantErr                string
+		assertFunc             func(*testing.T, *log.FakeLogger, *http.Response)
 	}{
 		{
 			name:                   "InvalidRequest",
@@ -85,6 +123,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
+			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
 		},
 		{
 			name:                   "UserNotFound",
@@ -95,6 +134,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
+			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
 		},
 		{
 			name:                   "UserSelectorError",
@@ -105,6 +145,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusInternalServerError,
+			assertFunc:             assertOnLoggedErr("user selector error"),
 		},
 		{
 			name:           "WrongPassword",
@@ -117,6 +158,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
+			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
 		},
 		{
 			name:           "HashComparerError",
@@ -129,6 +171,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusInternalServerError,
+			assertFunc:             assertOnLoggedErr("hash comparer error"),
 		},
 		{
 			name:           "TokenGeneratorError",
@@ -141,6 +184,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   errors.New("token generator error"),
 			wantStatusCode:         http.StatusInternalServerError,
+			assertFunc:             assertOnLoggedErr("token generator error"),
 		},
 		{
 			name:           "Success",
@@ -153,6 +197,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusOK,
+			assertFunc:             assertOnAuthToken,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -165,83 +210,29 @@ func TestHandler(t *testing.T) {
 			authTokenGenerator.OutErr = c.tokenGeneratorOutErr
 
 			// Prepare request and response recorder.
-			reqBody := ReqBody{
-				Username: "bob123", Password: "Myp4ssword!",
-			}
-			reqBodyJSON, err := json.Marshal(reqBody)
+			reqBody, err := json.Marshal(ReqBody{})
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(
-				http.MethodPost, "/login", bytes.NewReader(reqBodyJSON),
-			)
+			req, err := http.NewRequest(http.MethodPost, "", bytes.NewReader(reqBody))
 			if err != nil {
 				t.Fatal(err)
 			}
-			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
 			sut.ServeHTTP(w, req)
 			res := w.Result()
 
+			// Assert on the status code.
 			if err = assert.Equal(
 				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
-			switch c.wantStatusCode {
-			case http.StatusOK:
-				// 200 was expected - auth token must be set.
-				authTokenFound := false
-				for _, ck := range res.Cookies() {
-					if ck.Name == auth.CookieName {
-						authTokenFound = true
-						if err = assert.Equal(
-							c.tokenGeneratorOutToken, ck.Value,
-						); err != nil {
-							t.Error(err)
-						}
-						if err = assert.True(
-							ck.Expires.Unix() > time.Now().Unix(),
-						); err != nil {
-							t.Error(err)
-						}
-					}
-				}
-				if !authTokenFound {
-					t.Errorf("200 was expected but auth token was not set")
-				}
-			case http.StatusInternalServerError:
-				// 500 was expected - an error must be logged.
-				errFound := false
-				for _, depErr := range []error{
-					c.userSelectorOutErr,
-					c.hashComparerOutErr,
-					c.tokenGeneratorOutErr,
-				} {
-					if depErr != nil {
-						errFound = true
-						if err = assert.Equal(
-							log.LevelError, logger.InLevel,
-						); err != nil {
-							t.Error(err)
-						}
-						if err = assert.Equal(
-							depErr.Error(), logger.InMessage,
-						); err != nil {
-							t.Error(err)
-						}
-					}
-				}
-				if !errFound {
-					t.Errorf(
-						"500 was expected but no errors were returned " +
-							"from sut's dependencies",
-					)
-				}
-			}
+			// Run case-specific assertions.
+			c.assertFunc(t, logger, res)
 		})
 	}
 }

@@ -113,7 +113,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardDeleter.OutErr = c.boardDeleterOutErr
 
 			// Prepare request and response recorder.
-			req, err := http.NewRequest(http.MethodPost, "?id=123", nil)
+			req, err := http.NewRequest(http.MethodPost, "", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -124,9 +124,7 @@ func TestDELETEHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			if err := assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
+			if err := assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
 				t.Error(err)
 			}
 
