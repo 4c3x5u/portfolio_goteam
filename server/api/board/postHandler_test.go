@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,9 +25,35 @@ func TestPOSTHandler(t *testing.T) {
 	dbBoardInserter := &db.FakeBoardInserter{}
 	logger := &log.FakeLogger{}
 	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, logger)
-	sub := "bob123"
 
-	boardInserterErr := errors.New("create board error")
+	// Used in 500 error cases to assert on the logged error message.
+	assertOnLoggedErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {
+		return func(t *testing.T, l *log.FakeLogger, _ io.ReadCloser) {
+			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	// Used in 400 error cases to assert on the error returned in response body.
+	assertOnResErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {
+		return func(t *testing.T, _ *log.FakeLogger, rawResBody io.ReadCloser) {
+			resBody := POSTResBody{}
+			if err := json.NewDecoder(rawResBody).Decode(&resBody); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
+				t.Error(err)
+			}
+		}
+	}
 
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
@@ -36,7 +63,9 @@ func TestPOSTHandler(t *testing.T) {
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
 			wantStatusCode         int
-			wantErrMsg             string
+			assertFunc             func(
+				*testing.T, *log.FakeLogger, io.ReadCloser,
+			)
 		}{
 			{
 				name:                   "InvalidRequest",
@@ -45,7 +74,9 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             msgNameEmpty,
+				assertFunc: assertOnResErr(
+					"Board name cannot be empty.",
+				),
 			},
 			{
 				name:                   "UserBoardCounterErr",
@@ -54,7 +85,9 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusInternalServerError,
-				wantErrMsg:             msgMaxBoards,
+				assertFunc: assertOnLoggedErr(
+					sql.ErrConnDone.Error(),
+				),
 			},
 			{
 				name:                   "MaxBoardsCreated",
@@ -63,16 +96,20 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				wantErrMsg:             msgMaxBoards,
+				assertFunc: assertOnResErr(
+					"You have already created the maximum amount of boards " +
+						"allowed per user. Please delete one of your boards " +
+						"to create a new one.",
+				),
 			},
 			{
 				name:                   "BoardInserterErr",
 				validatorOutErrMsg:     "",
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
-				boardInserterOutErr:    boardInserterErr,
+				boardInserterOutErr:    errors.New("create board error"),
 				wantStatusCode:         http.StatusInternalServerError,
-				wantErrMsg:             boardInserterErr.Error(),
+				assertFunc:             assertOnLoggedErr("create board error"),
 			},
 			{
 				name:                   "Success",
@@ -81,7 +118,10 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusOK,
-				wantErrMsg:             "",
+				assertFunc: func(
+					*testing.T, *log.FakeLogger, io.ReadCloser,
+				) {
+				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -92,13 +132,12 @@ func TestPOSTHandler(t *testing.T) {
 				dbBoardInserter.OutErr = c.boardInserterOutErr
 
 				// Prepare request and response recorder.
-				reqBody := POSTReqBody{Name: "My Board"}
-				reqBodyJSON, err := json.Marshal(reqBody)
+				reqBodyJSON, err := json.Marshal(POSTReqBody{})
 				if err != nil {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPost, "/board", bytes.NewReader(reqBodyJSON),
+					http.MethodPost, "", bytes.NewReader(reqBodyJSON),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -106,7 +145,7 @@ func TestPOSTHandler(t *testing.T) {
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.
-				sut.Handle(w, req, sub)
+				sut.Handle(w, req, "bob123")
 				res := w.Result()
 
 				// Assert on the status code.
@@ -116,57 +155,7 @@ func TestPOSTHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				switch c.wantStatusCode {
-				case http.StatusBadRequest:
-					// 400 is expected - there must be a validation error in
-					// response body
-					if c.wantErrMsg == "" {
-						t.Error(
-							"400 was expected but no error messages were " +
-								"expected",
-						)
-					} else {
-						resBody := POSTResBody{}
-						if err = json.NewDecoder(w.Result().Body).Decode(
-							&resBody,
-						); err != nil {
-							t.Error(err)
-						}
-						if err = assert.Equal(
-							c.wantErrMsg, resBody.Error,
-						); err != nil {
-							t.Error(err)
-						}
-					}
-				case http.StatusInternalServerError:
-					// 500 was expected - an error must be logged.
-					errFound := false
-					for _, depErr := range []error{
-						c.userBoardCounterOutErr,
-						c.boardInserterOutErr,
-					} {
-						if depErr != nil && depErr != sql.ErrNoRows {
-							errFound = true
-							if err = assert.Equal(
-								log.LevelError, logger.InLevel,
-							); err != nil {
-								t.Error(err)
-							}
-							if err = assert.Equal(
-								depErr.Error(), logger.InMessage,
-							); err != nil {
-								t.Error(err)
-							}
-						}
-					}
-					if !errFound {
-						t.Errorf(
-							"500 was expected but no errors were returned " +
-								"from sut's dependencies",
-						)
-					}
-					return
-				}
+				c.assertFunc(t, logger, w.Result().Body)
 			})
 		}
 	})

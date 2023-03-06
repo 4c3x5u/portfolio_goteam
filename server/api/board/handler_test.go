@@ -55,7 +55,7 @@ func TestHandler(t *testing.T) {
 			http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
-				req, err := http.NewRequest(httpMethod, "/board", nil)
+				req, err := http.NewRequest(httpMethod, "", nil)
 				if err != nil {
 					t.Fatal(err)
 				}

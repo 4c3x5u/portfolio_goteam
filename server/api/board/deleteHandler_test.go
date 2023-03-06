@@ -25,19 +25,16 @@ func TestDELETEHandler(t *testing.T) {
 		validator, userBoardSelector, userBoardDeleter, logger,
 	)
 
-	// used in 500 error cases to assert on the logged error message
-	assertOnLoggedErr := func(wantErrMsg string) func(*testing.T) {
-		return func(t *testing.T) {
-			if levelErr := assert.Equal(
-				log.LevelError, logger.InLevel,
-			); levelErr != nil {
-				t.Error(levelErr)
+	// Used in 500 error cases to assert on the logged error message.
+	assertOnLoggedErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *log.FakeLogger) {
+		return func(t *testing.T, l *log.FakeLogger) {
+			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
+				t.Error(err)
 			}
-
-			if msgErr := assert.Equal(
-				wantErrMsg, logger.InMessage,
-			); msgErr != nil {
-				t.Error(msgErr)
+			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
+				t.Error(err)
 			}
 		}
 	}
@@ -49,7 +46,7 @@ func TestDELETEHandler(t *testing.T) {
 		userBoardSelectorOutErr     error
 		boardDeleterOutErr          error
 		wantStatusCode              int
-		assertFunc                  func(*testing.T)
+		assertFunc                  func(*testing.T, *log.FakeLogger)
 	}{
 		{
 			name:                        "ValidatorErr",
@@ -58,7 +55,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  func(t *testing.T) {},
+			assertFunc:                  func(*testing.T, *log.FakeLogger) {},
 		},
 		{
 			name:                        "NoRowsInUserBoardTable",
@@ -67,7 +64,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc:                  func(t *testing.T) {},
+			assertFunc:                  func(*testing.T, *log.FakeLogger) {},
 		},
 		{
 			name:                        "ConnDone",
@@ -76,7 +73,9 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc:                  assertOnLoggedErr(sql.ErrConnDone.Error()),
+			assertFunc: assertOnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
 		},
 		{
 			name:                        "NotAdmin",
@@ -85,7 +84,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc:                  func(t *testing.T) {},
+			assertFunc:                  func(*testing.T, *log.FakeLogger) {},
 		},
 		{
 			name:                        "DeleteErr",
@@ -103,7 +102,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusOK,
-			assertFunc:                  func(t *testing.T) {},
+			assertFunc:                  func(*testing.T, *log.FakeLogger) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -132,7 +131,7 @@ func TestDELETEHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions.
-			c.assertFunc(t)
+			c.assertFunc(t, logger)
 		})
 	}
 }
