@@ -49,7 +49,9 @@ func TestHandler(t *testing.T) {
 	}
 
 	// Used in success cases to assert on the auth token set on response cookie.
-	assertOnAuthToken := func(t *testing.T, _ *log.FakeLogger, r *http.Response) {
+	assertOnAuthToken := func(
+		t *testing.T, _ *log.FakeLogger, r *http.Response,
+	) {
 		authTokenFound := false
 		for _, ck := range r.Cookies() {
 			if ck.Name == "auth-token" {
@@ -78,7 +80,7 @@ func TestHandler(t *testing.T) {
 			http.MethodPut, http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
-				req, err := http.NewRequest(httpMethod, "/login", nil)
+				req, err := http.NewRequest(httpMethod, "", nil)
 				if err != nil {
 					t.Fatal(err)
 				}

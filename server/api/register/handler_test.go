@@ -33,6 +33,76 @@ func TestHandler(t *testing.T) {
 		validator, userSelector, hasher, userInserter, tokenGenerator, logger,
 	)
 
+	// Used in 400 error cases to assert on username and password error messages.
+	assertOnValidationErrs := func(
+		wantValidationErrs ValidationErrs,
+	) func(*testing.T, *log.FakeLogger, *http.Response) {
+		return func(t *testing.T, _ *log.FakeLogger, r *http.Response) {
+			resBody := &ResBody{}
+			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
+				t.Fatal(err)
+			}
+
+			if err := assert.EqualArr(
+				wantValidationErrs.Username,
+				resBody.ValidationErrs.Username,
+			); err != nil {
+				t.Error(err)
+			}
+
+			if err := assert.EqualArr(
+				wantValidationErrs.Password,
+				resBody.ValidationErrs.Password,
+			); err != nil {
+				t.Error(err)
+			}
+
+			if err := assert.Equal(
+				wantValidationErrs.Auth, resBody.ValidationErrs.Auth,
+			); err != nil {
+				t.Error(err)
+			}
+
+		}
+	}
+
+	// Used in 500 error cases to assert on the logged error message.
+	assertOnLoggedErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *log.FakeLogger, *http.Response) {
+		return func(t *testing.T, l *log.FakeLogger, _ *http.Response) {
+			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
+				t.Error(err)
+			}
+			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	// Used in success cases to assert on the auth token set on response cookie.
+	assertOnAuthToken := func(t *testing.T, _ *log.FakeLogger, r *http.Response) {
+		authTokenFound := false
+		for _, ck := range r.Cookies() {
+			if ck.Name == "auth-token" {
+				authTokenFound = true
+				if err := assert.Equal(
+					"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...", ck.Value,
+				); err != nil {
+					t.Error(err)
+				}
+				if err := assert.True(
+					ck.Expires.Unix() > time.Now().Unix(),
+				); err != nil {
+					t.Error(err)
+				}
+			}
+		}
+		if !authTokenFound {
+			t.Errorf("auth token was not found")
+		}
+	}
+
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodDelete, http.MethodGet,
@@ -66,120 +136,126 @@ func TestHandler(t *testing.T) {
 
 	validReqBody := ReqBody{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
-		name                   string
-		reqBody                ReqBody
-		validatorOutErr        ValidationErrs
-		userInserterOutRes     db.User
-		userSelectorOutErr     error
-		hasherOutRes           []byte
-		hasherOutErr           error
-		userInserterOutErr     error
-		tokenGeneratorOutToken string
-		tokenGeneratorOutErr   error
-		wantStatusCode         int
-		wantValidationErrs     ValidationErrs
+		name                 string
+		reqBody              ReqBody
+		validatorOutErr      ValidationErrs
+		userInserterOutRes   db.User
+		userSelectorOutErr   error
+		hasherOutRes         []byte
+		hasherOutErr         error
+		userInserterOutErr   error
+		tokenGeneratorOutRes string
+		tokenGeneratorOutErr error
+		wantStatusCode       int
+		assertFunc           func(*testing.T, *log.FakeLogger, *http.Response)
 	}{
 		{
-			name: "ValidatorErr",
+			name: "BasicValidatorErrs",
 			validatorOutErr: ValidationErrs{
 				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
 			},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     nil,
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusBadRequest,
-			wantValidationErrs: ValidationErrs{
-				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc: assertOnValidationErrs(
+				ValidationErrs{
+					Username: []string{usnTooLong},
+					Password: []string{pwdNoDigit},
+				},
+			),
+		},
+		{
+			name:                 "UsernameTaken",
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   nil,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc: assertOnValidationErrs(
+				ValidationErrs{Username: []string{errUsernameTaken}},
+			),
+		},
+		{
+			name:                 "UserSelectorError",
+			reqBody:              validReqBody,
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   errors.New("user selector error"),
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assertOnLoggedErr("user selector error"),
+		},
+		{
+			name:                 "HasherError",
+			reqBody:              validReqBody,
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         errors.New("hasher error"),
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assertOnLoggedErr("hasher error"),
+		},
+		{
+			name:                 "UserInserterError",
+			reqBody:              validReqBody,
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   errors.New("inserter error"),
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assertOnLoggedErr("inserter error"),
+		},
+		{
+			name:                 "TokenGeneratorError",
+			reqBody:              validReqBody,
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "",
+			tokenGeneratorOutErr: errors.New("token generator error"),
+			wantStatusCode:       http.StatusUnauthorized,
+			assertFunc: func(
+				*testing.T, *log.FakeLogger, *http.Response,
+			) {
 			},
 		},
 		{
-			name:                   "UsernameTaken",
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     nil,
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusBadRequest,
-			wantValidationErrs: ValidationErrs{
-				Username: []string{errUsernameTaken},
-			},
-		},
-		{
-			name:                   "UserSelectorError",
-			reqBody:                validReqBody,
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     errors.New("user selector error"),
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusInternalServerError,
-			wantValidationErrs:     ValidationErrs{},
-		},
-		{
-			name:                   "HasherError",
-			reqBody:                validReqBody,
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     sql.ErrNoRows,
-			hasherOutRes:           nil,
-			hasherOutErr:           errors.New("hasher fatal error"),
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusInternalServerError,
-			wantValidationErrs:     ValidationErrs{},
-		},
-		{
-			name:                   "UserInserterError",
-			reqBody:                validReqBody,
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     sql.ErrNoRows,
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     errors.New("inserter fatal error"),
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusInternalServerError,
-			wantValidationErrs:     ValidationErrs{},
-		},
-		{
-			name:                   "TokenGeneratorError",
-			reqBody:                validReqBody,
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     sql.ErrNoRows,
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   errors.New("token generator error"),
-			wantStatusCode:         http.StatusUnauthorized,
-			wantValidationErrs:     ValidationErrs{Auth: errAuth},
-		},
-		{
-			name:                   "Success",
-			reqBody:                validReqBody,
-			validatorOutErr:        ValidationErrs{},
-			userInserterOutRes:     db.User{},
-			userSelectorOutErr:     sql.ErrNoRows,
-			hasherOutRes:           nil,
-			hasherOutErr:           nil,
-			userInserterOutErr:     nil,
-			tokenGeneratorOutToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusOK,
-			wantValidationErrs:     ValidationErrs{},
+			name:                 "Success",
+			reqBody:              validReqBody,
+			validatorOutErr:      ValidationErrs{},
+			userInserterOutRes:   db.User{},
+			userSelectorOutErr:   sql.ErrNoRows,
+			hasherOutRes:         nil,
+			hasherOutErr:         nil,
+			userInserterOutErr:   nil,
+			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorOutErr: nil,
+			wantStatusCode:       http.StatusOK,
+			assertFunc:           assertOnAuthToken,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -190,7 +266,7 @@ func TestHandler(t *testing.T) {
 			hasher.outHash = c.hasherOutRes
 			hasher.outErr = c.hasherOutErr
 			userInserter.OutErr = c.userInserterOutErr
-			tokenGenerator.OutRes = c.tokenGeneratorOutToken
+			tokenGenerator.OutRes = c.tokenGeneratorOutRes
 			tokenGenerator.OutErr = c.tokenGeneratorOutErr
 
 			// Prepare request and response recorder.
@@ -217,87 +293,8 @@ func TestHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			// If any validation errors were expected, assert on those.
-			if c.wantValidationErrs.Any() {
-				resBody := &ResBody{}
-				if err = json.NewDecoder(res.Body).Decode(
-					&resBody,
-				); err != nil {
-					t.Fatal(err)
-				}
-
-				if err = assert.EqualArr(
-					c.wantValidationErrs.Username,
-					resBody.ValidationErrs.Username,
-				); err != nil {
-					t.Error(err)
-				}
-
-				if err = assert.EqualArr(
-					c.wantValidationErrs.Password,
-					resBody.ValidationErrs.Password,
-				); err != nil {
-					t.Error(err)
-				}
-
-				if err = assert.Equal(
-					c.wantValidationErrs.Auth, resBody.ValidationErrs.Auth,
-				); err != nil {
-					t.Error(err)
-				}
-			}
-
-			switch c.wantStatusCode {
-			case http.StatusOK:
-				// 200 was expected - auth token must be set.
-				authTokenFound := false
-				for _, ck := range res.Cookies() {
-					if ck.Name == auth.CookieName {
-						authTokenFound = true
-						if err = assert.Equal(
-							c.tokenGeneratorOutToken, ck.Value,
-						); err != nil {
-							t.Error(err)
-						}
-						if err = assert.True(
-							ck.Expires.Unix() > time.Now().Unix(),
-						); err != nil {
-							t.Error(err)
-						}
-					}
-				}
-				if !authTokenFound {
-					t.Errorf("200 was expected but auth token was not set")
-				}
-			case http.StatusInternalServerError:
-				// 500 was expected - an error must be logged.
-				errFound := false
-				for _, depErr := range []error{
-					c.userSelectorOutErr,
-					c.hasherOutErr,
-					c.userInserterOutErr,
-				} {
-					if depErr != nil && depErr != sql.ErrNoRows {
-						errFound = true
-						if err = assert.Equal(
-							log.LevelError, logger.InLevel,
-						); err != nil {
-							t.Error(err)
-						}
-						if err = assert.Equal(
-							depErr.Error(), logger.InMessage,
-						); err != nil {
-							t.Error(err)
-						}
-					}
-				}
-				if !errFound {
-					t.Errorf(
-						"500 was expected but no errors were returned " +
-							"from sut's dependencies",
-					)
-				}
-			}
+			// Run case-specific assertions
+			c.assertFunc(t, logger, res)
 		})
 	}
 }

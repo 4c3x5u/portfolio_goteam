@@ -19,23 +19,28 @@ func TestJWTValidator(t *testing.T) {
 		wantSub string
 	}{
 		{
-			name:    "InvalidSignature",
-			token:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IyMSJ9.w_B9yQkrWU3s5vdD7YJn4hAutfUMxtb4JfdQvpfeiP0",
+			name: "InvalidSignature",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IyMSJ9" +
+				".w_B9yQkrWU3s5vdD7YJn4hAutfUMxtb4JfdQvpfeiP0",
 			wantSub: "",
 		},
 		{
-			name:    "MalformedToken",
-			token:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCb2IyMSJ9.k6QDVjyaHxPYixeoQBLixC5c79VK-WZ_kD9u4fjX_Ks",
+			name: "MalformedToken",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCb2IyMSJ9.k6QDVjyaHxPYix" +
+				"eoQBLixC5c79VK-WZ_kD9u4fjX_Ks",
 			wantSub: "",
 		},
 		{
-			name:    "Expired",
-			token:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzM1MzQ2NDIsInN1YiI6ImJvYjIxIn0.6Ii9QWGyjY5Q1TMoI6W5QdiTB4Fhy87aD3QZYbxpmn4",
+			name: "Expired",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NzM1MzQ2" +
+				"NDIsInN1YiI6ImJvYjIxIn0.6Ii9QWGyjY5Q1TMoI6W5QdiTB4Fhy87aD3QZ" +
+				"Ybxpmn4",
 			wantSub: "",
 		},
 		{
-			name:    "Success",
-			token:   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IyMSJ9.k6QDVjyaHxPYixeoQBLixC5c79VK-WZ_kD9u4fjX_Ks",
+			name: "Success",
+			token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2IyMSJ9" +
+				".k6QDVjyaHxPYixeoQBLixC5c79VK-WZ_kD9u4fjX_Ks",
 			wantSub: "bob21",
 		},
 	} {

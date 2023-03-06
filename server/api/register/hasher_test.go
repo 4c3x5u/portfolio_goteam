@@ -14,34 +14,34 @@ import (
 // bcrypt.CompareHashAndPassword to assert that the result was generated from
 // the given plaintext and doesn't match another plaintext string.
 func TestPasswordHasher(t *testing.T) {
+	sut := NewPasswordHasher()
+
 	for _, c := range []struct {
 		name           string
 		inPlaintext    string
-		matchPlaintext []byte
+		matchPlaintext string
 		wantErr        error
 	}{
 		{
 			name:           "NoMatch",
 			inPlaintext:    "password",
-			matchPlaintext: []byte("different"),
+			matchPlaintext: "differentPassword",
 			wantErr:        bcrypt.ErrMismatchedHashAndPassword,
 		},
 		{
 			name:           "Match",
 			inPlaintext:    "password",
-			matchPlaintext: []byte("password"),
+			matchPlaintext: "password",
 			wantErr:        nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			sut := NewPasswordHasher()
-
 			hash, err := sut.Hash(c.inPlaintext)
 
 			if err = assert.Nil(err); err != nil {
 				t.Error(err)
 			}
-			err = bcrypt.CompareHashAndPassword(hash, c.matchPlaintext)
+			err = bcrypt.CompareHashAndPassword(hash, []byte(c.matchPlaintext))
 			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
 			}

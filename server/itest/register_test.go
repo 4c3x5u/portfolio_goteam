@@ -32,7 +32,7 @@ func TestRegister(t *testing.T) {
 		log.NewAppLogger(),
 	)
 
-	// used in 400 error cases to assert on username and password error messages
+	// Used in 400 error cases to assert on username and password error messages.
 	assertOnValidationErrs := func(
 		wantUsernameErrs, wantPasswordErrs []string,
 	) func(*testing.T, *http.Response) {
