@@ -65,10 +65,14 @@ func (h POSTHandler) Handle(
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else if boardCount >= maxBoards {
+	} else if boardCount >= 3 {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			POSTResBody{Error: msgMaxBoards},
+			POSTResBody{
+				Error: "You have already created the maximum amount of " +
+					"boards allowed per user. Please delete one of your " +
+					"boards to create a new one.",
+			},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -88,18 +92,3 @@ func (h POSTHandler) Handle(
 	// All went well. Return 200.
 	w.WriteHeader(http.StatusOK)
 }
-
-const (
-	// maxBoards is the amount of boards that each user is allowed to own (i.e.
-	// be the admin of).
-	maxBoards = 3
-
-	// maxNameLength is the maximum amount of characters that a board name can
-	// have.
-	maxNameLength = 35
-
-	// msgMaxBoards is the error message returned from the handler when the user
-	// already owns the maximum amount of boards allowed per user.
-	msgMaxBoards = "You have already created the maximum amount of boards all" +
-		"owed per user. Please delete one of your boards to create a new one."
-)

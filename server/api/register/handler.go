@@ -82,7 +82,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
 			ResBody{ValidationErrs: ValidationErrs{
-				Username: []string{msgUsernameTaken},
+				Username: []string{"Username is already taken."},
 			}},
 		); errEncode != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -116,7 +116,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Msg: msgAuthErr},
+			ResBody{
+				Msg: "You have been registered successfully but something " +
+					"went wrong. Please log in using the credentials you " +
+					"registered with.",
+			},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
 		}
@@ -129,12 +133,3 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}
 }
-
-// msgUsernameTaken is the error message returned from the handler when the
-// username given to it is already registered for another user.
-const msgUsernameTaken = "Username is already taken."
-
-// msgAuthErr is the error message returned from handlers when the token
-// generator throws an error
-const msgAuthErr = "You have been registered successfully but something went " +
-	"wrong. Please log in using the credentials you registered with."

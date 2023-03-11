@@ -79,6 +79,9 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
+	// Used on cases where no case-specific assertions are required.
+	emptyAssertFunc := func(*testing.T, *log.FakeLogger, *http.Response) {}
+
 	for _, c := range []struct {
 		name                   string
 		validatorOutOK         bool
@@ -100,7 +103,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
+			assertFunc:             emptyAssertFunc,
 		},
 		{
 			name:                   "UserNotFound",
@@ -111,7 +114,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
+			assertFunc:             emptyAssertFunc,
 		},
 		{
 			name:                   "UserSelectorError",
@@ -135,7 +138,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             func(*testing.T, *log.FakeLogger, *http.Response) {},
+			assertFunc:             emptyAssertFunc,
 		},
 		{
 			name:           "HashComparerError",
@@ -213,7 +216,9 @@ func TestHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(http.MethodPost, "", bytes.NewReader(reqBody))
+			req, err := http.NewRequest(
+				http.MethodPost, "", bytes.NewReader(reqBody),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}

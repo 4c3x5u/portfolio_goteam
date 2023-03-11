@@ -59,7 +59,10 @@ func (v UsernameValidator) Validate(username string) (errs []string) {
 	}
 
 	if match, _ := regexp.MatchString("[^A-Za-z0-9]+", username); match {
-		errs = append(errs, "Username can contain only letters (a-z/A-Z) and digits (0-9).")
+		errs = append(
+			errs,
+			"Username can contain only letters (a-z/A-Z) and digits (0-9).",
+		)
 	}
 	if match, _ := regexp.MatchString("(^\\d)", username); match {
 		errs = append(errs, "Username can start only with a letter (a-z/A-Z).")
@@ -96,17 +99,25 @@ func (v PasswordValidator) Validate(password string) (errs []string) {
 	if match, _ := regexp.MatchString("[0-9]", password); !match {
 		errs = append(errs, "Password must contain a digit (0-9).")
 	}
-	if match, _ := regexp.MatchString("[!\"#$%&'()*+,-./:;<=>?[\\]^_`{|}~]", password); !match {
-		errs = append(errs, "Password must contain one of the following special characters: "+
-			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.")
+	if match, _ := regexp.MatchString(
+		"[!\"#$%&'()*+,-./:;<=>?[\\]^_`{|}~]", password,
+	); !match {
+		errs = append(
+			errs,
+			"Password must contain one of the following special characters: "+
+				"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | "+
+				"} ~.",
+		)
 	}
 	if match, _ := regexp.MatchString("\\s", password); match {
 		errs = append(errs, "Password cannot contain spaces.")
 	}
 	if match, _ := regexp.MatchString("[^\\x00-\\x7F]", password); match {
-		errs = append(errs, "Password can contain only letters (a-z/A-Z), digits (0-9), "+
-			"and the following special characters: "+
-			"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
+		errs = append(
+			errs,
+			"Password can contain only letters (a-z/A-Z), digits (0-9), and "+
+				"the following special characters: ! \" # $ % & ' ( ) * + , "+
+				"- . / : ; < = > ? [ \\ ] ^ _ ` { | } ~.",
 		)
 	}
 

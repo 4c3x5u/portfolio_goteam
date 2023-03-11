@@ -151,7 +151,9 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
-				ValidationErrs{Username: []string{msgUsernameTaken}},
+				ValidationErrs{
+					Username: []string{"Username is already taken."},
+				},
 			),
 		},
 		{

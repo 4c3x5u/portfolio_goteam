@@ -69,7 +69,7 @@ func TestPOSTHandler(t *testing.T) {
 		}{
 			{
 				name:                   "InvalidRequest",
-				validatorOutErrMsg:     msgNameEmpty,
+				validatorOutErrMsg:     "Board name cannot be empty.",
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,

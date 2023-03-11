@@ -13,6 +13,8 @@ import (
 func TestPOSTValidator(t *testing.T) {
 	sut := NewPOSTValidator()
 
+	msgEmpty := "Board name cannot be empty."
+
 	for _, c := range []struct {
 		name       string
 		reqBody    POSTReqBody
@@ -21,19 +23,19 @@ func TestPOSTValidator(t *testing.T) {
 		{
 			name:       "NoName",
 			reqBody:    POSTReqBody{},
-			wantErrMsg: msgNameEmpty,
+			wantErrMsg: msgEmpty,
 		},
 		{
 			name:       "NameEmpty",
 			reqBody:    POSTReqBody{Name: ""},
-			wantErrMsg: msgNameEmpty,
+			wantErrMsg: msgEmpty,
 		},
 		{
 			name: "NameTooLong",
 			reqBody: POSTReqBody{
 				Name: "boardyboardsyboardkyboardishboardxyz",
 			},
-			wantErrMsg: msgNameTooLong,
+			wantErrMsg: "Board name cannot be longer than 35 characters.",
 		},
 		{
 			name:       "IsValid",
