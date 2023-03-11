@@ -21,7 +21,7 @@ func NewBearerTokenReader() BearerTokenReader { return BearerTokenReader{} }
 // exactly went wrong and just return an Unauthorized error/response.
 func (r BearerTokenReader) Read(authHeader string) string {
 	s := strings.Split(authHeader, " ")
-	if s[0] != "Bearer" || s[1] == "" {
+	if len(s) != 2 || s[0] != "Bearer" || s[1] == "" {
 		return ""
 	}
 	return s[1]
