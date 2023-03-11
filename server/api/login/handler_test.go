@@ -34,7 +34,7 @@ func TestHandler(t *testing.T) {
 		validator, dbUserSelector, passwordComparer, authTokenGenerator, logger,
 	)
 
-	// Used in 500 error cases to assert on the logged error message.
+	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
 	) func(*testing.T, *log.FakeLogger, *http.Response) {
@@ -45,31 +45,6 @@ func TestHandler(t *testing.T) {
 			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
 				t.Error(err)
 			}
-		}
-	}
-
-	// Used in success cases to assert on the auth token set on response cookie.
-	assertOnAuthToken := func(
-		t *testing.T, _ *log.FakeLogger, r *http.Response,
-	) {
-		authTokenFound := false
-		for _, ck := range r.Cookies() {
-			if ck.Name == "auth-token" {
-				authTokenFound = true
-				if err := assert.Equal(
-					"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...", ck.Value,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.True(
-					ck.Expires.Unix() > time.Now().Unix(),
-				); err != nil {
-					t.Error(err)
-				}
-			}
-		}
-		if !authTokenFound {
-			t.Errorf("auth token was not found")
 		}
 	}
 
@@ -199,7 +174,29 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusOK,
-			assertFunc:             assertOnAuthToken,
+			assertFunc: func(
+				t *testing.T, _ *log.FakeLogger, r *http.Response,
+			) {
+				authTokenFound := false
+				for _, ck := range r.Cookies() {
+					if ck.Name == "auth-token" {
+						authTokenFound = true
+						if err := assert.Equal(
+							"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...", ck.Value,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.True(
+							ck.Expires.Unix() > time.Now().Unix(),
+						); err != nil {
+							t.Error(err)
+						}
+					}
+				}
+				if !authTokenFound {
+					t.Errorf("auth token was not found")
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

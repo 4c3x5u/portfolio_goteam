@@ -94,7 +94,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	); err != nil {
 		h.logger.Log(log.LevelError, err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-		return
 	} else {
 		http.SetCookie(w, &http.Cookie{
 			Name:    auth.CookieName,
@@ -102,6 +101,5 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Expires: expiry,
 		})
 		w.WriteHeader(http.StatusOK)
-		return
 	}
 }

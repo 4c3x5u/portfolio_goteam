@@ -25,7 +25,7 @@ func TestDELETEHandler(t *testing.T) {
 		validator, userBoardSelector, userBoardDeleter, logger,
 	)
 
-	// Used in 500 error cases to assert on the logged error message.
+	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
 	) func(*testing.T, *log.FakeLogger) {

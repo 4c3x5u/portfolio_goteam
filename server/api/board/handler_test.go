@@ -28,8 +28,8 @@ func TestHandler(t *testing.T) {
 		},
 	)
 
-	// Used in success cases to assert on the parameters received by the method
-	// handler.
+	// Used in status 200 cases to assert that the correct method handler is
+	// called with the correct parameters.
 	assertOnMethodHandler := func(
 		h *api.FakeMethodHandler, sub string,
 	) func(*testing.T, *http.Request, *httptest.ResponseRecorder) {

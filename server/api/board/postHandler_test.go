@@ -26,7 +26,7 @@ func TestPOSTHandler(t *testing.T) {
 	logger := &log.FakeLogger{}
 	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, logger)
 
-	// Used in 500 error cases to assert on the logged error message.
+	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
 	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {
@@ -40,7 +40,7 @@ func TestPOSTHandler(t *testing.T) {
 		}
 	}
 
-	// Used in 400 error cases to assert on the error returned in response body.
+	// Used in status 400 cases to assert on the error returned in res body.
 	assertOnResErr := func(
 		wantErrMsg string,
 	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {

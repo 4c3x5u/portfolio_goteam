@@ -65,16 +65,11 @@ func main() {
 		logger.Log(log.LevelFatal, err.Error())
 		os.Exit(2)
 	}
-
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
 	userSelector := db.NewUserSelector(dbConn)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
 
 	mux.Handle("/register", registerAPI.NewHandler(
 		registerAPI.NewValidator(

@@ -47,7 +47,7 @@ func TestBoard(t *testing.T) {
 		}
 	}
 
-	// used in 400 error cases to assert on the error message
+	// Used in status 400 error cases to assert on the error message.
 	assertOnErrMsg := func(
 		wantErrMsg string,
 	) func(*testing.T, *httptest.ResponseRecorder) {
