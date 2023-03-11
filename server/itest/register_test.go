@@ -29,7 +29,7 @@ func TestRegister(t *testing.T) {
 		registerAPI.NewPasswordHasher(),
 		db.NewUserInserter(dbConn),
 		auth.NewJWTGenerator(jwtKey),
-		log.NewAppLogger(),
+		log.New(),
 	)
 
 	// Used in status 400 cases to assert on username and password error messages.

@@ -15,7 +15,7 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it
@@ -27,17 +27,17 @@ func TestHandler(t *testing.T) {
 		hasher         = &fakeHasher{}
 		userInserter   = &db.FakeUserInserter{}
 		tokenGenerator = &auth.FakeTokenGenerator{}
-		logger         = &log.FakeLogger{}
+		log            = &pkgLog.FakeErrorer{}
 	)
 	sut := NewHandler(
-		validator, userSelector, hasher, userInserter, tokenGenerator, logger,
+		validator, userSelector, hasher, userInserter, tokenGenerator, log,
 	)
 
 	// Used in status 400 cases to assert on validation errors.
 	assertOnValidationErrs := func(
 		wantValidationErrs ValidationErrs,
-	) func(*testing.T, *log.FakeLogger, *http.Response) {
-		return func(t *testing.T, _ *log.FakeLogger, r *http.Response) {
+	) func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {
+		return func(t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response) {
 			resBody := &ResBody{}
 			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
@@ -62,11 +62,8 @@ func TestHandler(t *testing.T) {
 	// Used in status 500 error cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
-	) func(*testing.T, *log.FakeLogger, *http.Response) {
-		return func(t *testing.T, l *log.FakeLogger, _ *http.Response) {
-			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
-				t.Error(err)
-			}
+	) func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {
+		return func(t *testing.T, l *pkgLog.FakeErrorer, _ *http.Response) {
 			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
 				t.Error(err)
 			}
@@ -117,7 +114,9 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
 		wantStatusCode       int
-		assertFunc           func(*testing.T, *log.FakeLogger, *http.Response)
+		assertFunc           func(
+			*testing.T, *pkgLog.FakeErrorer, *http.Response,
+		)
 	}{
 		{
 			name: "BasicValidatorErrs",
@@ -211,7 +210,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr: errors.New("token generator error"),
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: func(
-				t *testing.T, _ *log.FakeLogger, r *http.Response,
+				t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response,
 			) {
 				resBody := &ResBody{}
 				if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
@@ -240,7 +239,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
 			assertFunc: func(
-				t *testing.T, _ *log.FakeLogger, r *http.Response,
+				t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response,
 			) {
 				authTokenFound := false
 				for _, ck := range r.Cookies() {
@@ -300,7 +299,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions
-			c.assertFunc(t, logger, res)
+			c.assertFunc(t, log, res)
 		})
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"server/api"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 // Handler is a http.Handler that can be used to handle register requests.
@@ -19,7 +19,7 @@ type Handler struct {
 	hasher             Hasher
 	dbUserInserter     db.Inserter[db.User]
 	authTokenGenerator auth.TokenGenerator
-	logger             log.Logger
+	log                pkgLog.Errorer
 }
 
 // NewHandler is the constructor for Handler.
@@ -29,7 +29,7 @@ func NewHandler(
 	hasher Hasher,
 	dbUserInserter db.Inserter[db.User],
 	authTokenGenerator auth.TokenGenerator,
-	logger log.Logger,
+	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
 		validator:          validator,
@@ -37,7 +37,7 @@ func NewHandler(
 		hasher:             hasher,
 		dbUserInserter:     dbUserInserter,
 		authTokenGenerator: authTokenGenerator,
-		logger:             logger,
+		log:                log,
 	}
 }
 
@@ -53,7 +53,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -65,7 +65,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ResBody{ValidationErrs: validationErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.logger.Log(log.LevelError, err.Error())
+			h.log.Error(err.Error())
 		}
 		return
 	}
@@ -86,24 +86,24 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}},
 		); errEncode != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.logger.Log(log.LevelError, errEncode.Error())
+			h.log.Error(errEncode.Error())
 		}
 		return
 	} else if err != sql.ErrNoRows {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// Hash password and create user.
 	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if err = h.dbUserInserter.Insert(
 		db.NewUser(reqBody.Username, pwdHash),
 	); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -122,7 +122,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					"registered with.",
 			},
 		); err != nil {
-			h.logger.Log(log.LevelError, err.Error())
+			h.log.Error(err.Error())
 		}
 	} else {
 		http.SetCookie(w, &http.Cookie{

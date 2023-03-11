@@ -15,7 +15,7 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,20 +28,17 @@ func TestHandler(t *testing.T) {
 		dbUserSelector     = &db.FakeUserSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
-		logger             = &log.FakeLogger{}
+		log                = &pkgLog.FakeErrorer{}
 	)
 	sut := NewHandler(
-		validator, dbUserSelector, passwordComparer, authTokenGenerator, logger,
+		validator, dbUserSelector, passwordComparer, authTokenGenerator, log,
 	)
 
 	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
-	) func(*testing.T, *log.FakeLogger, *http.Response) {
-		return func(t *testing.T, l *log.FakeLogger, _ *http.Response) {
-			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
-				t.Error(err)
-			}
+	) func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {
+		return func(t *testing.T, l *pkgLog.FakeErrorer, _ *http.Response) {
 			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
 				t.Error(err)
 			}
@@ -80,7 +77,7 @@ func TestHandler(t *testing.T) {
 	})
 
 	// Used on cases where no case-specific assertions are required.
-	emptyAssertFunc := func(*testing.T, *log.FakeLogger, *http.Response) {}
+	emptyAssertFunc := func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {}
 
 	for _, c := range []struct {
 		name                   string
@@ -92,7 +89,9 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutErr   error
 		wantStatusCode         int
 		wantErr                string
-		assertFunc             func(*testing.T, *log.FakeLogger, *http.Response)
+		assertFunc             func(
+			*testing.T, *pkgLog.FakeErrorer, *http.Response,
+		)
 	}{
 		{
 			name:                   "InvalidRequest",
@@ -178,7 +177,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr:   nil,
 			wantStatusCode:         http.StatusOK,
 			assertFunc: func(
-				t *testing.T, _ *log.FakeLogger, r *http.Response,
+				t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response,
 			) {
 				authTokenFound := false
 				for _, ck := range r.Cookies() {
@@ -236,7 +235,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions.
-			c.assertFunc(t, logger, res)
+			c.assertFunc(t, log, res)
 		})
 	}
 }

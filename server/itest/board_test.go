@@ -15,12 +15,12 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 func TestBoard(t *testing.T) {
 	// Create board API handler.
-	logger := log.NewAppLogger()
+	log := pkgLog.New()
 	sut := boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
@@ -29,13 +29,13 @@ func TestBoard(t *testing.T) {
 				boardAPI.NewPOSTValidator(),
 				db.NewUserBoardCounter(dbConn),
 				db.NewBoardInserter(dbConn),
-				logger,
+				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewDELETEValidator(),
 				db.NewUserBoardSelector(dbConn),
 				db.NewBoardDeleter(dbConn),
-				logger,
+				log,
 			),
 		},
 	)

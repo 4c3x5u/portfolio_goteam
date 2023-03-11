@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
@@ -15,7 +15,7 @@ type POSTHandler struct {
 	validator        POSTReqValidator
 	userBoardCounter db.Counter
 	boardInserter    db.Inserter[db.Board]
-	logger           log.Logger
+	log              pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
@@ -23,13 +23,13 @@ func NewPOSTHandler(
 	validator POSTReqValidator,
 	userBoardCounter db.Counter,
 	boardInserter db.Inserter[db.Board],
-	logger log.Logger,
+	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{
 		validator:        validator,
 		userBoardCounter: userBoardCounter,
 		boardInserter:    boardInserter,
-		logger:           logger,
+		log:              log,
 	}
 }
 
@@ -40,16 +40,16 @@ func (h POSTHandler) Handle(
 	// Read and validate request body.
 	reqBody := POSTReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if errMsg := h.validator.Validate(reqBody); errMsg != "" {
 		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(
+		if err := json.NewEncoder(w).Encode(
 			POSTResBody{Error: errMsg},
-		); encodeErr != nil {
-			h.logger.Log(log.LevelError, encodeErr.Error())
+		); err != nil {
+			h.log.Error(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -62,7 +62,7 @@ func (h POSTHandler) Handle(
 	); err != nil && err != sql.ErrNoRows {
 		// sql.ErrNoRows is OK here. It just means the user hasn't created any
 		// boards yet.
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if boardCount >= 3 {
@@ -74,7 +74,7 @@ func (h POSTHandler) Handle(
 					"boards to create a new one.",
 			},
 		); err != nil {
-			h.logger.Log(log.LevelError, err.Error())
+			h.log.Error(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -84,7 +84,7 @@ func (h POSTHandler) Handle(
 	if err := h.boardInserter.Insert(
 		db.NewBoard(reqBody.Name, username),
 	); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

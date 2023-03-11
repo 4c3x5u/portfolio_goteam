@@ -4,6 +4,10 @@ package log
 
 import "log"
 
+// Errorer describes a type that can be used to log an error-level message to
+// the console.
+type Errorer interface{ Error(string) }
+
 // Log can be used to log messages of different log levels across the project.
 type Log struct{}
 
@@ -11,10 +15,10 @@ type Log struct{}
 func New() Log { return Log{} }
 
 // Info logs an information-level message to the console.
-func (l Log) Info(msg string) { log.Println("--[INFO]-- " + msg) }
+func (l Log) Info(message string) { log.Println("--[INFO]-- " + message) }
 
 // Info logs an error-level message to the console.
-func (l Log) Error(msg string) { log.Println("--[ERROR]-- " + msg) }
+func (l Log) Error(message string) { log.Println("--[ERROR]-- " + message) }
 
-// Info logs an fatal-level message to the console.
-func (l Log) Fatal(msg string) { log.Println("--[FATAL]-- " + msg) }
+// Info logs an fatal-level message to the console and os.Exit(1).
+func (l Log) Fatal(message string) { log.Println("--[FATAL]-- " + message) }

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
@@ -14,7 +14,7 @@ type DELETEHandler struct {
 	validator         DELETEReqValidator
 	userBoardSelector db.RelSelector[bool]
 	boardDeleter      db.Deleter
-	logger            log.Logger
+	log               pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
@@ -22,13 +22,13 @@ func NewDELETEHandler(
 	validator DELETEReqValidator,
 	userBoardSelector db.RelSelector[bool],
 	boardDeleter db.Deleter,
-	logger log.Logger,
+	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
 		validator:         validator,
 		userBoardSelector: userBoardSelector,
 		boardDeleter:      boardDeleter,
-		logger:            logger,
+		log:               log,
 	}
 }
 
@@ -48,7 +48,7 @@ func (h DELETEHandler) Handle(
 	if isAdmin, err := h.userBoardSelector.Select(
 		username, boardID,
 	); err != nil && err != sql.ErrNoRows {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if err == sql.ErrNoRows || !isAdmin {
@@ -58,7 +58,7 @@ func (h DELETEHandler) Handle(
 
 	// Delete the board.
 	if err := h.boardDeleter.Delete(boardID); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

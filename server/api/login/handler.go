@@ -9,7 +9,7 @@ import (
 	"server/api"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,7 +20,7 @@ type Handler struct {
 	dbUserSelector     db.Selector[db.User]
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
-	logger             log.Logger
+	log                pkgLog.Errorer
 }
 
 // NewHandler creates and returns a new Handler.
@@ -29,14 +29,14 @@ func NewHandler(
 	userSelector db.Selector[db.User],
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
-	logger log.Logger,
+	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
 		validator:          validator,
 		dbUserSelector:     userSelector,
 		passwordComparer:   hashComparer,
 		authTokenGenerator: authTokenGenerator,
-		logger:             logger,
+		log:                log,
 	}
 }
 
@@ -52,7 +52,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read and validate request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -68,7 +68,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -81,7 +81,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -92,7 +92,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
-		h.logger.Log(log.LevelError, err.Error())
+		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		http.SetCookie(w, &http.Cookie{

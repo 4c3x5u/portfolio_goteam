@@ -11,7 +11,7 @@ import (
 	registerAPI "server/api/register"
 	"server/auth"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 
 	"github.com/joho/godotenv"
 
@@ -30,13 +30,13 @@ const envDBCONNSTR = "DBCONNSTR"
 const envJWTKEY = "JWTKEY"
 
 func main() {
-	// Create a logger for the app.
-	logger := log.NewAppLogger()
+	// Create a log for the app.
+	log := pkgLog.New()
 
 	// Load environment variables from .env file.
 	err := godotenv.Load()
 	if err != nil {
-		logger.Log(log.LevelFatal, err.Error())
+		log.Error(err.Error())
 		os.Exit(1)
 	}
 
@@ -50,7 +50,7 @@ func main() {
 		envJWTKEY:    jwtKey,
 	} {
 		if value == "" {
-			logger.Log(log.LevelFatal, name+" env var was empty")
+			log.Fatal(name + " env var was empty")
 			os.Exit(1)
 		}
 	}
@@ -58,12 +58,12 @@ func main() {
 	// Create dependencies that are shared by multiple handlers.
 	dbConn, err := sql.Open("postgres", dbConnStr)
 	if err != nil {
-		logger.Log(log.LevelFatal, err.Error())
+		log.Fatal(err.Error())
 		os.Exit(1)
 	}
 	if err = dbConn.Ping(); err != nil {
-		logger.Log(log.LevelFatal, err.Error())
-		os.Exit(2)
+		log.Fatal(err.Error())
+		os.Exit(1)
 	}
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
 	userSelector := db.NewUserSelector(dbConn)
@@ -80,7 +80,7 @@ func main() {
 		registerAPI.NewPasswordHasher(),
 		db.NewUserInserter(dbConn),
 		jwtGenerator,
-		logger,
+		log,
 	))
 
 	mux.Handle("/login", loginAPI.NewHandler(
@@ -88,7 +88,7 @@ func main() {
 		userSelector,
 		loginAPI.NewPasswordComparer(),
 		jwtGenerator,
-		logger,
+		log,
 	))
 
 	mux.Handle("/board", boardAPI.NewHandler(
@@ -99,21 +99,21 @@ func main() {
 				boardAPI.NewPOSTValidator(),
 				db.NewUserBoardCounter(dbConn),
 				db.NewBoardInserter(dbConn),
-				logger,
+				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewDELETEValidator(),
 				db.NewUserBoardSelector(dbConn),
 				db.NewBoardDeleter(dbConn),
-				logger,
+				log,
 			),
 		},
 	))
 
 	// Serve the app using the ServeMux.
-	logger.Log(log.LevelInfo, "running server at port "+port)
+	log.Info("running server at port " + port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		logger.Log(log.LevelFatal, err.Error())
+		log.Fatal(err.Error())
 		os.Exit(1)
 	}
 }

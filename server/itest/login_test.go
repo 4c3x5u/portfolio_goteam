@@ -24,7 +24,7 @@ func TestLogin(t *testing.T) {
 		db.NewUserSelector(dbConn),
 		loginAPI.NewPasswordComparer(),
 		auth.NewJWTGenerator(jwtKey),
-		log.NewAppLogger(),
+		log.New(),
 	)
 
 	for _, c := range []struct {

@@ -14,7 +14,7 @@ import (
 
 	"server/assert"
 	"server/db"
-	"server/log"
+	pkgLog "server/log"
 )
 
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
@@ -23,17 +23,14 @@ func TestPOSTHandler(t *testing.T) {
 	validator := &fakePOSTReqValidator{}
 	userBoardCounter := &db.FakeCounter{}
 	dbBoardInserter := &db.FakeBoardInserter{}
-	logger := &log.FakeLogger{}
-	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, logger)
+	log := &pkgLog.FakeErrorer{}
+	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, log)
 
 	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
 		wantErrMsg string,
-	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {
-		return func(t *testing.T, l *log.FakeLogger, _ io.ReadCloser) {
-			if err := assert.Equal(log.LevelError, l.InLevel); err != nil {
-				t.Error(err)
-			}
+	) func(*testing.T, *pkgLog.FakeErrorer, io.ReadCloser) {
+		return func(t *testing.T, l *pkgLog.FakeErrorer, _ io.ReadCloser) {
 			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
 				t.Error(err)
 			}
@@ -43,8 +40,10 @@ func TestPOSTHandler(t *testing.T) {
 	// Used in status 400 cases to assert on the error returned in res body.
 	assertOnResErr := func(
 		wantErrMsg string,
-	) func(*testing.T, *log.FakeLogger, io.ReadCloser) {
-		return func(t *testing.T, _ *log.FakeLogger, rawResBody io.ReadCloser) {
+	) func(*testing.T, *pkgLog.FakeErrorer, io.ReadCloser) {
+		return func(
+			t *testing.T, _ *pkgLog.FakeErrorer, rawResBody io.ReadCloser,
+		) {
 			resBody := POSTResBody{}
 			if err := json.NewDecoder(rawResBody).Decode(&resBody); err != nil {
 				t.Error(err)
@@ -64,7 +63,7 @@ func TestPOSTHandler(t *testing.T) {
 			boardInserterOutErr    error
 			wantStatusCode         int
 			assertFunc             func(
-				*testing.T, *log.FakeLogger, io.ReadCloser,
+				*testing.T, *pkgLog.FakeErrorer, io.ReadCloser,
 			)
 		}{
 			{
@@ -119,7 +118,7 @@ func TestPOSTHandler(t *testing.T) {
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusOK,
 				assertFunc: func(
-					*testing.T, *log.FakeLogger, io.ReadCloser,
+					*testing.T, *pkgLog.FakeErrorer, io.ReadCloser,
 				) {
 				},
 			},
@@ -156,7 +155,7 @@ func TestPOSTHandler(t *testing.T) {
 				}
 
 				// Run case-specific assertions.
-				c.assertFunc(t, logger, w.Result().Body)
+				c.assertFunc(t, log, w.Result().Body)
 			})
 		}
 	})
