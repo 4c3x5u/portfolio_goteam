@@ -33,8 +33,7 @@ func TestHandler(t *testing.T) {
 		validator, userSelector, hasher, userInserter, tokenGenerator, logger,
 	)
 
-	// Used in status 400 cases to assert on username and password error
-	// messages.
+	// Used in status 400 cases to assert on validation errors.
 	assertOnValidationErrs := func(
 		wantValidationErrs ValidationErrs,
 	) func(*testing.T, *log.FakeLogger, *http.Response) {
@@ -57,13 +56,6 @@ func TestHandler(t *testing.T) {
 			); err != nil {
 				t.Error(err)
 			}
-
-			if err := assert.Equal(
-				wantValidationErrs.Auth, resBody.ValidationErrs.Auth,
-			); err != nil {
-				t.Error(err)
-			}
-
 		}
 	}
 
@@ -159,7 +151,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
-				ValidationErrs{Username: []string{errUsernameTaken}},
+				ValidationErrs{Username: []string{msgUsernameTaken}},
 			),
 		},
 		{
@@ -215,10 +207,22 @@ func TestHandler(t *testing.T) {
 			userInserterOutErr:   nil,
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: errors.New("token generator error"),
-			wantStatusCode:       http.StatusUnauthorized,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: func(
-				*testing.T, *log.FakeLogger, *http.Response,
+				t *testing.T, _ *log.FakeLogger, r *http.Response,
 			) {
+				resBody := &ResBody{}
+				if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"You have been registered successfully but something "+
+						"went wrong. Please log in using the credentials you "+
+						"registered with.",
+					resBody.Msg,
+				); err != nil {
+					t.Error(err)
+				}
 			},
 		},
 		{

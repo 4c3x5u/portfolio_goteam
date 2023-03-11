@@ -82,7 +82,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
 			ResBody{ValidationErrs: ValidationErrs{
-				Username: []string{errUsernameTaken},
+				Username: []string{msgUsernameTaken},
 			}},
 		); errEncode != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -114,12 +114,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if authToken, err := h.authTokenGenerator.Generate(
 		reqBody.Username, expiry,
 	); err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{ValidationErrs: ValidationErrs{Auth: errAuth}},
+			ResBody{Msg: msgAuthErr},
 		); err != nil {
 			h.logger.Log(log.LevelError, err.Error())
-			w.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
 		http.SetCookie(w, &http.Cookie{
@@ -131,11 +130,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// errUsernameTaken is the error message returned from the handler when the
+// msgUsernameTaken is the error message returned from the handler when the
 // username given to it is already registered for another user.
-const errUsernameTaken = "Username is already taken."
+const msgUsernameTaken = "Username is already taken."
 
-// errAuth is the error message returned from handlers when the token generator
-// throws an error
-const errAuth = "You have been registered successfully but something went " +
+// msgAuthErr is the error message returned from handlers when the token
+// generator throws an error
+const msgAuthErr = "You have been registered successfully but something went " +
 	"wrong. Please log in using the credentials you registered with."

@@ -18,13 +18,9 @@ type ResBody struct {
 type ValidationErrs struct {
 	Username []string `json:"username"`
 	Password []string `json:"password"`
-	Auth     string   `json:"auth"`
 }
 
 // Any checks whether there are any validation errors within the ValidationErrs.
 func (e ValidationErrs) Any() bool {
-	if len(e.Username) > 0 || len(e.Password) > 0 || len(e.Auth) > 0 {
-		return true
-	}
-	return false
+	return len(e.Username) > 0 || len(e.Password) > 0
 }
