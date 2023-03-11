@@ -15,3 +15,7 @@ const Duration = 1 * time.Hour
 func WWWAuthenticate() (string, string) {
 	return "WWW-Authenticate", "Bearer"
 }
+
+// AuthorizationHeader is the name of the header that is used to retrieve the
+// authentication token from a HTTP request.
+const AuthorizationHeader = "Authorization"
