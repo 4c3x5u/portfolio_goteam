@@ -24,7 +24,7 @@ type Logger interface{ Log(Level, string) }
 // project.
 type AppLogger struct{}
 
-// NewAppLogger creates and returns a new BasicLogger.
+// NewAppLogger creates and returns a new AppLogger.
 func NewAppLogger() AppLogger { return AppLogger{} }
 
 // Log formats a message based on LogLevel and logs the resulting string.
