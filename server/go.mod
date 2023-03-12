@@ -4,11 +4,11 @@ go 1.19
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/golang-jwt/jwt/v4 v4.4.3
-	github.com/joho/godotenv v1.4.0
+	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.7
 	github.com/ory/dockertest v3.3.5+incompatible
-	golang.org/x/crypto v0.4.0
+	golang.org/x/crypto v0.7.0
 )
 
 require (
@@ -27,8 +27,8 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/net v0.3.0 // indirect
-	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
