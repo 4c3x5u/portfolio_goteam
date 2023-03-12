@@ -49,7 +49,7 @@ func (i BoardInserter) Insert(board Board) error {
 	// ID, and an isAdmin field of true (i.e. make the user admin of the board).
 	if _, err = tx.ExecContext(
 		ctx,
-		"INSERT INTO app.user_board(userID, boardID, isAdmin) "+
+		"INSERT INTO app.user_board(username, boardID, isAdmin) "+
 			"VALUES($1, $2, TRUE)",
 		board.adminID,
 		boardID,

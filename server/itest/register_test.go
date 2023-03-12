@@ -137,16 +137,13 @@ func TestRegister(t *testing.T) {
 			assertFunc: func(t *testing.T, res *http.Response) {
 				// assert that a new user is inserted into the database with
 				// the correct credentials
-				var userID, password string
+				var password string
 				err := dbConn.QueryRow(
-					`SELECT id, password FROM app."user" WHERE id = $1`,
+					`SELECT password FROM app."user" WHERE username = $1`,
 					"bob321",
-				).Scan(&userID, &password)
+				).Scan(&password)
 				if err != nil {
 					t.Fatal(err)
-				}
-				if err = assert.Equal("bob321", userID); err != nil {
-					t.Error(err)
 				}
 				if err = bcrypt.CompareHashAndPassword(
 					[]byte(password), []byte("Myp4ssw0rd!"),
@@ -178,9 +175,9 @@ func TestRegister(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			reqBody, err := json.Marshal(registerAPI.ReqBody{
-				Username: c.username,
-				Password: c.password,
+			reqBody, err := json.Marshal(map[string]string{
+				"username": c.username,
+				"password": c.password,
 			})
 			if err != nil {
 				t.Fatal(err)

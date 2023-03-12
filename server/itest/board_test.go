@@ -161,7 +161,7 @@ func TestBoard(t *testing.T) {
 					var boardCount int
 					err := dbConn.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
-							"WHERE userID = 'bob124' AND isAdmin = TRUE",
+							"WHERE username = 'bob124' AND isAdmin = TRUE",
 					).Scan(&boardCount)
 					if err != nil {
 						t.Error(err)
@@ -173,8 +173,8 @@ func TestBoard(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBodyBytes, err := json.Marshal(boardAPI.POSTReqBody{
-					Name: c.boardName,
+				reqBodyBytes, err := json.Marshal(map[string]string{
+					"name": c.boardName,
 				})
 				if err != nil {
 					t.Fatal(err)

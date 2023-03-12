@@ -17,7 +17,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// create a new pool to run the resource (i.e. test db) in
+	// Create and run the docker container for itest database.
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not construct pool: %s", err)
@@ -26,8 +26,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not connect to Docker: %s", err)
 	}
-
-	// pulls the db image, creates a container based on it, and run it
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
 		Tag:        "14",
@@ -44,17 +42,14 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
-
-	databaseURL := "postgres://itestdb_usr:itestdb_pwd@" +
-		resource.GetHostPort("5432/tcp") + "/itestdb?sslmode=disable"
-
-	log.Println("Connecting to database on url: ", databaseURL)
-
-	// Tell docker to hard kill the container in 180 seconds
 	resource.Expire(180)
 
-	// exponential backoff-retry, because the application in the container might
-	// not be ready to accept connections yet
+	// Get the connection string to the database.
+	databaseURL := "postgres://itestdb_usr:itestdb_pwd@" +
+		resource.GetHostPort("5432/tcp") + "/itestdb?sslmode=disable"
+	log.Println("Connecting to database on url: ", databaseURL)
+
+	// Make sure the container and the database are healthy.
 	pool.MaxWait = 120 * time.Second
 	if err = pool.Retry(func() error {
 		dbConn, err = sql.Open("postgres", databaseURL)
@@ -66,22 +61,23 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	// initialise the database with schema and tables
+	// Initialise the database with schema and tables.
 	qInitBytes, err := ioutil.ReadFile("init.sql")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("+++", err)
 	}
 	if _, err = dbConn.Exec(string(qInitBytes)); err != nil {
-		log.Fatal(err)
+		log.Fatal("+++", err)
 	}
 
-	//Run tests
+	// Run integration tests.
 	code := m.Run()
 
-	// You can't defer this because os.Exit doesn't care for defer
+	// Tear down the database container.
 	if err = pool.Purge(resource); err != nil {
 		log.Fatalf("Could not purge resource: %s", err)
 	}
 
+	// Done.
 	os.Exit(code)
 }

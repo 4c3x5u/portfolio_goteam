@@ -51,7 +51,7 @@ func main() {
 	} {
 		if value == "" {
 			log.Fatal(name + " env var was empty")
-			os.Exit(1)
+			os.Exit(2)
 		}
 	}
 
@@ -59,11 +59,11 @@ func main() {
 	dbConn, err := sql.Open("postgres", dbConnStr)
 	if err != nil {
 		log.Fatal(err.Error())
-		os.Exit(1)
+		os.Exit(3)
 	}
 	if err = dbConn.Ping(); err != nil {
 		log.Fatal(err.Error())
-		os.Exit(1)
+		os.Exit(4)
 	}
 	jwtGenerator := auth.NewJWTGenerator(jwtKey)
 	userSelector := db.NewUserSelector(dbConn)
@@ -114,6 +114,6 @@ func main() {
 	log.Info("running server at port " + port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err.Error())
-		os.Exit(1)
+		os.Exit(5)
 	}
 }

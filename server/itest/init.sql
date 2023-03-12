@@ -3,7 +3,7 @@
 CREATE SCHEMA app;
 
 CREATE TABLE app."user" (
-  id       VARCHAR(15) PRIMARY KEY,
+  username VARCHAR(15) PRIMARY KEY,
   password BYTEA       NOT NULL
 );
 
@@ -13,10 +13,10 @@ CREATE TABLE app.board (
 );
 
 CREATE TABLE app.user_board (
-  id      INTEGER     PRIMARY KEY GENERATED ALWAYS      AS IDENTITY,
-  userID  VARCHAR(15) NOT NULL    REFERENCES app."user",
-  boardID INTEGER     NOT NULL    REFERENCES app.board,
-  isAdmin BOOLEAN     NOT NULL
+  id       INTEGER     PRIMARY KEY GENERATED ALWAYS      AS IDENTITY,
+  username VARCHAR(15) NOT NULL    REFERENCES app."user",
+  boardID  INTEGER     NOT NULL    REFERENCES app.board,
+  isAdmin  BOOLEAN     NOT NULL
 );
 
 CREATE TABLE app."column" (
@@ -39,7 +39,7 @@ CREATE TABLE app.subtask (
   isDone BOOLEAN     NOT NULL
 );
 
-INSERT INTO app."user"(id, password) 
+INSERT INTO app."user"(username, password) 
 VALUES 
   ('bob123', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO'),
   ('bob124', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO');
@@ -47,7 +47,7 @@ VALUES
 INSERT INTO app.board(name) 
 VALUES ('Board #1'), ('Board #2'), ('Board #3'), ('Board #4');
 
-INSERT INTO app.user_board(userID, boardID, isAdmin) 
+INSERT INTO app.user_board(username, boardID, isAdmin) 
 VALUES 
   ('bob123', 1, TRUE), 
   ('bob123', 2, TRUE), 

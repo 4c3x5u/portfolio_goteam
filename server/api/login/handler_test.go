@@ -130,7 +130,7 @@ func TestHandler(t *testing.T) {
 			name:           "WrongPassword",
 			validatorOutOK: true,
 			userSelectorOutUser: db.User{
-				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     bcrypt.ErrMismatchedHashAndPassword,
@@ -143,7 +143,7 @@ func TestHandler(t *testing.T) {
 			name:           "HashComparerError",
 			validatorOutOK: true,
 			userSelectorOutUser: db.User{
-				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     errors.New("hash comparer error"),
@@ -156,7 +156,7 @@ func TestHandler(t *testing.T) {
 			name:           "TokenGeneratorError",
 			validatorOutOK: true,
 			userSelectorOutUser: db.User{
-				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     nil,
@@ -169,7 +169,7 @@ func TestHandler(t *testing.T) {
 			name:           "Success",
 			validatorOutOK: true,
 			userSelectorOutUser: db.User{
-				ID: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
+				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     nil,

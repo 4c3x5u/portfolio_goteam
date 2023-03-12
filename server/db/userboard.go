@@ -13,11 +13,12 @@ func NewUserBoardSelector(db *sql.DB) UserBoardSelector {
 // Select selects a record from the user_board table. It only returns the
 // isAdmin field since that is the only piece of information
 func (s UserBoardSelector) Select(
-	userID, boardID string,
+	username, boardID string,
 ) (isAdmin bool, err error) {
 	err = s.db.QueryRow(
-		"SELECT isAdmin FROM app.user_board WHERE userID = $1 AND boardID = $2",
-		userID,
+		"SELECT isAdmin FROM app.user_board WHERE username = $1 "+
+			"AND boardID = $2",
+		username,
 		boardID,
 	).Scan(&isAdmin)
 	return
@@ -33,13 +34,12 @@ func NewUserBoardCounter(db *sql.DB) UserBoardCounter {
 }
 
 // Count counts the number of boards in the database that the user with the
-// given userID is the admin to.
-func (c UserBoardCounter) Count(userID string) (count int, err error) {
+// given username is the admin to.
+func (c UserBoardCounter) Count(username string) (count int, err error) {
 	err = c.db.QueryRow(
 		"SELECT COUNT(*) FROM app.user_board "+
-			"WHERE userID = $1 AND isAdmin = $2",
-		userID,
-		true,
+			"WHERE username = $1 AND isAdmin = TRUE",
+		username,
 	).Scan(&count)
 	return
 }

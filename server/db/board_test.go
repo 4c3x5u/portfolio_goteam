@@ -17,7 +17,7 @@ import (
 func TestBoardInserter(t *testing.T) {
 	const (
 		sqlInsertBoard     = `INSERT INTO app.board\(name\) VALUES \(\$1\)`
-		sqlInsertUserBoard = `INSERT INTO app.user_board\(userID, boardID, ` +
+		sqlInsertUserBoard = `INSERT INTO app.user_board\(username, boardID, ` +
 			`isAdmin\) VALUES\(\$1, \$2, TRUE\)`
 	)
 

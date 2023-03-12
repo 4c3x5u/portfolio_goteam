@@ -90,9 +90,9 @@ func TestLogin(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			reqBody, err := json.Marshal(loginAPI.ReqBody{
-				Username: c.username,
-				Password: c.password,
+			reqBody, err := json.Marshal(map[string]string{
+				"username": c.username,
+				"password": c.password,
 			})
 			if err != nil {
 				t.Fatal(err)

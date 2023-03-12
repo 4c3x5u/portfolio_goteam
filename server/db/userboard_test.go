@@ -17,10 +17,10 @@ func TestUserBoardSelector(t *testing.T) {
 	db, mock, teardown := setUpDBTest(t)
 	defer teardown()
 	sut := NewUserBoardSelector(db)
-	userID := "bob123"
+	username := "bob123"
 	boardID := "123"
 	query := `SELECT isAdmin FROM app.user_board` +
-		` WHERE userID = \$1 AND boardID = \$2`
+		` WHERE username = \$1 AND boardID = \$2`
 	sqlErr := errors.New("postgres query error")
 
 	for _, c := range []struct {
@@ -59,9 +59,9 @@ func TestUserBoardSelector(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			c.setUpMock(mock.ExpectQuery(query).WithArgs(userID, boardID))
+			c.setUpMock(mock.ExpectQuery(query).WithArgs(username, boardID))
 
-			isAdmin, err := sut.Select(userID, boardID)
+			isAdmin, err := sut.Select(username, boardID)
 
 			if err = assert.Equal(c.wantErr, err); err != nil {
 				t.Error(err)
@@ -80,9 +80,9 @@ func TestUserBoardCounter(t *testing.T) {
 	db, mock, teardown := setUpDBTest(t)
 	defer teardown()
 	sut := NewUserBoardCounter(db)
-	userID := "bob123"
+	username := "bob123"
 	query := `SELECT COUNT\(\*\) FROM app.user_board ` +
-		`WHERE userID = \$1 AND isAdmin = \$2`
+		`WHERE username = \$1 AND isAdmin = TRUE`
 
 	for wantCount, wantErr := range map[int]error{
 		0: sql.ErrConnDone,
@@ -90,11 +90,11 @@ func TestUserBoardCounter(t *testing.T) {
 		6: nil,
 	} {
 		t.Run(fmt.Sprintf("Count%d", wantCount), func(t *testing.T) {
-			mock.ExpectQuery(query).WithArgs(userID, true).WillReturnRows(
+			mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 				mock.NewRows([]string{"count"}).AddRow(wantCount),
 			).WillReturnError(wantErr)
 
-			count, errCount := sut.Count(userID)
+			count, errCount := sut.Count(username)
 
 			if err := assert.Equal(wantErr, errCount); err != nil {
 				t.Error(err)
