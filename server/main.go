@@ -12,22 +12,12 @@ import (
 	"server/auth"
 	"server/db"
 	pkgLog "server/log"
+	"server/midware"
 
 	"github.com/joho/godotenv"
 
 	_ "github.com/lib/pq"
 )
-
-// envPORT is the name of the environment variable used for deciding what port
-// to run the server on.
-const envPORT = "PORT"
-
-// envDBCONNSTR is the name of the environment variable used for connecting to
-// the database.
-const envDBCONNSTR = "DBCONNSTR"
-
-// envJWTKEY is the name of the environment variable used for signing JWTs.
-const envJWTKEY = "JWTKEY"
 
 func main() {
 	// Create a log for the app.
@@ -41,14 +31,13 @@ func main() {
 	}
 
 	// Ensure that the necessary env vars were set.
-	port := os.Getenv(envPORT)
-	dbConnStr := os.Getenv(envDBCONNSTR)
-	jwtKey := os.Getenv(envJWTKEY)
-	for name, value := range map[string]string{
-		envPORT:      port,
-		envDBCONNSTR: dbConnStr,
-		envJWTKEY:    jwtKey,
-	} {
+	env := map[string]string{
+		Port:         os.Getenv(Port),
+		DBConnStr:    os.Getenv(DBConnStr),
+		JWTKey:       os.Getenv(JWTKey),
+		ClientOrigin: os.Getenv(ClientOrigin),
+	}
+	for name, value := range env {
 		if value == "" {
 			log.Fatal(name + " env var was empty")
 			os.Exit(2)
@@ -56,7 +45,7 @@ func main() {
 	}
 
 	// Create dependencies that are shared by multiple handlers.
-	dbConn, err := sql.Open("postgres", dbConnStr)
+	dbConn, err := sql.Open("postgres", env[DBConnStr])
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(3)
@@ -65,7 +54,7 @@ func main() {
 		log.Fatal(err.Error())
 		os.Exit(4)
 	}
-	jwtGenerator := auth.NewJWTGenerator(jwtKey)
+	jwtGenerator := auth.NewJWTGenerator(env[JWTKey])
 	userSelector := db.NewUserSelector(dbConn)
 
 	// Register handlers for API routes.
@@ -93,7 +82,7 @@ func main() {
 
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(jwtKey),
+		auth.NewJWTValidator(env[JWTKey]),
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewPOSTValidator(),
@@ -110,10 +99,30 @@ func main() {
 		},
 	))
 
+	// Set up CORS.
+	handler := midware.NewCORS(mux, env[ClientOrigin])
+
 	// Serve the app using the ServeMux.
-	log.Info("running server at port " + port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	log.Info("running server at port " + env[Port])
+	if err := http.ListenAndServe(":"+env[Port], handler); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(5)
 	}
 }
+
+const (
+	// Port is the name of the environment variable used for deciding what port
+	// to run the server on.
+	Port = "PORT"
+
+	// DBConnStr is the name of the environment variable used for connecting to
+	// the database.
+	DBConnStr = "DBCONNSTR"
+
+	// JWTKey is the name of the environment variable used for signing JWTs.
+	JWTKey = "JWTKEY"
+
+	// ClientOrigin is the name of the environment variable used to set up CORS
+	// with the client app.
+	ClientOrigin = "CLIENTORIGIN"
+)
