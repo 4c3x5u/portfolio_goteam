@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { getAuthHeaders } from '../misc/util';
 
-const ColumnsAPI = {
+const ColumnAPI = {
   patch: (columnId, data) => axios.patch(
-    `${process.env.REACT_APP_BACKEND_URL}/columns/?id=${columnId}`,
+    `${process.env.SERVER_URL}/column?id=${columnId}`,
     data,
     getAuthHeaders(),
   ),
 };
 
-export default ColumnsAPI;
+export default ColumnAPI;

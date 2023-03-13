@@ -7,7 +7,7 @@ import {
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
 import AppContext from '../../../AppContext';
-import UsersAPI from '../../../api/UsersAPI';
+import UserAPI from '../../../api/UserAPI';
 
 import logo from './deletemember.svg';
 import './deletemember.sass';
@@ -25,7 +25,7 @@ const DeleteMember = ({ username, toggleOff }) => {
     setMembers(members.filter((member) => member.username !== username));
 
     // Delete user in database
-    UsersAPI
+    UserAPI
       .delete(username)
       .then(toggleOff)
       .catch((err) => {

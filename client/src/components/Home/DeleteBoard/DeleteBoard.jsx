@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import BoardsAPI from '../../../api/BoardsAPI';
+import BoardAPI from '../../../api/BoardAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
 
@@ -28,7 +28,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
     setBoards(newBoards);
 
     // Delete board in database
-    BoardsAPI
+    BoardAPI
       .delete(id)
       .then(() => {
         toggleOff();

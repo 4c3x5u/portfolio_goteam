@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import BoardsAPI from '../../../api/BoardsAPI';
+import BoardAPI from '../../../api/BoardAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import inputType from '../../../misc/inputType';
 import ValidateBoard from '../../../validation/ValidateBoard';
@@ -35,7 +35,7 @@ const CreateBoard = ({ toggleOff }) => {
       setBoards([...boards, { id: Number.MAX_SAFE_INTEGER, name }]);
 
       // Create board in database
-      BoardsAPI
+      BoardAPI
         .post({ name, team_id: user.teamId })
         .then(() => {
           loadBoard();

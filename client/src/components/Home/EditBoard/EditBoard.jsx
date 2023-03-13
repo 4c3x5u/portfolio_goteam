@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import BoardsAPI from '../../../api/BoardsAPI';
+import BoardAPI from '../../../api/BoardAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import ValidateBoard from '../../../validation/ValidateBoard';
 import inputType from '../../../misc/inputType';
@@ -37,7 +37,7 @@ const EditBoard = ({ id, name, toggleOff }) => {
       )));
 
       // Edit board in database
-      BoardsAPI
+      BoardAPI
         .patch(id, { name: newName })
         .then(toggleOff)
         .catch((err) => {

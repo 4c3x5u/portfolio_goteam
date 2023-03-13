@@ -1,23 +1,23 @@
 import axios from 'axios';
 import { getAuthHeaders } from '../misc/util';
 
-const TasksAPI = {
+const TaskAPI = {
   post: (task) => axios.post(
-    `${process.env.REACT_APP_BACKEND_URL}/tasks/`,
+    `${process.env.REACT_APP_BACKEND_URL}/task`,
     task,
     getAuthHeaders(),
   ),
 
   patch: (taskId, data) => axios.patch(
-    `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${taskId}`,
+    `${process.env.REACT_APP_BACKEND_URL}/task?id=${taskId}`,
     data,
     getAuthHeaders(),
   ),
 
   delete: (taskId) => axios.delete(
-    `${process.env.REACT_APP_BACKEND_URL}/tasks/?id=${taskId}`,
+    `${process.env.REACT_APP_BACKEND_URL}/task?id=${taskId}`,
     getAuthHeaders(),
   ),
 };
 
-export default TasksAPI;
+export default TaskAPI;

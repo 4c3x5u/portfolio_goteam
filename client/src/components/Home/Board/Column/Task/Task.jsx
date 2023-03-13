@@ -14,7 +14,7 @@ import _ from 'lodash/core';
 import AppContext from '../../../../../AppContext';
 import Subtask from './Subtask/Subtask';
 import window from '../../../../../misc/window';
-import TasksAPI from '../../../../../api/TasksAPI';
+import TaskAPI from '../../../../../api/TaskAPI';
 
 import './task.sass';
 import 'react-contexify/dist/ReactContexify.css';
@@ -56,7 +56,7 @@ const Task = ({
     });
 
     // Add user to task in database
-    TasksAPI
+    TaskAPI
       .patch(id, { user: username })
       .catch((err) => {
         notify(

@@ -9,7 +9,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import AppContext from '../../../../../../../AppContext';
-import UsersAPI from '../../../../../../../api/UsersAPI';
+import UserAPI from '../../../../../../../api/UserAPI';
 
 import './teamcontrolsmenuitem.sass';
 
@@ -24,7 +24,7 @@ const TeamControlsMenuItem = ({
   } = useContext(AppContext);
 
   const toggleActive = () => (
-    UsersAPI
+    UserAPI
       .patch(username, activeBoard.id, !isActive)
       .then(() => loadBoard())
       .catch((err) => {
@@ -40,7 +40,10 @@ const TeamControlsMenuItem = ({
 
   const getIcon = () => {
     if (isAdmin) {
-      return <FontAwesomeIcon className="AdminIcon" icon={faChalkboardTeacher} />;
+      return <FontAwesomeIcon
+        className="AdminIcon"
+        icon={faChalkboardTeacher}
+      />;
     }
     if (isActive) {
       return <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />;

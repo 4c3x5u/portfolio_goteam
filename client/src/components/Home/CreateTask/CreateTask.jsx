@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import TasksAPI from '../../../api/TasksAPI';
+import TaskAPI from '../../../api/TaskAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import AddSubtasks from './AddSubtasks/AddSubtasks';
 import ValidateTask from '../../../validation/ValidateTask';
@@ -61,7 +61,7 @@ const CreateTask = ({ toggleOff }) => {
       });
 
       // Create task in the database
-      TasksAPI
+      TaskAPI
         .post({
           title,
           description,

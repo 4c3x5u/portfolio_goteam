@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
@@ -21,7 +21,6 @@ const Register = () => {
     password: '',
     passwordConfirmation: '',
   });
-  const { inviteCode } = useParams();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -37,16 +36,17 @@ const Register = () => {
 
     if (
       clientErrors.username
-        || clientErrors.password
-        || clientErrors.passwordConfirmation
+      || clientErrors.password
+      || clientErrors.passwordConfirmation
     ) {
       setErrors(clientErrors);
     } else {
       setIsLoading(true);
       AuthAPI
-        .register(username, password, passwordConfirmation, inviteCode)
+        .register(username, password)
         .then((res) => {
           sessionStorage.setItem('username', res.data.username);
+          // do you need this if the token is returned in cookies header?
           sessionStorage.setItem('auth-token', res.data.token);
           loadBoard();
         })
@@ -63,8 +63,8 @@ const Register = () => {
 
           if (
             serverErrors.username
-              || serverErrors.password
-              || serverErrors.passwordConfirmation
+            || serverErrors.password
+            || serverErrors.passwordConfirmation
           ) {
             setErrors(serverErrors);
           } else {

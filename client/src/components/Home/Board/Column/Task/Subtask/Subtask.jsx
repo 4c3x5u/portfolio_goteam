@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 import AppContext from '../../../../../../AppContext';
-import SubtasksAPI from '../../../../../../api/SubtasksAPI';
+import SubtaskAPI from '../../../../../../api/SubtaskAPI';
 
 import './subtask.sass';
 
@@ -41,7 +41,7 @@ const Subtask = ({
     });
 
     // Update subtask in database
-    SubtasksAPI
+    SubtaskAPI
       .patch(subtaskId, { done: !done })
       .catch((err) => {
         notify(

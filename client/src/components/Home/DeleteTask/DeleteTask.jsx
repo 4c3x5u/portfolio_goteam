@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import TasksAPI from '../../../api/TasksAPI';
+import TaskAPI from '../../../api/TaskAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from '../EditTask/EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
@@ -36,7 +36,7 @@ const DeleteTask = ({
     });
 
     // Delete task in database
-    TasksAPI
+    TaskAPI
       .delete(id)
       .then(toggleOff)
       .catch((err) => {

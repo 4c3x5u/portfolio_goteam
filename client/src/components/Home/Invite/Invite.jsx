@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Form, Button, OverlayTrigger, Tooltip,
@@ -6,24 +6,16 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestion } from '@fortawesome/free-solid-svg-icons';
 
-import FormGroup from '../../_shared/FormGroup/FormGroup';
-import AppContext from '../../../AppContext';
-
 import logo from './invite.svg';
 import './invite.sass';
 
+// TODO: rewrite according to the new invite process
+
 const Invite = ({ toggleOff }) => {
-  const { team } = useContext(AppContext);
-
-  const inviteLink = (
-    `${process.env.REACT_APP_FRONTEND_URL}/register/${team.inviteCode}`
-  );
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const el = document.createElement('textarea');
-    el.value = inviteLink;
     document.body.appendChild(el);
     el.select();
     document.execCommand('copy');
@@ -42,13 +34,6 @@ const Invite = ({ toggleOff }) => {
         <div className="HeaderWrapper">
           <img className="Header" alt="logo" src={logo} />
         </div>
-
-        <FormGroup
-          type="text"
-          label="INVITE LINK"
-          value={inviteLink}
-          disabled
-        />
 
         <OverlayTrigger
           placement="bottom"

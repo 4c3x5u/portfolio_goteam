@@ -4,7 +4,7 @@ import { Row } from 'react-bootstrap';
 import { DragDropContext } from 'react-beautiful-dnd';
 
 import AppContext from '../../../AppContext';
-import ColumnsAPI from '../../../api/ColumnsAPI';
+import ColumnAPI from '../../../api/ColumnAPI';
 import Column from './Column/Column';
 
 import './board.sass';
@@ -66,8 +66,8 @@ const Board = ({ handleActivate }) => {
       });
 
       // Update the "source" and the "destination" in the database
-      await ColumnsAPI.patch(source.id, sourceTasks);
-      await ColumnsAPI.patch(destination.id, destinationTasks);
+      await ColumnAPI.patch(source.id, sourceTasks);
+      await ColumnAPI.patch(destination.id, destinationTasks);
     } catch (err) {
       notify(
         'Unable to update task.',

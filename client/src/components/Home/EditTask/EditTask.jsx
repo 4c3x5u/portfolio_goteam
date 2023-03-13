@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 
 import AppContext from '../../../AppContext';
-import TasksAPI from '../../../api/TasksAPI';
+import TaskAPI from '../../../api/TaskAPI';
 import FormGroup from '../../_shared/FormGroup/FormGroup';
 import EditSubtasks from './EditSubtasks/EditSubtasks';
 import inputType from '../../../misc/inputType';
@@ -63,7 +63,7 @@ const EditTask = ({
       });
 
       // Update task in database
-      TasksAPI
+      TaskAPI
         .patch(id, {
           title: newTitle,
           description: newDescription,
