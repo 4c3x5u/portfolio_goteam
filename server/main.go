@@ -31,21 +31,14 @@ func main() {
 	}
 
 	// Ensure that the necessary env vars were set.
-	env := map[string]string{
-		Port:         os.Getenv(Port),
-		DBConnStr:    os.Getenv(DBConnStr),
-		JWTKey:       os.Getenv(JWTKey),
-		ClientOrigin: os.Getenv(ClientOrigin),
-	}
-	for name, value := range env {
-		if value == "" {
-			log.Fatal(name + " env var was empty")
-			os.Exit(2)
-		}
+	env := newEnv()
+	if err := env.validate(); err != nil {
+		log.Fatal(err.Error())
+		os.Exit(2)
 	}
 
 	// Create dependencies that are shared by multiple handlers.
-	dbConn, err := sql.Open("postgres", env[DBConnStr])
+	dbConn, err := sql.Open("postgres", env.DBConnStr)
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(3)
@@ -54,7 +47,7 @@ func main() {
 		log.Fatal(err.Error())
 		os.Exit(4)
 	}
-	jwtGenerator := auth.NewJWTGenerator(env[JWTKey])
+	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
 	userSelector := db.NewUserSelector(dbConn)
 
 	// Register handlers for API routes.
@@ -82,7 +75,7 @@ func main() {
 
 	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(env[JWTKey]),
+		auth.NewJWTValidator(env.JWTKey),
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewPOSTValidator(),
@@ -100,29 +93,12 @@ func main() {
 	))
 
 	// Set up CORS.
-	handler := midware.NewCORS(mux, env[ClientOrigin])
+	handler := midware.NewCORS(mux, env.ClientOrigin)
 
 	// Serve the app using the ServeMux.
-	log.Info("running server at port " + env[Port])
-	if err := http.ListenAndServe(":"+env[Port], handler); err != nil {
+	log.Info("running server at port " + env.Port)
+	if err := http.ListenAndServe(":"+env.Port, handler); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(5)
 	}
 }
-
-const (
-	// Port is the name of the environment variable used for deciding what port
-	// to run the server on.
-	Port = "PORT"
-
-	// DBConnStr is the name of the environment variable used for connecting to
-	// the database.
-	DBConnStr = "DBCONNSTR"
-
-	// JWTKey is the name of the environment variable used for signing JWTs.
-	JWTKey = "JWTKEY"
-
-	// ClientOrigin is the name of the environment variable used to set up CORS
-	// with the client app.
-	ClientOrigin = "CLIENTORIGIN"
-)
