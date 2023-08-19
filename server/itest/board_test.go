@@ -14,7 +14,7 @@ import (
 	boardAPI "server/api/board"
 	"server/assert"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 )
 
@@ -27,14 +27,14 @@ func TestBoard(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewPOSTValidator(),
-				db.NewUserBoardCounter(dbConn),
-				db.NewBoardInserter(dbConn),
+				dbaccess.NewUserBoardCounter(db),
+				dbaccess.NewBoardInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewDELETEValidator(),
-				db.NewUserBoardSelector(dbConn),
-				db.NewBoardDeleter(dbConn),
+				dbaccess.NewUserBoardSelector(db),
+				dbaccess.NewBoardDeleter(db),
 				log,
 			),
 		},
@@ -159,7 +159,7 @@ func TestBoard(t *testing.T) {
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
 					var boardCount int
-					err := dbConn.QueryRow(
+					err := db.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
 							"WHERE username = 'bob124' AND isAdmin = TRUE",
 					).Scan(&boardCount)
@@ -240,13 +240,13 @@ func TestBoard(t *testing.T) {
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
 					var boardID int
-					err := dbConn.QueryRow(
+					err := db.QueryRow(
 						"SELECT boardID FROM app.user_board WHERE boardID = 1",
 					).Scan(&boardID)
 					if err != sql.ErrNoRows {
 						t.Error("user_board row was not deleted")
 					}
-					err = dbConn.QueryRow(
+					err = db.QueryRow(
 						"SELECT id FROM app.board WHERE id = 1",
 					).Scan(&boardID)
 					if err != sql.ErrNoRows {

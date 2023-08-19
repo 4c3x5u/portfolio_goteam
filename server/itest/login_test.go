@@ -12,7 +12,7 @@ import (
 	loginAPI "server/api/login"
 	"server/assert"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	"server/log"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -21,7 +21,7 @@ import (
 func TestLogin(t *testing.T) {
 	sut := loginAPI.NewHandler(
 		loginAPI.NewValidator(),
-		db.NewUserSelector(dbConn),
+		dbaccess.NewUserSelector(db),
 		loginAPI.NewPasswordComparer(),
 		auth.NewJWTGenerator(jwtKey),
 		log.New(),

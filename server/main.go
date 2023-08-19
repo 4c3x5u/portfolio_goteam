@@ -10,7 +10,7 @@ import (
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 	"server/midware"
 
@@ -38,17 +38,17 @@ func main() {
 	}
 
 	// Create dependencies that are shared by multiple handlers.
-	dbConn, err := sql.Open("postgres", env.DBConnStr)
+	db, err := sql.Open("postgres", env.DBConnStr)
 	if err != nil {
 		log.Fatal(err.Error())
 		os.Exit(3)
 	}
-	if err = dbConn.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(4)
 	}
 	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
-	userSelector := db.NewUserSelector(dbConn)
+	userSelector := dbaccess.NewUserSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -60,7 +60,7 @@ func main() {
 		),
 		userSelector,
 		registerAPI.NewPasswordHasher(),
-		db.NewUserInserter(dbConn),
+		dbaccess.NewUserInserter(db),
 		jwtGenerator,
 		log,
 	))
@@ -79,14 +79,14 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewPOSTValidator(),
-				db.NewUserBoardCounter(dbConn),
-				db.NewBoardInserter(dbConn),
+				dbaccess.NewUserBoardCounter(db),
+				dbaccess.NewBoardInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewDELETEValidator(),
-				db.NewUserBoardSelector(dbConn),
-				db.NewBoardDeleter(dbConn),
+				dbaccess.NewUserBoardSelector(db),
+				dbaccess.NewBoardDeleter(db),
 				log,
 			),
 		},

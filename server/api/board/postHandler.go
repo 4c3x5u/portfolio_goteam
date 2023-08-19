@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 )
 
@@ -13,16 +13,16 @@ import (
 // requests.
 type POSTHandler struct {
 	validator        POSTReqValidator
-	userBoardCounter db.Counter
-	boardInserter    db.Inserter[db.Board]
+	userBoardCounter dbaccess.Counter
+	boardInserter    dbaccess.Inserter[dbaccess.Board]
 	log              pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
 	validator POSTReqValidator,
-	userBoardCounter db.Counter,
-	boardInserter db.Inserter[db.Board],
+	userBoardCounter dbaccess.Counter,
+	boardInserter dbaccess.Inserter[dbaccess.Board],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{
@@ -82,7 +82,7 @@ func (h POSTHandler) Handle(
 
 	// Create a new board.
 	if err := h.boardInserter.Insert(
-		db.NewBoard(reqBody.Name, username),
+		dbaccess.NewBoard(reqBody.Name, username),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

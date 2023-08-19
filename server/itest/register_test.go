@@ -12,7 +12,7 @@ import (
 	registerAPI "server/api/register"
 	"server/assert"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	"server/log"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -25,9 +25,9 @@ func TestRegister(t *testing.T) {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		db.NewUserSelector(dbConn),
+		dbaccess.NewUserSelector(db),
 		registerAPI.NewPasswordHasher(),
-		db.NewUserInserter(dbConn),
+		dbaccess.NewUserInserter(db),
 		auth.NewJWTGenerator(jwtKey),
 		log.New(),
 	)
@@ -138,7 +138,7 @@ func TestRegister(t *testing.T) {
 				// assert that a new user is inserted into the database with
 				// the correct credentials
 				var password string
-				err := dbConn.QueryRow(
+				err := db.QueryRow(
 					`SELECT password FROM app."user" WHERE username = $1`,
 					"bob321",
 				).Scan(&password)

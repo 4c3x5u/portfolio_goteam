@@ -14,7 +14,7 @@ import (
 
 	"server/assert"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 
 	"golang.org/x/crypto/bcrypt"
@@ -25,7 +25,7 @@ import (
 func TestHandler(t *testing.T) {
 	var (
 		validator          = &fakeReqValidator{}
-		dbUserSelector     = &db.FakeUserSelector{}
+		dbUserSelector     = &dbaccess.FakeUserSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
 		log                = &pkgLog.FakeErrorer{}
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 	for _, c := range []struct {
 		name                   string
 		validatorOutOK         bool
-		userSelectorOutUser    db.User
+		userSelectorOutUser    dbaccess.User
 		userSelectorOutErr     error
 		hashComparerOutErr     error
 		tokenGeneratorOutToken string
@@ -96,7 +96,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "InvalidRequest",
 			validatorOutOK:         false,
-			userSelectorOutUser:    db.User{},
+			userSelectorOutUser:    dbaccess.User{},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -107,7 +107,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "UserNotFound",
 			validatorOutOK:         true,
-			userSelectorOutUser:    db.User{},
+			userSelectorOutUser:    dbaccess.User{},
 			userSelectorOutErr:     sql.ErrNoRows,
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -118,7 +118,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "UserSelectorError",
 			validatorOutOK:         true,
-			userSelectorOutUser:    db.User{},
+			userSelectorOutUser:    dbaccess.User{},
 			userSelectorOutErr:     errors.New("user selector error"),
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -129,7 +129,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "WrongPassword",
 			validatorOutOK: true,
-			userSelectorOutUser: db.User{
+			userSelectorOutUser: dbaccess.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -142,7 +142,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "HashComparerError",
 			validatorOutOK: true,
-			userSelectorOutUser: db.User{
+			userSelectorOutUser: dbaccess.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -155,7 +155,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "TokenGeneratorError",
 			validatorOutOK: true,
-			userSelectorOutUser: db.User{
+			userSelectorOutUser: dbaccess.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -168,7 +168,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "Success",
 			validatorOutOK: true,
-			userSelectorOutUser: db.User{
+			userSelectorOutUser: dbaccess.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,

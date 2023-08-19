@@ -52,11 +52,11 @@ func TestMain(m *testing.M) {
 	// Make sure the container and the database are healthy.
 	pool.MaxWait = 120 * time.Second
 	if err = pool.Retry(func() error {
-		dbConn, err = sql.Open("postgres", databaseURL)
+		db, err = sql.Open("postgres", databaseURL)
 		if err != nil {
 			return err
 		}
-		return dbConn.Ping()
+		return db.Ping()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
@@ -66,7 +66,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal("+++", err)
 	}
-	if _, err = dbConn.Exec(string(qInitBytes)); err != nil {
+	if _, err = db.Exec(string(qInitBytes)); err != nil {
 		log.Fatal("+++", err)
 	}
 

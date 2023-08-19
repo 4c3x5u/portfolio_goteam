@@ -8,16 +8,16 @@ import (
 
 	"server/api"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 )
 
 // Handler is a http.Handler that can be used to handle register requests.
 type Handler struct {
 	validator          ReqValidator
-	dbUserSelector     db.Selector[db.User]
+	dbUserSelector     dbaccess.Selector[dbaccess.User]
 	hasher             Hasher
-	dbUserInserter     db.Inserter[db.User]
+	dbUserInserter     dbaccess.Inserter[dbaccess.User]
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
 }
@@ -25,9 +25,9 @@ type Handler struct {
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator ReqValidator,
-	dbUserSelector db.Selector[db.User],
+	dbUserSelector dbaccess.Selector[dbaccess.User],
 	hasher Hasher,
-	dbUserInserter db.Inserter[db.User],
+	dbUserInserter dbaccess.Inserter[dbaccess.User],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {
@@ -101,7 +101,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if err = h.dbUserInserter.Insert(
-		db.NewUser(reqBody.Username, pwdHash),
+		dbaccess.NewUser(reqBody.Username, pwdHash),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

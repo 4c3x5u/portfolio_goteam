@@ -7,9 +7,9 @@ package itest
 
 import "database/sql"
 
-// dbConn is the database connection pool used during integration testing.
+// db is the database connection pool used during integration testing.
 // It is set in main_test.go/TestMain.
-var dbConn *sql.DB
+var db *sql.DB
 
 // jwtKey is the JWT key used for signing and validating JWTs during integration
 // testing.

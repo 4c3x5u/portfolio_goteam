@@ -1,4 +1,4 @@
-package db
+package dbaccess
 
 import "database/sql"
 

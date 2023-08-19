@@ -8,7 +8,7 @@ import (
 
 	"server/api"
 	"server/auth"
-	"server/db"
+	"server/dbaccess"
 	pkgLog "server/log"
 
 	"golang.org/x/crypto/bcrypt"
@@ -17,7 +17,7 @@ import (
 // Handler is a http.Handler that can be used to handle login requests.
 type Handler struct {
 	validator          ReqValidator
-	dbUserSelector     db.Selector[db.User]
+	dbUserSelector     dbaccess.Selector[dbaccess.User]
 	passwordComparer   Comparer
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
@@ -26,7 +26,7 @@ type Handler struct {
 // NewHandler creates and returns a new Handler.
 func NewHandler(
 	validator ReqValidator,
-	userSelector db.Selector[db.User],
+	userSelector dbaccess.Selector[dbaccess.User],
 	hashComparer Comparer,
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,

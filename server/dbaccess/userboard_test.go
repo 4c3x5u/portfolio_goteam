@@ -1,6 +1,6 @@
 //go:build utest
 
-package db
+package dbaccess
 
 import (
 	"database/sql"
