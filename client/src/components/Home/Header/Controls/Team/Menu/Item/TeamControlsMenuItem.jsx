@@ -40,10 +40,7 @@ const TeamControlsMenuItem = ({
 
   const getIcon = () => {
     if (isAdmin) {
-      return <FontAwesomeIcon
-        className="AdminIcon"
-        icon={faChalkboardTeacher}
-      />;
+      return <FontAwesomeIcon className="AdminIcon" icon={faChalkboardTeacher} />;
     }
     if (isActive) {
       return <FontAwesomeIcon className="ActiveIcon" icon={faPlay} />;
