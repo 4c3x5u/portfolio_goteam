@@ -14,7 +14,7 @@ test:
 	make utest
 	make itest
 
-# all tests [v]erbose
+# all tests verbose
 test.v:
 	make utest.v
 	make itest.v
@@ -23,7 +23,7 @@ test.v:
 utest:
 	go test -tags=utest ./...
 
-# unit tests [v]erbose
+# unit tests verbose
 utest.v:
 	go test -v -tags=utest ./...
 
@@ -31,7 +31,7 @@ utest.v:
 itest:
 	go test -tags=itest ./itest
 
-# integration tests [v]erbose
+# integration tests verbose
 itest.v:
 	go test -v -tags=itest ./itest
 

@@ -5,13 +5,13 @@ import (
 	"strconv"
 )
 
-// POSTValidator describes a type that can be used to validate the URL query
+// DELETEReqValidator describes a type that can be used to validate the URL query
 // parameters sent to the board route on DELETE requests.
 type DELETEReqValidator interface {
 	Validate(url.Values) (string, bool)
 }
 
-// POSTValidator can be used to validate the URL query parameters sent to the
+// DELETEValidator can be used to validate the URL query parameters sent to the
 // board route on DELETE requests.
 type DELETEValidator struct{}
 
