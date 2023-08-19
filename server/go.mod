@@ -1,6 +1,6 @@
 module server
 
-go 1.19
+go 1.21.0
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
@@ -26,9 +26,9 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
-	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/tools v0.1.12 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
