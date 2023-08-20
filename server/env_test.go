@@ -4,6 +4,7 @@ package main
 
 import (
 	"os"
+	"server/assert"
 	"testing"
 )
 
@@ -79,15 +80,15 @@ func TestEnv(t *testing.T) {
 		},
 	} {
 		t.Run(c.Name, func(t *testing.T) {
-			wantMsg := c.EnvVarName + errPostfix
+			wantErrMsg := c.EnvVarName + errPostfix
 			if err := c.Setup(); err != nil {
 				t.Fatal(err)
 			}
 
 			if err := newEnv().validate(); err == nil {
 				t.Error("validate() returned nil")
-			} else if gotMsg := err.Error(); gotMsg != wantMsg {
-				t.Errorf("want: \"%s\", got: \"%s\"", wantMsg, gotMsg)
+			} else if err = assert.Equal(wantErrMsg, err.Error()); err != nil {
+				t.Error(err)
 			}
 
 			if err := c.Cleanup(); err != nil {
@@ -110,8 +111,8 @@ func TestEnv(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := newEnv().validate(); err != nil {
-			t.Errorf("validate() returned %s", err)
+		if err := assert.Nil(newEnv().validate()); err != nil {
+			t.Error(err)
 		}
 
 		if err := os.Unsetenv("PORT"); err != nil {
