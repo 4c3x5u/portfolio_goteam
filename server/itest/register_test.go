@@ -45,13 +45,13 @@ func TestRegister(t *testing.T) {
 			}
 			if err := assert.EqualArr(
 				wantUsernameErrs,
-				resBody.ValidationErrs.Username,
+				resBody.Errs.Username,
 			); err != nil {
 				t.Error(err)
 			}
 			if err := assert.EqualArr(
 				wantPasswordErrs,
-				resBody.ValidationErrs.Password,
+				resBody.Errs.Password,
 			); err != nil {
 				t.Error(err)
 			}

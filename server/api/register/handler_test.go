@@ -45,14 +45,14 @@ func TestHandler(t *testing.T) {
 
 			if err := assert.EqualArr(
 				wantValidationErrs.Username,
-				resBody.ValidationErrs.Username,
+				resBody.Errs.Username,
 			); err != nil {
 				t.Error(err)
 			}
 
 			if err := assert.EqualArr(
 				wantValidationErrs.Password,
-				resBody.ValidationErrs.Password,
+				resBody.Errs.Password,
 			); err != nil {
 				t.Error(err)
 			}

@@ -62,7 +62,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if validationErrs := h.validator.Validate(reqBody); validationErrs.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{ValidationErrs: validationErrs},
+			ResBody{Errs: validationErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -81,7 +81,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
-			ResBody{ValidationErrs: ValidationErrs{
+			ResBody{Errs: ValidationErrs{
 				Username: []string{"Username is already taken."},
 			}},
 		); errEncode != nil {
