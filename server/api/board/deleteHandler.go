@@ -37,8 +37,9 @@ func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Get id query parameter. That's our board ID.
-	boardID, ok := h.validator.Validate(r.URL.Query())
-	if !ok {
+	boardID := r.URL.Query().Get("id")
+
+	if ok := h.validator.Validate(boardID); !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

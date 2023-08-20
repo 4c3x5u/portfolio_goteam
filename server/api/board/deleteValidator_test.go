@@ -3,7 +3,6 @@
 package board
 
 import (
-	"net/url"
 	"testing"
 
 	"server/assert"
@@ -16,42 +15,29 @@ func TestDELETEValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name    string
-		qParams url.Values
-		wantID  string
+		boardID string
 		wantOK  bool
 	}{
 		{
-			name:    "NoBoardID",
-			qParams: url.Values{},
-			wantID:  "",
+			name:    "Nil",
+			boardID: "",
 			wantOK:  false,
 		},
 		{
-			name:    "EmptyBoardID",
-			qParams: url.Values{"id": []string{""}},
-			wantID:  "",
+			name:    "NotInt",
+			boardID: "My Board",
 			wantOK:  false,
 		},
 		{
-			name:    "NotInteger",
-			qParams: url.Values{"id": []string{"My Board"}},
-			wantID:  "",
-			wantOK:  false,
-		},
-		{
-			name:    "Valid",
-			qParams: url.Values{"id": []string{"12"}},
-			wantID:  "12",
+			name:    "Success",
+			boardID: "12",
 			wantOK:  true,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			id, ok := sut.Validate(c.qParams)
+			ok := sut.Validate(c.boardID)
 
 			if err := assert.Equal(c.wantOK, ok); err != nil {
-				t.Error(err)
-			}
-			if err := assert.Equal(c.wantID, id); err != nil {
 				t.Error(err)
 			}
 		})
