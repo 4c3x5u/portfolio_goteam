@@ -2,6 +2,7 @@ package board
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	"server/dbaccess"
@@ -52,7 +53,10 @@ func (h DELETEHandler) Handle(
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else if err == sql.ErrNoRows || !isAdmin {
+	} else if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	} else if !isAdmin {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}

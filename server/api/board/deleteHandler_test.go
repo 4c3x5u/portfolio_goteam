@@ -58,15 +58,6 @@ func TestDELETEHandler(t *testing.T) {
 			assertFunc:                  emptyAssertFunc,
 		},
 		{
-			name:                        "NoRowsInUserBoardTable",
-			validatorOutOK:              true,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrNoRows,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc:                  emptyAssertFunc,
-		},
-		{
 			name:                        "ConnDone",
 			validatorOutOK:              true,
 			userBoardSelectorOutIsAdmin: false,
@@ -76,6 +67,15 @@ func TestDELETEHandler(t *testing.T) {
 			assertFunc: assertOnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
+		},
+		{
+			name:                        "BoardNotFound",
+			validatorOutOK:              true,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     sql.ErrNoRows,
+			boardDeleterOutErr:          nil,
+			wantStatusCode:              http.StatusBadRequest,
+			assertFunc:                  emptyAssertFunc,
 		},
 		{
 			name:                        "NotAdmin",
@@ -93,9 +93,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          errors.New("delete board error"),
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
-				"delete board error",
-			),
+			assertFunc:                  assertOnLoggedErr("delete board error"),
 		},
 		{
 			name:                        "Success",
