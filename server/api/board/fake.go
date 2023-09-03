@@ -1,16 +1,14 @@
 package board
 
-// fakePOSTReqValidator is a test fake for POSTReqValidator.
-type fakePOSTReqValidator struct{ OutErrMsg string }
+// fakeStrValidator is a test fake for StrValidator.
+type fakeStrValidator struct{ OutErr error }
 
-// Validate implements the POSTReqValidator interface on fakePOSTReqValidator.
-func (f *fakePOSTReqValidator) Validate(_ POSTReqBody) string {
-	return f.OutErrMsg
-}
+// Validate implements the StrValidator interface on fakeStrValidator.
+func (f *fakeStrValidator) Validate(_ string) error { return f.OutErr }
 
-// fakeDELETEReqValidator is a test fake for DELETEReqValidator.
-type fakeDELETEReqValidator struct{ OutOK bool }
+// fakeIDValidator is a test fake for IDValidator.
+type fakeIDValidator struct{ OutErr error }
 
 // Validate implements the DELETEReqValidator interface on
-// fakeDELETEReqValidator.
-func (f *fakeDELETEReqValidator) Validate(_ string) bool { return f.OutOK }
+// fakeIDValidator.
+func (f *fakeIDValidator) Validate(_ string) error { return f.OutErr }

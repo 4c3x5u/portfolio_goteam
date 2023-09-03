@@ -12,7 +12,7 @@ import (
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type POSTHandler struct {
-	validator        POSTReqValidator
+	validator        StrValidator
 	userBoardCounter dbaccess.Counter
 	boardInserter    dbaccess.Inserter[dbaccess.Board]
 	log              pkgLog.Errorer
@@ -20,7 +20,7 @@ type POSTHandler struct {
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	validator POSTReqValidator,
+	validator StrValidator,
 	userBoardCounter dbaccess.Counter,
 	boardInserter dbaccess.Inserter[dbaccess.Board],
 	log pkgLog.Errorer,
@@ -38,18 +38,18 @@ func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Read and validate request body.
-	reqBody := POSTReqBody{}
+	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if errMsg := h.validator.Validate(reqBody); errMsg != "" {
+	if err := h.validator.Validate(reqBody.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			POSTResBody{Error: errMsg},
-		); err != nil {
-			h.log.Error(err.Error())
+		if encodeErr := json.NewEncoder(w).Encode(
+			ResBody{Error: err.Error()},
+		); encodeErr != nil {
+			h.log.Error(encodeErr.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -68,7 +68,7 @@ func (h POSTHandler) Handle(
 	} else if boardCount >= 3 {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			POSTResBody{
+			ResBody{
 				Error: "You have already created the maximum amount of " +
 					"boards allowed per user. Please delete one of your " +
 					"boards to create a new one.",

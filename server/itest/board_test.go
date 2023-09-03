@@ -26,13 +26,13 @@ func TestBoard(t *testing.T) {
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewPOSTValidator(),
+				boardAPI.NewNameValidator(),
 				dbaccess.NewUserBoardCounter(db),
 				dbaccess.NewBoardInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewDELETEValidator(),
+				boardAPI.NewIDValidator(),
 				dbaccess.NewUserBoardSelector(db),
 				dbaccess.NewBoardDeleter(db),
 				log,
@@ -52,7 +52,7 @@ func TestBoard(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *httptest.ResponseRecorder) {
 		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := boardAPI.POSTResBody{}
+			resBody := boardAPI.ResBody{}
 			if err := json.NewDecoder(w.Result().Body).Decode(
 				&resBody,
 			); err != nil {

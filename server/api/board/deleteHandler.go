@@ -12,7 +12,7 @@ import (
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	validator         DELETEReqValidator
+	validator         StrValidator
 	userBoardSelector dbaccess.RelSelector[bool]
 	boardDeleter      dbaccess.Deleter
 	log               pkgLog.Errorer
@@ -20,7 +20,7 @@ type DELETEHandler struct {
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
-	validator DELETEReqValidator,
+	validator StrValidator,
 	userBoardSelector dbaccess.RelSelector[bool],
 	boardDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
@@ -40,7 +40,8 @@ func (h DELETEHandler) Handle(
 	// Get id query parameter. That's our board ID.
 	boardID := r.URL.Query().Get("id")
 
-	if ok := h.validator.Validate(boardID); !ok {
+	// Validate board ID.
+	if err := h.validator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

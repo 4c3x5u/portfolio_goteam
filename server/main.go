@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"server/api"
-	boardAPI "server/api/board"
-	loginAPI "server/api/login"
-	registerAPI "server/api/register"
+	"server/api/board"
+	"server/api/login"
+	"server/api/register"
 	"server/auth"
 	"server/dbaccess"
 	pkgLog "server/log"
@@ -53,38 +53,38 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", registerAPI.NewHandler(
-		registerAPI.NewValidator(
-			registerAPI.NewUsernameValidator(),
-			registerAPI.NewPasswordValidator(),
+	mux.Handle("/register", register.NewHandler(
+		register.NewValidator(
+			register.NewUsernameValidator(),
+			register.NewPasswordValidator(),
 		),
 		userSelector,
-		registerAPI.NewPasswordHasher(),
+		register.NewPasswordHasher(),
 		dbaccess.NewUserInserter(db),
 		jwtGenerator,
 		log,
 	))
 
-	mux.Handle("/login", loginAPI.NewHandler(
-		loginAPI.NewValidator(),
+	mux.Handle("/login", login.NewHandler(
+		login.NewValidator(),
 		userSelector,
-		loginAPI.NewPasswordComparer(),
+		login.NewPasswordComparer(),
 		jwtGenerator,
 		log,
 	))
 
-	mux.Handle("/board", boardAPI.NewHandler(
+	mux.Handle("/board", board.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(env.JWTKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewPOSTValidator(),
+			http.MethodPost: board.NewPOSTHandler(
+				board.NewNameValidator(),
 				dbaccess.NewUserBoardCounter(db),
 				dbaccess.NewBoardInserter(db),
 				log,
 			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewDELETEValidator(),
+			http.MethodDelete: board.NewDELETEHandler(
+				board.NewIDValidator(),
 				dbaccess.NewUserBoardSelector(db),
 				dbaccess.NewBoardDeleter(db),
 				log,

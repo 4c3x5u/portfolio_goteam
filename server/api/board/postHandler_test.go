@@ -20,7 +20,7 @@ import (
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
-	validator := &fakePOSTReqValidator{}
+	validator := &fakeStrValidator{}
 	userBoardCounter := &dbaccess.FakeCounter{}
 	dbBoardInserter := &dbaccess.FakeBoardInserter{}
 	log := &pkgLog.FakeErrorer{}
@@ -44,7 +44,7 @@ func TestPOSTHandler(t *testing.T) {
 		return func(
 			t *testing.T, _ *pkgLog.FakeErrorer, rawResBody io.ReadCloser,
 		) {
-			resBody := POSTResBody{}
+			resBody := ResBody{}
 			if err := json.NewDecoder(rawResBody).Decode(&resBody); err != nil {
 				t.Error(err)
 			}
@@ -57,7 +57,7 @@ func TestPOSTHandler(t *testing.T) {
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                   string
-			validatorOutErrMsg     string
+			validatorOutErr        error
 			userBoardCounterOutRes int
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
@@ -68,7 +68,7 @@ func TestPOSTHandler(t *testing.T) {
 		}{
 			{
 				name:                   "InvalidRequest",
-				validatorOutErrMsg:     "Board name cannot be empty.",
+				validatorOutErr:        errors.New("Board name cannot be empty."),
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
@@ -79,7 +79,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "UserBoardCounterErr",
-				validatorOutErrMsg:     "",
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
@@ -90,7 +90,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "MaxBoardsCreated",
-				validatorOutErrMsg:     "",
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 3,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
@@ -103,7 +103,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "BoardInserterErr",
-				validatorOutErrMsg:     "",
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    errors.New("create board error"),
@@ -112,7 +112,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			{
 				name:                   "Success",
-				validatorOutErrMsg:     "",
+				validatorOutErr:        nil,
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
@@ -125,13 +125,13 @@ func TestPOSTHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// Set pre-determinate return values for sut's dependencies.
-				validator.OutErrMsg = c.validatorOutErrMsg
+				validator.OutErr = c.validatorOutErr
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
 				userBoardCounter.OutErr = c.userBoardCounterOutErr
 				dbBoardInserter.OutErr = c.boardInserterOutErr
 
 				// Prepare request and response recorder.
-				reqBody, err := json.Marshal(POSTReqBody{})
+				reqBody, err := json.Marshal(ReqBody{})
 				if err != nil {
 					t.Fatal(err)
 				}
