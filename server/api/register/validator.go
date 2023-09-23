@@ -35,9 +35,7 @@ func (v Validator) Validate(req ReqBody) ValidationErrs {
 
 // StringValidator describes a type that validates a string arg and returns a
 // string slice containing validation error messages.
-type StringValidator interface {
-	Validate(string) (errs []string)
-}
+type StringValidator interface{ Validate(string) (errs []string) }
 
 // UsernameValidator is the password field validator for the register route.
 type UsernameValidator struct{}

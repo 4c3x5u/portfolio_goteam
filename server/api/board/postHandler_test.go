@@ -20,7 +20,7 @@ import (
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
-	validator := &fakeStrValidator{}
+	validator := &fakeStringValidator{}
 	userBoardCounter := &dbaccess.FakeCounter{}
 	dbBoardInserter := &dbaccess.FakeBoardInserter{}
 	log := &pkgLog.FakeErrorer{}

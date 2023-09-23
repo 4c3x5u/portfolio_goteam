@@ -12,7 +12,7 @@ import (
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	validator         StrValidator
+	validator         StringValidator
 	userBoardSelector dbaccess.RelSelector[bool]
 	boardDeleter      dbaccess.Deleter
 	log               pkgLog.Errorer
@@ -20,7 +20,7 @@ type DELETEHandler struct {
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
-	validator StrValidator,
+	validator StringValidator,
 	userBoardSelector dbaccess.RelSelector[bool],
 	boardDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
