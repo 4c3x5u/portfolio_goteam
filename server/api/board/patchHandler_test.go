@@ -36,6 +36,14 @@ func TestPATCHHandler(t *testing.T) {
 		}
 	}
 
+	assertOnLoggedErr := func(errMsg string) func(*testing.T, *http.Response) {
+		return func(t *testing.T, res *http.Response) {
+			if err := assert.Equal(errMsg, log.InMessage); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	for _, c := range []struct {
 		name                    string
 		idValidatorOutErr       error
@@ -83,13 +91,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:     sql.ErrConnDone,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusInternalServerError,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				if err := assert.Equal(
-					sql.ErrConnDone.Error(), log.InMessage,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:              assertOnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
 			name:                    "UserDoesNotHaveAccess",
@@ -109,13 +111,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:     nil,
 			userBoardSelectorOutErr: sql.ErrConnDone,
 			wantStatusCode:          http.StatusInternalServerError,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				if err := assert.Equal(
-					sql.ErrConnDone.Error(), log.InMessage,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:              assertOnLoggedErr(sql.ErrConnDone.Error()),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
