@@ -18,13 +18,13 @@ func NewPATCHHandler(
 }
 
 func (h *PATCHHandler) Handle(
-	w http.ResponseWriter, r *http.Request, username string,
+	w http.ResponseWriter, r *http.Request, _ string,
 ) {
 	id := r.URL.Query().Get("id")
-	if id == "" {
+	if err := h.idValidator.Validate(id); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Board ID cannot be empty."},
+			ResBody{Error: err.Error()},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

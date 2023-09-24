@@ -13,10 +13,11 @@ import (
 )
 
 func TestPATCHHandler(t *testing.T) {
-	t.Run("InvalidBoardID", func(t *testing.T) {
+	t.Run("IDValidatorErr", func(t *testing.T) {
 		log := &pkgLog.FakeErrorer{}
 		idValidator := &fakeIDValidator{}
 		sut := NewPATCHHandler(idValidator, log)
+
 		wantErrMsg := "Board ID cannot be empty."
 		idValidator.OutErr = errors.New(wantErrMsg)
 
