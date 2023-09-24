@@ -15,7 +15,7 @@ import (
 
 // TestBoardSelector tests the Select method of BoardSelector to assert that it
 // sends the correct query to the database with the correct arguments, and
-// returns whatever error eccurs.
+// returns whatever error occurs.
 func TestBoardSelector(t *testing.T) {
 	db, mock, teardown := setUpDBTest(t)
 	defer teardown()

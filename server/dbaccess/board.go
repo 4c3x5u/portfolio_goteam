@@ -12,6 +12,21 @@ type Board struct {
 	name string
 }
 
+// BoardSelector can be used to read records from the board table.
+type BoardSelector struct{ db *sql.DB }
+
+// NewBoardSelector creates and returns a new BoardSelector.
+func NewBoardSelector(db *sql.DB) BoardSelector { return BoardSelector{db: db} }
+
+// Select selects a record from the board table with the given id.
+func (s BoardSelector) Select(id string) (Board, error) {
+	var board Board
+	err := s.db.
+		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
+		Scan(&board.id, &board.name)
+	return board, err
+}
+
 // InBoard describes the data needed to insert a board into the database. It
 // doesn't represent the final record in the board table.
 type InBoard struct {
@@ -22,20 +37,6 @@ type InBoard struct {
 // NewInBoard creates and returns a new InBoard.
 func NewInBoard(name string, adminID string) InBoard {
 	return InBoard{name: name, adminID: adminID}
-}
-
-// BoardSelector can be used to read records from the board table.
-type BoardSelector struct{ db *sql.DB }
-
-// NewBoardSelector creates and returns a new BoardSelector.
-func NewBoardSelector(db *sql.DB) BoardSelector { return BoardSelector{db: db} }
-
-func (s BoardSelector) Select(id string) (Board, error) {
-	var board Board
-	err := s.db.
-		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
-		Scan(&board.id, &board.name)
-	return board, err
 }
 
 // BoardInserter can be used to create a new record in the board table.

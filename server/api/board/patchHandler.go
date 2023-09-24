@@ -1,25 +1,32 @@
 package board
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+
+	"server/dbaccess"
 	pkgLog "server/log"
 )
 
 type PATCHHandler struct {
 	idValidator   StringValidator
 	nameValidator StringValidator
+	boardSelector dbaccess.Selector[dbaccess.Board]
 	log           pkgLog.Errorer
 }
 
 func NewPATCHHandler(
 	idValidator StringValidator,
 	nameValidator StringValidator,
+	boardSelector dbaccess.Selector[dbaccess.Board],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
 		idValidator:   idValidator,
 		nameValidator: nameValidator,
+		boardSelector: boardSelector,
 		log:           log,
 	}
 }
@@ -55,5 +62,15 @@ func (h *PATCHHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
+	}
+
+	if _, err := h.boardSelector.Select(id); errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "Board not found."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 	}
 }

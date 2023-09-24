@@ -2,6 +2,7 @@ package board
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"server/assert"
+	"server/dbaccess"
 	pkgLog "server/log"
 )
 
@@ -17,29 +19,46 @@ func TestPATCHHandler(t *testing.T) {
 	idValidator := &fakeStringValidator{}
 	nameValidator := &fakeStringValidator{}
 	sut := NewPATCHHandler(idValidator, nameValidator, log)
+	boardSelector := &dbaccess.FakeBoardSelector{}
+	sut := NewPATCHHandler(idValidator, nameValidator, boardSelector, log)
 
 	for _, c := range []struct {
 		name                string
 		idValidatorOutErr   error
 		nameValidatorOutErr error
+		boardSelectorOutErr error
+		wantStatusCode      int
 		wantErrMsg          string
 	}{
 		{
 			name:                "IDValidatorErr",
 			idValidatorOutErr:   errors.New("Board ID cannot be empty."),
 			nameValidatorOutErr: nil,
+			boardSelectorOutErr: nil,
+			wantStatusCode:      http.StatusBadRequest,
 			wantErrMsg:          "Board ID cannot be empty.",
 		},
 		{
 			name:                "NameValidatorErr",
 			idValidatorOutErr:   nil,
 			nameValidatorOutErr: errors.New("Board name cannot be empty."),
+			boardSelectorOutErr: nil,
+			wantStatusCode:      http.StatusBadRequest,
 			wantErrMsg:          "Board name cannot be empty.",
+		},
+		{
+			name:                "BoardNotFound",
+			idValidatorOutErr:   nil,
+			nameValidatorOutErr: nil,
+			boardSelectorOutErr: sql.ErrNoRows,
+			wantStatusCode:      http.StatusNotFound,
+			wantErrMsg:          "Board not found.",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			idValidator.OutErr = c.idValidatorOutErr
 			nameValidator.OutErr = c.nameValidatorOutErr
+			boardSelector.OutErr = c.boardSelectorOutErr
 
 			reqBody, err := json.Marshal(ReqBody{})
 			if err != nil {
@@ -57,7 +76,7 @@ func TestPATCHHandler(t *testing.T) {
 			res := w.Result()
 
 			if err = assert.Equal(
-				http.StatusBadRequest, res.StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}

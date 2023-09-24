@@ -30,8 +30,14 @@ type FakeCounter struct {
 }
 
 // Count implements the Counter interface on FakeCounter.
-func (f *FakeCounter) Count(_ string) (int, error) {
-	return f.OutRes, f.OutErr
+func (f *FakeCounter) Count(_ string) (int, error) { return f.OutRes, f.OutErr }
+
+// FakeBoardSelector is a test fake for Selector[Board].
+type FakeBoardSelector struct{ OutErr error }
+
+// Select implements the Selector[Board] interface on FakeBoardSelector.
+func (f *FakeBoardSelector) Select(_ string) (Board, error) {
+	return Board{}, f.OutErr
 }
 
 // FakeBoardInserter is a test fake for Inserter[InBoard].

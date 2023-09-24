@@ -3,6 +3,7 @@ package login
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -64,7 +65,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Read the user in the database who owns the username that came in the
 	// request.
 	user, err := h.dbUserSelector.Select(reqBody.Username)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
@@ -77,7 +78,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// of the user from the database.
 	if err = h.passwordComparer.Compare(
 		user.Password, reqBody.Password,
-	); err == bcrypt.ErrMismatchedHashAndPassword {
+	); errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
