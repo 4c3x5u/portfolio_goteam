@@ -3,13 +3,62 @@
 package dbaccess
 
 import (
+	"database/sql"
 	"errors"
+	"strconv"
 	"testing"
 
 	"server/assert"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
+
+// TestBoardSelector tests the Select method of BoardSelector to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error eccurs.
+func TestBoardSelector(t *testing.T) {
+	db, mock, teardown := setUpDBTest(t)
+	defer teardown()
+
+	sut := NewBoardSelector(db)
+
+	const (
+		sqlSelectBoard     = "SELECT id, name FROM app.board WHERE id = \\$1"
+		existingBoardID    = "21"
+		existingBoardName  = "Board A"
+		nonExistingBoardID = "32"
+	)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(existingBoardID).
+		WillReturnRows(
+			sqlmock.
+				NewRows([]string{"id", "name"}).
+				AddRow(existingBoardID, existingBoardName),
+		)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(nonExistingBoardID).
+		WillReturnError(sql.ErrNoRows)
+
+	board, err := sut.Select(existingBoardID)
+	if err = assert.Nil(err); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingBoardID, strconv.Itoa(board.id)); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingBoardName, board.name); err != nil {
+		t.Error(err)
+	}
+
+	board, err = sut.Select(nonExistingBoardID)
+	if err := assert.True(errors.Is(err, sql.ErrNoRows)); err != nil {
+		t.Error(err)
+	}
+}
 
 // TestBoardInserter tests the Insert method of BoardInserter to assert that it
 // sends the correct queries to the database with the correct arguments, and
@@ -25,7 +74,7 @@ func TestBoardInserter(t *testing.T) {
 	// just need a generic error to be returned at different points in code and
 	// ansure the expected SQL is executed and the same error is returned.
 	someErr := errors.New("some error occured")
-	board := NewBoard("someboard", "bob123")
+	board := NewInBoard("someboard", "bob123")
 
 	for _, c := range []struct {
 		name      string

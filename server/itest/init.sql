@@ -9,7 +9,7 @@ CREATE TABLE app."user" (
 
 CREATE TABLE app.board (
   id   INTEGER     PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  name VARCHAR(30) NOT NULL
+  name VARCHAR(35) NOT NULL
 );
 
 CREATE TABLE app.user_board (

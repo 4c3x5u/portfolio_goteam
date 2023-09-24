@@ -8,13 +8,34 @@ import (
 
 // Board represents a record in the board table.
 type Board struct {
+	id   int
+	name string
+}
+
+// InBoard describes the data needed to insert a board into the database. It
+// doesn't represent the final record in the board table.
+type InBoard struct {
 	name    string
 	adminID string
 }
 
-// NewBoard creates and returns a new Board.
-func NewBoard(name string, adminID string) Board {
-	return Board{name: name, adminID: adminID}
+// NewInBoard creates and returns a new InBoard.
+func NewInBoard(name string, adminID string) InBoard {
+	return InBoard{name: name, adminID: adminID}
+}
+
+// BoardSelector can be used to read records from the board table.
+type BoardSelector struct{ db *sql.DB }
+
+// NewBoardSelector creates and returns a new BoardSelector.
+func NewBoardSelector(db *sql.DB) BoardSelector { return BoardSelector{db: db} }
+
+func (s BoardSelector) Select(id string) (Board, error) {
+	var board Board
+	err := s.db.
+		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
+		Scan(&board.id, &board.name)
+	return board, err
 }
 
 // BoardInserter can be used to create a new record in the board table.
@@ -24,7 +45,7 @@ type BoardInserter struct{ db *sql.DB }
 func NewBoardInserter(db *sql.DB) BoardInserter { return BoardInserter{db: db} }
 
 // Insert creates a new record in the board table.
-func (i BoardInserter) Insert(board Board) error {
+func (i BoardInserter) Insert(board InBoard) error {
 	// Begin transaction with new empty context.
 	ctx := context.Background()
 	tx, err := i.db.BeginTx(ctx, nil)

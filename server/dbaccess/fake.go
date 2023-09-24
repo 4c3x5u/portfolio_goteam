@@ -34,11 +34,11 @@ func (f *FakeCounter) Count(_ string) (int, error) {
 	return f.OutRes, f.OutErr
 }
 
-// FakeBoardInserter is a test fake for Inserter[Board].
+// FakeBoardInserter is a test fake for Inserter[InBoard].
 type FakeBoardInserter struct{ OutErr error }
 
-// Insert implements the Inserter[Board] interface on FakeBoardInserter.
-func (f *FakeBoardInserter) Insert(_ Board) error { return f.OutErr }
+// Insert implements the Inserter[InBoard] interface on FakeBoardInserter.
+func (f *FakeBoardInserter) Insert(_ InBoard) error { return f.OutErr }
 
 // FakeRelSelector is a test fake for RelSelector.
 type FakeRelSelector struct {

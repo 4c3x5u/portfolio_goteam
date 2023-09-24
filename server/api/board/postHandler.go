@@ -14,7 +14,7 @@ import (
 type POSTHandler struct {
 	validator        StringValidator
 	userBoardCounter dbaccess.Counter
-	boardInserter    dbaccess.Inserter[dbaccess.Board]
+	boardInserter    dbaccess.Inserter[dbaccess.InBoard]
 	log              pkgLog.Errorer
 }
 
@@ -22,7 +22,7 @@ type POSTHandler struct {
 func NewPOSTHandler(
 	validator StringValidator,
 	userBoardCounter dbaccess.Counter,
-	boardInserter dbaccess.Inserter[dbaccess.Board],
+	boardInserter dbaccess.Inserter[dbaccess.InBoard],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{
@@ -82,7 +82,7 @@ func (h POSTHandler) Handle(
 
 	// Create a new board.
 	if err := h.boardInserter.Insert(
-		dbaccess.NewBoard(reqBody.Name, username),
+		dbaccess.NewInBoard(reqBody.Name, username),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

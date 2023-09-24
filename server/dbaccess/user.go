@@ -31,7 +31,7 @@ func (c UserInserter) Insert(user User) error {
 // UserSelector can be used to read records from the user table.
 type UserSelector struct{ db *sql.DB }
 
-// NewUserSelector creates and returns a new user reader.
+// NewUserSelector creates and returns a new UserSelector.
 func NewUserSelector(db *sql.DB) UserSelector { return UserSelector{db: db} }
 
 // Select selects a record from the user table with the given username.

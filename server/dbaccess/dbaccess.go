@@ -13,6 +13,12 @@ type Deleter interface{ Delete(id string) error }
 // Counter describes a type counts records in the database.
 type Counter interface{ Count(id string) (int, error) }
 
+// Updater defines a type that updates a field of a record in the database with
+// a new value.
+type Updater interface {
+	Update(id string, fieldName string, newValue string)
+}
+
 // RelSelector describes a type that selects a record from a many-to-many
 // relationship table from the database. It uses the two IDs - one for each
 // entity that is subject to the relationship.
