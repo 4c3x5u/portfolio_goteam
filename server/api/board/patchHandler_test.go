@@ -102,6 +102,21 @@ func TestPATCHHandler(t *testing.T) {
 				"You do not have access to this board.",
 			),
 		},
+		{
+			name:                    "UserBoardSelectorErr",
+			idValidatorOutErr:       nil,
+			nameValidatorOutErr:     nil,
+			boardSelectorOutErr:     nil,
+			userBoardSelectorOutErr: sql.ErrConnDone,
+			wantStatusCode:          http.StatusInternalServerError,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				if err := assert.Equal(
+					sql.ErrConnDone.Error(), log.InMessage,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			idValidator.OutErr = c.idValidatorOutErr
