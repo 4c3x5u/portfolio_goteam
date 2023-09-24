@@ -72,5 +72,10 @@ func (h *PATCHHandler) Handle(
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
 	}
 }

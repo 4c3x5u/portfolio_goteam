@@ -46,7 +46,7 @@ func TestPOSTHandler(t *testing.T) {
 		) {
 			resBody := ResBody{}
 			if err := json.NewDecoder(rawResBody).Decode(&resBody); err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
 				t.Error(err)

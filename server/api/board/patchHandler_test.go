@@ -27,7 +27,7 @@ func TestPATCHHandler(t *testing.T) {
 		nameValidatorOutErr error
 		boardSelectorOutErr error
 		wantStatusCode      int
-		wantErrMsg          string
+		assertFunc          func(*testing.T, *http.Response)
 	}{
 		{
 			name:                "IDValidatorErr",
@@ -35,7 +35,17 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: nil,
 			boardSelectorOutErr: nil,
 			wantStatusCode:      http.StatusBadRequest,
-			wantErrMsg:          "Board ID cannot be empty.",
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"Board ID cannot be empty.", resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 		{
 			name:                "NameValidatorErr",
@@ -43,7 +53,17 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: errors.New("Board name cannot be empty."),
 			boardSelectorOutErr: nil,
 			wantStatusCode:      http.StatusBadRequest,
-			wantErrMsg:          "Board name cannot be empty.",
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"Board name cannot be empty.", resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 		{
 			name:                "BoardNotFound",
@@ -51,7 +71,31 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: nil,
 			boardSelectorOutErr: sql.ErrNoRows,
 			wantStatusCode:      http.StatusNotFound,
-			wantErrMsg:          "Board not found.",
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"Board not found.", resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
+		{
+			name:                "BoardSelectorErr",
+			idValidatorOutErr:   nil,
+			nameValidatorOutErr: nil,
+			boardSelectorOutErr: sql.ErrConnDone,
+			wantStatusCode:      http.StatusInternalServerError,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				if err := assert.Equal(
+					sql.ErrConnDone.Error(), log.InMessage,
+				); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -80,13 +124,7 @@ func TestPATCHHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			var resBody ResBody
-			if err = json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			if err = assert.Equal(c.wantErrMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
+			c.assertFunc(t, res)
 		})
 	}
 }
