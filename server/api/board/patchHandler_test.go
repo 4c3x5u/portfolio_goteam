@@ -18,7 +18,6 @@ func TestPATCHHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	idValidator := &fakeStringValidator{}
 	nameValidator := &fakeStringValidator{}
-	sut := NewPATCHHandler(idValidator, nameValidator, log)
 	boardSelector := &dbaccess.FakeBoardSelector{}
 	sut := NewPATCHHandler(idValidator, nameValidator, boardSelector, log)
 
