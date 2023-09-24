@@ -21,6 +21,18 @@ func TestPATCHHandler(t *testing.T) {
 	boardSelector := &dbaccess.FakeBoardSelector{}
 	sut := NewPATCHHandler(idValidator, nameValidator, boardSelector, log)
 
+	assertOnResErr := func(errMsg string) func(*testing.T, *http.Response) {
+		return func(t *testing.T, res *http.Response) {
+			var resBody ResBody
+			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+				t.Fatal(err)
+			}
+			if err := assert.Equal(errMsg, resBody.Error); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	for _, c := range []struct {
 		name                string
 		idValidatorOutErr   error
@@ -35,17 +47,7 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: nil,
 			boardSelectorOutErr: nil,
 			wantStatusCode:      http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				var resBody ResBody
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Board ID cannot be empty.", resBody.Error,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:          assertOnResErr("Board ID cannot be empty."),
 		},
 		{
 			name:                "NameValidatorErr",
@@ -53,17 +55,7 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: errors.New("Board name cannot be empty."),
 			boardSelectorOutErr: nil,
 			wantStatusCode:      http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				var resBody ResBody
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Board name cannot be empty.", resBody.Error,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:          assertOnResErr("Board name cannot be empty."),
 		},
 		{
 			name:                "BoardNotFound",
@@ -71,17 +63,7 @@ func TestPATCHHandler(t *testing.T) {
 			nameValidatorOutErr: nil,
 			boardSelectorOutErr: sql.ErrNoRows,
 			wantStatusCode:      http.StatusNotFound,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				var resBody ResBody
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Board not found.", resBody.Error,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:          assertOnResErr("Board not found."),
 		},
 		{
 			name:                "BoardSelectorErr",
