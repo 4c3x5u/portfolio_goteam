@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -243,13 +244,13 @@ func TestBoard(t *testing.T) {
 					err := db.QueryRow(
 						"SELECT boardID FROM app.user_board WHERE boardID = 1",
 					).Scan(&boardID)
-					if err != sql.ErrNoRows {
+					if !errors.Is(err, sql.ErrNoRows) {
 						t.Error("user_board row was not deleted")
 					}
 					err = db.QueryRow(
 						"SELECT id FROM app.board WHERE id = 1",
 					).Scan(&boardID)
-					if err != sql.ErrNoRows {
+					if !errors.Is(err, sql.ErrNoRows) {
 						t.Error("board row was not deleted")
 					}
 				},

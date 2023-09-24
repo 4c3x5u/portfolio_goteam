@@ -3,6 +3,7 @@ package register
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -89,7 +90,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Error(errEncode.Error())
 		}
 		return
-	} else if err != sql.ErrNoRows {
+	} else if !errors.Is(err, sql.ErrNoRows) {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

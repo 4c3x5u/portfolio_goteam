@@ -84,7 +84,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	if _, err := h.userBoardSelector.Select(
+	if isAdmin, err := h.userBoardSelector.Select(
 		username, boardID,
 	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
@@ -98,6 +98,15 @@ func (h *PATCHHandler) Handle(
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	} else if !isAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "Only the admin can edit the board."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
 }

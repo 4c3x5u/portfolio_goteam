@@ -3,6 +3,7 @@ package board
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"server/dbaccess"
@@ -59,7 +60,7 @@ func (h POSTHandler) Handle(
 	// resources used by this demo app.
 	if boardCount, err := h.userBoardCounter.Count(
 		username,
-	); err != nil && err != sql.ErrNoRows {
+	); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		// sql.ErrNoRows is OK here. It just means the user hasn't created any
 		// boards yet.
 		h.log.Error(err.Error())

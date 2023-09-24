@@ -50,7 +50,7 @@ func (h DELETEHandler) Handle(
 	// deleted.
 	if isAdmin, err := h.userBoardSelector.Select(
 		username, boardID,
-	); err != nil && err != sql.ErrNoRows {
+	); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -58,7 +58,7 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if !isAdmin {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
