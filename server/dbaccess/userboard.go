@@ -11,7 +11,8 @@ func NewUserBoardSelector(db *sql.DB) UserBoardSelector {
 }
 
 // Select selects a record from the user_board table. It only returns the
-// isAdmin field since that is the only piece of information
+// isAdmin field since that is the only piece of information required for the
+// use cases.
 func (s UserBoardSelector) Select(
 	username, boardID string,
 ) (isAdmin bool, err error) {

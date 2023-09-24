@@ -46,14 +46,14 @@ type FakeBoardInserter struct{ OutErr error }
 // Insert implements the Inserter[InBoard] interface on FakeBoardInserter.
 func (f *FakeBoardInserter) Insert(_ InBoard) error { return f.OutErr }
 
-// FakeRelSelector is a test fake for RelSelector.
-type FakeRelSelector struct {
+// FakeUserBoardSelector is a test fake for RelSelector[bool].
+type FakeUserBoardSelector struct {
 	OutIsAdmin bool
 	OutErr     error
 }
 
-// Select implements the RelSelector interface on FakeRelSelector.
-func (f *FakeRelSelector) Select(_, _ string) (bool, error) {
+// Select implements the RelSelector[bool] interface on FakeUserBoardSelector.
+func (f *FakeUserBoardSelector) Select(_, _ string) (bool, error) {
 	return f.OutIsAdmin, f.OutErr
 }
 
