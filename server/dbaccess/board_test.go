@@ -120,48 +120,67 @@ func TestBoardUpdater(t *testing.T) {
 		newBoardName   = "Board B"
 	)
 
-	mock.
-		ExpectExec(sqlUpdateBoard).
-		WithArgs(newBoardName, boardID).
-		WillReturnError(sql.ErrNoRows)
-
-	mock.
-		ExpectExec(sqlUpdateBoard).
-		WithArgs(newBoardName, boardID).
-		WillReturnResult(sqlmock.NewResult(-1, 0))
-
-	mock.
-		ExpectExec(sqlUpdateBoard).
-		WithArgs(newBoardName, boardID).
-		WillReturnResult(sqlmock.NewResult(-1, 2))
-
-	mock.
-		ExpectExec(sqlUpdateBoard).
-		WithArgs(newBoardName, boardID).
-		WillReturnResult(sqlmock.NewResult(21, 1))
-
-	err := sut.Update(boardID, newBoardName)
-	if assertErr := assert.SameError(err, sql.ErrNoRows); assertErr != nil {
-		t.Error(assertErr)
-	}
-
-	err = sut.Update(boardID, newBoardName)
-	if assertErr := assert.Equal(
-		err.Error(), "no rows were affected",
-	); assertErr != nil {
-		t.Error(assertErr)
-	}
-
-	err = sut.Update(boardID, newBoardName)
-	if assertErr := assert.Equal(
-		err.Error(), "more than expected rows were affected",
-	); assertErr != nil {
-		t.Error(assertErr)
-	}
-
-	err = sut.Update(boardID, newBoardName)
-	if assertErr := assert.Nil(err); assertErr != nil {
-		t.Error(assertErr)
+	for _, c := range []struct {
+		name        string
+		setUp       func(sqlmock.Sqlmock)
+		assertOnErr func(error) error
+	}{
+		{
+			name: "SqlErrNoRows",
+			setUp: func(mock sqlmock.Sqlmock) {
+				mock.
+					ExpectExec(sqlUpdateBoard).
+					WithArgs(newBoardName, boardID).
+					WillReturnError(sql.ErrNoRows)
+			},
+			assertOnErr: func(err error) error {
+				return assert.SameError(err, sql.ErrNoRows)
+			},
+		},
+		{
+			name: "NoRowsAffected",
+			setUp: func(mock sqlmock.Sqlmock) {
+				mock.
+					ExpectExec(sqlUpdateBoard).
+					WithArgs(newBoardName, boardID).
+					WillReturnResult(sqlmock.NewResult(-1, 0))
+			},
+			assertOnErr: func(err error) error {
+				return assert.Equal(err.Error(), "no rows were affected")
+			},
+		},
+		{
+			name: "MoreRowsAffected",
+			setUp: func(mock sqlmock.Sqlmock) {
+				mock.
+					ExpectExec(sqlUpdateBoard).
+					WithArgs(newBoardName, boardID).
+					WillReturnResult(sqlmock.NewResult(-1, 2))
+			},
+			assertOnErr: func(err error) error {
+				return assert.Equal(
+					err.Error(), "more than expected rows were affected",
+				)
+			},
+		},
+		{
+			name: "Success",
+			setUp: func(mock sqlmock.Sqlmock) {
+				mock.
+					ExpectExec(sqlUpdateBoard).
+					WithArgs(newBoardName, boardID).
+					WillReturnResult(sqlmock.NewResult(21, 1))
+			},
+			assertOnErr: func(err error) error { return assert.Nil(err) },
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			c.setUp(mock)
+			err := sut.Update(boardID, newBoardName)
+			if assertErr := c.assertOnErr(err); assertErr != nil {
+				t.Error(assertErr)
+			}
+		})
 	}
 }
 
@@ -175,36 +194,35 @@ func TestBoardSelector(t *testing.T) {
 	sut := NewBoardSelector(db)
 
 	const (
-		sqlSelectBoard     = "SELECT id, name FROM app.board WHERE id = \\$1"
-		nonExistingBoardID = "32"
-		existingBoardID    = "21"
-		existingBoardName  = "Board A"
+		sqlSelectBoard    = "SELECT id, name FROM app.board WHERE id = \\$1"
+		boardID           = "21"
+		existingBoardName = "Board A"
 	)
 
 	mock.
 		ExpectQuery(sqlSelectBoard).
-		WithArgs(nonExistingBoardID).
+		WithArgs(boardID).
 		WillReturnError(sql.ErrNoRows)
 
 	mock.
 		ExpectQuery(sqlSelectBoard).
-		WithArgs(existingBoardID).
+		WithArgs(boardID).
 		WillReturnRows(
 			sqlmock.
 				NewRows([]string{"id", "name"}).
-				AddRow(existingBoardID, existingBoardName),
+				AddRow(boardID, existingBoardName),
 		)
 
-	board, err := sut.Select(nonExistingBoardID)
+	board, err := sut.Select(boardID)
 	if err := assert.SameError(err, sql.ErrNoRows); err != nil {
 		t.Error(err)
 	}
 
-	board, err = sut.Select(existingBoardID)
+	board, err = sut.Select(boardID)
 	if err = assert.Nil(err); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(existingBoardID, strconv.Itoa(board.id)); err != nil {
+	if err = assert.Equal(boardID, strconv.Itoa(board.id)); err != nil {
 		t.Error(err)
 	}
 	if err = assert.Equal(existingBoardName, board.name); err != nil {
