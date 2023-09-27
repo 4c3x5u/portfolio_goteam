@@ -98,7 +98,7 @@ func TestBoardInserter(t *testing.T) {
 
 			err := sut.Insert(board)
 
-			if err = assert.Equal(c.wantErr, err); err != nil {
+			if err = assert.SameError(c.wantErr, err); err != nil {
 				t.Error(err)
 			}
 		})

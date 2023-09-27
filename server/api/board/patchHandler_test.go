@@ -22,8 +22,14 @@ func TestPATCHHandler(t *testing.T) {
 	nameValidator := &fakeStringValidator{}
 	boardSelector := &dbaccess.FakeBoardSelector{}
 	userBoardSelector := &dbaccess.FakeUserBoardSelector{}
+	boardUpdater := &dbaccess.FakeUpdater{}
 	sut := NewPATCHHandler(
-		idValidator, nameValidator, boardSelector, userBoardSelector, log,
+		idValidator,
+		nameValidator,
+		boardSelector,
+		userBoardSelector,
+		boardUpdater,
+		log,
 	)
 
 	assertOnResErr := func(errMsg string) func(*testing.T, *http.Response) {
@@ -53,6 +59,7 @@ func TestPATCHHandler(t *testing.T) {
 		boardSelectorOutErr         error
 		userBoardSelectorOutIsAdmin bool
 		userBoardSelectorOutErr     error
+		boardUpdaterOutErr          error
 		wantStatusCode              int
 		assertFunc                  func(*testing.T, *http.Response)
 	}{
@@ -63,6 +70,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assertOnResErr(
 				"Board ID cannot be empty.",
@@ -75,6 +83,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assertOnResErr(
 				"Board name cannot be empty.",
@@ -87,6 +96,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         sql.ErrNoRows,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusNotFound,
 			assertFunc:                  assertOnResErr("Board not found."),
 		},
@@ -97,6 +107,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         sql.ErrConnDone,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc:                  assertOnLoggedErr(sql.ErrConnDone.Error()),
 		},
@@ -107,6 +118,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrNoRows,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusForbidden,
 			assertFunc: assertOnResErr(
 				"You do not have access to this board.",
@@ -119,8 +131,11 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrConnDone,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc:                  assertOnLoggedErr(sql.ErrConnDone.Error()),
+			assertFunc: assertOnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
 		},
 		{
 			name:                        "UserIsNotAdmin",
@@ -129,9 +144,23 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelectorOutErr:         nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusForbidden,
 			assertFunc: assertOnResErr(
 				"Only board admins can edit the board.",
+			),
+		},
+		{
+			name:                        "BoardUpdaterErr",
+			idValidatorOutErr:           nil,
+			nameValidatorOutErr:         nil,
+			boardSelectorOutErr:         nil,
+			userBoardSelectorOutIsAdmin: true,
+			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          sql.ErrNoRows,
+			wantStatusCode:              http.StatusInternalServerError,
+			assertFunc: assertOnLoggedErr(
+				sql.ErrNoRows.Error(),
 			),
 		},
 	} {
@@ -141,6 +170,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelector.OutErr = c.boardSelectorOutErr
 			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
+			boardUpdater.OutErr = c.boardUpdaterOutErr
 
 			reqBody, err := json.Marshal(ReqBody{})
 			if err != nil {

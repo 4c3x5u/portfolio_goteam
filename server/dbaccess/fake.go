@@ -62,3 +62,9 @@ type FakeDeleter struct{ OutErr error }
 
 // Delete implements the Deleter interface on FakeDeleter.
 func (f *FakeDeleter) Delete(_ string) error { return f.OutErr }
+
+// FakeUpdater is a test fake for Updater.
+type FakeUpdater struct{ OutErr error }
+
+// Update implements the Updater interface on FakeUpdater.
+func (f *FakeUpdater) Update(id, newValue string) error { return f.OutErr }

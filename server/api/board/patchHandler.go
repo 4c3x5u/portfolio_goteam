@@ -15,6 +15,7 @@ type PATCHHandler struct {
 	nameValidator     StringValidator
 	boardSelector     dbaccess.Selector[dbaccess.Board]
 	userBoardSelector dbaccess.RelSelector[bool]
+	boardUpdater      dbaccess.Updater
 	log               pkgLog.Errorer
 }
 
@@ -23,6 +24,7 @@ func NewPATCHHandler(
 	nameValidator StringValidator,
 	boardSelector dbaccess.Selector[dbaccess.Board],
 	userBoardSelector dbaccess.RelSelector[bool],
+	boardUpdater dbaccess.Updater,
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
@@ -30,6 +32,7 @@ func NewPATCHHandler(
 		nameValidator:     nameValidator,
 		boardSelector:     boardSelector,
 		userBoardSelector: userBoardSelector,
+		boardUpdater:      boardUpdater,
 		log:               log,
 	}
 }
@@ -107,6 +110,15 @@ func (h *PATCHHandler) Handle(
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
+	}
+
+	// even if the error is sql.ErrNoRows, something must have gone wrong since
+	// we were able to find the board with this ID earlier on the boardSelector
+	// call, therefore log the error and return 500
+	if err := h.boardUpdater.Update(boardID, reqBody.Name); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 }
