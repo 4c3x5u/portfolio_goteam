@@ -13,53 +13,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// TestBoardSelector tests the Select method of BoardSelector to assert that it
-// sends the correct query to the database with the correct arguments, and
-// returns whatever error occurs.
-func TestBoardSelector(t *testing.T) {
-	db, mock, teardown := setUpDBTest(t)
-	defer teardown()
-
-	sut := NewBoardSelector(db)
-
-	const (
-		sqlSelectBoard     = "SELECT id, name FROM app.board WHERE id = \\$1"
-		existingBoardID    = "21"
-		existingBoardName  = "Board A"
-		nonExistingBoardID = "32"
-	)
-
-	mock.
-		ExpectQuery(sqlSelectBoard).
-		WithArgs(existingBoardID).
-		WillReturnRows(
-			sqlmock.
-				NewRows([]string{"id", "name"}).
-				AddRow(existingBoardID, existingBoardName),
-		)
-
-	mock.
-		ExpectQuery(sqlSelectBoard).
-		WithArgs(nonExistingBoardID).
-		WillReturnError(sql.ErrNoRows)
-
-	board, err := sut.Select(existingBoardID)
-	if err = assert.Nil(err); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(existingBoardID, strconv.Itoa(board.id)); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(existingBoardName, board.name); err != nil {
-		t.Error(err)
-	}
-
-	board, err = sut.Select(nonExistingBoardID)
-	if err := assert.True(errors.Is(err, sql.ErrNoRows)); err != nil {
-		t.Error(err)
-	}
-}
-
 // TestBoardInserter tests the Insert method of BoardInserter to assert that it
 // sends the correct queries to the database with the correct arguments, and
 // returns whatever error occurs.
@@ -152,6 +105,82 @@ func TestBoardInserter(t *testing.T) {
 	}
 }
 
+// TestBoardUpdater tests the Update method of BoardUpdater to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
+func TestBoardUpdater(t *testing.T) {
+	db, mock, teardown := setUpDBTest(t)
+	defer teardown()
+
+	sut := NewBoardUpdater(db)
+
+	const (
+		sqlUpdateBoard     = "UPDATE app.board SET name = \\$1 WHERE id = \\$2"
+		nonExistingBoardID = "32"
+		newBoardName       = "Board B"
+	)
+
+	mock.
+		ExpectExec(sqlUpdateBoard).
+		WithArgs(newBoardName, nonExistingBoardID).
+		WillReturnError(sql.ErrNoRows)
+
+	err := sut.Update(nonExistingBoardID, newBoardName)
+	if assertErr := assert.SameError(err, sql.ErrNoRows); assertErr != nil {
+		t.Error(assertErr)
+	}
+}
+
+// TestBoardSelector tests the Select method of BoardSelector to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
+func TestBoardSelector(t *testing.T) {
+	db, mock, teardown := setUpDBTest(t)
+	defer teardown()
+
+	sut := NewBoardSelector(db)
+
+	const (
+		sqlSelectBoard     = "SELECT id, name FROM app.board WHERE id = \\$1"
+		nonExistingBoardID = "32"
+		existingBoardID    = "21"
+		existingBoardName  = "Board A"
+	)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(nonExistingBoardID).
+		WillReturnError(sql.ErrNoRows)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(existingBoardID).
+		WillReturnRows(
+			sqlmock.
+				NewRows([]string{"id", "name"}).
+				AddRow(existingBoardID, existingBoardName),
+		)
+
+	board, err := sut.Select(nonExistingBoardID)
+	if err := assert.SameError(err, sql.ErrNoRows); err != nil {
+		t.Error(err)
+	}
+
+	board, err = sut.Select(existingBoardID)
+	if err = assert.Nil(err); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingBoardID, strconv.Itoa(board.id)); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingBoardName, board.name); err != nil {
+		t.Error(err)
+	}
+}
+
+// TestBoardDeleter tests the Delete method of BoardDeleter to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
 func TestBoardDeleter(t *testing.T) {
 	const (
 		sqlDeleteRel   = `DELETE FROM app.user_board WHERE boardID = \$1`

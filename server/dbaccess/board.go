@@ -6,29 +6,8 @@ import (
 	"errors"
 )
 
-// Board represents a record in the board table.
-type Board struct {
-	id   int
-	name string
-}
-
-// BoardSelector can be used to read records from the board table.
-type BoardSelector struct{ db *sql.DB }
-
-// NewBoardSelector creates and returns a new BoardSelector.
-func NewBoardSelector(db *sql.DB) BoardSelector { return BoardSelector{db: db} }
-
-// Select selects a record from the board table with the given id.
-func (s BoardSelector) Select(id string) (Board, error) {
-	var board Board
-	err := s.db.
-		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
-		Scan(&board.id, &board.name)
-	return board, err
-}
-
 // InBoard describes the data needed to insert a board into the database. It
-// doesn't represent the final record in the board table.
+// doesn't represent the final record in the board table - see Board for that.
 type InBoard struct {
 	name    string
 	adminID string
@@ -87,9 +66,46 @@ func (i BoardInserter) Insert(board InBoard) error {
 	return nil
 }
 
+// Board represents a record in the board table.
+type Board struct {
+	id   int
+	name string
+}
+
+// BoardSelector can be used to read records from the board table.
+type BoardSelector struct{ db *sql.DB }
+
+// NewBoardSelector creates and returns a new BoardSelector.
+func NewBoardSelector(db *sql.DB) BoardSelector { return BoardSelector{db: db} }
+
+// Select selects a record from the board table with the given id.
+func (s BoardSelector) Select(id string) (Board, error) {
+	var board Board
+	err := s.db.
+		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
+		Scan(&board.id, &board.name)
+	return board, err
+}
+
+// BoardUpdater can be used to update the name field of record in the board
+// table.
+type BoardUpdater struct{ db *sql.DB }
+
+// NewBoardUpdater is the constructor for BoardUpdater.
+func NewBoardUpdater(db *sql.DB) BoardUpdater { return BoardUpdater{db: db} }
+
+// Update updates the name field of a record in the board database with a new
+// value.
+func (u BoardUpdater) Update(id, newName string) error {
+	_, err := u.db.Exec(
+		"UPDATE app.board SET name = $1 WHERE id = $2", newName, id,
+	)
+	return err
+}
+
 // BoardDeleter can be used to delete a record from the board table as well
-// as deleting all of the corresponding relationships records from the
-// user_board table.
+// as deleting the corresponding relationships records from the user_board
+// table.
 type BoardDeleter struct{ db *sql.DB }
 
 // NewBoardDeleter creates and returns a new BoardDeleter.

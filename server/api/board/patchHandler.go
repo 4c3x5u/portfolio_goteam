@@ -102,7 +102,7 @@ func (h *PATCHHandler) Handle(
 	} else if !isAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only the admin can edit the board."},
+			ResBody{Error: "Only board admins can edit the board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

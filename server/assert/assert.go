@@ -4,6 +4,7 @@
 package assert
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -49,6 +50,14 @@ func Nil(got any) error {
 func True(got bool) error {
 	if !got {
 		return newErr("true", got)
+	}
+	return nil
+}
+
+// SameError asserts that the given two errors are the same.
+func SameError(errA, errB error) error {
+	if !errors.Is(errA, errB) {
+		return newErr(errA, errB)
 	}
 	return nil
 }

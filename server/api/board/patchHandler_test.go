@@ -131,7 +131,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			wantStatusCode:              http.StatusForbidden,
 			assertFunc: assertOnResErr(
-				"Only the admin can edit the board.",
+				"Only board admins can edit the board.",
 			),
 		},
 	} {

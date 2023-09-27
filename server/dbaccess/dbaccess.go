@@ -16,7 +16,7 @@ type Counter interface{ Count(id string) (int, error) }
 // Updater defines a type that updates a field of a record in the database with
 // a new value.
 type Updater interface {
-	Update(id string, fieldName string, newValue string)
+	Update(id string, newValue string) error
 }
 
 // RelSelector describes a type that selects a record from a many-to-many
