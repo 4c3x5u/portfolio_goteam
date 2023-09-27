@@ -115,19 +115,29 @@ func TestBoardUpdater(t *testing.T) {
 	sut := NewBoardUpdater(db)
 
 	const (
-		sqlUpdateBoard     = "UPDATE app.board SET name = \\$1 WHERE id = \\$2"
-		nonExistingBoardID = "32"
-		newBoardName       = "Board B"
+		sqlUpdateBoard = "UPDATE app.board SET name = \\$1 WHERE id = \\$2"
+		boardID        = "21"
+		newBoardName   = "Board B"
 	)
 
 	mock.
 		ExpectExec(sqlUpdateBoard).
-		WithArgs(newBoardName, nonExistingBoardID).
+		WithArgs(newBoardName, boardID).
 		WillReturnError(sql.ErrNoRows)
 
-	err := sut.Update(nonExistingBoardID, newBoardName)
-	if assertErr := assert.SameError(err, sql.ErrNoRows); assertErr != nil {
-		t.Error(assertErr)
+	mock.
+		ExpectExec(sqlUpdateBoard).
+		WithArgs(newBoardName, boardID).
+		WillReturnResult(sqlmock.NewResult(-1, 0))
+
+	err := sut.Update(boardID, newBoardName)
+	if err = assert.SameError(err, sql.ErrNoRows); err != nil {
+		t.Error(err)
+	}
+
+	err = sut.Update(boardID, newBoardName)
+	if err = assert.Equal(err.Error(), "no rows were affected"); err != nil {
+		t.Error(err)
 	}
 }
 

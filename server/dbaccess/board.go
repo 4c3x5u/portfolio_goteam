@@ -97,10 +97,18 @@ func NewBoardUpdater(db *sql.DB) BoardUpdater { return BoardUpdater{db: db} }
 // Update updates the name field of a record in the board database with a new
 // value.
 func (u BoardUpdater) Update(id, newName string) error {
-	_, err := u.db.Exec(
+	res, err := u.db.Exec(
 		"UPDATE app.board SET name = $1 WHERE id = $2", newName, id,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return err
+	} else if rowsAffected == 0 {
+		return errors.New("no rows were affected")
+	}
+	return nil
 }
 
 // BoardDeleter can be used to delete a record from the board table as well
