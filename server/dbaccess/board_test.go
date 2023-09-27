@@ -135,6 +135,11 @@ func TestBoardUpdater(t *testing.T) {
 		WithArgs(newBoardName, boardID).
 		WillReturnResult(sqlmock.NewResult(-1, 2))
 
+	mock.
+		ExpectExec(sqlUpdateBoard).
+		WithArgs(newBoardName, boardID).
+		WillReturnResult(sqlmock.NewResult(21, 1))
+
 	err := sut.Update(boardID, newBoardName)
 	if assertErr := assert.SameError(err, sql.ErrNoRows); assertErr != nil {
 		t.Error(assertErr)
@@ -151,6 +156,11 @@ func TestBoardUpdater(t *testing.T) {
 	if assertErr := assert.Equal(
 		err.Error(), "more than expected rows were affected",
 	); assertErr != nil {
+		t.Error(assertErr)
+	}
+
+	err = sut.Update(boardID, newBoardName)
+	if assertErr := assert.Nil(err); assertErr != nil {
 		t.Error(assertErr)
 	}
 }
