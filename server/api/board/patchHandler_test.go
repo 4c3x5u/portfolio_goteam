@@ -163,6 +163,18 @@ func TestPATCHHandler(t *testing.T) {
 				sql.ErrNoRows.Error(),
 			),
 		},
+		{
+			name:                        "Success",
+			idValidatorOutErr:           nil,
+			nameValidatorOutErr:         nil,
+			boardSelectorOutErr:         nil,
+			userBoardSelectorOutIsAdmin: true,
+			userBoardSelectorOutErr:     nil,
+			boardUpdaterOutErr:          nil,
+			wantStatusCode:              http.StatusOK,
+			assertFunc: func(_ *testing.T, _ *http.Response) {
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			idValidator.OutErr = c.idValidatorOutErr

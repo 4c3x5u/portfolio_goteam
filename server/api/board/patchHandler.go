@@ -40,6 +40,7 @@ func NewPATCHHandler(
 func (h *PATCHHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Retrieve and validate the board ID.
 	boardID := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -52,13 +53,13 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
+	// Retrieve and validate the new board name.
 	var reqBody ReqBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-
 	if err := h.nameValidator.Validate(reqBody.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
@@ -70,6 +71,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
+	// Validate that the board exists in the database.
 	if _, err := h.boardSelector.Select(
 		boardID,
 	); errors.Is(err, sql.ErrNoRows) {
@@ -87,6 +89,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
+	// Validate that the user is a board admin.
 	if isAdmin, err := h.userBoardSelector.Select(
 		username, boardID,
 	); errors.Is(err, sql.ErrNoRows) {
@@ -113,12 +116,16 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// even if the error is sql.ErrNoRows, something must have gone wrong since
-	// we were able to find the board with this ID earlier on the boardSelector
-	// call, therefore log the error and return 500
+	// Update the name of the board in the database. Note that 500 is returned
+	// any error including sql.ErrNoRows. Because even in that case,
+	// something else must have gone wrong since we have already validated that
+	// a board with this ID exists.
 	if err := h.boardUpdater.Update(boardID, reqBody.Name); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
+
+	// All went well. Return 200.
+	w.WriteHeader(http.StatusOK)
 }
