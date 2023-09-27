@@ -107,6 +107,8 @@ func (u BoardUpdater) Update(id, newName string) error {
 		return err
 	} else if rowsAffected == 0 {
 		return errors.New("no rows were affected")
+	} else if rowsAffected > 1 {
+		return errors.New("more than expected rows were affected")
 	}
 	return nil
 }
