@@ -182,14 +182,14 @@ func TestBoard(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBodyBytes, err := json.Marshal(map[string]string{
+				reqBody, err := json.Marshal(map[string]string{
 					"name": c.boardName,
 				})
 				if err != nil {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(reqBodyBytes),
+					http.MethodPost, "", bytes.NewReader(reqBody),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -296,21 +296,38 @@ func TestBoard(t *testing.T) {
 		for _, c := range []struct {
 			name       string
 			id         string
+			boardName  string
 			assertFunc func(*testing.T, *httptest.ResponseRecorder)
 		}{
 			{
 				name:       "IDEmpty",
 				id:         "",
+				boardName:  "",
 				assertFunc: assertOnErrMsg("Board ID cannot be empty."),
 			},
 			{
 				name:       "IDNotInt",
 				id:         "A",
+				boardName:  "",
 				assertFunc: assertOnErrMsg("Board ID must be an integer."),
+			},
+			{
+				name:       "BoardNameEmpty",
+				id:         "2",
+				boardName:  "",
+				assertFunc: assertOnErrMsg("Board name cannot be empty."),
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req, err := http.NewRequest(http.MethodPatch, "?id="+c.id, nil)
+				reqBody, err := json.Marshal(map[string]string{
+					"name": c.boardName,
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				req, err := http.NewRequest(
+					http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
+				)
 				if err != nil {
 					t.Fatal(err)
 				}
