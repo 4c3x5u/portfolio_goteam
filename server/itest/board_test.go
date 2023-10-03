@@ -317,6 +317,14 @@ func TestBoard(t *testing.T) {
 				boardName:  "",
 				assertFunc: assertOnErrMsg("Board name cannot be empty."),
 			},
+			{
+				name:      "BoardNameTooLong",
+				id:        "2",
+				boardName: "A Board Whose Name Is Just Too Long!",
+				assertFunc: assertOnErrMsg(
+					"Board name cannot be longer than 35 characters.",
+				),
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				reqBody, err := json.Marshal(map[string]string{
