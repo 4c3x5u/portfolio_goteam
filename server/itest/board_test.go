@@ -108,7 +108,7 @@ func TestBoard(t *testing.T) {
 		}
 	})
 
-	t.Run("POST", func(t *testing.T) {
+	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			authFunc       func(*http.Request)
@@ -204,7 +204,7 @@ func TestBoard(t *testing.T) {
 		}
 	})
 
-	t.Run("DELETE", func(t *testing.T) {
+	t.Run(http.MethodDelete, func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			id             string
@@ -226,13 +226,13 @@ func TestBoard(t *testing.T) {
 			{
 				name:           "UserBoardNotFound",
 				id:             "123",
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "UserNotAdmin",
 				id:             "4",
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{

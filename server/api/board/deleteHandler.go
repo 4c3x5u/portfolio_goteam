@@ -55,7 +55,7 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusForbidden)
 		return
 	} else if !isAdmin {
 		w.WriteHeader(http.StatusForbidden)
