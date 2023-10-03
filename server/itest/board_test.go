@@ -293,50 +293,44 @@ func TestBoard(t *testing.T) {
 	})
 
 	t.Run(http.MethodPatch, func(t *testing.T) {
-		t.Run("IDEmpty", func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodPatch, "?id=", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			addBearerAuth(
-				"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-					"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-			)(req)
-			w := httptest.NewRecorder()
+		for _, c := range []struct {
+			name       string
+			id         string
+			assertFunc func(*testing.T, *httptest.ResponseRecorder)
+		}{
+			{
+				name:       "IDEmpty",
+				id:         "",
+				assertFunc: assertOnErrMsg("Board ID cannot be empty."),
+			},
+			{
+				name:       "IDNotInt",
+				id:         "A",
+				assertFunc: assertOnErrMsg("Board ID must be an integer."),
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				req, err := http.NewRequest(http.MethodPatch, "?id="+c.id, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				addBearerAuth(
+					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+				)(req)
+				w := httptest.NewRecorder()
 
-			sut.ServeHTTP(w, req)
-			res := w.Result()
+				sut.ServeHTTP(w, req)
+				res := w.Result()
 
-			if err = assert.Equal(
-				http.StatusBadRequest, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
+				if err = assert.Equal(
+					http.StatusBadRequest, res.StatusCode,
+				); err != nil {
+					t.Error(err)
+				}
 
-			assertOnErrMsg("Board ID cannot be empty.")(t, w)
-		})
-	})
-
-	t.Run("IDNotInt", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodPatch, "?id=A", nil)
-		if err != nil {
-			t.Fatal(err)
+				c.assertFunc(t, w)
+			})
 		}
-		addBearerAuth(
-			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-		)(req)
-		w := httptest.NewRecorder()
-
-		sut.ServeHTTP(w, req)
-		res := w.Result()
-
-		if err = assert.Equal(
-			http.StatusBadRequest, res.StatusCode,
-		); err != nil {
-			t.Error(err)
-		}
-
-		assertOnErrMsg("Board ID must be an integer.")(t, w)
 	})
 }
