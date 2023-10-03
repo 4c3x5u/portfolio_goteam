@@ -178,6 +178,36 @@ func TestBoardInserter(t *testing.T) {
 			wantErr: someErr,
 		},
 		{
+			name: "CommitErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectQuery(sqlInsertBoard).
+					WithArgs(board.name).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
+				mock.
+					ExpectExec(sqlInsertUserBoard).
+					WithArgs(board.adminID, 1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 2).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 3).
+					WillReturnResult(sqlmock.NewResult(2, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 4).
+					WillReturnResult(sqlmock.NewResult(3, 1))
+				mock.ExpectCommit().WillReturnError(someErr)
+			},
+			wantErr: someErr,
+		},
+		{
 			name: "Success",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
@@ -220,6 +250,52 @@ func TestBoardInserter(t *testing.T) {
 				t.Error(err)
 			}
 		})
+	}
+}
+
+// TestBoardSelector tests the Select method of BoardSelector to assert that it
+// sends the correct query to the database with the correct arguments, and
+// returns whatever error occurs.
+func TestBoardSelector(t *testing.T) {
+	db, mock, teardown := setUpDBTest(t)
+	defer teardown()
+
+	sut := NewBoardSelector(db)
+
+	const (
+		sqlSelectBoard    = "SELECT id, name FROM app.board WHERE id = \\$1"
+		boardID           = "21"
+		existingBoardName = "Board A"
+	)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(boardID).
+		WillReturnError(sql.ErrNoRows)
+
+	mock.
+		ExpectQuery(sqlSelectBoard).
+		WithArgs(boardID).
+		WillReturnRows(
+			sqlmock.
+				NewRows([]string{"id", "name"}).
+				AddRow(boardID, existingBoardName),
+		)
+
+	board, err := sut.Select(boardID)
+	if err := assert.SameError(err, sql.ErrNoRows); err != nil {
+		t.Error(err)
+	}
+
+	board, err = sut.Select(boardID)
+	if err = assert.Nil(err); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(boardID, strconv.Itoa(board.id)); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingBoardName, board.name); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -302,52 +378,6 @@ func TestBoardUpdater(t *testing.T) {
 	}
 }
 
-// TestBoardSelector tests the Select method of BoardSelector to assert that it
-// sends the correct query to the database with the correct arguments, and
-// returns whatever error occurs.
-func TestBoardSelector(t *testing.T) {
-	db, mock, teardown := setUpDBTest(t)
-	defer teardown()
-
-	sut := NewBoardSelector(db)
-
-	const (
-		sqlSelectBoard    = "SELECT id, name FROM app.board WHERE id = \\$1"
-		boardID           = "21"
-		existingBoardName = "Board A"
-	)
-
-	mock.
-		ExpectQuery(sqlSelectBoard).
-		WithArgs(boardID).
-		WillReturnError(sql.ErrNoRows)
-
-	mock.
-		ExpectQuery(sqlSelectBoard).
-		WithArgs(boardID).
-		WillReturnRows(
-			sqlmock.
-				NewRows([]string{"id", "name"}).
-				AddRow(boardID, existingBoardName),
-		)
-
-	board, err := sut.Select(boardID)
-	if err := assert.SameError(err, sql.ErrNoRows); err != nil {
-		t.Error(err)
-	}
-
-	board, err = sut.Select(boardID)
-	if err = assert.Nil(err); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(boardID, strconv.Itoa(board.id)); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(existingBoardName, board.name); err != nil {
-		t.Error(err)
-	}
-}
-
 // TestBoardDeleter tests the Delete method of BoardDeleter to assert that it
 // sends the correct query to the database with the correct arguments, and
 // returns whatever error occurs.
@@ -397,6 +427,22 @@ func TestBoardDeleter(t *testing.T) {
 					WithArgs(boardID).
 					WillReturnError(someErr)
 				mock.ExpectRollback()
+			},
+			wantErr: someErr,
+		},
+		{
+			name: "CommitErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectExec(sqlDeleteRel).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.
+					ExpectExec(sqlDeleteBoard).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit().WillReturnError(someErr)
 			},
 			wantErr: someErr,
 		},

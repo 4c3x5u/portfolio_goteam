@@ -79,7 +79,9 @@ func (i BoardInserter) Insert(board InBoard) error {
 		}
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -173,7 +175,9 @@ func (d BoardDeleter) Delete(id string) error {
 		return err
 	}
 
-	tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 
 	return nil
 }
