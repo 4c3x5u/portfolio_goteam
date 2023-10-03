@@ -47,6 +47,9 @@ VALUES
 INSERT INTO app.board(name) 
 VALUES ('Board #1'), ('Board #2'), ('Board #3'), ('Board #4');
 
+INSERT INTO app."column"(boardID, "order")
+VALUES (1, 1), (1, 2), (1, 3), (1, 4);
+
 INSERT INTO app.user_board(username, boardID, isAdmin) 
 VALUES 
   ('bob123', 1, TRUE), 

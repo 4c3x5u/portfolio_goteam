@@ -383,12 +383,13 @@ func TestBoardUpdater(t *testing.T) {
 // returns whatever error occurs.
 func TestBoardDeleter(t *testing.T) {
 	const (
-		sqlDeleteRel   = `DELETE FROM app.user_board WHERE boardID = \$1`
-		sqlDeleteBoard = `DELETE FROM app.board WHERE id = \$1`
-		boardID        = "123"
+		sqlDeleteUserBoards = `DELETE FROM app.user_board WHERE boardID = \$1`
+		sqlDeleteColumns    = `DELETE FROM app.\"column\" WHERE boardID = \$1`
+		sqlDeleteBoard      = `DELETE FROM app.board WHERE id = \$1`
+		boardID             = "123"
 	)
 
-	someErr := errors.New("some error occured")
+	someErr := errors.New("some error occurred")
 
 	for _, c := range []struct {
 		name      string
@@ -403,11 +404,27 @@ func TestBoardDeleter(t *testing.T) {
 			wantErr: someErr,
 		},
 		{
-			name: "DeleteRelsErr",
+			name: "DeleteUserBoardErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlDeleteRel).
+					ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnError(someErr)
+				mock.ExpectRollback()
+			},
+			wantErr: someErr,
+		},
+		{
+			name: "DeleteColumnsErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.
+					ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnError(someErr)
 				mock.ExpectRollback()
@@ -419,9 +436,13 @@ func TestBoardDeleter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlDeleteRel).
+					ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.
+					ExpectExec(sqlDeleteColumns).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(-1, 4))
 				mock.
 					ExpectExec(sqlDeleteBoard).
 					WithArgs(boardID).
@@ -435,9 +456,13 @@ func TestBoardDeleter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlDeleteRel).
+					ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.
+					ExpectExec(sqlDeleteColumns).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(-1, 4))
 				mock.
 					ExpectExec(sqlDeleteBoard).
 					WithArgs(boardID).
@@ -451,9 +476,13 @@ func TestBoardDeleter(t *testing.T) {
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
-					ExpectExec(sqlDeleteRel).
+					ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.
+					ExpectExec(sqlDeleteColumns).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(-1, 4))
 				mock.
 					ExpectExec(sqlDeleteBoard).
 					WithArgs(boardID).

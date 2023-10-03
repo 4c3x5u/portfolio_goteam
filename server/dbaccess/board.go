@@ -148,9 +148,7 @@ func (d BoardDeleter) Delete(id string) error {
 		return err
 	}
 
-	// Delete all rows from the user_board table that corresponds to the given
-	// board ID.
-	// i.e. Delete all of board's relationships.
+	// Delete all records from the user_board table with the given board ID.
 	if _, err = tx.ExecContext(
 		ctx, "DELETE FROM app.user_board WHERE boardID = $1", id,
 	); err != nil {
@@ -160,8 +158,17 @@ func (d BoardDeleter) Delete(id string) error {
 		return err
 	}
 
-	// Delete the row from the board table that corresponds to the board ID.
-	// i.e. Delete board.
+	// Delete all records from the column table with the given board ID.
+	if _, err = tx.ExecContext(
+		ctx, `DELETE FROM app."column" WHERE boardID = $1`, id,
+	); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return wrapRollbackErr(err, rollbackErr)
+		}
+		return err
+	}
+
+	// Delete the record from the board table with the given board ID.
 	if _, err = tx.ExecContext(
 		ctx, "DELETE FROM app.board WHERE id = $1", id,
 	); err != nil {

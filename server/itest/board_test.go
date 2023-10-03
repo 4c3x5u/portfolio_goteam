@@ -4,9 +4,7 @@ package itest
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -262,18 +260,42 @@ func TestBoard(t *testing.T) {
 				id:             "1",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
-					var boardID int
+					// Assert that all user_board records with this board ID are
+					// deleted.
+					var userBoardCount int
 					err := db.QueryRow(
-						"SELECT boardID FROM app.user_board WHERE boardID = 1",
-					).Scan(&boardID)
-					if !errors.Is(err, sql.ErrNoRows) {
-						t.Error("user_board row was not deleted")
+						"SELECT COUNT(*) FROM app.user_board WHERE boardID = 1",
+					).Scan(&userBoardCount)
+					if err != nil {
+						t.Fatal(err)
 					}
+					if err = assert.Equal(0, userBoardCount); err != nil {
+						t.Error(err)
+					}
+
+					// Assert that all column records with this board ID are
+					// deleted.
+					var columnCount int
 					err = db.QueryRow(
-						"SELECT id FROM app.board WHERE id = 1",
-					).Scan(&boardID)
-					if !errors.Is(err, sql.ErrNoRows) {
-						t.Error("board row was not deleted")
+						`SELECT COUNT(*) FROM app."column" WHERE boardID = 1`,
+					).Scan(&columnCount)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err = assert.Equal(0, columnCount); err != nil {
+						t.Error(err)
+					}
+
+					// Assert that the board record with this ID is deleted.
+					var boardCount int
+					err = db.QueryRow(
+						"SELECT COUNT(*) FROM app.board WHERE id = 1",
+					).Scan(&boardCount)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err = assert.Equal(0, boardCount); err != nil {
+						t.Error(err)
 					}
 				},
 			},
