@@ -14,7 +14,7 @@ import (
 )
 
 func TestUserBoardSelector(t *testing.T) {
-	db, mock, teardown := setUpDBTest(t)
+	db, mock, teardown := SetUpDBTest(t)
 	defer teardown()
 	sut := NewUserBoardSelector(db)
 	username := "bob123"
@@ -77,7 +77,7 @@ func TestUserBoardSelector(t *testing.T) {
 // that it executes the correct SQL query with the correct arguments, and
 // returns the count back alongside any sql error occured.
 func TestUserBoardCounter(t *testing.T) {
-	db, mock, teardown := setUpDBTest(t)
+	db, mock, teardown := SetUpDBTest(t)
 	defer teardown()
 	sut := NewUserBoardCounter(db)
 	username := "bob123"

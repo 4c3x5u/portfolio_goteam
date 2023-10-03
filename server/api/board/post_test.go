@@ -14,6 +14,7 @@ import (
 
 	"server/assert"
 	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 )
 
@@ -22,7 +23,7 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	validator := &fakeStringValidator{}
 	userBoardCounter := &dbaccess.FakeCounter{}
-	dbBoardInserter := &dbaccess.FakeBoardInserter{}
+	dbBoardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, log)
 

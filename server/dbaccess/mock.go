@@ -7,9 +7,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// setUpDBTest sets up the *sql.DB and *sqlmock.Sqlmock for server/db test
+// SetUpDBTest sets up the *sql.DB and *sqlmock.Sqlmock for server/db test
 // cases.
-func setUpDBTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
+func SetUpDBTest(t *testing.T) (*sql.DB, sqlmock.Sqlmock, func()) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatal(err)

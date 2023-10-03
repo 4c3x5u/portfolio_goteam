@@ -14,6 +14,7 @@ import (
 	"server/assert"
 	"server/auth"
 	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 )
 
@@ -27,21 +28,21 @@ func TestBoard(t *testing.T) {
 			http.MethodPost: board.NewPOSTHandler(
 				board.NewNameValidator(),
 				dbaccess.NewUserBoardCounter(db),
-				dbaccess.NewBoardInserter(db),
+				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: board.NewDELETEHandler(
 				board.NewIDValidator(),
 				dbaccess.NewUserBoardSelector(db),
-				dbaccess.NewBoardDeleter(db),
+				boardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: board.NewPATCHHandler(
 				board.NewIDValidator(),
 				board.NewNameValidator(),
-				dbaccess.NewBoardSelector(db),
+				boardTable.NewSelector(db),
 				dbaccess.NewUserBoardSelector(db),
-				dbaccess.NewBoardUpdater(db),
+				boardTable.NewUpdater(db),
 				log,
 			),
 		},

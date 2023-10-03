@@ -11,6 +11,7 @@ import (
 
 	"server/assert"
 	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 )
 
@@ -20,7 +21,7 @@ func TestPATCHHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	idValidator := &fakeStringValidator{}
 	nameValidator := &fakeStringValidator{}
-	boardSelector := &dbaccess.FakeBoardSelector{}
+	boardSelector := &boardTable.FakeSelector{}
 	userBoardSelector := &dbaccess.FakeUserBoardSelector{}
 	boardUpdater := &dbaccess.FakeUpdater{}
 	sut := NewPATCHHandler(

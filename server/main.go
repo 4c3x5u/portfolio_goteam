@@ -6,11 +6,12 @@ import (
 	"os"
 
 	"server/api"
-	"server/api/board"
-	"server/api/login"
-	"server/api/register"
+	boardAPI "server/api/board"
+	loginAPI "server/api/login"
+	registerAPI "server/api/register"
 	"server/auth"
 	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 	"server/midware"
 
@@ -53,48 +54,48 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", register.NewHandler(
-		register.NewValidator(
-			register.NewUsernameValidator(),
-			register.NewPasswordValidator(),
+	mux.Handle("/register", registerAPI.NewHandler(
+		registerAPI.NewValidator(
+			registerAPI.NewUsernameValidator(),
+			registerAPI.NewPasswordValidator(),
 		),
 		userSelector,
-		register.NewPasswordHasher(),
+		registerAPI.NewPasswordHasher(),
 		dbaccess.NewUserInserter(db),
 		jwtGenerator,
 		log,
 	))
 
-	mux.Handle("/login", login.NewHandler(
-		login.NewValidator(),
+	mux.Handle("/login", loginAPI.NewHandler(
+		loginAPI.NewValidator(),
 		userSelector,
-		login.NewPasswordComparator(),
+		loginAPI.NewPasswordComparator(),
 		jwtGenerator,
 		log,
 	))
 
-	mux.Handle("/board", board.NewHandler(
+	mux.Handle("/board", boardAPI.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(env.JWTKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: board.NewPOSTHandler(
-				board.NewNameValidator(),
+			http.MethodPost: boardAPI.NewPOSTHandler(
+				boardAPI.NewNameValidator(),
 				dbaccess.NewUserBoardCounter(db),
-				dbaccess.NewBoardInserter(db),
+				boardTable.NewInserter(db),
 				log,
 			),
-			http.MethodDelete: board.NewDELETEHandler(
-				board.NewIDValidator(),
+			http.MethodDelete: boardAPI.NewDELETEHandler(
+				boardAPI.NewIDValidator(),
 				dbaccess.NewUserBoardSelector(db),
-				dbaccess.NewBoardDeleter(db),
+				boardTable.NewDeleter(db),
 				log,
 			),
-			http.MethodPatch: board.NewPATCHHandler(
-				board.NewIDValidator(),
-				board.NewNameValidator(),
-				dbaccess.NewBoardSelector(db),
+			http.MethodPatch: boardAPI.NewPATCHHandler(
+				boardAPI.NewIDValidator(),
+				boardAPI.NewNameValidator(),
+				boardTable.NewSelector(db),
 				dbaccess.NewUserBoardSelector(db),
-				dbaccess.NewBoardUpdater(db),
+				boardTable.NewUpdater(db),
 				log,
 			),
 		},

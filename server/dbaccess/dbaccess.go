@@ -1,4 +1,4 @@
-// Package dbaccess contains code for accessing the GoTeam! database.
+// Package dbaccess contains code for working with the goteam database.
 package dbaccess
 
 // Inserter describes a type that inserts a record into a table in the database.
