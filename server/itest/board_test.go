@@ -345,6 +345,16 @@ func TestBoard(t *testing.T) {
 					"You do not have access to this board.",
 				),
 			},
+			{
+				name:       "UserNotAdmin",
+				id:         "4",
+				boardName:  "Board A",
+				authFunc:   addBearerAuth(bob123AuthToken),
+				statusCode: http.StatusForbidden,
+				assertFunc: assertOnErrMsg(
+					"Only board admins can edit the board.",
+				),
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				reqBody, err := json.Marshal(map[string]string{
