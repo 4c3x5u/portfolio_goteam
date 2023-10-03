@@ -297,33 +297,45 @@ func TestBoard(t *testing.T) {
 			name       string
 			id         string
 			boardName  string
+			statusCode int
 			assertFunc func(*testing.T, *httptest.ResponseRecorder)
 		}{
 			{
 				name:       "IDEmpty",
 				id:         "",
 				boardName:  "",
+				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board ID cannot be empty."),
 			},
 			{
 				name:       "IDNotInt",
 				id:         "A",
 				boardName:  "",
+				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board ID must be an integer."),
 			},
 			{
 				name:       "BoardNameEmpty",
 				id:         "2",
 				boardName:  "",
+				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board name cannot be empty."),
 			},
 			{
-				name:      "BoardNameTooLong",
-				id:        "2",
-				boardName: "A Board Whose Name Is Just Too Long!",
+				name:       "BoardNameTooLong",
+				id:         "2",
+				boardName:  "A Board Whose Name Is Just Too Long!",
+				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg(
 					"Board name cannot be longer than 35 characters.",
 				),
+			},
+			{
+				name:       "BoardNotFound",
+				id:         "1001",
+				boardName:  "Board A",
+				statusCode: http.StatusNotFound,
+				assertFunc: assertOnErrMsg("Board not found."),
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -349,7 +361,7 @@ func TestBoard(t *testing.T) {
 				res := w.Result()
 
 				if err = assert.Equal(
-					http.StatusBadRequest, res.StatusCode,
+					c.statusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
