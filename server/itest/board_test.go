@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"server/api"
-	boardAPI "server/api/board"
+	"server/api/board"
 	"server/assert"
 	"server/auth"
 	"server/dbaccess"
@@ -22,26 +22,34 @@ import (
 func TestBoard(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
-	sut := boardAPI.NewHandler(
+	sut := board.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewNameValidator(),
+			http.MethodPost: board.NewPOSTHandler(
+				board.NewNameValidator(),
 				dbaccess.NewUserBoardCounter(db),
 				dbaccess.NewBoardInserter(db),
 				log,
 			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewIDValidator(),
+			http.MethodDelete: board.NewDELETEHandler(
+				board.NewIDValidator(),
 				dbaccess.NewUserBoardSelector(db),
 				dbaccess.NewBoardDeleter(db),
+				log,
+			),
+			http.MethodPatch: board.NewPATCHHandler(
+				board.NewIDValidator(),
+				board.NewNameValidator(),
+				dbaccess.NewBoardSelector(db),
+				dbaccess.NewUserBoardSelector(db),
+				dbaccess.NewBoardUpdater(db),
 				log,
 			),
 		},
 	)
 
-	// used in varioues test cases to authenticate the request sent
+	// used in various test cases to authenticate the request sent
 	addBearerAuth := func(token string) func(*http.Request) {
 		return func(req *http.Request) {
 			req.Header.Add("Authorization", "Bearer "+token)
@@ -53,7 +61,7 @@ func TestBoard(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *httptest.ResponseRecorder) {
 		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := boardAPI.ResBody{}
+			resBody := board.ResBody{}
 			if err := json.NewDecoder(w.Result().Body).Decode(
 				&resBody,
 			); err != nil {
@@ -282,5 +290,30 @@ func TestBoard(t *testing.T) {
 				c.assertFunc(t)
 			})
 		}
+	})
+
+	t.Run(http.MethodPatch, func(t *testing.T) {
+		t.Run("IDEmpty", func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPatch, "?id=", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			addBearerAuth(
+				"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+					"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+			)(req)
+			w := httptest.NewRecorder()
+
+			sut.ServeHTTP(w, req)
+			res := w.Result()
+
+			if err = assert.Equal(
+				http.StatusBadRequest, res.StatusCode,
+			); err != nil {
+				t.Error(err)
+			}
+
+			assertOnErrMsg("Board ID cannot be empty.")(t, w)
+		})
 	})
 }

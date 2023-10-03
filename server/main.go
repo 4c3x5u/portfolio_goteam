@@ -89,6 +89,14 @@ func main() {
 				dbaccess.NewBoardDeleter(db),
 				log,
 			),
+			http.MethodPatch: board.NewPATCHHandler(
+				board.NewIDValidator(),
+				board.NewNameValidator(),
+				dbaccess.NewBoardSelector(db),
+				dbaccess.NewUserBoardSelector(db),
+				dbaccess.NewBoardUpdater(db),
+				log,
+			),
 		},
 	))
 
