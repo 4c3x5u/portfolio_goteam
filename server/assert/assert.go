@@ -56,7 +56,9 @@ func True(got bool) error {
 
 // SameError asserts that the given two errors are the same.
 func SameError(errA, errB error) error {
-	if !errors.Is(errA, errB) {
+	// Order is reversed when passing to errors.Is since it is received as
+	// "want" first and "got" second, yet we assert on whether "got" is "want".
+	if !errors.Is(errB, errA) {
 		return newErr(errA, errB)
 	}
 	return nil

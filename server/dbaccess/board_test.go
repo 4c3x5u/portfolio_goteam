@@ -28,20 +28,33 @@ func TestBoardInserter(t *testing.T) {
 	// Since we're doing pointer comparison for errors in test cases below, we
 	// just need a generic error to be returned at different points in code and
 	// ansure the expected SQL is executed and the same error is returned.
-	someErr := errors.New("some error occured")
+	errA := errors.New("an error occurred")
+	errB := errors.New("another error occurred")
 	board := NewInBoard("someboard", "bob123")
 
 	for _, c := range []struct {
 		name      string
 		setUpMock func(sqlmock.Sqlmock)
-		wantErr   error
+		wantErrs  []error
 	}{
 		{
 			name: "BeginTxErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin().WillReturnError(someErr)
+				mock.ExpectBegin().WillReturnError(errA)
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
+		},
+		{
+			name: "InsertBoardRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectQuery(sqlInsertBoard).
+					WithArgs(board.name).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
 		},
 		{
 			name: "InsertBoardErr",
@@ -50,10 +63,28 @@ func TestBoardInserter(t *testing.T) {
 				mock.
 					ExpectQuery(sqlInsertBoard).
 					WithArgs(board.name).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
+		},
+		{
+			name: "InsertUserBoardRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectQuery(sqlInsertBoard).
+					WithArgs(board.name).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
+				mock.
+					ExpectExec(sqlInsertUserBoard).
+					WithArgs(board.adminID, 1).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
 		},
 		{
 			name: "InsertUserBoardErr",
@@ -68,10 +99,31 @@ func TestBoardInserter(t *testing.T) {
 				mock.
 					ExpectExec(sqlInsertUserBoard).
 					WithArgs(board.adminID, 1).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
+		},
+		{
+			name: "InsertColumnRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectQuery(sqlInsertBoard).
+					WithArgs(board.name).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
+				mock.
+					ExpectExec(sqlInsertUserBoard).
+					WithArgs(board.adminID, 1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 1).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
 		},
 		// 4 columns in total are inserted after the board creation. Below are
 		// error cases for each of these insert operations.
@@ -91,10 +143,10 @@ func TestBoardInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectExec(sqlInsertColumn).
 					WithArgs(1, 1).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "InsertColumnErr#2",
@@ -115,10 +167,10 @@ func TestBoardInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectExec(sqlInsertColumn).
 					WithArgs(1, 2).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "InsertColumnErr#3",
@@ -142,10 +194,10 @@ func TestBoardInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectExec(sqlInsertColumn).
 					WithArgs(1, 3).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "InsertColumnErr#4",
@@ -172,10 +224,10 @@ func TestBoardInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(2, 1))
 				mock.ExpectExec(sqlInsertColumn).
 					WithArgs(1, 4).
-					WillReturnError(someErr)
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "CommitErr",
@@ -203,9 +255,9 @@ func TestBoardInserter(t *testing.T) {
 				mock.ExpectExec(sqlInsertColumn).
 					WithArgs(1, 4).
 					WillReturnResult(sqlmock.NewResult(3, 1))
-				mock.ExpectCommit().WillReturnError(someErr)
+				mock.ExpectCommit().WillReturnError(errA)
 			},
-			wantErr: someErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "Success",
@@ -235,7 +287,7 @@ func TestBoardInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(3, 1))
 				mock.ExpectCommit()
 			},
-			wantErr: nil,
+			wantErrs: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -246,8 +298,12 @@ func TestBoardInserter(t *testing.T) {
 
 			err := sut.Insert(board)
 
-			if err = assert.SameError(c.wantErr, err); err != nil {
-				t.Error(err)
+			for _, wantErr := range c.wantErrs {
+				if assertErr := assert.SameError(
+					wantErr, err,
+				); assertErr != nil {
+					t.Error(assertErr)
+				}
 			}
 		})
 	}
