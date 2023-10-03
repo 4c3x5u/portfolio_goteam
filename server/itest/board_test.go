@@ -49,6 +49,13 @@ func TestBoard(t *testing.T) {
 		},
 	)
 
+	const (
+		bob123AuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
+			"ib2IxMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc"
+		bob124AuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
+			"ib2IxMjQifQ.LqENrj9APUHgQ3X0HRN6-IFMIg6nyo0_n74KfoxA0qI"
+	)
+
 	// used in various test cases to authenticate the request sent
 	addBearerAuth := func(token string) func(*http.Request) {
 		return func(req *http.Request) {
@@ -86,7 +93,7 @@ func TestBoard(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				for _, method := range []string{
-					http.MethodPost, http.MethodDelete,
+					http.MethodPost, http.MethodDelete, http.MethodPatch,
 				} {
 					t.Run(method, func(t *testing.T) {
 						req, err := http.NewRequest(method, "", nil)
@@ -125,32 +132,23 @@ func TestBoard(t *testing.T) {
 			assertFunc     func(*testing.T, *httptest.ResponseRecorder)
 		}{
 			{
-				name: "EmptyBoardName",
-				authFunc: addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-				),
+				name:           "EmptyBoardName",
+				authFunc:       addBearerAuth(bob123AuthToken),
 				boardName:      "",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assertOnErrMsg("Board name cannot be empty."),
 			},
 			{
-				name: "TooLongBoardName",
-				authFunc: addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-				),
+				name:           "TooLongBoardName",
+				authFunc:       addBearerAuth(bob123AuthToken),
 				boardName:      "A Board Whose Name Is Just Too Long!",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg(
 					"Board name cannot be longer than 35 characters.",
 				)},
 			{
-				name: "TooManyBoards",
-				authFunc: addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-				),
+				name:           "TooManyBoards",
+				authFunc:       addBearerAuth(bob123AuthToken),
 				boardName:      "bob123's new board",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg(
@@ -159,11 +157,8 @@ func TestBoard(t *testing.T) {
 						"to create a new one.",
 				)},
 			{
-				name: "Success",
-				authFunc: addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjQifQ.LqENrj9APUHgQ3X0HRN6-IFMIg6nyo0_n74KfoxA0qI",
-				),
+				name:           "Success",
+				authFunc:       addBearerAuth(bob124AuthToken),
 				boardName:      "bob124's new board",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
@@ -271,10 +266,7 @@ func TestBoard(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-				)(req)
+				addBearerAuth(bob123AuthToken)(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
@@ -297,6 +289,7 @@ func TestBoard(t *testing.T) {
 			name       string
 			id         string
 			boardName  string
+			authFunc   func(*http.Request)
 			statusCode int
 			assertFunc func(*testing.T, *httptest.ResponseRecorder)
 		}{
@@ -304,6 +297,7 @@ func TestBoard(t *testing.T) {
 				name:       "IDEmpty",
 				id:         "",
 				boardName:  "",
+				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board ID cannot be empty."),
 			},
@@ -311,6 +305,7 @@ func TestBoard(t *testing.T) {
 				name:       "IDNotInt",
 				id:         "A",
 				boardName:  "",
+				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board ID must be an integer."),
 			},
@@ -318,6 +313,7 @@ func TestBoard(t *testing.T) {
 				name:       "BoardNameEmpty",
 				id:         "2",
 				boardName:  "",
+				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Board name cannot be empty."),
 			},
@@ -325,6 +321,7 @@ func TestBoard(t *testing.T) {
 				name:       "BoardNameTooLong",
 				id:         "2",
 				boardName:  "A Board Whose Name Is Just Too Long!",
+				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg(
 					"Board name cannot be longer than 35 characters.",
@@ -334,8 +331,19 @@ func TestBoard(t *testing.T) {
 				name:       "BoardNotFound",
 				id:         "1001",
 				boardName:  "Board A",
+				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusNotFound,
 				assertFunc: assertOnErrMsg("Board not found."),
+			},
+			{
+				name:       "UserBoardNotFound",
+				id:         "3",
+				boardName:  "Board A",
+				authFunc:   addBearerAuth(bob124AuthToken),
+				statusCode: http.StatusForbidden,
+				assertFunc: assertOnErrMsg(
+					"You do not have access to this board.",
+				),
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -351,10 +359,7 @@ func TestBoard(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				addBearerAuth(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
-						"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
-				)(req)
+				c.authFunc(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
