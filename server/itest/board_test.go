@@ -316,4 +316,27 @@ func TestBoard(t *testing.T) {
 			assertOnErrMsg("Board ID cannot be empty.")(t, w)
 		})
 	})
+
+	t.Run("IDNotInt", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPatch, "?id=A", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		addBearerAuth(
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJib2I" +
+				"xMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc",
+		)(req)
+		w := httptest.NewRecorder()
+
+		sut.ServeHTTP(w, req)
+		res := w.Result()
+
+		if err = assert.Equal(
+			http.StatusBadRequest, res.StatusCode,
+		); err != nil {
+			t.Error(err)
+		}
+
+		assertOnErrMsg("Board ID must be an integer.")(t, w)
+	})
 }
