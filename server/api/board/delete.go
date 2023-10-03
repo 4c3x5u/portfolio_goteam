@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"server/dbaccess"
+	"server/db"
 	pkgLog "server/log"
 )
 
@@ -13,16 +13,16 @@ import (
 // requests.
 type DELETEHandler struct {
 	validator         StringValidator
-	userBoardSelector dbaccess.RelSelector[bool]
-	boardDeleter      dbaccess.Deleter
+	userBoardSelector db.RelSelector[bool]
+	boardDeleter      db.Deleter
 	log               pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
 	validator StringValidator,
-	userBoardSelector dbaccess.RelSelector[bool],
-	boardDeleter dbaccess.Deleter,
+	userBoardSelector db.RelSelector[bool],
+	boardDeleter db.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{

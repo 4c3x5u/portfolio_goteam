@@ -13,8 +13,8 @@ import (
 	"server/api/board"
 	"server/assert"
 	"server/auth"
-	boardTable "server/dbaccess/board"
-	userboardTable "server/dbaccess/userboard"
+	boardTable "server/db/board"
+	userboardTable "server/db/userboard"
 	pkgLog "server/log"
 )
 

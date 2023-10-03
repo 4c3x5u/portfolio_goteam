@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"server/assert"
-	"server/dbaccess"
+	"server/db"
 )
 
 // TestCounter tests the Count method of Counter to assert that it executes the
 // correct SQL query with the correct arguments, and returns the count back
 // alongside any sql error occurred.
 func TestCounter(t *testing.T) {
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := db.SetUpDBTest(t)
 	defer teardown()
 	sut := NewCounter(db)
 	username := "bob123"

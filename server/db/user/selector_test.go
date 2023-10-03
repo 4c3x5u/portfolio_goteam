@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"server/assert"
-	"server/dbaccess"
+	"server/db"
 )
 
 // TestSelector tests the Select method of Selector to assert that it
@@ -20,7 +20,7 @@ func TestSelector(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("user inserter error")
 
-		db, mock, teardown := dbaccess.SetUpDBTest(t)
+		db, mock, teardown := db.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
@@ -36,7 +36,7 @@ func TestSelector(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		wantPwd := "Myp4ssword!"
 
-		db, mock, teardown := dbaccess.SetUpDBTest(t)
+		db, mock, teardown := db.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 			mock.NewRows([]string{"password"}).AddRow(wantPwd),

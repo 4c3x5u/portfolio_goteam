@@ -10,9 +10,9 @@ import (
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
 	"server/auth"
-	boardTable "server/dbaccess/board"
-	userTable "server/dbaccess/user"
-	userboardTable "server/dbaccess/userboard"
+	boardTable "server/db/board"
+	userTable "server/db/user"
+	userboardTable "server/db/userboard"
 	pkgLog "server/log"
 	"server/midware"
 

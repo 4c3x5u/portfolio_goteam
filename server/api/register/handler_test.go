@@ -14,7 +14,7 @@ import (
 
 	"server/assert"
 	"server/auth"
-	userTable "server/dbaccess/user"
+	userTable "server/db/user"
 	pkgLog "server/log"
 )
 

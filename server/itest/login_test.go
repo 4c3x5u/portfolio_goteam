@@ -12,7 +12,7 @@ import (
 	loginAPI "server/api/login"
 	"server/assert"
 	"server/auth"
-	userTable "server/dbaccess/user"
+	userTable "server/db/user"
 	"server/log"
 
 	"github.com/golang-jwt/jwt/v4"

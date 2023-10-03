@@ -6,8 +6,8 @@ import (
 	"errors"
 	"net/http"
 
-	"server/dbaccess"
-	boardTable "server/dbaccess/board"
+	"server/db"
+	boardTable "server/db/board"
 	pkgLog "server/log"
 )
 
@@ -15,16 +15,16 @@ import (
 // requests.
 type POSTHandler struct {
 	validator        StringValidator
-	userBoardCounter dbaccess.Counter
-	boardInserter    dbaccess.Inserter[boardTable.InBoard]
+	userBoardCounter db.Counter
+	boardInserter    db.Inserter[boardTable.InBoard]
 	log              pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
 	validator StringValidator,
-	userBoardCounter dbaccess.Counter,
-	boardInserter dbaccess.Inserter[boardTable.InBoard],
+	userBoardCounter db.Counter,
+	boardInserter db.Inserter[boardTable.InBoard],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{

@@ -4,7 +4,7 @@ package board
 
 import (
 	"errors"
-	"server/dbaccess"
+	"server/db"
 	"testing"
 
 	"server/assert"
@@ -176,7 +176,7 @@ func TestDeleter(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			db, mock, teardown := dbaccess.SetUpDBTest(t)
+			db, mock, teardown := db.SetUpDBTest(t)
 			defer teardown()
 			c.setUpMock(mock)
 			sut := NewDeleter(db)
