@@ -79,11 +79,7 @@ func (i BoardInserter) Insert(board InBoard) error {
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }
 
 // Board represents a record in the board table.
@@ -175,11 +171,7 @@ func (d BoardDeleter) Delete(id string) error {
 		return err
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }
 
 // wrapRollbackErr is a helper function to standardise the message for cases
