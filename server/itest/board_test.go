@@ -330,7 +330,7 @@ func TestBoard(t *testing.T) {
 			{
 				name:       "BoardNotFound",
 				id:         "1001",
-				boardName:  "Board A",
+				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusNotFound,
 				assertFunc: assertOnErrMsg("Board not found."),
@@ -338,7 +338,7 @@ func TestBoard(t *testing.T) {
 			{
 				name:       "UserBoardNotFound",
 				id:         "3",
-				boardName:  "Board A",
+				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(bob124AuthToken),
 				statusCode: http.StatusForbidden,
 				assertFunc: assertOnErrMsg(
@@ -348,12 +348,31 @@ func TestBoard(t *testing.T) {
 			{
 				name:       "UserNotAdmin",
 				id:         "4",
-				boardName:  "Board A",
+				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(bob123AuthToken),
 				statusCode: http.StatusForbidden,
 				assertFunc: assertOnErrMsg(
 					"Only board admins can edit the board.",
 				),
+			},
+			{
+				name:       "Success",
+				id:         "2",
+				boardName:  "New Board Name",
+				authFunc:   addBearerAuth(bob123AuthToken),
+				statusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, _ *httptest.ResponseRecorder) {
+					var boardName string
+					err := db.QueryRow(
+						"SELECT name FROM app.board WHERE id = 2",
+					).Scan(&boardName)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if boardName != "New Board Name" {
+						t.Error("Board name was not updated.")
+					}
+				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
