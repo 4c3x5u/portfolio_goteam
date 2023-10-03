@@ -17,9 +17,9 @@ import (
 // Handler is a http.Handler that can be used to handle register requests.
 type Handler struct {
 	validator          ReqValidator
-	dbUserSelector     db.Selector[userTable.User]
+	userSelector       db.Selector[userTable.Record]
 	hasher             Hasher
-	dbUserInserter     db.Inserter[userTable.User]
+	userInserter       db.Inserter[userTable.Record]
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
 }
@@ -27,17 +27,17 @@ type Handler struct {
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator ReqValidator,
-	dbUserSelector db.Selector[userTable.User],
+	userSelector db.Selector[userTable.Record],
 	hasher Hasher,
-	dbUserInserter db.Inserter[userTable.User],
+	userInserter db.Inserter[userTable.Record],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
 		validator:          validator,
-		dbUserSelector:     dbUserSelector,
+		userSelector:       userSelector,
 		hasher:             hasher,
-		dbUserInserter:     dbUserInserter,
+		userInserter:       userInserter,
 		authTokenGenerator: authTokenGenerator,
 		log:                log,
 	}
@@ -79,7 +79,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// sure if that would increase or decrease the performance as hashing will
 	// then occur before exists checks. Test when deployed or when you add
 	// integration tests.
-	_, err := h.dbUserSelector.Select(reqBody.Username)
+	_, err := h.userSelector.Select(reqBody.Username)
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
@@ -102,8 +102,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else if err = h.dbUserInserter.Insert(
-		userTable.NewUser(reqBody.Username, pwdHash),
+	} else if err = h.userInserter.Insert(
+		userTable.NewRecord(reqBody.Username, pwdHash),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

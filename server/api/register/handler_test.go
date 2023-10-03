@@ -106,7 +106,7 @@ func TestHandler(t *testing.T) {
 		name                 string
 		reqBody              ReqBody
 		validatorOutErr      ValidationErrs
-		userInserterOutRes   userTable.User
+		userInserterOutRes   userTable.Record
 		userSelectorOutErr   error
 		hasherOutRes         []byte
 		hasherOutErr         error
@@ -123,7 +123,7 @@ func TestHandler(t *testing.T) {
 			validatorOutErr: ValidationErrs{
 				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
 			},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -141,7 +141,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                 "UsernameTaken",
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   nil,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -159,7 +159,7 @@ func TestHandler(t *testing.T) {
 			name:                 "UserSelectorError",
 			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   errors.New("user selector error"),
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -173,7 +173,7 @@ func TestHandler(t *testing.T) {
 			name:                 "HasherError",
 			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         errors.New("hasher error"),
@@ -187,7 +187,7 @@ func TestHandler(t *testing.T) {
 			name:                 "UserInserterError",
 			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -201,7 +201,7 @@ func TestHandler(t *testing.T) {
 			name:                 "TokenGeneratorError",
 			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,
@@ -230,7 +230,7 @@ func TestHandler(t *testing.T) {
 			name:                 "Success",
 			reqBody:              validReqBody,
 			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.User{},
+			userInserterOutRes:   userTable.Record{},
 			userSelectorOutErr:   sql.ErrNoRows,
 			hasherOutRes:         nil,
 			hasherOutErr:         nil,

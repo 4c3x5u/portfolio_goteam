@@ -1,18 +1,18 @@
 package user
 
-// FakeInserter is a test fake for Inserter[User].
+// FakeInserter is a test fake for Inserter[Record].
 type FakeInserter struct{ OutErr error }
 
-// Insert implements the Inserter[User] interface on FakeInserter.
-func (f *FakeInserter) Insert(_ User) error { return f.OutErr }
+// Insert implements the Inserter[Record] interface on FakeInserter.
+func (f *FakeInserter) Insert(_ Record) error { return f.OutErr }
 
-// FakeSelector is a test fake for Selector[User].
+// FakeSelector is a test fake for Selector[Record].
 type FakeSelector struct {
-	OutRes User
+	OutRes Record
 	OutErr error
 }
 
-// Select implements the Selector[User] interface on FakeSelector.
-func (f *FakeSelector) Select(_ string) (User, error) {
+// Select implements the Selector[Record] interface on FakeSelector.
+func (f *FakeSelector) Select(_ string) (Record, error) {
 	return f.OutRes, f.OutErr
 }

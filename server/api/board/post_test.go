@@ -23,9 +23,9 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	validator := &fakeStringValidator{}
 	userBoardCounter := &db.FakeCounter{}
-	dbBoardInserter := &boardTable.FakeInserter{}
+	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPOSTHandler(validator, userBoardCounter, dbBoardInserter, log)
+	sut := NewPOSTHandler(validator, userBoardCounter, boardInserter, log)
 
 	// Used in status 500 cases to assert on the logged error message.
 	assertOnLoggedErr := func(
@@ -129,7 +129,7 @@ func TestPOSTHandler(t *testing.T) {
 				validator.OutErr = c.validatorOutErr
 				userBoardCounter.OutRes = c.userBoardCounterOutRes
 				userBoardCounter.OutErr = c.userBoardCounterOutErr
-				dbBoardInserter.OutErr = c.boardInserterOutErr
+				boardInserter.OutErr = c.boardInserterOutErr
 
 				// Prepare request and response recorder.
 				reqBody, err := json.Marshal(ReqBody{})

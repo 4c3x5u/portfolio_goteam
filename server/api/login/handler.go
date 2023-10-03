@@ -19,7 +19,7 @@ import (
 // Handler is a http.Handler that can be used to handle login requests.
 type Handler struct {
 	validator          ReqValidator
-	dbUserSelector     db.Selector[userTable.User]
+	userSelector       db.Selector[userTable.Record]
 	passwordComparer   Comparator
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
@@ -28,14 +28,14 @@ type Handler struct {
 // NewHandler creates and returns a new Handler.
 func NewHandler(
 	validator ReqValidator,
-	userSelector db.Selector[userTable.User],
+	userSelector db.Selector[userTable.Record],
 	hashComparer Comparator,
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
 		validator:          validator,
-		dbUserSelector:     userSelector,
+		userSelector:       userSelector,
 		passwordComparer:   hashComparer,
 		authTokenGenerator: authTokenGenerator,
 		log:                log,
@@ -65,7 +65,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.dbUserSelector.Select(reqBody.Username)
+	user, err := h.userSelector.Select(reqBody.Username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusBadRequest)
 		return

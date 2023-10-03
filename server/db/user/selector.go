@@ -9,7 +9,7 @@ type Selector struct{ db *sql.DB }
 func NewSelector(db *sql.DB) Selector { return Selector{db: db} }
 
 // Select selects a record from the user table with the given username.
-func (s Selector) Select(username string) (user User, err error) {
+func (s Selector) Select(username string) (user Record, err error) {
 	err = s.db.QueryRow(
 		`SELECT password FROM app."user" WHERE username = $1`,
 		username,

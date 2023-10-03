@@ -2,13 +2,13 @@
 // the goteam database.
 package user
 
-// User represents a record in the user table.
-type User struct {
+// Record represents a record in the user table.
+type Record struct {
 	Username string
 	Password []byte
 }
 
-// NewUser creates and returns a new User.
-func NewUser(username string, password []byte) User {
-	return User{Username: username, Password: password}
+// NewRecord creates and returns a new Record.
+func NewRecord(username string, password []byte) Record {
+	return Record{Username: username, Password: password}
 }

@@ -27,7 +27,7 @@ func TestInserter(t *testing.T) {
 	// ensure the expected SQL is executed and the same error is returned.
 	errA := errors.New("an error occurred")
 	errB := errors.New("another error occurred")
-	board := NewInBoard("someboard", "bob123")
+	board := NewBoard("someboard", "bob123")
 
 	for _, c := range []struct {
 		name      string

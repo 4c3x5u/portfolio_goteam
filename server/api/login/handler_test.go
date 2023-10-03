@@ -25,13 +25,13 @@ import (
 func TestHandler(t *testing.T) {
 	var (
 		validator          = &fakeReqValidator{}
-		dbUserSelector     = &userTable.FakeSelector{}
+		userSelector       = &userTable.FakeSelector{}
 		passwordComparer   = &fakeHashComparer{}
 		authTokenGenerator = &auth.FakeTokenGenerator{}
 		log                = &pkgLog.FakeErrorer{}
 	)
 	sut := NewHandler(
-		validator, dbUserSelector, passwordComparer, authTokenGenerator, log,
+		validator, userSelector, passwordComparer, authTokenGenerator, log,
 	)
 
 	// Used in status 500 cases to assert on the logged error message.
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 	for _, c := range []struct {
 		name                   string
 		validatorOutOK         bool
-		userSelectorOutUser    userTable.User
+		userSelectorOutUser    userTable.Record
 		userSelectorOutErr     error
 		hashComparerOutErr     error
 		tokenGeneratorOutToken string
@@ -96,7 +96,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "InvalidRequest",
 			validatorOutOK:         false,
-			userSelectorOutUser:    userTable.User{},
+			userSelectorOutUser:    userTable.Record{},
 			userSelectorOutErr:     nil,
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -107,7 +107,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "UserNotFound",
 			validatorOutOK:         true,
-			userSelectorOutUser:    userTable.User{},
+			userSelectorOutUser:    userTable.Record{},
 			userSelectorOutErr:     sql.ErrNoRows,
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -118,7 +118,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:                   "UserSelectorError",
 			validatorOutOK:         true,
-			userSelectorOutUser:    userTable.User{},
+			userSelectorOutUser:    userTable.Record{},
 			userSelectorOutErr:     errors.New("user selector error"),
 			hashComparerOutErr:     nil,
 			tokenGeneratorOutToken: "",
@@ -129,7 +129,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "WrongPassword",
 			validatorOutOK: true,
-			userSelectorOutUser: userTable.User{
+			userSelectorOutUser: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -142,7 +142,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "HashComparerError",
 			validatorOutOK: true,
-			userSelectorOutUser: userTable.User{
+			userSelectorOutUser: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -155,7 +155,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "TokenGeneratorError",
 			validatorOutOK: true,
-			userSelectorOutUser: userTable.User{
+			userSelectorOutUser: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -168,7 +168,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:           "Success",
 			validatorOutOK: true,
-			userSelectorOutUser: userTable.User{
+			userSelectorOutUser: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorOutErr:     nil,
@@ -204,8 +204,8 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.outOK = c.validatorOutOK
-			dbUserSelector.OutRes = c.userSelectorOutUser
-			dbUserSelector.OutErr = c.userSelectorOutErr
+			userSelector.OutRes = c.userSelectorOutUser
+			userSelector.OutErr = c.userSelectorOutErr
 			passwordComparer.outErr = c.hashComparerOutErr
 			authTokenGenerator.OutRes = c.tokenGeneratorOutToken
 			authTokenGenerator.OutErr = c.tokenGeneratorOutErr

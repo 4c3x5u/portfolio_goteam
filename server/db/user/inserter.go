@@ -9,7 +9,7 @@ type Inserter struct{ db *sql.DB }
 func NewInserter(db *sql.DB) Inserter { return Inserter{db: db} }
 
 // Insert creates a new record in the user table.
-func (i Inserter) Insert(user User) error {
+func (i Inserter) Insert(user Record) error {
 	_, err := i.db.Exec(
 		`INSERT INTO app."user"(username, password) VALUES ($1, $2)`,
 		user.Username, string(user.Password),

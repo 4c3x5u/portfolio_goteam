@@ -14,7 +14,7 @@ import (
 type PATCHHandler struct {
 	idValidator       StringValidator
 	nameValidator     StringValidator
-	boardSelector     db.Selector[boardTable.Board]
+	boardSelector     db.Selector[boardTable.Record]
 	userBoardSelector db.RelSelector[bool]
 	boardUpdater      db.Updater
 	log               pkgLog.Errorer
@@ -23,7 +23,7 @@ type PATCHHandler struct {
 func NewPATCHHandler(
 	idValidator StringValidator,
 	nameValidator StringValidator,
-	boardSelector db.Selector[boardTable.Board],
+	boardSelector db.Selector[boardTable.Record],
 	userBoardSelector db.RelSelector[bool],
 	boardUpdater db.Updater,
 	log pkgLog.Errorer,

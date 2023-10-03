@@ -33,7 +33,7 @@ func TestInserter(t *testing.T) {
 			WillReturnError(wantErr)
 		sut := NewInserter(db)
 
-		err := sut.Insert(NewUser(username, []byte(pwdHash)))
+		err := sut.Insert(NewRecord(username, []byte(pwdHash)))
 
 		if err = assert.Equal(wantErr, err); err != nil {
 			t.Error(err)
@@ -49,7 +49,7 @@ func TestInserter(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewInserter(db)
 
-		err := sut.Insert(NewUser(username, []byte(pwdHash)))
+		err := sut.Insert(NewRecord(username, []byte(pwdHash)))
 
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
