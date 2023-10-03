@@ -12,7 +12,7 @@ import (
 	registerAPI "server/api/register"
 	"server/assert"
 	"server/auth"
-	"server/dbaccess"
+	userTable "server/dbaccess/user"
 	"server/log"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -25,9 +25,9 @@ func TestRegister(t *testing.T) {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		dbaccess.NewUserSelector(db),
+		userTable.NewSelector(db),
 		registerAPI.NewPasswordHasher(),
-		dbaccess.NewUserInserter(db),
+		userTable.NewInserter(db),
 		auth.NewJWTGenerator(jwtKey),
 		log.New(),
 	)

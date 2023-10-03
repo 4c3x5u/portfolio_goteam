@@ -6,23 +6,6 @@ type FakeCloser struct{}
 // Close implements the Closer interface on FakeCloser.
 func (c *FakeCloser) Close() {}
 
-// FakeUserInserter is a test fake for Inserter[User].
-type FakeUserInserter struct{ OutErr error }
-
-// Insert implements the Inserter[User] interface on FakeUserInserter.
-func (f *FakeUserInserter) Insert(_ User) error { return f.OutErr }
-
-// FakeUserSelector is a test fake for Selector[User].
-type FakeUserSelector struct {
-	OutRes User
-	OutErr error
-}
-
-// Select implements the Selector[User] interface on FakeUserSelector.
-func (f *FakeUserSelector) Select(_ string) (User, error) {
-	return f.OutRes, f.OutErr
-}
-
 // FakeCounter is a test fake for Counter.
 type FakeCounter struct {
 	OutRes int

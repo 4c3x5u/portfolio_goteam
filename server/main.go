@@ -12,6 +12,7 @@ import (
 	"server/auth"
 	"server/dbaccess"
 	boardTable "server/dbaccess/board"
+	userTable "server/dbaccess/user"
 	pkgLog "server/log"
 	"server/midware"
 
@@ -49,7 +50,7 @@ func main() {
 		os.Exit(4)
 	}
 	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
-	userSelector := dbaccess.NewUserSelector(db)
+	userSelector := userTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -61,7 +62,7 @@ func main() {
 		),
 		userSelector,
 		registerAPI.NewPasswordHasher(),
-		dbaccess.NewUserInserter(db),
+		userTable.NewInserter(db),
 		jwtGenerator,
 		log,
 	))
