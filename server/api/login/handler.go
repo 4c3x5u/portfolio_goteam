@@ -19,7 +19,7 @@ import (
 type Handler struct {
 	validator          ReqValidator
 	dbUserSelector     dbaccess.Selector[dbaccess.User]
-	passwordComparer   Comparer
+	passwordComparer   Comparator
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
 }
@@ -28,7 +28,7 @@ type Handler struct {
 func NewHandler(
 	validator ReqValidator,
 	userSelector dbaccess.Selector[dbaccess.User],
-	hashComparer Comparer,
+	hashComparer Comparator,
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {

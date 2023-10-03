@@ -68,7 +68,7 @@ func main() {
 	mux.Handle("/login", login.NewHandler(
 		login.NewValidator(),
 		userSelector,
-		login.NewPasswordComparer(),
+		login.NewPasswordComparator(),
 		jwtGenerator,
 		log,
 	))

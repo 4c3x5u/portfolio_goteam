@@ -22,7 +22,7 @@ func TestLogin(t *testing.T) {
 	sut := loginAPI.NewHandler(
 		loginAPI.NewValidator(),
 		dbaccess.NewUserSelector(db),
-		loginAPI.NewPasswordComparer(),
+		loginAPI.NewPasswordComparator(),
 		auth.NewJWTGenerator(jwtKey),
 		log.New(),
 	)
