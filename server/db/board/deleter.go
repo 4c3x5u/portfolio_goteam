@@ -14,9 +14,8 @@ type Deleter struct{ db *sql.DB }
 // NewDeleter creates and returns a new Deleter.
 func NewDeleter(db *sql.DB) Deleter { return Deleter{db: db} }
 
-// Delete deletes a record from the board table as well as deleting all of
-// the corresponding relationship records from the
-// user_board table.
+// Delete deletes a record from the board table as well as deleting the
+// corresponding relationship records from the user_board table.
 func (d Deleter) Delete(id string) error {
 	// Begin transaction with new empty context.
 	ctx := context.Background()

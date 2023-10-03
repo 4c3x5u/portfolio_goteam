@@ -42,18 +42,6 @@ func TestInserter(t *testing.T) {
 			wantErrs: []error{errA},
 		},
 		{
-			name: "InsertBoardRollbackErr",
-			setUpMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin()
-				mock.
-					ExpectQuery(sqlInsertBoard).
-					WithArgs(board.name).
-					WillReturnError(errA)
-				mock.ExpectRollback().WillReturnError(errB)
-			},
-			wantErrs: []error{errA, errB},
-		},
-		{
 			name: "InsertBoardErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
@@ -66,18 +54,12 @@ func TestInserter(t *testing.T) {
 			wantErrs: []error{errA},
 		},
 		{
-			name: "InsertUserBoardRollbackErr",
+			name: "InsertBoardRollbackErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
 					ExpectQuery(sqlInsertBoard).
 					WithArgs(board.name).
-					WillReturnRows(
-						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
-					)
-				mock.
-					ExpectExec(sqlInsertUserBoard).
-					WithArgs(board.adminID, 1).
 					WillReturnError(errA)
 				mock.ExpectRollback().WillReturnError(errB)
 			},
@@ -102,7 +84,7 @@ func TestInserter(t *testing.T) {
 			wantErrs: []error{errA},
 		},
 		{
-			name: "InsertColumnRollbackErr",
+			name: "InsertUserBoardRollbackErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
 				mock.
@@ -114,9 +96,6 @@ func TestInserter(t *testing.T) {
 				mock.
 					ExpectExec(sqlInsertUserBoard).
 					WithArgs(board.adminID, 1).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-				mock.ExpectExec(sqlInsertColumn).
-					WithArgs(1, 1).
 					WillReturnError(errA)
 				mock.ExpectRollback().WillReturnError(errB)
 			},
@@ -225,6 +204,27 @@ func TestInserter(t *testing.T) {
 				mock.ExpectRollback()
 			},
 			wantErrs: []error{errA},
+		},
+		{
+			name: "InsertColumnRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.
+					ExpectQuery(sqlInsertBoard).
+					WithArgs(board.name).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"boardID"}).AddRow(1),
+					)
+				mock.
+					ExpectExec(sqlInsertUserBoard).
+					WithArgs(board.adminID, 1).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectExec(sqlInsertColumn).
+					WithArgs(1, 1).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
 		},
 		{
 			name: "CommitErr",

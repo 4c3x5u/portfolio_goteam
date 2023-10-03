@@ -20,5 +20,5 @@ func (l Log) Info(message string) { log.Println("--[INFO]-- " + message) }
 // Info logs an error-level message to the console.
 func (l Log) Error(message string) { log.Println("--[ERROR]-- " + message) }
 
-// Info logs an fatal-level message to the console.
+// Fatal logs a fatal-level message to the console.
 func (l Log) Fatal(message string) { log.Println("--[FATAL]-- " + message) }
