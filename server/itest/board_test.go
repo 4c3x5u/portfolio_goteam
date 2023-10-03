@@ -162,16 +162,35 @@ func TestBoard(t *testing.T) {
 				boardName:      "bob124's new board",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
+					// Assert that bob124 is assigned to the board as admin.
 					var boardCount int
 					err := db.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
-							"WHERE username = 'bob124' AND isAdmin = TRUE",
+							"WHERE boardID = 5 " +
+							"AND username = 'bob124' " +
+							"AND isAdmin = TRUE",
 					).Scan(&boardCount)
 					if err != nil {
 						t.Error(err)
 					}
 					if err = assert.Equal(1, boardCount); err != nil {
 						t.Error(err)
+					}
+
+					// Assert that 4 columns are created for this board.
+					for order := 1; order < 5; order++ {
+						var columnCount int
+						err = db.QueryRow(
+							`SELECT COUNT(*) FROM app."column" `+
+								`WHERE boardID = 5 AND "order" = $1`,
+							order,
+						).Scan(&columnCount)
+						if err != nil {
+							t.Error(err)
+						}
+						if err = assert.Equal(1, columnCount); err != nil {
+							t.Error(err)
+						}
 					}
 				},
 			},

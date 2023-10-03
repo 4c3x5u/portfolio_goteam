@@ -21,7 +21,7 @@ CREATE TABLE app.user_board (
 
 CREATE TABLE app."column" (
   id      INTEGER  PRIMARY KEY GENERATED ALWAYS     AS IDENTITY,
-  tableID INTEGER  NOT NULL    REFERENCES app.board,
+  boardID INTEGER  NOT NULL    REFERENCES app.board,
   "order" SMALLINT NOT NULL
 );
 
