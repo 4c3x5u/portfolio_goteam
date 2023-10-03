@@ -40,7 +40,7 @@ func (i BoardInserter) Insert(board InBoard) error {
 	).Scan(&boardID)
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return wrapRollbackErr(err, rollbackErr)
+			return errors.Join(err, rollbackErr)
 		}
 		return err
 	}
@@ -58,7 +58,7 @@ func (i BoardInserter) Insert(board InBoard) error {
 		boardID,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return wrapRollbackErr(err, rollbackErr)
+			return errors.Join(err, rollbackErr)
 		}
 		return err
 	}
@@ -73,7 +73,7 @@ func (i BoardInserter) Insert(board InBoard) error {
 			order,
 		); err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				return wrapRollbackErr(err, rollbackErr)
+				return errors.Join(err, rollbackErr)
 			}
 			return err
 		}
@@ -153,7 +153,7 @@ func (d BoardDeleter) Delete(id string) error {
 		ctx, "DELETE FROM app.user_board WHERE boardID = $1", id,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return wrapRollbackErr(err, rollbackErr)
+			return errors.Join(err, rollbackErr)
 		}
 		return err
 	}
@@ -163,7 +163,7 @@ func (d BoardDeleter) Delete(id string) error {
 		ctx, `DELETE FROM app."column" WHERE boardID = $1`, id,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return wrapRollbackErr(err, rollbackErr)
+			return errors.Join(err, rollbackErr)
 		}
 		return err
 	}
@@ -173,20 +173,10 @@ func (d BoardDeleter) Delete(id string) error {
 		ctx, "DELETE FROM app.board WHERE id = $1", id,
 	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return wrapRollbackErr(err, rollbackErr)
+			return errors.Join(err, rollbackErr)
 		}
 		return err
 	}
 
 	return tx.Commit()
-}
-
-// wrapRollbackErr is a helper function to standardise the message for cases
-// where a rollback error occurs alongside the error that causes the rollback.
-func wrapRollbackErr(err, rollbackErr error) error {
-	return errors.New(
-		"multiple errors occured:" +
-			"\n  (0) err: " + err.Error() +
-			"\n  (1) rollbackErr: " + rollbackErr.Error(),
-	)
 }
