@@ -10,9 +10,9 @@ import (
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
 	"server/auth"
-	"server/dbaccess"
 	boardTable "server/dbaccess/board"
 	userTable "server/dbaccess/user"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 	"server/midware"
 
@@ -81,13 +81,13 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewNameValidator(),
-				dbaccess.NewUserBoardCounter(db),
+				userboardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewIDValidator(),
-				dbaccess.NewUserBoardSelector(db),
+				userboardTable.NewSelector(db),
 				boardTable.NewDeleter(db),
 				log,
 			),
@@ -95,7 +95,7 @@ func main() {
 				boardAPI.NewIDValidator(),
 				boardAPI.NewNameValidator(),
 				boardTable.NewSelector(db),
-				dbaccess.NewUserBoardSelector(db),
+				userboardTable.NewSelector(db),
 				boardTable.NewUpdater(db),
 				log,
 			),

@@ -13,8 +13,8 @@ import (
 	"server/api/board"
 	"server/assert"
 	"server/auth"
-	"server/dbaccess"
 	boardTable "server/dbaccess/board"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -27,13 +27,13 @@ func TestBoard(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: board.NewPOSTHandler(
 				board.NewNameValidator(),
-				dbaccess.NewUserBoardCounter(db),
+				userboardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: board.NewDELETEHandler(
 				board.NewIDValidator(),
-				dbaccess.NewUserBoardSelector(db),
+				userboardTable.NewSelector(db),
 				boardTable.NewDeleter(db),
 				log,
 			),
@@ -41,7 +41,7 @@ func TestBoard(t *testing.T) {
 				board.NewIDValidator(),
 				board.NewNameValidator(),
 				boardTable.NewSelector(db),
-				dbaccess.NewUserBoardSelector(db),
+				userboardTable.NewSelector(db),
 				boardTable.NewUpdater(db),
 				log,
 			),
