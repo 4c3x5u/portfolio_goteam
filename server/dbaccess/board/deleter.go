@@ -6,16 +6,17 @@ import (
 	"errors"
 )
 
-// Deleter can be used to delete a record from the board table as well
-// as deleting the corresponding relationships records from the user_board
-// table.
+// Deleter can be used to delete a record from the board table recursively.
 type Deleter struct{ db *sql.DB }
 
 // NewDeleter creates and returns a new Deleter.
 func NewDeleter(db *sql.DB) Deleter { return Deleter{db: db} }
 
-// Delete deletes a record from the board table as well as deleting the
-// corresponding relationship records from the user_board table.
+// Delete deletes a board recursively, meaning that alongside the record from
+// the board table with the given ID, it will delete all records from the
+// user_board table and columns table associated with the board, all records
+// from the tasks table associated with those columns, and all records from the
+// subtasks table associated with those tasks.
 func (d Deleter) Delete(id string) error {
 	// Begin transaction with new empty context.
 	ctx := context.Background()
