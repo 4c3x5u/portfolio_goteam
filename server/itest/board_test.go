@@ -274,6 +274,18 @@ func TestBoard(t *testing.T) {
 						t.Error(err)
 					}
 
+					// Assert that the board record with this ID is deleted.
+					var boardCount int
+					err = db.QueryRow(
+						"SELECT COUNT(*) FROM app.board WHERE id = 1",
+					).Scan(&boardCount)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err = assert.Equal(0, boardCount); err != nil {
+						t.Error(err)
+					}
+
 					// Assert that all column records with this board ID are
 					// deleted.
 					var columnCount int
@@ -287,16 +299,37 @@ func TestBoard(t *testing.T) {
 						t.Error(err)
 					}
 
-					// Assert that the board record with this ID is deleted.
-					var boardCount int
-					err = db.QueryRow(
-						"SELECT COUNT(*) FROM app.board WHERE id = 1",
-					).Scan(&boardCount)
-					if err != nil {
-						t.Fatal(err)
+					// Assert that all task records associated with each
+					// column record is deleted.
+					for columnID := 1; columnID < 5; columnID++ {
+						var count int
+						err = db.QueryRow(
+							`SELECT COUNT(*) FROM app.task WHERE columnID = $1`,
+							columnID,
+						).Scan(&count)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if err = assert.Equal(0, count); err != nil {
+							t.Error(err)
+						}
 					}
-					if err = assert.Equal(0, boardCount); err != nil {
-						t.Error(err)
+
+					// Assert that all subtask records associated with each
+					// task record is deleted.
+					for taskID := 1; taskID < 5; taskID++ {
+						var count int
+						err = db.QueryRow(
+							"SELECT COUNT(*) FROM app.subtask "+
+								"WHERE taskID = $1",
+							taskID,
+						).Scan(&count)
+						if err != nil {
+							t.Fatal(err)
+						}
+						if err = assert.Equal(0, count); err != nil {
+							t.Error(err)
+						}
 					}
 				},
 			},

@@ -45,15 +45,32 @@ VALUES
   ('bob124', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO');
 
 INSERT INTO app.board(name) 
-VALUES ('Board #1'), ('Board #2'), ('Board #3'), ('Board #4');
+VALUES
+    ('Board #1'), -- used for DELETE tests
+    ('Board #2'),
+    ('Board #3'),
+    ('Board #4');
 
+INSERT INTO app.user_board(username, boardID, isAdmin)
+VALUES
+  ('bob123', 1, TRUE),
+  ('bob123', 2, TRUE),
+  ('bob123', 3, TRUE),
+  ('bob123', 4, FALSE);
+
+-- insert columns into the second board for testing recursive board deletion
 INSERT INTO app."column"(boardID, "order")
 VALUES (1, 1), (1, 2), (1, 3), (1, 4);
 
-INSERT INTO app.user_board(username, boardID, isAdmin) 
-VALUES 
-  ('bob123', 1, TRUE), 
-  ('bob123', 2, TRUE), 
-  ('bob123', 3, TRUE), 
-  ('bob123', 4, FALSE);
+-- insert a task into each column for testing recursive board deletion
+INSERT INTO app.task(columnID, title)
+VALUES (1, 'task A'), (2, 'task B'), (3, 'task C'), (4, 'task D');
+
+-- insert a subtask into each task for testing recursive board deletion
+INSERT INTO app.subtask(taskID, title, isDone)
+VALUES
+    (1, 'subtask A', false),
+    (2, 'subtask B', false),
+    (3, 'subtask C', false),
+    (4, 'subtask D', false);
 
