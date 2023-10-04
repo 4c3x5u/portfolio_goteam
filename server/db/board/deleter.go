@@ -36,13 +36,38 @@ func (d Deleter) Delete(id string) error {
 
 	// Get IDs of this board's columns so that we can delete the tasks
 	// associated to them.
-	if _, err := tx.QueryContext(
+	var columnIDs []int
+	if rows, selectErr := tx.QueryContext(
 		ctx, `SELECT id FROM app."column" WHERE boardID = $1`, id,
-	); err != nil {
+	); selectErr != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.Join(err, rollbackErr)
+			return errors.Join(selectErr, rollbackErr)
 		}
-		return err
+		return selectErr
+	} else {
+		var columnID int
+		for rows.Next() {
+			if scanErr := rows.Scan(&columnID); scanErr != nil {
+				if rollbackErr := tx.Rollback(); rollbackErr != nil {
+					return errors.Join(scanErr, rollbackErr)
+				}
+				return scanErr
+			}
+			columnIDs = append(columnIDs, columnID)
+		}
+	}
+
+	// Get IDs of each column's tasks so that we can delete the subtasks
+	// associated to them.
+	for _, columnID := range columnIDs {
+		if _, selectErr := tx.QueryContext(
+			ctx, `SELECT id FROM app.task WHERE columnID = $1`, columnID,
+		); selectErr != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(selectErr, rollbackErr)
+			}
+			return selectErr
+		}
 	}
 
 	// Delete all records from the column table with the given board ID.

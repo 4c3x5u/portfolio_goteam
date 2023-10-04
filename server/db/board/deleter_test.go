@@ -19,6 +19,8 @@ func TestDeleter(t *testing.T) {
 	const (
 		sqlDeleteUserBoards = `DELETE FROM app.user_board WHERE boardID = \$1`
 		sqlSelectColumnIDs  = `SELECT id FROM app.\"column\" WHERE boardID = \$1`
+		sqlSelectTaskIDs    = `SELECT id FROM app.task WHERE columnID = \$1`
+		sqlDeleteSubtasks   = `DELETE FROM app.subtask WHERE taskID = \$1`
 		sqlDeleteColumns    = `DELETE FROM app.\"column\" WHERE boardID = \$1`
 		sqlDeleteBoard      = `DELETE FROM app.board WHERE id = \$1`
 		boardID             = "123"
@@ -43,8 +45,7 @@ func TestDeleter(t *testing.T) {
 			name: "DeleteUserBoardErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.
-					ExpectExec(sqlDeleteUserBoards).
+				mock.ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnError(errA)
 				mock.ExpectRollback()
@@ -55,8 +56,7 @@ func TestDeleter(t *testing.T) {
 			name: "DeleteUserBoardRollbackErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.
-					ExpectExec(sqlDeleteUserBoards).
+				mock.ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnError(errA)
 				mock.ExpectRollback().WillReturnError(errB)
@@ -67,8 +67,7 @@ func TestDeleter(t *testing.T) {
 			name: "SelectColumnIDsErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.
-					ExpectExec(sqlDeleteUserBoards).
+				mock.ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectQuery(sqlSelectColumnIDs).
@@ -82,8 +81,7 @@ func TestDeleter(t *testing.T) {
 			name: "SelectColumnIDsRollbackErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.
-					ExpectExec(sqlDeleteUserBoards).
+				mock.ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectQuery(sqlSelectColumnIDs).
@@ -94,11 +92,10 @@ func TestDeleter(t *testing.T) {
 			wantErrs: []error{errA, errB},
 		},
 		{
-			name: "DeleteColumnsErr",
+			name: "SelectTaskIDsErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				mock.
-					ExpectExec(sqlDeleteUserBoards).
+				mock.ExpectExec(sqlDeleteUserBoards).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectQuery(sqlSelectColumnIDs).
@@ -107,8 +104,55 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
-				mock.
-					ExpectExec(sqlDeleteColumns).
+				mock.ExpectQuery(sqlSelectTaskIDs).
+					WithArgs(11).
+					WillReturnError(errA)
+				mock.ExpectRollback()
+			},
+			wantErrs: []error{errA},
+		},
+		{
+			name: "SelectTaskIDsRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				mock.ExpectQuery(sqlSelectTaskIDs).
+					WithArgs(11).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
+		},
+		{
+			name: "DeleteColumnsErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
+				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnError(errA)
 				mock.ExpectRollback()
@@ -128,6 +172,14 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnError(errA)
@@ -148,6 +200,14 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -171,6 +231,14 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -194,6 +262,14 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -217,6 +293,14 @@ func TestDeleter(t *testing.T) {
 						sqlmock.NewRows([]string{"id"}).
 							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
 					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
