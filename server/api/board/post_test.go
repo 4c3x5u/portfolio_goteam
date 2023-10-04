@@ -13,8 +13,8 @@ import (
 	"testing"
 
 	"server/assert"
-	"server/db"
-	boardTable "server/db/board"
+	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 )
 
@@ -22,7 +22,7 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
 	validator := &fakeStringValidator{}
-	userBoardCounter := &db.FakeCounter{}
+	userBoardCounter := &dbaccess.FakeCounter{}
 	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(validator, userBoardCounter, boardInserter, log)

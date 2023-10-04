@@ -4,7 +4,7 @@ package user
 
 import (
 	"errors"
-	"server/db"
+	"server/dbaccess"
 	"testing"
 
 	"server/assert"
@@ -25,7 +25,7 @@ func TestInserter(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
-		db, mock, teardown := db.SetUpDBTest(t)
+		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.
 			ExpectExec(query).
@@ -41,7 +41,7 @@ func TestInserter(t *testing.T) {
 	})
 
 	t.Run("Success", func(t *testing.T) {
-		db, mock, teardown := db.SetUpDBTest(t)
+		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.
 			ExpectExec(query).

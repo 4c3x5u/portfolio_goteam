@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"server/assert"
-	"server/db"
+	"server/dbaccess"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
@@ -14,7 +14,7 @@ import (
 // sends the correct query to the database with the correct arguments, and
 // returns whatever error occurs.
 func TestUpdater(t *testing.T) {
-	db, mock, teardown := db.SetUpDBTest(t)
+	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewUpdater(db)

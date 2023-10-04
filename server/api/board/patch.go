@@ -6,26 +6,26 @@ import (
 	"errors"
 	"net/http"
 
-	"server/db"
-	boardTable "server/db/board"
+	"server/dbaccess"
+	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
 )
 
 type PATCHHandler struct {
 	idValidator       StringValidator
 	nameValidator     StringValidator
-	boardSelector     db.Selector[boardTable.Record]
-	userBoardSelector db.RelSelector[bool]
-	boardUpdater      db.Updater
+	boardSelector     dbaccess.Selector[boardTable.Record]
+	userBoardSelector dbaccess.RelSelector[bool]
+	boardUpdater      dbaccess.Updater
 	log               pkgLog.Errorer
 }
 
 func NewPATCHHandler(
 	idValidator StringValidator,
 	nameValidator StringValidator,
-	boardSelector db.Selector[boardTable.Record],
-	userBoardSelector db.RelSelector[bool],
-	boardUpdater db.Updater,
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userBoardSelector dbaccess.RelSelector[bool],
+	boardUpdater dbaccess.Updater,
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{

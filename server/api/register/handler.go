@@ -9,17 +9,17 @@ import (
 
 	"server/api"
 	"server/auth"
-	"server/db"
-	userTable "server/db/user"
+	"server/dbaccess"
+	userTable "server/dbaccess/user"
 	pkgLog "server/log"
 )
 
 // Handler is a http.Handler that can be used to handle register requests.
 type Handler struct {
 	validator          ReqValidator
-	userSelector       db.Selector[userTable.Record]
+	userSelector       dbaccess.Selector[userTable.Record]
 	hasher             Hasher
-	userInserter       db.Inserter[userTable.Record]
+	userInserter       dbaccess.Inserter[userTable.Record]
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
 }
@@ -27,9 +27,9 @@ type Handler struct {
 // NewHandler is the constructor for Handler.
 func NewHandler(
 	validator ReqValidator,
-	userSelector db.Selector[userTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	hasher Hasher,
-	userInserter db.Inserter[userTable.Record],
+	userInserter dbaccess.Inserter[userTable.Record],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {

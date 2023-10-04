@@ -1,4 +1,4 @@
-package db
+package dbaccess
 
 // FakeCloser is a test fake for Closer.
 type FakeCloser struct{}
