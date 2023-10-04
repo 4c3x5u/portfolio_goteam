@@ -21,6 +21,7 @@ func TestDeleter(t *testing.T) {
 		sqlSelectColumnIDs  = `SELECT id FROM app.\"column\" WHERE boardID = \$1`
 		sqlSelectTaskIDs    = `SELECT id FROM app.task WHERE columnID = \$1`
 		sqlDeleteSubtasks   = `DELETE FROM app.subtask WHERE taskID = \$1`
+		sqlDeleteTasks      = `DELETE FROM app.task WHERE columnID = \$1`
 		sqlDeleteColumns    = `DELETE FROM app.\"column\" WHERE boardID = \$1`
 		sqlDeleteBoard      = `DELETE FROM app.board WHERE id = \$1`
 		boardID             = "123"
@@ -188,6 +189,72 @@ func TestDeleter(t *testing.T) {
 			wantErrs: []error{errA, errB},
 		},
 		{
+			name: "DeleteTasksErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
+				mock.ExpectExec(sqlDeleteTasks).
+					WithArgs(11).
+					WillReturnError(errA)
+				mock.ExpectRollback()
+			},
+			wantErrs: []error{errA},
+		},
+		{
+			name: "DeleteTasksRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
+				mock.ExpectExec(sqlDeleteTasks).
+					WithArgs(11).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
+		},
+		{
 			name: "DeleteColumnsErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
@@ -211,6 +278,11 @@ func TestDeleter(t *testing.T) {
 				for taskID := 21; taskID < 25; taskID++ {
 					mock.ExpectExec(sqlDeleteSubtasks).
 						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
@@ -246,6 +318,11 @@ func TestDeleter(t *testing.T) {
 						WithArgs(taskID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnError(errA)
@@ -277,6 +354,11 @@ func TestDeleter(t *testing.T) {
 				for taskID := 21; taskID < 25; taskID++ {
 					mock.ExpectExec(sqlDeleteSubtasks).
 						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
@@ -315,6 +397,11 @@ func TestDeleter(t *testing.T) {
 						WithArgs(taskID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -351,6 +438,11 @@ func TestDeleter(t *testing.T) {
 						WithArgs(taskID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -385,6 +477,11 @@ func TestDeleter(t *testing.T) {
 				for taskID := 21; taskID < 25; taskID++ {
 					mock.ExpectExec(sqlDeleteSubtasks).
 						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectExec(sqlDeleteTasks).
+						WithArgs(columnID).
 						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
