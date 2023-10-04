@@ -34,6 +34,17 @@ func (d Deleter) Delete(id string) error {
 		return err
 	}
 
+	// Get IDs of this board's columns so that we can delete the tasks
+	// associated to them.
+	if _, err := tx.QueryContext(
+		ctx, `SELECT id FROM app."column" WHERE boardID = $1`, id,
+	); err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return errors.Join(err, rollbackErr)
+		}
+		return err
+	}
+
 	// Delete all records from the column table with the given board ID.
 	if _, err = tx.ExecContext(
 		ctx, `DELETE FROM app."column" WHERE boardID = $1`, id,
