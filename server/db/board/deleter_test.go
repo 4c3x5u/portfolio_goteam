@@ -132,6 +132,62 @@ func TestDeleter(t *testing.T) {
 			wantErrs: []error{errA, errB},
 		},
 		{
+			name: "DeleteSubtasksErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
+				mock.ExpectExec(sqlDeleteSubtasks).
+					WithArgs(21).
+					WillReturnError(errA)
+				mock.ExpectRollback()
+			},
+			wantErrs: []error{errA},
+		},
+		{
+			name: "DeleteSubtasksRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlDeleteUserBoards).
+					WithArgs(boardID).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectQuery(sqlSelectColumnIDs).
+					WithArgs(boardID).
+					WillReturnRows(
+						sqlmock.NewRows([]string{"id"}).
+							AddRow(11).AddRow(12).AddRow(13).AddRow(14),
+					)
+				for columnID := 11; columnID < 15; columnID++ {
+					mock.ExpectQuery(sqlSelectTaskIDs).
+						WithArgs(columnID).
+						WillReturnRows(
+							sqlmock.NewRows([]string{"id"}).
+								AddRow(columnID + 10),
+						)
+				}
+				mock.ExpectExec(sqlDeleteSubtasks).
+					WithArgs(21).
+					WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
+		},
+		{
 			name: "DeleteColumnsErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
@@ -151,6 +207,11 @@ func TestDeleter(t *testing.T) {
 							sqlmock.NewRows([]string{"id"}).
 								AddRow(columnID + 10),
 						)
+				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
@@ -180,6 +241,11 @@ func TestDeleter(t *testing.T) {
 								AddRow(columnID + 10),
 						)
 				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnError(errA)
@@ -207,6 +273,11 @@ func TestDeleter(t *testing.T) {
 							sqlmock.NewRows([]string{"id"}).
 								AddRow(columnID + 10),
 						)
+				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
@@ -239,6 +310,11 @@ func TestDeleter(t *testing.T) {
 								AddRow(columnID + 10),
 						)
 				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -270,6 +346,11 @@ func TestDeleter(t *testing.T) {
 								AddRow(columnID + 10),
 						)
 				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
+				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 4))
@@ -300,6 +381,11 @@ func TestDeleter(t *testing.T) {
 							sqlmock.NewRows([]string{"id"}).
 								AddRow(columnID + 10),
 						)
+				}
+				for taskID := 21; taskID < 25; taskID++ {
+					mock.ExpectExec(sqlDeleteSubtasks).
+						WithArgs(taskID).
+						WillReturnResult(sqlmock.NewResult(0, 1))
 				}
 				mock.ExpectExec(sqlDeleteColumns).
 					WithArgs(boardID).

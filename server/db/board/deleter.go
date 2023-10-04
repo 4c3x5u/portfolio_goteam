@@ -59,14 +59,38 @@ func (d Deleter) Delete(id string) error {
 
 	// Get IDs of each column's tasks so that we can delete the subtasks
 	// associated to them.
+	var taskIDs []int
 	for _, columnID := range columnIDs {
-		if _, selectErr := tx.QueryContext(
+		if rows, selectErr := tx.QueryContext(
 			ctx, `SELECT id FROM app.task WHERE columnID = $1`, columnID,
 		); selectErr != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
 				return errors.Join(selectErr, rollbackErr)
 			}
 			return selectErr
+		} else {
+			var taskID int
+			for rows.Next() {
+				if scanErr := rows.Scan(&taskID); scanErr != nil {
+					if rollbackErr := tx.Rollback(); rollbackErr != nil {
+						return errors.Join(scanErr, rollbackErr)
+					}
+					return scanErr
+				}
+				taskIDs = append(taskIDs, taskID)
+			}
+		}
+	}
+
+	// Delete each subtask associated with each task.
+	for _, taskID := range taskIDs {
+		if _, err = tx.ExecContext(
+			ctx, "DELETE FROM app.subtask WHERE taskID = $1", taskID,
+		); err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(err, rollbackErr)
+			}
+			return err
 		}
 	}
 
