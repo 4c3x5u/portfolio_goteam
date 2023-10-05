@@ -21,6 +21,7 @@ type Handler struct {
 	idValidator        api.StringValidator
 	columnSelector     dbaccess.Selector[columnTable.Record]
 	userBoardSelector  dbaccess.RelSelector[bool]
+	columnUpdater      dbaccess.Updater[[]columnTable.Task]
 	log                pkgLog.Errorer
 }
 
@@ -31,6 +32,7 @@ func NewHandler(
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
+	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
@@ -39,6 +41,7 @@ func NewHandler(
 		idValidator:        idValidator,
 		columnSelector:     columnSelector,
 		userBoardSelector:  userBoardSelector,
+		columnUpdater:      columnUpdater,
 		log:                log,
 	}
 }
@@ -115,6 +118,32 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
 			ResBody{Error: "Only board admins can move tasks."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	// Decode request body and map it into tasks.
+	var reqBody ReqBody
+	if err = json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	var tasks []columnTable.Task
+	for _, t := range reqBody {
+		tasks = append(tasks, columnTable.Task{ID: t.ID, Order: t.Order})
+	}
+
+	// Update tasks.
+	if err = h.columnUpdater.Update(
+		columnID, tasks,
+	); errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "Task not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

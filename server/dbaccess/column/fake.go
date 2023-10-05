@@ -7,3 +7,9 @@ type FakeSelector struct{ OutErr error }
 func (f *FakeSelector) Select(_ string) (Record, error) {
 	return Record{}, f.OutErr
 }
+
+// FakeUpdater is a test fake for Updater.
+type FakeUpdater struct{ OutErr error }
+
+// Update implements the dbaccess.Updater[string] interface on FakeUpdater.
+func (f *FakeUpdater) Update(_ string, _ []Task) error { return f.OutErr }

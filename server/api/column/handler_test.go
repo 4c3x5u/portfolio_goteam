@@ -3,6 +3,7 @@
 package column
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -26,6 +27,7 @@ func TestHandler(t *testing.T) {
 	idValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
 	userBoardSelector := &userboardTable.FakeSelector{}
+	columnUpdater := &columnTable.FakeUpdater{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewHandler(
 		authHeaderReader,
@@ -33,6 +35,7 @@ func TestHandler(t *testing.T) {
 		idValidator,
 		columnSelector,
 		userBoardSelector,
+		columnUpdater,
 		log,
 	)
 
@@ -101,6 +104,7 @@ func TestHandler(t *testing.T) {
 		columnSelectorOutErr        error
 		userBoardSelectorOutIsAdmin bool
 		userBoardSelectorOutErr     error
+		columnUpdaterOutErr         error
 		wantStatusCode              int
 		assertFunc                  func(t *testing.T, r *http.Response)
 	}{
@@ -111,6 +115,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: func(t *testing.T, res *http.Response) {
 				name, value := auth.WWWAuthenticate()
@@ -128,6 +133,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc:                  assertOnResErr("invalid id"),
 		},
@@ -138,6 +144,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        sql.ErrNoRows,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc:                  assertOnResErr("Column not found."),
 		},
@@ -148,6 +155,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        sql.ErrConnDone,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assertOnLoggedErr(
 				sql.ErrConnDone.Error(),
@@ -160,6 +168,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrNoRows,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: assertOnResErr(
 				"You do not have access to this board.",
@@ -172,6 +181,7 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     sql.ErrConnDone,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assertOnLoggedErr(
 				sql.ErrConnDone.Error(),
@@ -184,10 +194,22 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutIsAdmin: false,
 			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: assertOnResErr(
 				"Only board admins can move tasks.",
 			),
+		},
+		{
+			name:                        "TaskNotFound",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: true,
+			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         sql.ErrNoRows,
+			wantStatusCode:              http.StatusNotFound,
+			assertFunc:                  assertOnResErr("Task not found."),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -197,9 +219,16 @@ func TestHandler(t *testing.T) {
 			columnSelector.OutErr = c.columnSelectorOutErr
 			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
+			columnUpdater.OutErr = c.columnUpdaterOutErr
 
 			// Prepare request and response recorder.
-			req, err := http.NewRequest(http.MethodPatch, "", nil)
+			tasks, err := json.Marshal([]map[string]int{{"id": 0, "order": 0}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			req, err := http.NewRequest(
+				http.MethodPatch, "", bytes.NewReader(tasks),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
