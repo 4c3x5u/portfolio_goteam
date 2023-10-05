@@ -149,6 +149,10 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Error(err.Error())
 		}
 		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
 	}
 
 	// All went well. Return 200.

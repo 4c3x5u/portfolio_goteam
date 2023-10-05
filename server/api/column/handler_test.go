@@ -211,6 +211,19 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:              http.StatusNotFound,
 			assertFunc:                  assertOnResErr("Task not found."),
 		},
+		{
+			name:                        "ColumnUpdaterErr",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: true,
+			userBoardSelectorOutErr:     nil,
+			columnUpdaterOutErr:         sql.ErrConnDone,
+			wantStatusCode:              http.StatusInternalServerError,
+			assertFunc: assertOnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
