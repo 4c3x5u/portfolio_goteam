@@ -10,9 +10,9 @@ import (
 	"server/dbaccess"
 )
 
-// TestSelector tests the Select method of Selector to assert that it
-// sends the correct query to the database with the correct arguments, and
-// returns whatever error occurs.
+// TestSelector tests the Select method of Selector to assert that it sends the
+// correct query to the database with the correct arguments, and returns all
+// data or returns whatever error occurs.
 func TestSelector(t *testing.T) {
 	const (
 		username = "bob123"

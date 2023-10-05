@@ -12,9 +12,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-// TestSelector tests the Select method of Selector to assert that it
-// sends the correct query to the database with the correct arguments, and
-// returns whatever error occurs.
+// TestSelector tests the Select method of Selector to assert that it sends the
+// correct query to the database with the correct arguments, and returns all
+// data or whatever error occurs.
 func TestSelector(t *testing.T) {
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer teardown()

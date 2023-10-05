@@ -1,6 +1,6 @@
 //go:build utest
 
-package board
+package column
 
 import (
 	"database/sql"
@@ -23,38 +23,43 @@ func TestSelector(t *testing.T) {
 	sut := NewSelector(db)
 
 	const (
-		sqlSelectBoard    = "SELECT id, name FROM app.board WHERE id = \\$1"
-		boardID           = "21"
-		existingBoardName = "Board A"
+		sqlSelectBoard = `SELECT id, boardID, order ` +
+			`FROM app."column" WHERE id = \$1`
+		columnID                    = "42"
+		existingColumnBoardID       = 21
+		existingColumnOrder   int16 = 2
 	)
 
 	mock.
 		ExpectQuery(sqlSelectBoard).
-		WithArgs(boardID).
+		WithArgs(columnID).
 		WillReturnError(sql.ErrNoRows)
 
 	mock.
 		ExpectQuery(sqlSelectBoard).
-		WithArgs(boardID).
+		WithArgs(columnID).
 		WillReturnRows(
 			sqlmock.
-				NewRows([]string{"id", "name"}).
-				AddRow(boardID, existingBoardName),
+				NewRows([]string{"id", "boardID", "order"}).
+				AddRow(columnID, existingColumnBoardID, existingColumnOrder),
 		)
 
-	board, err := sut.Select(boardID)
+	column, err := sut.Select(columnID)
 	if err := assert.SameError(err, sql.ErrNoRows); err != nil {
 		t.Error(err)
 	}
 
-	board, err = sut.Select(boardID)
+	column, err = sut.Select(columnID)
 	if err = assert.Nil(err); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(boardID, strconv.Itoa(board.id)); err != nil {
+	if err = assert.Equal(columnID, strconv.Itoa(column.ID)); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(existingBoardName, board.name); err != nil {
+	if err = assert.Equal(existingColumnBoardID, column.BoardID); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(existingColumnOrder, column.Order); err != nil {
 		t.Error(err)
 	}
 }

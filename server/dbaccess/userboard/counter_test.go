@@ -13,7 +13,7 @@ import (
 
 // TestCounter tests the Count method of Counter to assert that it executes the
 // correct SQL query with the correct arguments, and returns the count back
-// alongside any sql error occurred.
+// or whatever error occurrs.
 func TestCounter(t *testing.T) {
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer teardown()
