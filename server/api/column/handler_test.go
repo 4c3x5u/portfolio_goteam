@@ -95,20 +95,23 @@ func TestHandler(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name                     string
-		authTokenValidatorOutSub string
-		idValidatorOutErr        error
-		columnSelectorOutErr     error
-		userBoardSelectorOutErr  error
-		wantStatusCode           int
-		assertFunc               func(t *testing.T, r *http.Response)
+		name                        string
+		authTokenValidatorOutSub    string
+		idValidatorOutErr           error
+		columnSelectorOutErr        error
+		userBoardSelectorOutIsAdmin bool
+		userBoardSelectorOutErr     error
+		wantStatusCode              int
+		assertFunc                  func(t *testing.T, r *http.Response)
 	}{
 		{
-			name:                     "InvalidAuthToken",
-			authTokenValidatorOutSub: "",
-			idValidatorOutErr:        nil,
-			columnSelectorOutErr:     nil,
-			wantStatusCode:           http.StatusUnauthorized,
+			name:                        "InvalidAuthToken",
+			authTokenValidatorOutSub:    "",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     nil,
+			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: func(t *testing.T, res *http.Response) {
 				name, value := auth.WWWAuthenticate()
 				if err := assert.Equal(
@@ -119,54 +122,71 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
-			name:                     "IDValidatorErr",
-			authTokenValidatorOutSub: "bob123",
-			idValidatorOutErr:        errors.New("invalid id"),
-			columnSelectorOutErr:     nil,
-			userBoardSelectorOutErr:  nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc:               assertOnResErr("invalid id"),
+			name:                        "IDValidatorErr",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           errors.New("invalid id"),
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     nil,
+			wantStatusCode:              http.StatusBadRequest,
+			assertFunc:                  assertOnResErr("invalid id"),
 		},
 		{
-			name:                     "ColumnNotFound",
-			authTokenValidatorOutSub: "bob123",
-			idValidatorOutErr:        nil,
-			columnSelectorOutErr:     sql.ErrNoRows,
-			userBoardSelectorOutErr:  nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc:               assertOnResErr("Column not found."),
+			name:                        "ColumnNotFound",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        sql.ErrNoRows,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     nil,
+			wantStatusCode:              http.StatusBadRequest,
+			assertFunc:                  assertOnResErr("Column not found."),
 		},
 		{
-			name:                     "ColumnSelectorErr",
-			authTokenValidatorOutSub: "bob123",
-			idValidatorOutErr:        nil,
-			columnSelectorOutErr:     sql.ErrConnDone,
-			userBoardSelectorOutErr:  nil,
-			wantStatusCode:           http.StatusInternalServerError,
+			name:                        "ColumnSelectorErr",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        sql.ErrConnDone,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     nil,
+			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assertOnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                     "UserBoardNotFound",
-			authTokenValidatorOutSub: "bob123",
-			idValidatorOutErr:        nil,
-			columnSelectorOutErr:     nil,
-			userBoardSelectorOutErr:  sql.ErrNoRows,
-			wantStatusCode:           http.StatusUnauthorized,
+			name:                        "UserBoardNotFound",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     sql.ErrNoRows,
+			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: assertOnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:                     "UserBoardSelectorErr",
-			authTokenValidatorOutSub: "bob123",
-			idValidatorOutErr:        nil,
-			columnSelectorOutErr:     nil,
-			userBoardSelectorOutErr:  sql.ErrConnDone,
-			wantStatusCode:           http.StatusInternalServerError,
+			name:                        "UserBoardSelectorErr",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     sql.ErrConnDone,
+			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assertOnLoggedErr(
 				sql.ErrConnDone.Error(),
+			),
+		},
+		{
+			name:                        "UserIsNotAdmin",
+			authTokenValidatorOutSub:    "bob123",
+			idValidatorOutErr:           nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutIsAdmin: false,
+			userBoardSelectorOutErr:     nil,
+			wantStatusCode:              http.StatusUnauthorized,
+			assertFunc: assertOnResErr(
+				"Only board admins can move tasks.",
 			),
 		},
 	} {
@@ -175,6 +195,7 @@ func TestHandler(t *testing.T) {
 			authTokenValidator.OutSub = c.authTokenValidatorOutSub
 			idValidator.OutErr = c.idValidatorOutErr
 			columnSelector.OutErr = c.columnSelectorOutErr
+			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
 
 			// Prepare request and response recorder.
