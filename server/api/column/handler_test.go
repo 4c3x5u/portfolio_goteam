@@ -53,6 +53,16 @@ func TestHandler(t *testing.T) {
 		}
 	}
 
+	assertOnLoggedErr := func(wantErrMsg string) func(*testing.T, *http.Response) {
+		return func(t *testing.T, _ *http.Response) {
+			if err := assert.Equal(
+				wantErrMsg, log.InMessage,
+			); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodGet, http.MethodPost,
@@ -133,13 +143,9 @@ func TestHandler(t *testing.T) {
 			columnSelectorOutErr:     sql.ErrConnDone,
 			userBoardSelectorOutErr:  nil,
 			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: func(t *testing.T, _ *http.Response) {
-				if err := assert.Equal(
-					sql.ErrConnDone.Error(), log.InMessage,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc: assertOnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
 		},
 		{
 			name:                     "UserBoardNotFound",
@@ -150,6 +156,17 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:           http.StatusUnauthorized,
 			assertFunc: assertOnResErr(
 				"You do not have access to this board.",
+			),
+		},
+		{
+			name:                     "UserBoardSelectorErr",
+			authTokenValidatorOutSub: "bob123",
+			idValidatorOutErr:        nil,
+			columnSelectorOutErr:     nil,
+			userBoardSelectorOutErr:  sql.ErrConnDone,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assertOnLoggedErr(
+				sql.ErrConnDone.Error(),
 			),
 		},
 	} {
