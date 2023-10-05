@@ -55,68 +55,71 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("InvalidAuthToken", func(t *testing.T) {
-		// Set pre-determinate return values for sut's dependencies.
-		authTokenValidator.OutSub = ""
+	for _, c := range []struct {
+		name                     string
+		authTokenValidatorOutSub string
+		idValidatorOutErr        error
+		wantStatusCode           int
+		assertFunc               func(t *testing.T, r *http.Response)
+	}{
+		{
+			name:                     "InvalidAuthToken",
+			authTokenValidatorOutSub: "",
+			idValidatorOutErr:        nil,
+			wantStatusCode:           http.StatusUnauthorized,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				name, value := auth.WWWAuthenticate()
+				if err := assert.Equal(
+					value, res.Header.Get(name),
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
+		{
+			name:                     "IDValidatorErr",
+			authTokenValidatorOutSub: "bob123",
+			idValidatorOutErr:        errors.New("invalid id"),
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(
+					&resBody,
+				); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"invalid id", resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			authTokenValidator.OutSub = c.authTokenValidatorOutSub
+			idValidator.OutErr = c.idValidatorOutErr
 
-		// Prepare request and response recorder.
-		req, err := http.NewRequest(http.MethodPatch, "", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
+			// Prepare request and response recorder.
+			req, err := http.NewRequest(http.MethodPatch, "", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
 
-		// Handle request with sut and get the result.
-		sut.ServeHTTP(w, req)
-		res := w.Result()
+			// Handle request with sut and get the result.
+			sut.ServeHTTP(w, req)
+			res := w.Result()
 
-		// Assert on the status code.
-		if err = assert.Equal(
-			http.StatusUnauthorized, res.StatusCode,
-		); err != nil {
-			t.Error(err)
-		}
+			// Assert on the status code.
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
+				t.Error(err)
+			}
 
-		// Run case-specific assertions.
-		name, value := auth.WWWAuthenticate()
-		if err := assert.Equal(
-			value, w.Result().Header.Get(name),
-		); err != nil {
-			t.Error(err)
-		}
-	})
-
-	t.Run("IDValidatorErr", func(t *testing.T) {
-		// Set pre-determinate return values for sut's dependencies.
-		const wantErrMsg = "Invalid ID."
-		authTokenValidator.OutSub = "bob123"
-		idValidator.OutErr = errors.New(wantErrMsg)
-
-		// Prepare request and response recorder.
-		req, err := http.NewRequest(http.MethodPatch, "", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
-
-		// Handle request with sut and get the result.
-		sut.ServeHTTP(w, req)
-		res := w.Result()
-
-		// Assert on the status code.
-		if err = assert.Equal(
-			http.StatusBadRequest, res.StatusCode,
-		); err != nil {
-			t.Error(err)
-		}
-
-		// Assert on error message.
-		var resBody ResBody
-		if err = json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-			t.Fatal(err)
-		}
-		if err = assert.Equal(wantErrMsg, resBody.Error); err != nil {
-			t.Error(err)
-		}
-	})
+			// Run case-specific assertions.
+			c.assertFunc(t, res)
+		})
+	}
 }
