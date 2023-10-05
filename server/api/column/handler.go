@@ -6,10 +6,11 @@ import (
 	"errors"
 	"net/http"
 	"server/dbaccess"
-	columnTable "server/dbaccess/column"
+	"strconv"
 
 	"server/api"
 	"server/auth"
+	columnTable "server/dbaccess/column"
 	pkgLog "server/log"
 )
 
@@ -19,6 +20,7 @@ type Handler struct {
 	authTokenValidator auth.TokenValidator
 	idValidator        api.StringValidator
 	columnSelector     dbaccess.Selector[columnTable.Record]
+	userBoardSelector  dbaccess.RelSelector[bool]
 	log                pkgLog.Errorer
 }
 
@@ -28,6 +30,7 @@ func NewHandler(
 	authTokenValidator auth.TokenValidator,
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
+	userBoardSelector dbaccess.RelSelector[bool],
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
@@ -35,6 +38,7 @@ func NewHandler(
 		authTokenValidator: authTokenValidator,
 		idValidator:        idValidator,
 		columnSelector:     columnSelector,
+		userBoardSelector:  userBoardSelector,
 		log:                log,
 	}
 }
@@ -74,7 +78,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Retrieve the column from the database so that we find out its board ID to
 	// validate that the user has the right to edit it.
-	_, err := h.columnSelector.Select(columnID)
+	column, err := h.columnSelector.Select(columnID)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(
@@ -88,6 +92,19 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	}
+
+	// Check whether the user has the right to edit this column.
+	_, err = h.userBoardSelector.Select(sub, strconv.Itoa(column.ID))
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "You do not have access to this board."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
 

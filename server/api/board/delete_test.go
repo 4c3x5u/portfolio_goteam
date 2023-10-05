@@ -12,6 +12,7 @@ import (
 	"server/api"
 	"server/assert"
 	"server/dbaccess"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -19,7 +20,7 @@ import (
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
 	validator := &api.FakeStringValidator{}
-	userBoardSelector := &dbaccess.FakeUserBoardSelector{}
+	userBoardSelector := &userboardTable.FakeSelector{}
 	userBoardDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(

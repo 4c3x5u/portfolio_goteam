@@ -14,6 +14,7 @@ import (
 	"server/assert"
 	"server/auth"
 	columnTable "server/dbaccess/column"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -24,12 +25,14 @@ func TestHandler(t *testing.T) {
 	authTokenValidator := &auth.FakeTokenValidator{}
 	idValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
+	userBoardSelector := &userboardTable.FakeSelector{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewHandler(
 		authHeaderReader,
 		authTokenValidator,
 		idValidator,
 		columnSelector,
+		userBoardSelector,
 		log,
 	)
 
@@ -86,6 +89,7 @@ func TestHandler(t *testing.T) {
 		authTokenValidatorOutSub string
 		idValidatorOutErr        error
 		columnSelectorOutErr     error
+		userBoardSelectorOutErr  error
 		wantStatusCode           int
 		assertFunc               func(t *testing.T, r *http.Response)
 	}{
@@ -109,6 +113,7 @@ func TestHandler(t *testing.T) {
 			authTokenValidatorOutSub: "bob123",
 			idValidatorOutErr:        errors.New("invalid id"),
 			columnSelectorOutErr:     nil,
+			userBoardSelectorOutErr:  nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc:               assertOnResErr("invalid id"),
 		},
@@ -117,6 +122,7 @@ func TestHandler(t *testing.T) {
 			authTokenValidatorOutSub: "bob123",
 			idValidatorOutErr:        nil,
 			columnSelectorOutErr:     sql.ErrNoRows,
+			userBoardSelectorOutErr:  nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc:               assertOnResErr("Column not found."),
 		},
@@ -125,6 +131,7 @@ func TestHandler(t *testing.T) {
 			authTokenValidatorOutSub: "bob123",
 			idValidatorOutErr:        nil,
 			columnSelectorOutErr:     sql.ErrConnDone,
+			userBoardSelectorOutErr:  nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: func(t *testing.T, _ *http.Response) {
 				if err := assert.Equal(
@@ -134,12 +141,24 @@ func TestHandler(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:                     "UserBoardNotFound",
+			authTokenValidatorOutSub: "bob123",
+			idValidatorOutErr:        nil,
+			columnSelectorOutErr:     nil,
+			userBoardSelectorOutErr:  sql.ErrNoRows,
+			wantStatusCode:           http.StatusUnauthorized,
+			assertFunc: assertOnResErr(
+				"You do not have access to this board.",
+			),
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			authTokenValidator.OutSub = c.authTokenValidatorOutSub
 			idValidator.OutErr = c.idValidatorOutErr
 			columnSelector.OutErr = c.columnSelectorOutErr
+			userBoardSelector.OutErr = c.userBoardSelectorOutErr
 
 			// Prepare request and response recorder.
 			req, err := http.NewRequest(http.MethodPatch, "", nil)

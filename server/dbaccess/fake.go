@@ -15,17 +15,6 @@ type FakeCounter struct {
 // Count implements the Counter interface on FakeCounter.
 func (f *FakeCounter) Count(_ string) (int, error) { return f.OutRes, f.OutErr }
 
-// FakeUserBoardSelector is a test fake for RelSelector[bool].
-type FakeUserBoardSelector struct {
-	OutIsAdmin bool
-	OutErr     error
-}
-
-// Select implements the RelSelector[bool] interface on FakeUserBoardSelector.
-func (f *FakeUserBoardSelector) Select(_, _ string) (bool, error) {
-	return f.OutIsAdmin, f.OutErr
-}
-
 // FakeDeleter is a test fake for Deleter.
 type FakeDeleter struct{ OutErr error }
 
