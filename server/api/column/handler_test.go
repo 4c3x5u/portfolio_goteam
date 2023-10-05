@@ -3,6 +3,7 @@
 package column
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"server/api"
 	"server/assert"
 	"server/auth"
+	columnTable "server/dbaccess/column"
 	pkgLog "server/log"
 )
 
@@ -21,8 +23,15 @@ func TestHandler(t *testing.T) {
 	authHeaderReader := &auth.FakeHeaderReader{}
 	authTokenValidator := &auth.FakeTokenValidator{}
 	idValidator := &api.FakeStringValidator{}
+	columnSelector := &columnTable.FakeSelector{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewHandler(authHeaderReader, authTokenValidator, idValidator, log)
+	sut := NewHandler(
+		authHeaderReader,
+		authTokenValidator,
+		idValidator,
+		columnSelector,
+		log,
+	)
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
@@ -59,6 +68,7 @@ func TestHandler(t *testing.T) {
 		name                     string
 		authTokenValidatorOutSub string
 		idValidatorOutErr        error
+		columnSelectorOutErr     error
 		wantStatusCode           int
 		assertFunc               func(t *testing.T, r *http.Response)
 	}{
@@ -66,6 +76,7 @@ func TestHandler(t *testing.T) {
 			name:                     "InvalidAuthToken",
 			authTokenValidatorOutSub: "",
 			idValidatorOutErr:        nil,
+			columnSelectorOutErr:     nil,
 			wantStatusCode:           http.StatusUnauthorized,
 			assertFunc: func(t *testing.T, res *http.Response) {
 				name, value := auth.WWWAuthenticate()
@@ -80,6 +91,7 @@ func TestHandler(t *testing.T) {
 			name:                     "IDValidatorErr",
 			authTokenValidatorOutSub: "bob123",
 			idValidatorOutErr:        errors.New("invalid id"),
+			columnSelectorOutErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: func(t *testing.T, res *http.Response) {
 				var resBody ResBody
@@ -95,10 +107,31 @@ func TestHandler(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:                     "ColumnNotFound",
+			authTokenValidatorOutSub: "bob123",
+			idValidatorOutErr:        nil,
+			columnSelectorOutErr:     sql.ErrNoRows,
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: func(t *testing.T, res *http.Response) {
+				var resBody ResBody
+				if err := json.NewDecoder(res.Body).Decode(
+					&resBody,
+				); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"Column not found.", resBody.Error,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			authTokenValidator.OutSub = c.authTokenValidatorOutSub
 			idValidator.OutErr = c.idValidatorOutErr
+			columnSelector.OutErr = c.columnSelectorOutErr
 
 			// Prepare request and response recorder.
 			req, err := http.NewRequest(http.MethodPatch, "", nil)

@@ -1,8 +1,12 @@
 package column
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"server/dbaccess"
+	columnTable "server/dbaccess/column"
 
 	"server/api"
 	"server/auth"
@@ -14,6 +18,7 @@ type Handler struct {
 	authHeaderReader   auth.HeaderReader
 	authTokenValidator auth.TokenValidator
 	idValidator        api.StringValidator
+	columnSelector     dbaccess.Selector[columnTable.Record]
 	log                pkgLog.Errorer
 }
 
@@ -22,12 +27,14 @@ func NewHandler(
 	authHeaderReader auth.HeaderReader,
 	authTokenValidator auth.TokenValidator,
 	idValidator api.StringValidator,
+	columnSelector dbaccess.Selector[columnTable.Record],
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
 		authHeaderReader:   authHeaderReader,
 		authTokenValidator: authTokenValidator,
 		idValidator:        idValidator,
+		columnSelector:     columnSelector,
 		log:                log,
 	}
 }
@@ -63,6 +70,19 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Error(err.Error())
 		}
 		return
+	}
+
+	// Retrieve the column from the database so that we find out its board ID to
+	// validate that the user has the right to edit it.
+	_, err := h.columnSelector.Select(columnID)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "Column not found."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 	}
 
 	// All went well. Return 200.
