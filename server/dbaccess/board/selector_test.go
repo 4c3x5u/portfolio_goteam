@@ -28,17 +28,14 @@ func TestSelector(t *testing.T) {
 		existingBoardName = "Board A"
 	)
 
-	mock.
-		ExpectQuery(sqlSelectBoard).
+	mock.ExpectQuery(sqlSelectBoard).
 		WithArgs(boardID).
 		WillReturnError(sql.ErrNoRows)
 
-	mock.
-		ExpectQuery(sqlSelectBoard).
+	mock.ExpectQuery(sqlSelectBoard).
 		WithArgs(boardID).
 		WillReturnRows(
-			sqlmock.
-				NewRows([]string{"id", "name"}).
+			sqlmock.NewRows([]string{"id", "name"}).
 				AddRow(boardID, existingBoardName),
 		)
 

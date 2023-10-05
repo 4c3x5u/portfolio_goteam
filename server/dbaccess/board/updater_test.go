@@ -35,8 +35,7 @@ func TestUpdater(t *testing.T) {
 		{
 			name: "SqlErrNoRows",
 			setUp: func(mock sqlmock.Sqlmock) {
-				mock.
-					ExpectExec(sqlUpdateBoard).
+				mock.ExpectExec(sqlUpdateBoard).
 					WithArgs(newBoardName, boardID).
 					WillReturnError(sql.ErrNoRows)
 			},
@@ -47,8 +46,7 @@ func TestUpdater(t *testing.T) {
 		{
 			name: "NoRowsAffected",
 			setUp: func(mock sqlmock.Sqlmock) {
-				mock.
-					ExpectExec(sqlUpdateBoard).
+				mock.ExpectExec(sqlUpdateBoard).
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 0))
 			},
@@ -59,8 +57,7 @@ func TestUpdater(t *testing.T) {
 		{
 			name: "MoreRowsAffected",
 			setUp: func(mock sqlmock.Sqlmock) {
-				mock.
-					ExpectExec(sqlUpdateBoard).
+				mock.ExpectExec(sqlUpdateBoard).
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 2))
 			},
@@ -73,8 +70,7 @@ func TestUpdater(t *testing.T) {
 		{
 			name: "Success",
 			setUp: func(mock sqlmock.Sqlmock) {
-				mock.
-					ExpectExec(sqlUpdateBoard).
+				mock.ExpectExec(sqlUpdateBoard).
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(21, 1))
 			},

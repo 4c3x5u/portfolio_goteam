@@ -137,7 +137,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		tasks = append(tasks, columnTable.Task{ID: t.ID, Order: t.Order})
 	}
 
-	// Update tasks.
+	// Update task records in the database using column ID and order from tasks.
 	if err = h.columnUpdater.Update(
 		columnID, tasks,
 	); errors.Is(err, sql.ErrNoRows) {

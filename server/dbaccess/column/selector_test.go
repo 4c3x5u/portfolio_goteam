@@ -30,17 +30,14 @@ func TestSelector(t *testing.T) {
 		existingColumnOrder   int16 = 2
 	)
 
-	mock.
-		ExpectQuery(sqlSelectBoard).
+	mock.ExpectQuery(sqlSelectBoard).
 		WithArgs(columnID).
 		WillReturnError(sql.ErrNoRows)
 
-	mock.
-		ExpectQuery(sqlSelectBoard).
+	mock.ExpectQuery(sqlSelectBoard).
 		WithArgs(columnID).
 		WillReturnRows(
-			sqlmock.
-				NewRows([]string{"id", "boardID", "order"}).
+			sqlmock.NewRows([]string{"id", "boardID", "order"}).
 				AddRow(columnID, existingColumnBoardID, existingColumnOrder),
 		)
 

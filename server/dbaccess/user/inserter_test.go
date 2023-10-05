@@ -27,8 +27,7 @@ func TestInserter(t *testing.T) {
 		wantErr := errors.New("db: fatal error")
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
-		mock.
-			ExpectExec(query).
+		mock.ExpectExec(query).
 			WithArgs(username, pwdHash).
 			WillReturnError(wantErr)
 		sut := NewInserter(db)
@@ -43,8 +42,7 @@ func TestInserter(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
-		mock.
-			ExpectExec(query).
+		mock.ExpectExec(query).
 			WithArgs(username, pwdHash).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		sut := NewInserter(db)
