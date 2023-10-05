@@ -20,9 +20,13 @@ func NewUpdater(db *sql.DB) Updater { return Updater{db: db} }
 // and the task order respectively, thus reordering the tasks within the column
 // with the given ID or moving tasks from one column to another.
 func (u Updater) Update(columnID string, tasks []Task) error {
-	_, err := u.db.Exec(
-		"UPDATE app.task SET columnID = $1 AND order = $2 WHERE id = $3",
-		columnID, tasks[0].Order, tasks[0].ID,
-	)
-	return err
+	for _, task := range tasks {
+		if _, err := u.db.Exec(
+			"UPDATE app.task SET columnID = $1 AND order = $2 WHERE id = $3",
+			columnID, task.Order, task.ID,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
