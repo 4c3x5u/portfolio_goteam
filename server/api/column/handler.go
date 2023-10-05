@@ -96,8 +96,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check whether the user has the right to edit this column.
-	isAdmin, err := h.userBoardSelector.Select(sub, strconv.Itoa(column.ID))
-	if errors.Is(err, sql.ErrNoRows) {
+	if isAdmin, err := h.userBoardSelector.Select(
+		sub, strconv.Itoa(column.ID),
+	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
 			ResBody{Error: "You do not have access to this board."},
@@ -106,13 +107,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Error(err.Error())
 		}
 		return
-	}
-	if err != nil {
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
-	}
-	if !isAdmin {
+	} else if !isAdmin {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
 			ResBody{Error: "Only board admins can move tasks."},
