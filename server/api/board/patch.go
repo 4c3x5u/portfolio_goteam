@@ -17,7 +17,7 @@ type PATCHHandler struct {
 	nameValidator     api.StringValidator
 	boardSelector     dbaccess.Selector[boardTable.Record]
 	userBoardSelector dbaccess.RelSelector[bool]
-	boardUpdater      dbaccess.Updater
+	boardUpdater      dbaccess.Updater[string]
 	log               pkgLog.Errorer
 }
 
@@ -26,7 +26,7 @@ func NewPATCHHandler(
 	nameValidator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
-	boardUpdater dbaccess.Updater,
+	boardUpdater dbaccess.Updater[string],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{

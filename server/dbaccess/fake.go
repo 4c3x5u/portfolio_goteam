@@ -1,11 +1,5 @@
 package dbaccess
 
-// FakeCloser is a test fake for Closer.
-type FakeCloser struct{}
-
-// Close implements the Closer interface on FakeCloser.
-func (c *FakeCloser) Close() {}
-
 // FakeCounter is a test fake for Counter.
 type FakeCounter struct {
 	OutRes int
