@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"server/api"
 	"server/assert"
 	"server/dbaccess"
 	boardTable "server/dbaccess/board"
@@ -21,7 +22,7 @@ import (
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
-	validator := &fakeStringValidator{}
+	validator := &api.FakeStringValidator{}
 	userBoardCounter := &dbaccess.FakeCounter{}
 	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}

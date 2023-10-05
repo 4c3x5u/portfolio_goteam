@@ -17,3 +17,9 @@ func (f *FakeMethodHandler) Handle(
 ) {
 	f.InResponseWriter, f.InReq, f.InSub = w, r, sub
 }
+
+// FakeStringValidator is a test fake for StringValidator.
+type FakeStringValidator struct{ OutErr error }
+
+// Validate implements the StringValidator interface on fakeStringValidator.
+func (f FakeStringValidator) Validate(_ string) error { return f.OutErr }

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"server/api"
 	"server/assert"
 	"server/dbaccess"
 	boardTable "server/dbaccess/board"
@@ -19,8 +20,8 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPATCHHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
-	idValidator := &fakeStringValidator{}
-	nameValidator := &fakeStringValidator{}
+	idValidator := &api.FakeStringValidator{}
+	nameValidator := &api.FakeStringValidator{}
 	boardSelector := &boardTable.FakeSelector{}
 	userBoardSelector := &dbaccess.FakeUserBoardSelector{}
 	boardUpdater := &dbaccess.FakeUpdater{}

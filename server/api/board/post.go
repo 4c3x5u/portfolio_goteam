@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"server/api"
 	"server/dbaccess"
 	boardTable "server/dbaccess/board"
 	pkgLog "server/log"
@@ -14,7 +15,7 @@ import (
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type POSTHandler struct {
-	validator        StringValidator
+	validator        api.StringValidator
 	userBoardCounter dbaccess.Counter
 	boardInserter    dbaccess.Inserter[boardTable.Board]
 	log              pkgLog.Errorer
@@ -22,7 +23,7 @@ type POSTHandler struct {
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	validator StringValidator,
+	validator api.StringValidator,
 	userBoardCounter dbaccess.Counter,
 	boardInserter dbaccess.Inserter[boardTable.Board],
 	log pkgLog.Errorer,

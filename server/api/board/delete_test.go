@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"server/api"
 	"server/assert"
 	"server/dbaccess"
 	pkgLog "server/log"
@@ -17,7 +18,7 @@ import (
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
-	validator := &fakeStringValidator{}
+	validator := &api.FakeStringValidator{}
 	userBoardSelector := &dbaccess.FakeUserBoardSelector{}
 	userBoardDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"server/api"
 
 	"server/dbaccess"
 	boardTable "server/dbaccess/board"
@@ -12,8 +13,8 @@ import (
 )
 
 type PATCHHandler struct {
-	idValidator       StringValidator
-	nameValidator     StringValidator
+	idValidator       api.StringValidator
+	nameValidator     api.StringValidator
 	boardSelector     dbaccess.Selector[boardTable.Record]
 	userBoardSelector dbaccess.RelSelector[bool]
 	boardUpdater      dbaccess.Updater
@@ -21,8 +22,8 @@ type PATCHHandler struct {
 }
 
 func NewPATCHHandler(
-	idValidator StringValidator,
-	nameValidator StringValidator,
+	idValidator api.StringValidator,
+	nameValidator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
 	boardUpdater dbaccess.Updater,
