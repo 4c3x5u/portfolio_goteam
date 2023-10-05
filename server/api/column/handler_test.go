@@ -120,8 +120,23 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc:               assertOnResErr("Column not found."),
 		},
+		{
+			name:                     "ColumnSelectorErr",
+			authTokenValidatorOutSub: "bob123",
+			idValidatorOutErr:        nil,
+			columnSelectorOutErr:     sql.ErrConnDone,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: func(t *testing.T, _ *http.Response) {
+				if err := assert.Equal(
+					sql.ErrConnDone.Error(), log.InMessage,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			// Set pre-determinate return values for sut's dependencies.
 			authTokenValidator.OutSub = c.authTokenValidatorOutSub
 			idValidator.OutErr = c.idValidatorOutErr
 			columnSelector.OutErr = c.columnSelectorOutErr
