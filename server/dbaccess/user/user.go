@@ -1,5 +1,4 @@
-// Package user contains code for working with the user table that is inside
-// the goteam database.
+// Package user contains code for working with the user table.
 package user
 
 // Record represents a record in the user table.
