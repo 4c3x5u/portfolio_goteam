@@ -33,6 +33,23 @@ func TestHandler(t *testing.T) {
 		log,
 	)
 
+	// Used in status 400 cases to assert on the error returned in res body.
+	assertOnResErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *http.Response) {
+		return func(
+			t *testing.T, res *http.Response,
+		) {
+			resBody := ResBody{}
+			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+				t.Fatal(err)
+			}
+			if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodGet, http.MethodPost,
@@ -93,19 +110,7 @@ func TestHandler(t *testing.T) {
 			idValidatorOutErr:        errors.New("invalid id"),
 			columnSelectorOutErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				var resBody ResBody
-				if err := json.NewDecoder(res.Body).Decode(
-					&resBody,
-				); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"invalid id", resBody.Error,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:               assertOnResErr("invalid id"),
 		},
 		{
 			name:                     "ColumnNotFound",
@@ -113,19 +118,7 @@ func TestHandler(t *testing.T) {
 			idValidatorOutErr:        nil,
 			columnSelectorOutErr:     sql.ErrNoRows,
 			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				var resBody ResBody
-				if err := json.NewDecoder(res.Body).Decode(
-					&resBody,
-				); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Column not found.", resBody.Error,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:               assertOnResErr("Column not found."),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

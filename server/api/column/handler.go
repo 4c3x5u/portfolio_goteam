@@ -83,6 +83,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
 	}
 
 	// All went well. Return 200.
