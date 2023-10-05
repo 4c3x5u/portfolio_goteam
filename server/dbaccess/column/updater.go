@@ -1,6 +1,10 @@
 package column
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+	"errors"
+)
 
 // Task contains data needed to reorder tasks within a column or move tasks
 // from one column to another.
@@ -20,13 +24,31 @@ func NewUpdater(db *sql.DB) Updater { return Updater{db: db} }
 // and the task order respectively, thus reordering the tasks within the column
 // with the given ID or moving tasks from one column to another.
 func (u Updater) Update(columnID string, tasks []Task) error {
+	// Begin a transaction so that no tasks end up with the same order in case
+	// updates fail halfway though
+	ctx := context.Background()
+	tx, err := u.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer tx.Rollback()
+
+	// Go through each task and update their column ID and order based on the
+	// columnID and tasks received.
 	for _, task := range tasks {
-		if _, err := u.db.Exec(
+		if _, err := tx.ExecContext(
+			ctx,
 			"UPDATE app.task SET columnID = $1 AND order = $2 WHERE id = $3",
 			columnID, task.Order, task.ID,
 		); err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(err, rollbackErr)
+			}
 			return err
 		}
 	}
-	return nil
+
+	// All went well, commit transaction and return err if occurs.
+	return tx.Commit()
 }

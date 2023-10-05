@@ -32,6 +32,8 @@ func (i Inserter) Insert(board Board) error {
 	if err != nil {
 		return err
 	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer tx.Rollback()
 
 	// Insert the new board into the board table.
 	var boardID int64
@@ -79,5 +81,6 @@ func (i Inserter) Insert(board Board) error {
 		}
 	}
 
+	// All went well, commit transaction and return err if occurs.
 	return tx.Commit()
 }

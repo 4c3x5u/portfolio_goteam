@@ -24,6 +24,8 @@ func (d Deleter) Delete(id string) error {
 	if err != nil {
 		return err
 	}
+	//goland:noinspection GoUnhandledErrorResult
+	defer tx.Rollback()
 
 	// Delete all records from the user_board table with the given board ID.
 	if _, err = tx.ExecContext(
@@ -127,5 +129,6 @@ func (d Deleter) Delete(id string) error {
 		return err
 	}
 
+	// All went well, commit transaction and return err if occurs.
 	return tx.Commit()
 }

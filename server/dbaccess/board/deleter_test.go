@@ -16,19 +16,24 @@ import (
 // correct query to the database with the correct arguments, and returns
 // whatever error occurs.
 func TestDeleter(t *testing.T) {
-	const (
-		sqlDeleteUserBoards = `DELETE FROM app.user_board WHERE boardID = \$1`
-		sqlSelectColumnIDs  = `SELECT id FROM app.\"column\" WHERE boardID = \$1`
-		sqlSelectTaskIDs    = `SELECT id FROM app.task WHERE columnID = \$1`
-		sqlDeleteSubtasks   = `DELETE FROM app.subtask WHERE taskID = \$1`
-		sqlDeleteTasks      = `DELETE FROM app.task WHERE columnID = \$1`
-		sqlDeleteColumns    = `DELETE FROM app.\"column\" WHERE boardID = \$1`
-		sqlDeleteBoard      = `DELETE FROM app.board WHERE id = \$1`
-		boardID             = "123"
-	)
+	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	defer teardown()
 
-	errA := errors.New("an error is occurred")
-	errB := errors.New("another error is occurred")
+	sut := NewDeleter(db)
+
+	var (
+		sqlDeleteUserBoards = `DELETE FROM app.user_board WHERE boardID = \$1`
+		sqlSelectColumnIDs  = `SELECT id FROM app.\"column\" ` +
+			`WHERE boardID = \$1`
+		sqlSelectTaskIDs  = `SELECT id FROM app.task WHERE columnID = \$1`
+		sqlDeleteSubtasks = `DELETE FROM app.subtask WHERE taskID = \$1`
+		sqlDeleteTasks    = `DELETE FROM app.task WHERE columnID = \$1`
+		sqlDeleteColumns  = `DELETE FROM app.\"column\" WHERE boardID = \$1`
+		sqlDeleteBoard    = `DELETE FROM app.board WHERE id = \$1`
+		boardID           = "123"
+		errA              = errors.New("an error is occurred")
+		errB              = errors.New("another error is occurred")
+	)
 
 	for _, c := range []struct {
 		name      string
@@ -492,14 +497,11 @@ func TestDeleter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectCommit()
 			},
-			wantErrs: nil,
+			wantErrs: []error{nil},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			db, mock, teardown := dbaccess.SetUpDBTest(t)
-			defer teardown()
 			c.setUpMock(mock)
-			sut := NewDeleter(db)
 
 			err := sut.Delete(boardID)
 

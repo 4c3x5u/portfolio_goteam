@@ -16,20 +16,21 @@ import (
 // correct queries to the database with the correct arguments, and returns
 // whatever error occurs.
 func TestInserter(t *testing.T) {
-	const (
+	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	defer teardown()
+
+	sut := NewInserter(db)
+
+	var (
 		sqlInsertBoard     = `INSERT INTO app.board\(name\) VALUES \(\$1\)`
 		sqlInsertUserBoard = `INSERT INTO app.user_board\(username, boardID, ` +
 			`isAdmin\) VALUES\(\$1, \$2, TRUE\)`
 		sqlInsertColumn = `INSERT INTO app.\"column\"\(boardID, "order\"\) ` +
 			`VALUES \(\$1, \$2\)`
+		errA  = errors.New("an error occurred")
+		errB  = errors.New("another error occurred")
+		board = NewBoard("someboard", "bob123")
 	)
-
-	// Since we're doing pointer comparison for errors in test cases below, we
-	// just need a generic error to be returned at different points in code and
-	// ensure the expected SQL is executed and the same error is returned.
-	errA := errors.New("an error occurred")
-	errB := errors.New("another error occurred")
-	board := NewBoard("someboard", "bob123")
 
 	for _, c := range []struct {
 		name      string
@@ -286,14 +287,11 @@ func TestInserter(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(3, 1))
 				mock.ExpectCommit()
 			},
-			wantErrs: nil,
+			wantErrs: []error{nil},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			db, mock, teardown := dbaccess.SetUpDBTest(t)
-			defer teardown()
 			c.setUpMock(mock)
-			sut := NewInserter(db)
 
 			err := sut.Insert(board)
 
