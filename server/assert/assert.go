@@ -1,3 +1,5 @@
+//go:build utest
+
 // Package assert contains simple helper functions for test assertions. Its main
 // purpose is to centralise the formatting of the error messages for assertions
 // and to provide easy-to-read/use abstractions for commonly used assertions.
