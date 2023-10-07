@@ -116,4 +116,9 @@ func (h *POSTHandler) Handle(
 		}
 		return
 	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
 }

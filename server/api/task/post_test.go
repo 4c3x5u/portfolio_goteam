@@ -70,7 +70,9 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:    sql.ErrConnDone,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusInternalServerError,
-			assertFunc:              assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
 		},
 		{
 			name:                    "NoAccess",
@@ -80,6 +82,16 @@ func TestPOSTHandler(t *testing.T) {
 			wantStatusCode:          http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
+			),
+		},
+		{
+			name:                    "UserBoardSelectorErr",
+			titleValidatorOutErr:    nil,
+			columnSelectorOutErr:    nil,
+			userBoardSelectorOutErr: sql.ErrConnDone,
+			wantStatusCode:          http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
 			),
 		},
 	} {
