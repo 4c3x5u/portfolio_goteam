@@ -27,27 +27,30 @@ type ResBody struct {
 // POSTHandler is an api.MethodHandler that can be used to handle POST task
 // requests.
 type POSTHandler struct {
-	titleValidator api.StringValidator
-	columnSelector dbaccess.Selector[columnTable.Record]
-	log            pkgLog.Errorer
+	titleValidator    api.StringValidator
+	columnSelector    dbaccess.Selector[columnTable.Record]
+	userBoardSelector dbaccess.RelSelector[bool]
+	log               pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
 	titleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
+	userBoardSelector dbaccess.RelSelector[bool],
 	log pkgLog.Errorer,
 ) *POSTHandler {
 	return &POSTHandler{
-		titleValidator: titleValidator,
-		columnSelector: columnSelector,
-		log:            log,
+		titleValidator:    titleValidator,
+		columnSelector:    columnSelector,
+		userBoardSelector: userBoardSelector,
+		log:               log,
 	}
 }
 
 // Handle handles the POST requests sent to the task route.
 func (h *POSTHandler) Handle(
-	w http.ResponseWriter, r *http.Request, _ string,
+	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	var reqBody ReqBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
@@ -80,9 +83,10 @@ func (h *POSTHandler) Handle(
 	}
 
 	// Get the column from the database with the task's column ID.
-	if _, err := h.columnSelector.Select(
+	column, err := h.columnSelector.Select(
 		strconv.Itoa(reqBody.ColumnID),
-	); errors.Is(err, sql.ErrNoRows) {
+	)
+	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
 			Error: "Column not found.",
@@ -91,9 +95,25 @@ func (h *POSTHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	}
+
+	// Check if the user is admin on the board the column is associated with.
+	_, err = h.userBoardSelector.Select(
+		username, strconv.Itoa(column.BoardID),
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
 }

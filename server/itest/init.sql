@@ -52,7 +52,8 @@ VALUES
     ('Board #2'), -- id: 2
     ('Board #3'), -- id: 3
     ('Board #4'), -- id: 4
-    ('Board #5'); -- id: 5
+    ('Board #5'), -- id: 5
+    ('Board #6'); -- id: 6
 -- a record is inserted here with the id of 6 during board POST tests.
 
 INSERT INTO app.user_board(username, boardID, isAdmin)
@@ -73,7 +74,8 @@ VALUES
     (1, 4), -- id: 4 (used for board DELETE tests)
     (2, 1), -- id: 5
     (4, 1), -- id: 6
-    (2, 2); -- id: 7
+    (2, 2), -- id: 7
+    (6, 1); -- id: 8
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")

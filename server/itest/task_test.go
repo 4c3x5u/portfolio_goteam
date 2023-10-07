@@ -14,6 +14,7 @@ import (
 	"server/assert"
 	"server/auth"
 	columnTable "server/dbaccess/column"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -25,6 +26,7 @@ func TestTaskAPI(t *testing.T) {
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				taskAPI.NewTitleValidator(),
 				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
 				pkgLog.New(),
 			),
 		},
@@ -106,6 +108,17 @@ func TestTaskAPI(t *testing.T) {
 			},
 			wantStatusCode: http.StatusNotFound,
 			wantErrMsg:     "Column not found.",
+		},
+		{
+			name: "NoAccess",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "",
+				"column":      8,
+				"subtasks":    []map[string]any{},
+			},
+			wantStatusCode: http.StatusUnauthorized,
+			wantErrMsg:     "You do not have access to this board.",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
