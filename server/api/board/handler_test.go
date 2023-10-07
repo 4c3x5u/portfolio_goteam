@@ -5,6 +5,7 @@ package board
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"server/api"
@@ -19,12 +20,14 @@ func TestHandler(t *testing.T) {
 	authTokenValidator := &auth.FakeTokenValidator{}
 	postHandler := &api.FakeMethodHandler{}
 	deleteHandler := &api.FakeMethodHandler{}
+	patchHandler := &api.FakeMethodHandler{}
 	sut := NewHandler(
 		authHeaderReader,
 		authTokenValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost:   postHandler,
 			http.MethodDelete: deleteHandler,
+			http.MethodPatch:  patchHandler,
 		},
 	)
 
@@ -51,8 +54,7 @@ func TestHandler(t *testing.T) {
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodGet, http.MethodHead,
-			http.MethodOptions, http.MethodPatch, http.MethodPut,
-			http.MethodTrace,
+			http.MethodOptions, http.MethodPut, http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
 				req, err := http.NewRequest(httpMethod, "", nil)
@@ -62,18 +64,23 @@ func TestHandler(t *testing.T) {
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
+				res := w.Result()
 
 				if err = assert.Equal(
-					http.StatusMethodNotAllowed, w.Result().StatusCode,
+					http.StatusMethodNotAllowed, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
 
-				if err := assert.Equal(
-					http.MethodPost,
-					w.Result().Header.Get("Access-Control-Allow-Methods"),
-				); err != nil {
-					t.Error(err)
+				// Assert that all allowed methods were set in the correct
+				// header.
+				allowedMethods := res.Header.Get("Access-Control-Allow-Methods")
+				for method := range sut.methodHandlers {
+					if err := assert.True(
+						strings.Contains(allowedMethods, method),
+					); err != nil {
+						t.Error(err)
+					}
 				}
 			})
 		}
@@ -118,6 +125,15 @@ func TestHandler(t *testing.T) {
 			wantStatusCode:       http.StatusOK,
 			assertFunc: assertOnMethodHandler(
 				deleteHandler, "bob123",
+			),
+		},
+		{
+			name:                 "Success" + http.MethodPatch,
+			httpMethod:           http.MethodPatch,
+			tokenValidatorOutSub: "bob123",
+			wantStatusCode:       http.StatusOK,
+			assertFunc: assertOnMethodHandler(
+				patchHandler, "bob123",
 			),
 		},
 	} {

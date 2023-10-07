@@ -15,7 +15,7 @@ type MethodHandler interface {
 
 // AllowedMethods takes in a slice of allowed HTTP methods and returns the key
 // and the value for the Access-Control-Allow-Methods header.
-func AllowedMethods(methods ...string) (string, string) {
+func AllowedMethods(methods []string) (string, string) {
 	if len(methods) == 0 {
 		return "", ""
 	}

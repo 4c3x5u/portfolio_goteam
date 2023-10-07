@@ -50,7 +50,7 @@ func NewHandler(
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Only allow PATCH requests.
 	if r.Method != http.MethodPatch {
-		w.Header().Add(api.AllowedMethods(http.MethodPost))
+		w.Header().Add(api.AllowedMethods([]string{http.MethodPost}))
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 

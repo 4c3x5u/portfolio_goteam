@@ -29,8 +29,14 @@ func NewHandler(
 
 // ServeHTTP responds to requests made to the board route.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Keep track of allowed methods to return them in
+	// "Access-Control-Allow-Methods" header on 405.
+	var allowedMethods []string
+
 	// Find the MethodHandler for the HTTP method of the received request.
 	for method, methodHandler := range h.methodHandlers {
+		allowedMethods = append(allowedMethods, method)
+
 		// If found, authenticate and handle with MethodHandler.
 		if r.Method == method {
 			// Get auth token from Authorization header, validate it, and get
@@ -52,6 +58,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// This path of execution means no MethodHandler was found in
 	// h.methodHandlers for the HTTP method of the request.
-	w.Header().Add(api.AllowedMethods(http.MethodPost))
+	w.Header().Add(api.AllowedMethods(allowedMethods))
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }
