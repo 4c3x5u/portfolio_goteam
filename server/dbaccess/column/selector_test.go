@@ -23,7 +23,7 @@ func TestSelector(t *testing.T) {
 	sut := NewSelector(db)
 
 	const (
-		sqlSelectBoard = `SELECT id, boardID, order ` +
+		sqlSelectBoard = `SELECT id, boardID, "order" ` +
 			`FROM app."column" WHERE id = \$1`
 		columnID                    = "42"
 		existingColumnBoardID       = 21

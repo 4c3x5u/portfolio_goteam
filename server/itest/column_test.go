@@ -118,6 +118,13 @@ func TestColumn(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Column ID must be an integer."),
 			},
+			{
+				name:       "ColumnNotFound",
+				id:         "1001",
+				authFunc:   addBearerAuth(bob123AuthToken),
+				statusCode: http.StatusBadRequest,
+				assertFunc: assertOnErrMsg("Column not found."),
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				tasks, err := json.Marshal([]map[string]int{

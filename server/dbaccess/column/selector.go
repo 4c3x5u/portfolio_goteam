@@ -19,7 +19,7 @@ func NewSelector(db *sql.DB) Selector { return Selector{db: db} }
 func (s Selector) Select(id string) (Record, error) {
 	var rec Record
 	err := s.db.QueryRow(
-		`SELECT id, boardID, order FROM app."column" WHERE id = $1`, id,
+		`SELECT id, boardID, "order" FROM app."column" WHERE id = $1`, id,
 	).Scan(&rec.ID, &rec.BoardID, &rec.Order)
 	return rec, err
 }
