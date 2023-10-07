@@ -79,6 +79,7 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
+	// Get the column from the database with the task's column ID.
 	if _, err := h.columnSelector.Select(
 		strconv.Itoa(reqBody.ColumnID),
 	); errors.Is(err, sql.ErrNoRows) {
@@ -89,6 +90,10 @@ func (h *POSTHandler) Handle(
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 }

@@ -29,29 +29,39 @@ func TestPOSTHandler(t *testing.T) {
 		titleValidatorOutErr error
 		columnSelectorOutErr error
 		wantStatusCode       int
-		wantErrMsg           string
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:                 "TitleEmpty",
 			titleValidatorOutErr: errTitleEmpty,
 			columnSelectorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantErrMsg:           "Task title cannot be empty.",
+			assertFunc: assert.OnResErr(
+				"Task title cannot be empty.",
+			),
 		},
 		{
 			name:                 "TitleTooLong",
 			titleValidatorOutErr: errTitleTooLong,
 			columnSelectorOutErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
-			wantErrMsg: "Task title cannot be longer than 50 " +
-				"characters.",
+			assertFunc: assert.OnResErr(
+				"Task title cannot be longer than 50 characters.",
+			),
 		},
 		{
 			name:                 "ColumnNotFound",
 			titleValidatorOutErr: nil,
 			columnSelectorOutErr: sql.ErrNoRows,
 			wantStatusCode:       http.StatusNotFound,
-			wantErrMsg:           "Column not found.",
+			assertFunc:           assert.OnResErr("Column not found."),
+		},
+		{
+			name:                 "ColumnSelectorErr",
+			titleValidatorOutErr: nil,
+			columnSelectorOutErr: sql.ErrConnDone,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -77,20 +87,15 @@ func TestPOSTHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, req, "")
+			res := w.Result()
 
 			if err = assert.Equal(
-				c.wantStatusCode, w.Result().StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}
 
-			var resBody ResBody
-			if err = json.NewDecoder(w.Body).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			if err = assert.Equal(c.wantErrMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
+			c.assertFunc(t, w.Result(), log.InMessage)
 		})
 	}
 }

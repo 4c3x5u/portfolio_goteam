@@ -6,8 +6,11 @@
 package assert
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"testing"
 )
 
 // newErr formats, creates, and returns an assertion error.
@@ -64,4 +67,48 @@ func SameError(errA, errB error) error {
 		return newErr(errA, errB)
 	}
 	return nil
+}
+
+// OnResErr can be used in HTTP tests to assert that a given error message was
+// written on the response body's "error" field. It takes in the expected error
+// message and returns a function that takes in:
+//   - *testing.T to be able to either call Fatal or Error,
+//   - *http.Response to read the response body,
+//   - *pkgLog.FakeErrorer to match the signature of OnLoggedErr so that it can
+//     be used interchangeably with it in table-driven tests.
+//
+// This two-step function call is necessary to be able to use it effectively in
+// table-driven tests.
+func OnResErr(
+	errMsg string,
+) func(*testing.T, *http.Response, string) {
+	return func(t *testing.T, res *http.Response, _ string) {
+		var resBody map[string]string
+		if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+			t.Fatal(err)
+		}
+		if err := Equal(errMsg, resBody["error"]); err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+// OnLoggedErr can be used in HTTP tests to assert that a given error message
+// was logged. It takes in the expected error message and returns a function
+// that takes in:
+//   - *testing.T to be able to either call Fatal or Error,
+//   - *http.Response to match the signature of OnResErr so that it can be used
+//     interchangeably with it in table-driven tests,
+//   - *pkgLog.FakeErrorer to check what error was logged.
+//
+// This two-step function call is necessary to be able to use it effectively in
+// table-driven tests.
+func OnLoggedErr(
+	errMsg string,
+) func(*testing.T, *http.Response, string) {
+	return func(t *testing.T, _ *http.Response, loggedErr string) {
+		if err := Equal(errMsg, loggedErr); err != nil {
+			t.Error(err)
+		}
+	}
 }
