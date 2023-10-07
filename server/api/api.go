@@ -6,7 +6,7 @@ package api
 import "net/http"
 
 // MethodHandler describes a type that can be used to serve a certain part of an
-// API route that corresponds to a specific HTTP method. It is intended for the
+// API route that corresponds to a specific HTTP method. It is intended for its
 // Handle method to be called after authentication, and with the authenticated
 // user's username as the third argument.
 type MethodHandler interface {

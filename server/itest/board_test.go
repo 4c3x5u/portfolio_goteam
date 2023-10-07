@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"server/api"
-	"server/api/board"
+	boardAPI "server/api/board"
 	"server/assert"
 	"server/auth"
 	boardTable "server/dbaccess/board"
@@ -21,25 +21,25 @@ import (
 func TestBoard(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
-	sut := board.NewHandler(
+	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: board.NewPOSTHandler(
-				board.NewNameValidator(),
+			http.MethodPost: boardAPI.NewPOSTHandler(
+				boardAPI.NewNameValidator(),
 				userboardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
-			http.MethodDelete: board.NewDELETEHandler(
-				board.NewIDValidator(),
+			http.MethodDelete: boardAPI.NewDELETEHandler(
+				boardAPI.NewIDValidator(),
 				userboardTable.NewSelector(db),
 				boardTable.NewDeleter(db),
 				log,
 			),
-			http.MethodPatch: board.NewPATCHHandler(
-				board.NewIDValidator(),
-				board.NewNameValidator(),
+			http.MethodPatch: boardAPI.NewPATCHHandler(
+				boardAPI.NewIDValidator(),
+				boardAPI.NewNameValidator(),
 				boardTable.NewSelector(db),
 				userboardTable.NewSelector(db),
 				boardTable.NewUpdater(db),
@@ -53,7 +53,7 @@ func TestBoard(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *httptest.ResponseRecorder) {
 		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := board.ResBody{}
+			resBody := boardAPI.ResBody{}
 			if err := json.NewDecoder(w.Result().Body).Decode(
 				&resBody,
 			); err != nil {

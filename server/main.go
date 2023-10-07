@@ -77,7 +77,7 @@ func main() {
 		log,
 	))
 
-	mux.Handle("/board", boardAPI.NewHandler(
+	mux.Handle("/board", api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(env.JWTKey),
 		map[string]api.MethodHandler{
