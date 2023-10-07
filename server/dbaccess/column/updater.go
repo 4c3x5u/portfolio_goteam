@@ -37,16 +37,32 @@ func (u Updater) Update(columnID string, tasks []Task) error {
 	// Go through each task and update their column ID and order based on the
 	// columnID and tasks received.
 	for _, task := range tasks {
-		if _, err := tx.ExecContext(
+		res, execErr := tx.ExecContext(
 			ctx,
 			`UPDATE app.task SET columnID = $1, "order" = $2 `+
 				`WHERE id = $3`,
 			columnID, task.Order, task.ID,
-		); err != nil {
+		)
+		if execErr != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				return errors.Join(err, rollbackErr)
+				return errors.Join(execErr, rollbackErr)
 			}
-			return err
+			return execErr
+		}
+		rowsAffected, rowsAffectedErr := res.RowsAffected()
+		if rowsAffectedErr != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(rowsAffectedErr, rollbackErr)
+			}
+			return rowsAffectedErr
+		}
+		// If no rows were affected when execErr was nil, it means task not
+		// found? todo: confirm
+		if rowsAffected != int64(1) {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(sql.ErrNoRows, rollbackErr)
+			}
+			return sql.ErrNoRows
 		}
 	}
 

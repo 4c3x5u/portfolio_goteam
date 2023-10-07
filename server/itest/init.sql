@@ -71,16 +71,16 @@ VALUES
     (1, 2), -- id: 2 (used for board DELETE tests)
     (1, 3), -- id: 3 (used for board DELETE tests)
     (1, 4), -- id: 4 (used for board DELETE tests)
-    (5, 1), -- id: 5
+    (2, 1), -- id: 5
     (4, 1); -- id: 6
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
 VALUES
-    (1, 'task A', 1), -- (used for board DELETE tests)
-    (2, 'task B', 1),
-    (3, 'task C', 1),
-    (4, 'task D', 1);
+    (1, 'task A', 1), -- id: 1 (used for board DELETE tests)
+    (2, 'task B', 1), -- id: 2 (columnID is set to 3 during column UPDATE tests)
+    (3, 'task C', 1), -- id: 3
+    (4, 'task D', 1); -- id: 4
 
 -- insert a subtask into each task for testing recursive board deletion
 INSERT INTO app.subtask(taskID, title, "order", isDone)

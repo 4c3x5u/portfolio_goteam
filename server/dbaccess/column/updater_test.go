@@ -3,6 +3,7 @@
 package column
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -67,6 +68,28 @@ func TestUpdater(t *testing.T) {
 				mock.ExpectRollback().WillReturnError(errB)
 			},
 			wantErrs: []error{errA, errB},
+		},
+		{
+			name: "NoRowsAffected",
+			mockFunc: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlUpdateTask).
+					WithArgs(columnID, tasks[0].Order, tasks[0].ID).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectRollback()
+			},
+			wantErrs: []error{sql.ErrNoRows},
+		},
+		{
+			name: "NoRowsAffectedRollbackErr",
+			mockFunc: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec(sqlUpdateTask).
+					WithArgs(columnID, tasks[0].Order, tasks[0].ID).
+					WillReturnResult(sqlmock.NewResult(0, 0))
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{sql.ErrNoRows, errB},
 		},
 		{
 			name: "CommitErr",

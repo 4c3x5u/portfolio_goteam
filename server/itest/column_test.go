@@ -129,14 +129,19 @@ func TestColumn(t *testing.T) {
 				id:         "6",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusUnauthorized,
-				assertFunc: assertOnErrMsg(
-					"Only board admins can move tasks.",
-				),
+				assertFunc: assertOnErrMsg("Only board admins can move tasks."),
+			},
+			{
+				name:       "TaskNotFound",
+				id:         "5",
+				authFunc:   addBearerAuth(jwtBob123),
+				statusCode: http.StatusNotFound,
+				assertFunc: assertOnErrMsg("Task not found."),
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				tasks, err := json.Marshal([]map[string]int{
-					{"id": 0, "order": 0},
+					{"id": 1001, "order": 0},
 				})
 				if err != nil {
 					t.Fatal(err)
