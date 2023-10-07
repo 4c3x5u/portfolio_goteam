@@ -41,7 +41,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
 	}
-	resource.Expire(180)
+	if err := resource.Expire(180); err != nil {
+		log.Fatalf("expire error: %s", err)
+	}
 
 	// Get the connection string to the database.
 	databaseURL := "postgres://itestdb_usr:itestdb_pwd@" +
