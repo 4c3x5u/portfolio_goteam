@@ -103,7 +103,7 @@ func (h *POSTHandler) Handle(
 	}
 
 	// Check if the user is admin on the board the column is associated with.
-	_, err = h.userBoardSelector.Select(
+	isAdmin, err := h.userBoardSelector.Select(
 		username, strconv.Itoa(column.BoardID),
 	)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -119,6 +119,16 @@ func (h *POSTHandler) Handle(
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	}
+	if !isAdmin {
+		w.WriteHeader(http.StatusUnauthorized)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "Only board admins can create tasks.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
 }

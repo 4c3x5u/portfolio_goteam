@@ -120,6 +120,17 @@ func TestTaskAPI(t *testing.T) {
 			wantStatusCode: http.StatusUnauthorized,
 			wantErrMsg:     "You do not have access to this board.",
 		},
+		{
+			name: "NotAdmin",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "",
+				"column":      9,
+				"subtasks":    []map[string]any{},
+			},
+			wantStatusCode: http.StatusUnauthorized,
+			wantErrMsg:     "Only board admins can create tasks.",
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			task, err := json.Marshal(c.task)

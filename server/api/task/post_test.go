@@ -32,6 +32,7 @@ func TestPOSTHandler(t *testing.T) {
 		name                    string
 		titleValidatorOutErr    error
 		columnSelectorOutErr    error
+		userBoardSelectorOutRes bool
 		userBoardSelectorOutErr error
 		wantStatusCode          int
 		assertFunc              func(*testing.T, *http.Response, string)
@@ -40,6 +41,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "TitleEmpty",
 			titleValidatorOutErr:    errTitleEmpty,
 			columnSelectorOutErr:    nil,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -50,6 +52,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "TitleTooLong",
 			titleValidatorOutErr:    errTitleTooLong,
 			columnSelectorOutErr:    nil,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -60,6 +63,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "ColumnNotFound",
 			titleValidatorOutErr:    nil,
 			columnSelectorOutErr:    sql.ErrNoRows,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusNotFound,
 			assertFunc:              assert.OnResErr("Column not found."),
@@ -68,6 +72,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "ColumnSelectorErr",
 			titleValidatorOutErr:    nil,
 			columnSelectorOutErr:    sql.ErrConnDone,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: nil,
 			wantStatusCode:          http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -78,6 +83,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "NoAccess",
 			titleValidatorOutErr:    nil,
 			columnSelectorOutErr:    nil,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: sql.ErrNoRows,
 			wantStatusCode:          http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
@@ -88,10 +94,22 @@ func TestPOSTHandler(t *testing.T) {
 			name:                    "UserBoardSelectorErr",
 			titleValidatorOutErr:    nil,
 			columnSelectorOutErr:    nil,
+			userBoardSelectorOutRes: false,
 			userBoardSelectorOutErr: sql.ErrConnDone,
 			wantStatusCode:          http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
+			),
+		},
+		{
+			name:                    "NotAdmin",
+			titleValidatorOutErr:    nil,
+			columnSelectorOutErr:    nil,
+			userBoardSelectorOutRes: false,
+			userBoardSelectorOutErr: nil,
+			wantStatusCode:          http.StatusUnauthorized,
+			assertFunc: assert.OnResErr(
+				"Only board admins can create tasks.",
 			),
 		},
 	} {

@@ -75,7 +75,8 @@ VALUES
     (2, 1), -- id: 5
     (4, 1), -- id: 6
     (2, 2), -- id: 7
-    (6, 1); -- id: 8
+    (6, 1), -- id: 8
+    (4, 1); -- id: 9
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
