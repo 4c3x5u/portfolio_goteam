@@ -4,7 +4,6 @@ package itest
 
 import (
 	"database/sql"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -50,7 +49,9 @@ func TestMain(m *testing.M) {
 	log.Println("Connecting to database on url: ", databaseURL)
 
 	// Make sure the container and the database are healthy.
-	pool.MaxWait = 120 * time.Second
+	// IMPORTANT: if it's the first time creating the image, set the maxWait to
+	// something higher (e.g. 180 seconds).
+	pool.MaxWait = 15 * time.Second
 	if err = pool.Retry(func() error {
 		db, err = sql.Open("postgres", databaseURL)
 		if err != nil {
@@ -62,7 +63,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Initialise the database with schema and tables.
-	qInitBytes, err := ioutil.ReadFile("init.sql")
+	qInitBytes, err := os.ReadFile("init.sql")
 	if err != nil {
 		log.Fatal("+++", err)
 	}
