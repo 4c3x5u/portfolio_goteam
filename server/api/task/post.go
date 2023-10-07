@@ -13,10 +13,17 @@ import (
 	pkgLog "server/log"
 )
 
+// Subtask defines the each element of the subtasks array inside incoming
+// request.
+type Subtask struct {
+	Title string `json:"title"`
+}
+
 // ReqBody defines the request body for requests handled by method handlers.
 type ReqBody struct {
-	Title    string `json:"title"`
-	ColumnID int    `json:"column"`
+	Title    string    `json:"title"`
+	ColumnID int       `json:"column"`
+	Subtasks []Subtask `json:"subtasks"`
 }
 
 // ResBody defines the response body for requests handled by method handlers.
@@ -27,24 +34,27 @@ type ResBody struct {
 // POSTHandler is an api.MethodHandler that can be used to handle POST task
 // requests.
 type POSTHandler struct {
-	titleValidator    api.StringValidator
-	columnSelector    dbaccess.Selector[columnTable.Record]
-	userBoardSelector dbaccess.RelSelector[bool]
-	log               pkgLog.Errorer
+	taskTitleValidator    api.StringValidator
+	subtaskTitleValidator api.StringValidator
+	columnSelector        dbaccess.Selector[columnTable.Record]
+	userBoardSelector     dbaccess.RelSelector[bool]
+	log                   pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	titleValidator api.StringValidator,
+	taskTitleValidator api.StringValidator,
+	subtaskTitleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
 	log pkgLog.Errorer,
 ) *POSTHandler {
 	return &POSTHandler{
-		titleValidator:    titleValidator,
-		columnSelector:    columnSelector,
-		userBoardSelector: userBoardSelector,
-		log:               log,
+		taskTitleValidator:    taskTitleValidator,
+		subtaskTitleValidator: subtaskTitleValidator,
+		columnSelector:        columnSelector,
+		userBoardSelector:     userBoardSelector,
+		log:                   log,
 	}
 }
 
@@ -60,7 +70,7 @@ func (h *POSTHandler) Handle(
 	}
 
 	// Validate task title.
-	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
+	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, errTitleEmpty) {
 			errMsg = "Task title cannot be empty."
@@ -80,6 +90,31 @@ func (h *POSTHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
+	}
+
+	// Validate subtask titles
+	for _, subtask := range reqBody.Subtasks {
+		if err := h.subtaskTitleValidator.Validate(subtask.Title); err != nil {
+			var errMsg string
+			if errors.Is(err, errTitleEmpty) {
+				errMsg = "Subtask title cannot be empty."
+			} else if errors.Is(err, errTitleTooLong) {
+				errMsg = "Subtask title cannot be longer than 50 characters."
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			}
+
+			w.WriteHeader(http.StatusBadRequest)
+			if encodeErr := json.NewEncoder(w).Encode(ResBody{
+				Error: errMsg,
+			}); encodeErr != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
 	}
 
 	// Get the column from the database with the task's column ID.

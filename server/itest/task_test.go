@@ -25,6 +25,7 @@ func TestTaskAPI(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				taskAPI.NewTitleValidator(),
+				taskAPI.NewTitleValidator(),
 				columnTable.NewSelector(db),
 				userboardTable.NewSelector(db),
 				pkgLog.New(),
@@ -76,7 +77,7 @@ func TestTaskAPI(t *testing.T) {
 		wantErrMsg     string
 	}{
 		{
-			name: "TitleEmpty",
+			name: "TaskTitleEmpty",
 			task: map[string]any{
 				"title":       "",
 				"description": "",
@@ -87,7 +88,7 @@ func TestTaskAPI(t *testing.T) {
 			wantErrMsg:     "Task title cannot be empty.",
 		},
 		{
-			name: "TitleTooLong",
+			name: "TaskTitleTooLong",
 			task: map[string]any{
 				"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
 					"asd",
@@ -97,6 +98,36 @@ func TestTaskAPI(t *testing.T) {
 			},
 			wantStatusCode: http.StatusBadRequest,
 			wantErrMsg:     "Task title cannot be longer than 50 characters.",
+		},
+		{
+			name: "SubtaskTitleEmpty",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "",
+				"column":      0,
+				"subtasks": []map[string]any{
+					{"title": ""},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Subtask title cannot be empty.",
+		},
+		{
+			name: "SubtaskTitleTooLong",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "",
+				"column":      0,
+				"subtasks": []map[string]any{
+					{
+						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqwea" +
+							"sdqweasd",
+					},
+				},
+			},
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg: "Subtask title cannot be longer than 50 " +
+				"characters.",
 		},
 		{
 			name: "ColumnNotFound",
@@ -131,6 +162,7 @@ func TestTaskAPI(t *testing.T) {
 			wantStatusCode: http.StatusUnauthorized,
 			wantErrMsg:     "Only board admins can create tasks.",
 		},
+		// todo: when testing for success, check order values too
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			task, err := json.Marshal(c.task)
