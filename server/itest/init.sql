@@ -29,8 +29,8 @@ CREATE TABLE app.task (
   id          INTEGER     PRIMARY KEY GENERATED ALWAYS        AS IDENTITY,
   columnID    INTEGER     NOT NULL    REFERENCES app."column",
   title       VARCHAR(50) NOT NULL,
-  "order"     INTEGER     NOT NULL,
-  description TEXT
+  description TEXT,
+  "order"     INTEGER     NOT NULL
 );
 
 CREATE TABLE app.subtask (

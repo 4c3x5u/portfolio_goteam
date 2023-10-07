@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	pkgLog "server/log"
 	"testing"
 
 	"server/api"
 	taskAPI "server/api/task"
 	"server/assert"
 	"server/auth"
+	columnTable "server/dbaccess/column"
+	pkgLog "server/log"
 )
 
 func TestTaskAPI(t *testing.T) {
@@ -23,6 +24,7 @@ func TestTaskAPI(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				taskAPI.NewTitleValidator(),
+				columnTable.NewSelector(db),
 				pkgLog.New(),
 			),
 		},
@@ -66,9 +68,10 @@ func TestTaskAPI(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name       string
-		task       map[string]any
-		wantErrMsg string
+		name           string
+		task           map[string]any
+		wantStatusCode int
+		wantErrMsg     string
 	}{
 		{
 			name: "TitleEmpty",
@@ -78,7 +81,8 @@ func TestTaskAPI(t *testing.T) {
 				"column":      0,
 				"subtasks":    []map[string]any{},
 			},
-			wantErrMsg: "Task title cannot be empty.",
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Task title cannot be empty.",
 		},
 		{
 			name: "TitleTooLong",
@@ -89,12 +93,22 @@ func TestTaskAPI(t *testing.T) {
 				"column":      0,
 				"subtasks":    []map[string]any{},
 			},
-			wantErrMsg: "Task title cannot be longer than 50 characters.",
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Task title cannot be longer than 50 characters.",
+		},
+		{
+			name: "ColumnNotFound",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "",
+				"column":      1001,
+				"subtasks":    []map[string]any{},
+			},
+			wantStatusCode: http.StatusNotFound,
+			wantErrMsg:     "Column not found.",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			wantStatusCode := http.StatusBadRequest
-
 			task, err := json.Marshal(c.task)
 			if err != nil {
 				t.Fatal(err)
@@ -114,7 +128,7 @@ func TestTaskAPI(t *testing.T) {
 			res := w.Result()
 
 			if err = assert.Equal(
-				wantStatusCode, res.StatusCode,
+				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
 			}

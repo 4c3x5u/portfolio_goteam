@@ -23,5 +23,8 @@ func (v TitleValidator) Validate(title string) error {
 	if title == "" {
 		return errTitleEmpty
 	}
-	return errTitleTooLong
+	if len(title) > 50 {
+		return errTitleTooLong
+	}
+	return nil
 }

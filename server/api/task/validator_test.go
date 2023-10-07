@@ -27,6 +27,11 @@ func TestTitleValidator(t *testing.T) {
 			title:   "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 			wantErr: errTitleTooLong,
 		},
+		{
+			name:    "Success",
+			title:   "Some Task",
+			wantErr: nil,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			err := sut.Validate(c.title)

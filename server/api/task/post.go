@@ -1,16 +1,22 @@
 package task
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
+
 	"server/api"
+	"server/dbaccess"
+	columnTable "server/dbaccess/column"
 	pkgLog "server/log"
 )
 
 // ReqBody defines the request body for requests handled by method handlers.
 type ReqBody struct {
-	Title string `json:"title"`
+	Title    string `json:"title"`
+	ColumnID int    `json:"column"`
 }
 
 // ResBody defines the response body for requests handled by method handlers.
@@ -22,14 +28,21 @@ type ResBody struct {
 // requests.
 type POSTHandler struct {
 	titleValidator api.StringValidator
+	columnSelector dbaccess.Selector[columnTable.Record]
 	log            pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	titleValidator api.StringValidator, log pkgLog.Errorer,
+	titleValidator api.StringValidator,
+	columnSelector dbaccess.Selector[columnTable.Record],
+	log pkgLog.Errorer,
 ) *POSTHandler {
-	return &POSTHandler{titleValidator: titleValidator, log: log}
+	return &POSTHandler{
+		titleValidator: titleValidator,
+		columnSelector: columnSelector,
+		log:            log,
+	}
 }
 
 // Handle handles the POST requests sent to the task route.
@@ -43,6 +56,7 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
+	// Validate task title.
 	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, errTitleEmpty) {
@@ -58,6 +72,19 @@ func (h *POSTHandler) Handle(
 		w.WriteHeader(http.StatusBadRequest)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
 			Error: errMsg,
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	if _, err := h.columnSelector.Select(
+		strconv.Itoa(reqBody.ColumnID),
+	); errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "Column not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
