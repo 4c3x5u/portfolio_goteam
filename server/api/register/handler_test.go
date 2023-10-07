@@ -36,8 +36,8 @@ func TestHandler(t *testing.T) {
 	// Used in status 400 cases to assert on validation errors.
 	assertOnValidationErrs := func(
 		wantValidationErrs ValidationErrs,
-	) func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {
-		return func(t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response) {
+	) func(*testing.T, *http.Response, string) {
+		return func(t *testing.T, r *http.Response, _ string) {
 			resBody := &ResBody{}
 			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
@@ -54,17 +54,6 @@ func TestHandler(t *testing.T) {
 				wantValidationErrs.Password,
 				resBody.Errs.Password,
 			); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
-	// Used in status 500 error cases to assert on the logged error message.
-	assertOnLoggedErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *pkgLog.FakeErrorer, *http.Response) {
-		return func(t *testing.T, l *pkgLog.FakeErrorer, _ *http.Response) {
-			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
 				t.Error(err)
 			}
 		}
@@ -114,9 +103,7 @@ func TestHandler(t *testing.T) {
 		tokenGeneratorOutRes string
 		tokenGeneratorOutErr error
 		wantStatusCode       int
-		assertFunc           func(
-			*testing.T, *pkgLog.FakeErrorer, *http.Response,
-		)
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
 			name: "BasicValidatorErrs",
@@ -167,7 +154,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assertOnLoggedErr("user selector error"),
+			assertFunc:           assert.OnLoggedErr("user selector error"),
 		},
 		{
 			name:                 "HasherError",
@@ -181,7 +168,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assertOnLoggedErr("hasher error"),
+			assertFunc:           assert.OnLoggedErr("hasher error"),
 		},
 		{
 			name:                 "UserInserterError",
@@ -195,7 +182,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assertOnLoggedErr("inserter error"),
+			assertFunc:           assert.OnLoggedErr("inserter error"),
 		},
 		{
 			name:                 "TokenGeneratorError",
@@ -209,9 +196,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutRes: "",
 			tokenGeneratorOutErr: errors.New("token generator error"),
 			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc: func(
-				t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response,
-			) {
+			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				resBody := &ResBody{}
 				if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 					t.Fatal(err)
@@ -239,7 +224,7 @@ func TestHandler(t *testing.T) {
 			tokenGeneratorOutErr: nil,
 			wantStatusCode:       http.StatusOK,
 			assertFunc: func(
-				t *testing.T, _ *pkgLog.FakeErrorer, r *http.Response,
+				t *testing.T, r *http.Response, _ string,
 			) {
 				authTokenFound := false
 				for _, ck := range r.Cookies() {
@@ -299,7 +284,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions
-			c.assertFunc(t, log, res)
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }

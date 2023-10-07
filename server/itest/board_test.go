@@ -48,25 +48,6 @@ func TestBoard(t *testing.T) {
 		},
 	)
 
-	// Used in status 400 error cases to assert on the error message.
-	assertOnErrMsg := func(
-		wantErrMsg string,
-	) func(*testing.T, *httptest.ResponseRecorder) {
-		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := boardAPI.ResBody{}
-			if err := json.NewDecoder(w.Result().Body).Decode(
-				&resBody,
-			); err != nil {
-				t.Error(err)
-			}
-			if err := assert.Equal(
-				wantErrMsg, resBody.Error,
-			); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
 	t.Run("Auth", func(t *testing.T) {
 		for _, c := range []struct {
 			name     string
@@ -114,21 +95,21 @@ func TestBoard(t *testing.T) {
 			authFunc       func(*http.Request)
 			boardName      string
 			wantStatusCode int
-			assertFunc     func(*testing.T, *httptest.ResponseRecorder)
+			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:           "EmptyBoardName",
 				authFunc:       addBearerAuth(jwtBob123),
 				boardName:      "",
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assertOnErrMsg("Board name cannot be empty."),
+				assertFunc:     assert.OnResErr("Board name cannot be empty."),
 			},
 			{
 				name:           "TooLongBoardName",
 				authFunc:       addBearerAuth(jwtBob123),
 				boardName:      "A Board Whose Name Is Just Too Long!",
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
 				)},
 			{
@@ -136,7 +117,7 @@ func TestBoard(t *testing.T) {
 				authFunc:       addBearerAuth(jwtBob123),
 				boardName:      "bob123's new board",
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per user. Please delete one of your boards " +
 						"to create a new one.",
@@ -146,7 +127,7 @@ func TestBoard(t *testing.T) {
 				authFunc:       addBearerAuth(jwtBob124),
 				boardName:      "bob124's new board",
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(*testing.T, *httptest.ResponseRecorder) {
+				assertFunc: func(*testing.T, *http.Response, string) {
 					// Assert that bob124 is assigned to the board as admin.
 					var boardCount int
 					err := db.QueryRow(
@@ -206,7 +187,7 @@ func TestBoard(t *testing.T) {
 				}
 
 				// Run case-specific assertions.
-				c.assertFunc(t, w)
+				c.assertFunc(t, res, "")
 			})
 		}
 	})
@@ -352,7 +333,7 @@ func TestBoard(t *testing.T) {
 			boardName  string
 			authFunc   func(*http.Request)
 			statusCode int
-			assertFunc func(*testing.T, *httptest.ResponseRecorder)
+			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:       "IDEmpty",
@@ -360,7 +341,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Board ID cannot be empty."),
+				assertFunc: assert.OnResErr("Board ID cannot be empty."),
 			},
 			{
 				name:       "IDNotInt",
@@ -368,7 +349,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Board ID must be an integer."),
+				assertFunc: assert.OnResErr("Board ID must be an integer."),
 			},
 			{
 				name:       "BoardNameEmpty",
@@ -376,7 +357,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Board name cannot be empty."),
+				assertFunc: assert.OnResErr("Board name cannot be empty."),
 			},
 			{
 				name:       "BoardNameTooLong",
@@ -384,7 +365,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "A Board Whose Name Is Just Too Long!",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
 				),
 			},
@@ -394,7 +375,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusNotFound,
-				assertFunc: assertOnErrMsg("Board not found."),
+				assertFunc: assert.OnResErr("Board not found."),
 			},
 			{
 				name:       "UserBoardNotFound",
@@ -402,7 +383,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(jwtBob124),
 				statusCode: http.StatusForbidden,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
 			},
@@ -412,7 +393,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusForbidden,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"Only board admins can edit the board.",
 				),
 			},
@@ -422,7 +403,7 @@ func TestBoard(t *testing.T) {
 				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *httptest.ResponseRecorder) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var boardName string
 					err := db.QueryRow(
 						"SELECT name FROM app.board WHERE id = 2",
@@ -461,7 +442,7 @@ func TestBoard(t *testing.T) {
 					t.Error(err)
 				}
 
-				c.assertFunc(t, w)
+				c.assertFunc(t, res, "")
 			})
 		}
 	})

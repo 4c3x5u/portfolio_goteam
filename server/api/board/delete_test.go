@@ -27,19 +27,8 @@ func TestDELETEHandler(t *testing.T) {
 		validator, userBoardSelector, userBoardDeleter, log,
 	)
 
-	// Used in status 500 cases to assert on the logged error message.
-	assertOnLoggedErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *pkgLog.FakeErrorer) {
-		return func(t *testing.T, l *pkgLog.FakeErrorer) {
-			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
 	// Used on cases where no case-specific assertions are required.
-	emptyAssertFunc := func(*testing.T, *pkgLog.FakeErrorer) {}
+	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
 
 	for _, c := range []struct {
 		name                        string
@@ -48,7 +37,7 @@ func TestDELETEHandler(t *testing.T) {
 		userBoardSelectorOutErr     error
 		boardDeleterOutErr          error
 		wantStatusCode              int
-		assertFunc                  func(*testing.T, *pkgLog.FakeErrorer)
+		assertFunc                  func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:                        "ValidatorErr",
@@ -66,7 +55,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			boardDeleterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
@@ -95,7 +84,9 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardDeleterOutErr:          errors.New("delete board error"),
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc:                  assertOnLoggedErr("delete board error"),
+			assertFunc: assert.OnLoggedErr(
+				"delete board error",
+			),
 		},
 		{
 			name:                        "Success",
@@ -131,7 +122,7 @@ func TestDELETEHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions.
-			c.assertFunc(t, log)
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	boardAPI "server/api/board"
 	columnAPI "server/api/column"
 	"server/assert"
 	"server/auth"
@@ -30,25 +29,6 @@ func TestColumn(t *testing.T) {
 		columnTable.NewUpdater(db),
 		log,
 	)
-
-	// Used in status 400 error cases to assert on the error message.
-	assertOnErrMsg := func(
-		wantErrMsg string,
-	) func(*testing.T, *httptest.ResponseRecorder) {
-		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := boardAPI.ResBody{}
-			if err := json.NewDecoder(w.Result().Body).Decode(
-				&resBody,
-			); err != nil {
-				t.Error(err)
-			}
-			if err := assert.Equal(
-				wantErrMsg, resBody.Error,
-			); err != nil {
-				t.Error(err)
-			}
-		}
-	}
 
 	t.Run("Auth", func(t *testing.T) {
 		for _, c := range []struct {
@@ -93,7 +73,7 @@ func TestColumn(t *testing.T) {
 			reqBody    columnAPI.ReqBody
 			authFunc   func(*http.Request)
 			statusCode int
-			assertFunc func(*testing.T, *httptest.ResponseRecorder)
+			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:       "IDEmpty",
@@ -101,7 +81,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Column ID cannot be empty."),
+				assertFunc: assert.OnResErr("Column ID cannot be empty."),
 			},
 			{
 				name:       "IDNotInt",
@@ -109,7 +89,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Column ID must be an integer."),
+				assertFunc: assert.OnResErr("Column ID must be an integer."),
 			},
 			{
 				name:       "ColumnNotFound",
@@ -117,7 +97,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assertOnErrMsg("Column not found."),
+				assertFunc: assert.OnResErr("Column not found."),
 			},
 			{
 				name:       "NoAccess",
@@ -125,7 +105,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob124),
 				statusCode: http.StatusUnauthorized,
-				assertFunc: assertOnErrMsg(
+				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
 			},
@@ -135,7 +115,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusUnauthorized,
-				assertFunc: assertOnErrMsg("Only board admins can move tasks."),
+				assertFunc: assert.OnResErr("Only board admins can move tasks."),
 			},
 			{
 				name:       "TaskNotFound",
@@ -143,7 +123,7 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusNotFound,
-				assertFunc: assertOnErrMsg("Task not found."),
+				assertFunc: assert.OnResErr("Task not found."),
 			},
 			{
 				name:       "Success",
@@ -151,7 +131,9 @@ func TestColumn(t *testing.T) {
 				reqBody:    columnAPI.ReqBody{{ID: 5, Order: 2}},
 				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *httptest.ResponseRecorder) {
+				assertFunc: func(
+					t *testing.T, _ *http.Response, _ string,
+				) {
 					var columnID, order int
 					if err := db.QueryRow(
 						`SELECT columnID, "order" FROM app.task WHERE id = $1`,
@@ -191,7 +173,7 @@ func TestColumn(t *testing.T) {
 					t.Error(err)
 				}
 
-				c.assertFunc(t, w)
+				c.assertFunc(t, res, "")
 			})
 		}
 	})

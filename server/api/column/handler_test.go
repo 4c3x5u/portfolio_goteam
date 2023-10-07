@@ -39,33 +39,6 @@ func TestHandler(t *testing.T) {
 		log,
 	)
 
-	// Used in status 400 cases to assert on the error returned in res body.
-	assertOnResErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *http.Response) {
-		return func(
-			t *testing.T, res *http.Response,
-		) {
-			resBody := ResBody{}
-			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
-	assertOnLoggedErr := func(wantErrMsg string) func(*testing.T, *http.Response) {
-		return func(t *testing.T, _ *http.Response) {
-			if err := assert.Equal(
-				wantErrMsg, log.InMessage,
-			); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
 			http.MethodConnect, http.MethodGet, http.MethodPost,
@@ -106,7 +79,7 @@ func TestHandler(t *testing.T) {
 		userBoardSelectorOutErr     error
 		columnUpdaterOutErr         error
 		wantStatusCode              int
-		assertFunc                  func(t *testing.T, r *http.Response)
+		assertFunc                  func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:                        "InvalidAuthToken",
@@ -117,7 +90,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc: func(t *testing.T, res *http.Response) {
+			assertFunc: func(t *testing.T, res *http.Response, _ string) {
 				name, value := auth.WWWAuthenticate()
 				if err := assert.Equal(
 					value, res.Header.Get(name),
@@ -135,7 +108,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  assertOnResErr("invalid id"),
+			assertFunc:                  assert.OnResErr("invalid id"),
 		},
 		{
 			name:                        "ColumnNotFound",
@@ -146,7 +119,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  assertOnResErr("Column not found."),
+			assertFunc:                  assert.OnResErr("Column not found."),
 		},
 		{
 			name:                        "ColumnSelectorErr",
@@ -157,7 +130,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
@@ -170,7 +143,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
@@ -183,7 +156,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
@@ -196,7 +169,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         nil,
 			wantStatusCode:              http.StatusUnauthorized,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"Only board admins can move tasks.",
 			),
 		},
@@ -209,7 +182,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         sql.ErrNoRows,
 			wantStatusCode:              http.StatusNotFound,
-			assertFunc:                  assertOnResErr("Task not found."),
+			assertFunc:                  assert.OnResErr("Task not found."),
 		},
 		{
 			name:                        "ColumnUpdaterErr",
@@ -220,7 +193,7 @@ func TestHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			columnUpdaterOutErr:         sql.ErrConnDone,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
@@ -259,7 +232,7 @@ func TestHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions.
-			c.assertFunc(t, res)
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }

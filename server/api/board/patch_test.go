@@ -37,26 +37,6 @@ func TestPATCHHandler(t *testing.T) {
 		log,
 	)
 
-	assertOnResErr := func(errMsg string) func(*testing.T, *http.Response) {
-		return func(t *testing.T, res *http.Response) {
-			var resBody ResBody
-			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			if err := assert.Equal(errMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
-	assertOnLoggedErr := func(errMsg string) func(*testing.T, *http.Response) {
-		return func(t *testing.T, res *http.Response) {
-			if err := assert.Equal(errMsg, log.InMessage); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
 	for _, c := range []struct {
 		name                        string
 		idValidatorOutErr           error
@@ -66,7 +46,7 @@ func TestPATCHHandler(t *testing.T) {
 		userBoardSelectorOutErr     error
 		boardUpdaterOutErr          error
 		wantStatusCode              int
-		assertFunc                  func(*testing.T, *http.Response)
+		assertFunc                  func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:                        "IDValidatorErr",
@@ -77,7 +57,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"Board ID cannot be empty.",
 			),
 		},
@@ -90,7 +70,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"Board name cannot be empty.",
 			),
 		},
@@ -103,7 +83,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusNotFound,
-			assertFunc:                  assertOnResErr("Board not found."),
+			assertFunc:                  assert.OnResErr("Board not found."),
 		},
 		{
 			name:                        "BoardSelectorErr",
@@ -114,7 +94,9 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc:                  assertOnLoggedErr(sql.ErrConnDone.Error()),
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
 		},
 		{
 			name:                        "UserDoesNotHaveAccess",
@@ -125,7 +107,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrNoRows,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusForbidden,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
@@ -138,7 +120,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     sql.ErrConnDone,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
@@ -151,7 +133,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusForbidden,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"Only board admins can edit the board.",
 			),
 		},
@@ -164,7 +146,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          sql.ErrNoRows,
 			wantStatusCode:              http.StatusInternalServerError,
-			assertFunc: assertOnLoggedErr(
+			assertFunc: assert.OnLoggedErr(
 				sql.ErrNoRows.Error(),
 			),
 		},
@@ -177,7 +159,7 @@ func TestPATCHHandler(t *testing.T) {
 			userBoardSelectorOutErr:     nil,
 			boardUpdaterOutErr:          nil,
 			wantStatusCode:              http.StatusOK,
-			assertFunc: func(_ *testing.T, _ *http.Response) {
+			assertFunc: func(*testing.T, *http.Response, string) {
 			},
 		},
 	} {
@@ -210,7 +192,7 @@ func TestPATCHHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			c.assertFunc(t, res)
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }

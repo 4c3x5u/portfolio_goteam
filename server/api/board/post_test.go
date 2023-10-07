@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,34 +27,6 @@ func TestPOSTHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(validator, userBoardCounter, boardInserter, log)
 
-	// Used in status 500 cases to assert on the logged error message.
-	assertOnLoggedErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *pkgLog.FakeErrorer, io.ReadCloser) {
-		return func(t *testing.T, l *pkgLog.FakeErrorer, _ io.ReadCloser) {
-			if err := assert.Equal(wantErrMsg, l.InMessage); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
-	// Used in status 400 cases to assert on the error returned in res body.
-	assertOnResErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *pkgLog.FakeErrorer, io.ReadCloser) {
-		return func(
-			t *testing.T, _ *pkgLog.FakeErrorer, rawResBody io.ReadCloser,
-		) {
-			resBody := ResBody{}
-			if err := json.NewDecoder(rawResBody).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
-		}
-	}
-
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                   string
@@ -64,18 +35,18 @@ func TestPOSTHandler(t *testing.T) {
 			userBoardCounterOutErr error
 			boardInserterOutErr    error
 			wantStatusCode         int
-			assertFunc             func(
-				*testing.T, *pkgLog.FakeErrorer, io.ReadCloser,
-			)
+			assertFunc             func(*testing.T, *http.Response, string)
 		}{
 			{
-				name:                   "InvalidRequest",
-				validatorOutErr:        errors.New("Board name cannot be empty."),
+				name: "InvalidRequest",
+				validatorOutErr: errors.New(
+					"Board name cannot be empty.",
+				),
 				userBoardCounterOutRes: 0,
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				assertFunc: assertOnResErr(
+				assertFunc: assert.OnResErr(
 					"Board name cannot be empty.",
 				),
 			},
@@ -86,7 +57,7 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: sql.ErrConnDone,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusInternalServerError,
-				assertFunc: assertOnLoggedErr(
+				assertFunc: assert.OnLoggedErr(
 					sql.ErrConnDone.Error(),
 				),
 			},
@@ -97,7 +68,7 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: nil,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusBadRequest,
-				assertFunc: assertOnResErr(
+				assertFunc: assert.OnResErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per user. Please delete one of your boards " +
 						"to create a new one.",
@@ -110,7 +81,9 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    errors.New("create board error"),
 				wantStatusCode:         http.StatusInternalServerError,
-				assertFunc:             assertOnLoggedErr("create board error"),
+				assertFunc: assert.OnLoggedErr(
+					"create board error",
+				),
 			},
 			{
 				name:                   "Success",
@@ -119,9 +92,7 @@ func TestPOSTHandler(t *testing.T) {
 				userBoardCounterOutErr: sql.ErrNoRows,
 				boardInserterOutErr:    nil,
 				wantStatusCode:         http.StatusOK,
-				assertFunc: func(
-					*testing.T, *pkgLog.FakeErrorer, io.ReadCloser,
-				) {
+				assertFunc: func(*testing.T, *http.Response, string) {
 				},
 			},
 		} {
@@ -157,7 +128,7 @@ func TestPOSTHandler(t *testing.T) {
 				}
 
 				// Run case-specific assertions.
-				c.assertFunc(t, log, w.Result().Body)
+				c.assertFunc(t, res, log.InMessage)
 			})
 		}
 	})
