@@ -20,4 +20,15 @@ func TestTitleValidator(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	t.Run("TitleTooLong", func(t *testing.T) {
+		err := sut.Validate(
+			"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
+		)
+		if assertErr := assert.Equal(
+			"Task title cannot be longer than 50 characters.", err.Error(),
+		); assertErr != nil {
+			t.Error(err)
+		}
+	})
 }

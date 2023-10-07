@@ -104,4 +104,47 @@ func TestTaskAPI(t *testing.T) {
 			t.Error(err)
 		}
 	})
+
+	t.Run("TitleTooLong", func(t *testing.T) {
+		wantStatusCode := http.StatusBadRequest
+		wantErrMsg := "Task title cannot be longer than 50 characters."
+
+		task, err := json.Marshal(map[string]any{
+			"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
+				"asd",
+			"description": "",
+			"column":      0,
+			"subtasks":    []map[string]any{},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		req, err := http.NewRequest(
+			http.MethodPost, "", bytes.NewReader(task),
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		addBearerAuth(jwtBob123)(req)
+
+		w := httptest.NewRecorder()
+
+		sut.ServeHTTP(w, req)
+		res := w.Result()
+
+		if err = assert.Equal(
+			wantStatusCode, res.StatusCode,
+		); err != nil {
+			t.Error(err)
+		}
+
+		resBody := taskAPI.ResBody{}
+		if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+			t.Error(err)
+		}
+		if err := assert.Equal(wantErrMsg, resBody.Error); err != nil {
+			t.Error(err)
+		}
+	})
 }
