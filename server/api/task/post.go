@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"server/api"
+	pkgLog "server/log"
 )
 
 // ReqBody defines the request body for requests handled by method handlers.
@@ -21,11 +22,14 @@ type ResBody struct {
 // requests.
 type POSTHandler struct {
 	titleValidator api.StringValidator
+	log            pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
-func NewPOSTHandler(titleValidator api.StringValidator) *POSTHandler {
-	return &POSTHandler{titleValidator: titleValidator}
+func NewPOSTHandler(
+	titleValidator api.StringValidator, log pkgLog.Errorer,
+) *POSTHandler {
+	return &POSTHandler{titleValidator: titleValidator, log: log}
 }
 
 // Handle handles the POST requests sent to the task route.
@@ -35,6 +39,7 @@ func (h *POSTHandler) Handle(
 	var reqBody ReqBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 
@@ -46,6 +51,7 @@ func (h *POSTHandler) Handle(
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
 			return
 		}
 
@@ -54,6 +60,7 @@ func (h *POSTHandler) Handle(
 			Error: errMsg,
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
 		}
 		return
 	}

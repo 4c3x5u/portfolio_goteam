@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	pkgLog "server/log"
 	"testing"
 
 	"server/api"
@@ -17,7 +18,8 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
 	titleValidator := &api.FakeStringValidator{}
-	sut := NewPOSTHandler(titleValidator)
+	log := &pkgLog.FakeErrorer{}
+	sut := NewPOSTHandler(titleValidator, log)
 
 	for _, c := range []struct {
 		name                 string

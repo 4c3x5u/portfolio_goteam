@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	pkgLog "server/log"
 	"testing"
 
 	"server/api"
@@ -22,6 +23,7 @@ func TestTaskAPI(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				taskAPI.NewTitleValidator(),
+				pkgLog.New(),
 			),
 		},
 	)
