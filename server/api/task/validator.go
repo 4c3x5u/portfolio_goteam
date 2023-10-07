@@ -3,8 +3,13 @@ package task
 import "errors"
 
 var (
-	errTitleEmpty   error = errors.New("title empty")
-	errTitleTooLong error = errors.New("title too long")
+	// errTitleEmpty is returned from TitleValidator.Validate when the
+	// given title is empty.
+	errTitleEmpty = errors.New("title empty")
+
+	// errTitleTooLong is returned from TitleValidator.Validate when the
+	// given title is longer than 50 characters.
+	errTitleTooLong = errors.New("title too long")
 )
 
 // TitleValidator can be used to validate a task title.
