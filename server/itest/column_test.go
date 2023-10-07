@@ -111,6 +111,13 @@ func TestColumn(t *testing.T) {
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Column ID cannot be empty."),
 			},
+			{
+				name:       "IDNotInt",
+				id:         "A",
+				authFunc:   addBearerAuth(bob123AuthToken),
+				statusCode: http.StatusBadRequest,
+				assertFunc: assertOnErrMsg("Column ID must be an integer."),
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				tasks, err := json.Marshal([]map[string]int{
