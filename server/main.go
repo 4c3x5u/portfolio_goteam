@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
+	columnAPI "server/api/column"
+	columnTable "server/dbaccess/column"
 
 	"server/api"
 	boardAPI "server/api/board"
@@ -100,6 +102,16 @@ func main() {
 				log,
 			),
 		},
+	))
+
+	mux.Handle("/column", columnAPI.NewHandler(
+		auth.NewBearerTokenReader(),
+		auth.NewJWTValidator(env.JWTKey),
+		columnAPI.NewIDValidator(),
+		columnTable.NewSelector(db),
+		userboardTable.NewSelector(db),
+		columnTable.NewUpdater(db),
+		log,
 	))
 
 	// Set up CORS.
