@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"server/api"
 )
@@ -38,9 +39,19 @@ func (h *POSTHandler) Handle(
 	}
 
 	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
+		var errMsg string
+		if errors.Is(err, errTitleEmpty) {
+			errMsg = "Task title cannot be empty."
+		} else if errors.Is(err, errTitleTooLong) {
+			errMsg = "Task title cannot be longer than 50 characters."
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		w.WriteHeader(http.StatusBadRequest)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
-			Error: err.Error(),
+			Error: errMsg,
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}

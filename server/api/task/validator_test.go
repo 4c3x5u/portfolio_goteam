@@ -12,23 +12,27 @@ import (
 func TestTitleValidator(t *testing.T) {
 	sut := NewTitleValidator()
 
-	t.Run("TitleEmpty", func(t *testing.T) {
-		err := sut.Validate("")
-		if assertErr := assert.Equal(
-			"Task title cannot be empty.", err.Error(),
-		); assertErr != nil {
-			t.Error(err)
-		}
-	})
-
-	t.Run("TitleTooLong", func(t *testing.T) {
-		err := sut.Validate(
-			"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
-		)
-		if assertErr := assert.Equal(
-			"Task title cannot be longer than 50 characters.", err.Error(),
-		); assertErr != nil {
-			t.Error(err)
-		}
-	})
+	for _, c := range []struct {
+		name    string
+		title   string
+		wantErr error
+	}{
+		{
+			name:    "TitleEmpty",
+			title:   "",
+			wantErr: errTitleEmpty,
+		},
+		{
+			name:    "TitleTooLong",
+			title:   "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
+			wantErr: errTitleTooLong,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			err := sut.Validate(c.title)
+			if assertErr := assert.SameError(c.wantErr, err); assertErr != nil {
+				t.Error(err)
+			}
+		})
+	}
 }
