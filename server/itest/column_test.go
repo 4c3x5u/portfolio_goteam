@@ -7,14 +7,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"server/api/board"
-	columnTable "server/dbaccess/column"
-	userboardTable "server/dbaccess/userboard"
 	"testing"
 
+	boardAPI "server/api/board"
 	columnAPI "server/api/column"
 	"server/assert"
 	"server/auth"
+	columnTable "server/dbaccess/column"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -36,7 +36,7 @@ func TestColumn(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *httptest.ResponseRecorder) {
 		return func(t *testing.T, w *httptest.ResponseRecorder) {
-			resBody := board.ResBody{}
+			resBody := boardAPI.ResBody{}
 			if err := json.NewDecoder(w.Result().Body).Decode(
 				&resBody,
 			); err != nil {
