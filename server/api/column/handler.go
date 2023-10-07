@@ -100,7 +100,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the user has the right to edit this column.
 	if isAdmin, err := h.userBoardSelector.Select(
-		sub, strconv.Itoa(column.ID),
+		sub, strconv.Itoa(column.BoardID),
 	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(

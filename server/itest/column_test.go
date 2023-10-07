@@ -124,6 +124,15 @@ func TestColumn(t *testing.T) {
 					"You do not have access to this board.",
 				),
 			},
+			{
+				name:       "NotAdmin",
+				id:         "6",
+				authFunc:   addBearerAuth(jwtBob123),
+				statusCode: http.StatusUnauthorized,
+				assertFunc: assertOnErrMsg(
+					"Only board admins can move tasks.",
+				),
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				tasks, err := json.Marshal([]map[string]int{

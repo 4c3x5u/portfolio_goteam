@@ -143,7 +143,7 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                        "UserIsNotAdmin",
+			name:                        "NotAdmin",
 			idValidatorOutErr:           nil,
 			nameValidatorOutErr:         nil,
 			boardSelectorOutErr:         nil,

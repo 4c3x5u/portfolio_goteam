@@ -71,7 +71,8 @@ VALUES
     (1, 2), -- id: 2 (used for board DELETE tests)
     (1, 3), -- id: 3 (used for board DELETE tests)
     (1, 4), -- id: 4 (used for board DELETE tests)
-    (5, 1); -- id: 5
+    (5, 1), -- id: 5
+    (4, 1); -- id: 6
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")

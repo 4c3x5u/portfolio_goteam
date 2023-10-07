@@ -237,7 +237,7 @@ func TestBoard(t *testing.T) {
 				assertFunc:     func(*testing.T) {},
 			},
 			{
-				name:           "UserNotAdmin",
+				name:           "NotAdmin",
 				id:             "4",
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
@@ -407,7 +407,7 @@ func TestBoard(t *testing.T) {
 				),
 			},
 			{
-				name:       "UserNotAdmin",
+				name:       "NotAdmin",
 				id:         "4",
 				boardName:  "New Board Name",
 				authFunc:   addBearerAuth(jwtBob123),

@@ -188,7 +188,7 @@ func TestHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                        "UserIsNotAdmin",
+			name:                        "NotAdmin",
 			authTokenValidatorOutSub:    "bob123",
 			idValidatorOutErr:           nil,
 			columnSelectorOutErr:        nil,
