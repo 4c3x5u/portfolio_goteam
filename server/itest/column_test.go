@@ -31,16 +31,6 @@ func TestColumn(t *testing.T) {
 		log,
 	)
 
-	const bob123AuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
-		"ib2IxMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc"
-
-	// used in various test cases to authenticate the request sent
-	addBearerAuth := func(token string) func(*http.Request) {
-		return func(req *http.Request) {
-			req.Header.Add("Authorization", "Bearer "+token)
-		}
-	}
-
 	// Used in status 400 error cases to assert on the error message.
 	assertOnErrMsg := func(
 		wantErrMsg string,
@@ -107,23 +97,32 @@ func TestColumn(t *testing.T) {
 			{
 				name:       "IDEmpty",
 				id:         "",
-				authFunc:   addBearerAuth(bob123AuthToken),
+				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Column ID cannot be empty."),
 			},
 			{
 				name:       "IDNotInt",
 				id:         "A",
-				authFunc:   addBearerAuth(bob123AuthToken),
+				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Column ID must be an integer."),
 			},
 			{
 				name:       "ColumnNotFound",
 				id:         "1001",
-				authFunc:   addBearerAuth(bob123AuthToken),
+				authFunc:   addBearerAuth(jwtBob123),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assertOnErrMsg("Column not found."),
+			},
+			{
+				name:       "NoAccess",
+				id:         "5",
+				authFunc:   addBearerAuth(jwtBob124),
+				statusCode: http.StatusUnauthorized,
+				assertFunc: assertOnErrMsg(
+					"You do not have access to this board.",
+				),
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {

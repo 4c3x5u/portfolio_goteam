@@ -28,8 +28,8 @@ func TestUpdater(t *testing.T) {
 			{ID: 2, Order: 2},
 			{ID: 3, Order: 3},
 		}
-		sqlUpdateTask = `UPDATE app.task SET columnID = \$1 AND order = \$2 ` +
-			`WHERE id = \$3`
+		sqlUpdateTask = `UPDATE app.task ` +
+			`SET columnID = \$1, "order" = \$2 WHERE id = \$3`
 		errA = errors.New("an error occurred")
 		errB = errors.New("another error occurred")
 	)

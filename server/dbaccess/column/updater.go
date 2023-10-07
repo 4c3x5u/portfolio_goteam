@@ -39,7 +39,8 @@ func (u Updater) Update(columnID string, tasks []Task) error {
 	for _, task := range tasks {
 		if _, err := tx.ExecContext(
 			ctx,
-			"UPDATE app.task SET columnID = $1 AND order = $2 WHERE id = $3",
+			`UPDATE app.task SET columnID = $1, "order" = $2 `+
+				`WHERE id = $3`,
 			columnID, task.Order, task.ID,
 		); err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {

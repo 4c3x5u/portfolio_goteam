@@ -5,12 +5,33 @@
 // application to serve an API endpoint.
 package itest
 
-import "database/sql"
+import (
+	"database/sql"
+	"net/http"
+)
 
 // db is the database connection pool used during integration testing.
 // It is set in main_test.go/TestMain.
 var db *sql.DB
 
-// jwtKey is the JWT key used for signing and validating JWTs during integration
-// testing.
-const jwtKey = "itest-jwt-key-0123456789qwerty"
+const (
+	// jwtKey is the JWT key used for signing and validating JWTs during
+	// integration testing.
+	jwtKey = "itest-jwt-key-0123456789qwerty"
+
+	// jwtBob123 is the JWT belonging to the bob123 test user.
+	jwtBob123 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
+		"ib2IxMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc"
+
+	// jwtBob124 is the JWT belonging to the bob124 test user.
+	jwtBob124 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
+		"ib2IxMjQifQ.LqENrj9APUHgQ3X0HRN6-IFMIg6nyo0_n74KfoxA0qI"
+)
+
+// addBearerAuth is used in various test cases to authenticate the request
+// being sent to a handler.
+func addBearerAuth(token string) func(*http.Request) {
+	return func(req *http.Request) {
+		req.Header.Add("Authorization", "Bearer "+token)
+	}
+}
