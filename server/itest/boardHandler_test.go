@@ -18,7 +18,9 @@ import (
 	pkgLog "server/log"
 )
 
-func TestBoard(t *testing.T) {
+// TestBoardHandler tests the http.Handler for the board API route and asserts
+// that it behaves correctly during various execution paths.
+func TestBoardHandler(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
 	sut := api.NewHandler(

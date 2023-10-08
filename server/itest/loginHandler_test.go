@@ -18,7 +18,9 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func TestLogin(t *testing.T) {
+// TestLoginHandler tests the http.Handler for the login API route and asserts
+// that it behaves correctly during various execution paths.
+func TestLoginHandler(t *testing.T) {
 	sut := loginAPI.NewHandler(
 		loginAPI.NewValidator(),
 		userTable.NewSelector(db),

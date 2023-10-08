@@ -19,7 +19,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func TestRegister(t *testing.T) {
+// TestRegisterHandler tests the http.Handler for the register API route and
+// asserts that it behaves correctly during various execution paths.
+func TestRegisterHandler(t *testing.T) {
 	sut := registerAPI.NewHandler(
 		registerAPI.NewValidator(
 			registerAPI.NewUsernameValidator(),

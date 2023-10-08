@@ -17,7 +17,9 @@ import (
 	pkgLog "server/log"
 )
 
-func TestColumn(t *testing.T) {
+// TestColumnHandler tests the http.Handler for the column API route and asserts
+// that it behaves correctly during various execution paths.
+func TestColumnHandler(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
 	sut := columnAPI.NewHandler(

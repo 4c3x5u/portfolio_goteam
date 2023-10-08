@@ -19,7 +19,9 @@ import (
 	pkgLog "server/log"
 )
 
-func TestTaskAPI(t *testing.T) {
+// TestTaskHandler tests the http.Handler for the task API route and asserts
+// that it behaves correctly during various execution paths.
+func TestTaskHandler(t *testing.T) {
 	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
