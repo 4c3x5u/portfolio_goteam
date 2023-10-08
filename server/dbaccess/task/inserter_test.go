@@ -13,7 +13,7 @@ import (
 // correct queries to the database with the correct arguments, and returns
 // whatever error occurs.
 func TestInserter(t *testing.T) {
-	task := NewTask()
+	task := NewTask(2)
 	wantErr := errors.New("an error occurred")
 
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
@@ -21,11 +21,27 @@ func TestInserter(t *testing.T) {
 
 	sut := NewInserter(db)
 
-	mock.ExpectBegin().WillReturnError(wantErr)
+	t.Run("BeginErr", func(t *testing.T) {
+		mock.ExpectBegin().WillReturnError(wantErr)
 
-	err := sut.Insert(task)
+		err := sut.Insert(task)
 
-	if assertErr := assert.SameError(err, wantErr); assertErr != nil {
-		t.Error(assertErr)
-	}
+		if assertErr := assert.SameError(err, wantErr); assertErr != nil {
+			t.Error(assertErr)
+		}
+	})
+
+	t.Run("GetHighestOrderErr", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery(
+			`SELECT "order" FROM app.task WHERE columnID = \$1 ` +
+				`ORDER BY "order" DESC LIMIT 1`,
+		).WithArgs(task.columnID).WillReturnError(wantErr)
+
+		err := sut.Insert(task)
+
+		if assertErr := assert.SameError(err, wantErr); assertErr != nil {
+			t.Error(assertErr)
+		}
+	})
 }
