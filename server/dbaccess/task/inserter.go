@@ -81,6 +81,9 @@ func (i Inserter) Insert(task Task) error {
 			taskID, subtaskTitle, order+1, false,
 		)
 		if err != nil {
+			if rollbackErr := tx.Rollback(); rollbackErr != nil {
+				return errors.Join(err, rollbackErr)
+			}
 			return err
 		}
 	}

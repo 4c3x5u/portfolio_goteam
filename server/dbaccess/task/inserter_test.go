@@ -28,7 +28,8 @@ func TestInserter(t *testing.T) {
 	task := NewTask(
 		2, "Task A", "Description A", []string{"Subtask A", "Subtask B"},
 	)
-	anErr := errors.New("an error occurred")
+	errA := errors.New("an error occurred")
+	errB := errors.New("another error occurred")
 
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer teardown()
@@ -38,14 +39,14 @@ func TestInserter(t *testing.T) {
 	for _, c := range []struct {
 		name      string
 		setUpMock func(sqlmock.Sqlmock)
-		wantErr   error
+		wantErrs  []error
 	}{
 		{
 			name: "BeginErr",
 			setUpMock: func(mock sqlmock.Sqlmock) {
-				mock.ExpectBegin().WillReturnError(anErr)
+				mock.ExpectBegin().WillReturnError(errA)
 			},
-			wantErr: anErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "SelectOrderErr",
@@ -53,9 +54,9 @@ func TestInserter(t *testing.T) {
 				mock.ExpectBegin()
 				mock.ExpectQuery(sqlSelectOrder).
 					WithArgs(task.columnID).
-					WillReturnError(anErr)
+					WillReturnError(errA)
 			},
-			wantErr: anErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "SelectOrderNoRows",
@@ -66,9 +67,9 @@ func TestInserter(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 				mock.ExpectExec(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 1).
-					WillReturnError(anErr)
+					WillReturnError(errA)
 			},
-			wantErr: anErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "InsertTaskErr",
@@ -79,9 +80,9 @@ func TestInserter(t *testing.T) {
 					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
 				mock.ExpectExec(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 6).
-					WillReturnError(anErr)
+					WillReturnError(errA)
 			},
-			wantErr: anErr,
+			wantErrs: []error{errA},
 		},
 		{
 			name: "InsertSubtaskErr",
@@ -99,16 +100,39 @@ func TestInserter(t *testing.T) {
 						`VALUES\(\$1, \$2, \$3, \$4\)`,
 				).WithArgs(
 					int64(3), task.subtaskTitles[0], 1, false,
-				).WillReturnError(anErr)
+				).WillReturnError(errA)
 				mock.ExpectRollback()
 			},
-			wantErr: anErr,
+			wantErrs: []error{errA},
+		},
+		{
+			name: "InsertSubtaskRollbackErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(sqlSelectOrder).
+					WithArgs(task.columnID).
+					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
+				mock.ExpectExec(sqlInsertTask).
+					WithArgs(task.columnID, task.title, task.description, 6).
+					WillReturnResult(sqlmock.NewResult(3, 1))
+				mock.ExpectExec(
+					`INSERT INTO app.subtask`+
+						`\(taskID, title, "order", isDone\) `+
+						`VALUES\(\$1, \$2, \$3, \$4\)`,
+				).WithArgs(
+					int64(3), task.subtaskTitles[0], 1, false,
+				).WillReturnError(errA)
+				mock.ExpectRollback().WillReturnError(errB)
+			},
+			wantErrs: []error{errA, errB},
 		},
 	} {
 		c.setUpMock(mock)
 		err := sut.Insert(task)
-		if assertErr := assert.SameError(c.wantErr, err); assertErr != nil {
-			t.Error(assertErr)
+		for _, wantErr := range c.wantErrs {
+			if assertErr := assert.SameError(wantErr, err); assertErr != nil {
+				t.Error(assertErr)
+			}
 		}
 	}
 }
