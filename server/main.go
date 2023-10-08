@@ -4,15 +4,17 @@ import (
 	"database/sql"
 	"net/http"
 	"os"
-	columnAPI "server/api/column"
-	columnTable "server/dbaccess/column"
 
 	"server/api"
 	boardAPI "server/api/board"
+	columnAPI "server/api/column"
 	loginAPI "server/api/login"
 	registerAPI "server/api/register"
+	taskAPI "server/api/task"
 	"server/auth"
 	boardTable "server/dbaccess/board"
+	columnTable "server/dbaccess/column"
+	taskTable "server/dbaccess/task"
 	userTable "server/dbaccess/user"
 	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
@@ -112,6 +114,21 @@ func main() {
 		userboardTable.NewSelector(db),
 		columnTable.NewUpdater(db),
 		log,
+	))
+
+	mux.Handle("/task", api.NewHandler(
+		auth.NewBearerTokenReader(),
+		auth.NewJWTValidator(jwtKey),
+		map[string]api.MethodHandler{
+			http.MethodPost: taskAPI.NewPOSTHandler(
+				taskAPI.NewTitleValidator(),
+				taskAPI.NewTitleValidator(),
+				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
+				taskTable.NewInserter(db),
+				pkgLog.New(),
+			),
+		},
 	))
 
 	// Set up CORS.

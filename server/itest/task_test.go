@@ -14,6 +14,7 @@ import (
 	"server/assert"
 	"server/auth"
 	columnTable "server/dbaccess/column"
+	taskTable "server/dbaccess/task"
 	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
@@ -28,6 +29,7 @@ func TestTaskAPI(t *testing.T) {
 				taskAPI.NewTitleValidator(),
 				columnTable.NewSelector(db),
 				userboardTable.NewSelector(db),
+				taskTable.NewInserter(db),
 				pkgLog.New(),
 			),
 		},
@@ -74,7 +76,7 @@ func TestTaskAPI(t *testing.T) {
 		name           string
 		task           map[string]any
 		wantStatusCode int
-		wantErrMsg     string
+		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
 			name: "TaskTitleEmpty",
@@ -82,10 +84,10 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "",
 				"description": "",
 				"column":      0,
-				"subtasks":    []map[string]any{},
+				"subtasks":    []string{},
 			},
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg:     "Task title cannot be empty.",
+			assertFunc:     assert.OnResErr("Task title cannot be empty."),
 		},
 		{
 			name: "TaskTitleTooLong",
@@ -94,10 +96,12 @@ func TestTaskAPI(t *testing.T) {
 					"asd",
 				"description": "",
 				"column":      0,
-				"subtasks":    []map[string]any{},
+				"subtasks":    []string{},
 			},
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg:     "Task title cannot be longer than 50 characters.",
+			assertFunc: assert.OnResErr(
+				"Task title cannot be longer than 50 characters.",
+			),
 		},
 		{
 			name: "SubtaskTitleEmpty",
@@ -105,12 +109,10 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "Some Task",
 				"description": "",
 				"column":      0,
-				"subtasks": []map[string]any{
-					{"title": ""},
-				},
+				"subtasks":    []string{""},
 			},
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg:     "Subtask title cannot be empty.",
+			assertFunc:     assert.OnResErr("Subtask title cannot be empty."),
 		},
 		{
 			name: "SubtaskTitleTooLong",
@@ -118,16 +120,14 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "Some Task",
 				"description": "",
 				"column":      0,
-				"subtasks": []map[string]any{
-					{
-						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqwea" +
-							"sdqweasd",
-					},
+				"subtasks": []string{
+					"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 				},
 			},
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg: "Subtask title cannot be longer than 50 " +
-				"characters.",
+			assertFunc: assert.OnResErr(
+				"Subtask title cannot be longer than 50 characters.",
+			),
 		},
 		{
 			name: "ColumnNotFound",
@@ -135,10 +135,10 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "Some Task",
 				"description": "",
 				"column":      1001,
-				"subtasks":    []map[string]any{},
+				"subtasks":    []string{"Some Subtask"},
 			},
 			wantStatusCode: http.StatusNotFound,
-			wantErrMsg:     "Column not found.",
+			assertFunc:     assert.OnResErr("Column not found."),
 		},
 		{
 			name: "NoAccess",
@@ -146,10 +146,12 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "Some Task",
 				"description": "",
 				"column":      8,
-				"subtasks":    []map[string]any{},
+				"subtasks":    []string{"Some Subtask"},
 			},
 			wantStatusCode: http.StatusUnauthorized,
-			wantErrMsg:     "You do not have access to this board.",
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
+			),
 		},
 		{
 			name: "NotAdmin",
@@ -157,12 +159,62 @@ func TestTaskAPI(t *testing.T) {
 				"title":       "Some Task",
 				"description": "",
 				"column":      9,
-				"subtasks":    []map[string]any{},
+				"subtasks":    []string{"Some Subtask"},
 			},
 			wantStatusCode: http.StatusUnauthorized,
-			wantErrMsg:     "Only board admins can create tasks.",
+			assertFunc: assert.OnResErr(
+				"Only board admins can create tasks.",
+			),
 		},
-		// todo: when testing for success, check order values too
+		{
+			name: "Success",
+			task: map[string]any{
+				"title":       "Some Task",
+				"description": "Do something. Then, do something else.",
+				"column":      10,
+				"subtasks":    []string{"Some Subtask", "Some Other Subtask"},
+			},
+			wantStatusCode: http.StatusOK,
+			assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				// A task with the order of 1 and 2 already exists in the given
+				// column. Therefore, the order of the newly created task must
+				// be 3.
+				var taskID, taskOrder int
+				if err := db.QueryRow(
+					`SELECT id, "order" FROM app.task `+
+						`WHERE columnID = $1 AND title = $2`,
+					10,
+					"Some Task",
+				).Scan(&taskID, &taskOrder); err != nil {
+					t.Error(err)
+				}
+				if err := assert.Equal(3, taskOrder); err != nil {
+					t.Error(err)
+				}
+
+				// The order of the subtasks must be set respective to their
+				// sequential order.
+				for i, subtaskTitle := range []string{
+					"Some Subtask", "Some Other Subtask",
+				} {
+					wantOrder := i + 1
+					var subtaskOrder int
+					if err := db.QueryRow(
+						`SELECT "order" FROM app.subtask `+
+							`WHERE taskID = $1 AND title = $2`,
+						taskID,
+						subtaskTitle,
+					).Scan(&subtaskOrder); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						wantOrder, subtaskOrder,
+					); err != nil {
+						t.Error(err)
+					}
+				}
+			},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			task, err := json.Marshal(c.task)
@@ -189,13 +241,7 @@ func TestTaskAPI(t *testing.T) {
 				t.Error(err)
 			}
 
-			resBody := taskAPI.ResBody{}
-			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-				t.Error(err)
-			}
-			if err := assert.Equal(c.wantErrMsg, resBody.Error); err != nil {
-				t.Error(err)
-			}
+			c.assertFunc(t, res, "")
 		})
 	}
 }
