@@ -13,6 +13,7 @@ import (
 	"server/api"
 	"server/assert"
 	columnTable "server/dbaccess/column"
+	taskTable "server/dbaccess/task"
 	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
@@ -24,12 +25,14 @@ func TestPOSTHandler(t *testing.T) {
 	subtaskTitleValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
 	userBoardSelector := &userboardTable.FakeSelector{}
+	taskInserter := &taskTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(
 		taskTitleValidator,
 		subtaskTitleValidator,
 		columnSelector,
 		userBoardSelector,
+		taskInserter,
 		log,
 	)
 
@@ -40,6 +43,7 @@ func TestPOSTHandler(t *testing.T) {
 		columnSelectorOutErr        error
 		userBoardSelectorOutRes     bool
 		userBoardSelectorOutErr     error
+		taskInserterOutErr          error
 		wantStatusCode              int
 		assertFunc                  func(*testing.T, *http.Response, string)
 	}{
@@ -50,6 +54,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be empty.",
@@ -62,6 +67,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be longer than 50 characters.",
@@ -74,6 +80,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be empty.",
@@ -86,6 +93,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be longer than 50 characters.",
@@ -98,6 +106,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        sql.ErrNoRows,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusNotFound,
 			assertFunc:                  assert.OnResErr("Column not found."),
 		},
@@ -108,6 +117,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        sql.ErrConnDone,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
@@ -120,6 +130,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     sql.ErrNoRows,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
@@ -132,6 +143,7 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     sql.ErrConnDone,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
@@ -144,9 +156,23 @@ func TestPOSTHandler(t *testing.T) {
 			columnSelectorOutErr:        nil,
 			userBoardSelectorOutRes:     false,
 			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          nil,
 			wantStatusCode:              http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"Only board admins can create tasks.",
+			),
+		},
+		{
+			name:                        "TaskInserterErr",
+			taskTitleValidatorOutErr:    nil,
+			subtaskTitleValidatorOutErr: nil,
+			columnSelectorOutErr:        nil,
+			userBoardSelectorOutRes:     true,
+			userBoardSelectorOutErr:     nil,
+			taskInserterOutErr:          sql.ErrConnDone,
+			wantStatusCode:              http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
 			),
 		},
 	} {
@@ -154,13 +180,15 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidator.OutErr = c.taskTitleValidatorOutErr
 			subtaskTitleValidator.OutErr = c.subtaskTitleValidatorOutErr
 			columnSelector.OutErr = c.columnSelectorOutErr
+			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutRes
 			userBoardSelector.OutErr = c.userBoardSelectorOutErr
+			taskInserter.OutErr = c.taskInserterOutErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"title":       "",
 				"description": "",
 				"column":      0,
-				"subtasks":    []map[string]any{{"title": ""}},
+				"subtasks":    []string{""},
 			})
 			if err != nil {
 				t.Fatal(err)

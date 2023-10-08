@@ -10,20 +10,16 @@ import (
 	"server/api"
 	"server/dbaccess"
 	columnTable "server/dbaccess/column"
+	taskTable "server/dbaccess/task"
 	pkgLog "server/log"
 )
 
-// Subtask defines the each element of the subtasks array inside incoming
-// request.
-type Subtask struct {
-	Title string `json:"title"`
-}
-
 // ReqBody defines the request body for requests handled by method handlers.
 type ReqBody struct {
-	Title    string    `json:"title"`
-	ColumnID int       `json:"column"`
-	Subtasks []Subtask `json:"subtasks"`
+	ColumnID      int      `json:"column"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	SubtaskTitles []string `json:"subtasks"`
 }
 
 // ResBody defines the response body for requests handled by method handlers.
@@ -38,6 +34,7 @@ type POSTHandler struct {
 	subtaskTitleValidator api.StringValidator
 	columnSelector        dbaccess.Selector[columnTable.Record]
 	userBoardSelector     dbaccess.RelSelector[bool]
+	taskInserter          dbaccess.Inserter[taskTable.Task]
 	log                   pkgLog.Errorer
 }
 
@@ -47,6 +44,7 @@ func NewPOSTHandler(
 	subtaskTitleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
+	taskInserter dbaccess.Inserter[taskTable.Task],
 	log pkgLog.Errorer,
 ) *POSTHandler {
 	return &POSTHandler{
@@ -54,6 +52,7 @@ func NewPOSTHandler(
 		subtaskTitleValidator: subtaskTitleValidator,
 		columnSelector:        columnSelector,
 		userBoardSelector:     userBoardSelector,
+		taskInserter:          taskInserter,
 		log:                   log,
 	}
 }
@@ -93,8 +92,8 @@ func (h *POSTHandler) Handle(
 	}
 
 	// Validate subtask titles
-	for _, subtask := range reqBody.Subtasks {
-		if err := h.subtaskTitleValidator.Validate(subtask.Title); err != nil {
+	for _, title := range reqBody.SubtaskTitles {
+		if err := h.subtaskTitleValidator.Validate(title); err != nil {
 			var errMsg string
 			if errors.Is(err, errTitleEmpty) {
 				errMsg = "Subtask title cannot be empty."
@@ -164,6 +163,18 @@ func (h *POSTHandler) Handle(
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
+	}
+
+	// Insert task and subtasks into the database.
+	if err = h.taskInserter.Insert(taskTable.NewTask(
+		reqBody.ColumnID,
+		reqBody.Title,
+		reqBody.Description,
+		reqBody.SubtaskTitles,
+	)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 }
