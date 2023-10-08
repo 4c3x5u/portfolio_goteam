@@ -83,6 +83,27 @@ func TestInserter(t *testing.T) {
 			},
 			wantErr: anErr,
 		},
+		{
+			name: "InsertSubtaskErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(sqlSelectOrder).
+					WithArgs(task.columnID).
+					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
+				mock.ExpectExec(sqlInsertTask).
+					WithArgs(task.columnID, task.title, task.description, 6).
+					WillReturnResult(sqlmock.NewResult(3, 1))
+				mock.ExpectExec(
+					`INSERT INTO app.subtask`+
+						`\(taskID, title, "order", isDone\) `+
+						`VALUES\(\$1, \$2, \$3, \$4\)`,
+				).WithArgs(
+					int64(3), task.subtaskTitles[0], 1, false,
+				).WillReturnError(anErr)
+				mock.ExpectRollback()
+			},
+			wantErr: anErr,
+		},
 	} {
 		c.setUpMock(mock)
 		err := sut.Insert(task)

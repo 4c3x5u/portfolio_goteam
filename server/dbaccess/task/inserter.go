@@ -57,7 +57,7 @@ func (i Inserter) Insert(task Task) error {
 
 	// Insert a record into task table with the given data and the order of 1
 	// higher than the highest order found in this table.
-	_, err = tx.ExecContext(
+	res, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO app.task(columnID, title, description, "order")`+
 			`VALUES ($1, $2, $3, $4)`,
@@ -65,6 +65,24 @@ func (i Inserter) Insert(task Task) error {
 	)
 	if err != nil {
 		return err
+	}
+	// Get the task ID for subtasks.
+	taskID, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	// Insert subtasks for the task into the database.
+	for order, subtaskTitle := range task.subtaskTitles {
+		_, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO app.subtask(taskID, title, "order", isDone) `+
+				`VALUES($1, $2, $3, $4)`,
+			taskID, subtaskTitle, order+1, false,
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
