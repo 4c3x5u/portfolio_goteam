@@ -35,7 +35,7 @@ func TestHandler(t *testing.T) {
 
 	// Used in status 400 cases to assert on validation errors.
 	assertOnValidationErrs := func(
-		wantValidationErrs ValidationErrs,
+		wantValidationErrs ValidationErrors,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, r *http.Response, _ string) {
 			resBody := &ResBody{}
@@ -92,110 +92,110 @@ func TestHandler(t *testing.T) {
 
 	validReqBody := ReqBody{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
-		name                 string
-		reqBody              ReqBody
-		validatorOutErr      ValidationErrs
-		userInserterOutRes   userTable.Record
-		userSelectorOutErr   error
-		hasherOutRes         []byte
-		hasherOutErr         error
-		userInserterOutErr   error
-		tokenGeneratorOutRes string
-		tokenGeneratorOutErr error
-		wantStatusCode       int
-		assertFunc           func(*testing.T, *http.Response, string)
+		name              string
+		reqBody           ReqBody
+		validationErrs    ValidationErrors
+		userRecord        userTable.Record
+		userSelectorErr   error
+		hashedPwd         []byte
+		hasherErr         error
+		userInserterErr   error
+		authToken         string
+		tokenGeneratorErr error
+		wantStatusCode    int
+		assertFunc        func(*testing.T, *http.Response, string)
 	}{
 		{
 			name: "BasicValidatorErrs",
-			validatorOutErr: ValidationErrs{
+			validationErrs: ValidationErrors{
 				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
 			},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   nil,
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			userRecord:        userTable.Record{},
+			userSelectorErr:   nil,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
-				ValidationErrs{
+				ValidationErrors{
 					Username: []string{usnTooLong},
 					Password: []string{pwdNoDigit},
 				},
 			),
 		},
 		{
-			name:                 "UsernameTaken",
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   nil,
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:              "UsernameTaken",
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   nil,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
-				ValidationErrs{
+				ValidationErrors{
 					Username: []string{"Username is already taken."},
 				},
 			),
 		},
 		{
-			name:                 "UserSelectorError",
-			reqBody:              validReqBody,
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   errors.New("user selector error"),
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("user selector error"),
+			name:              "UserSelectorError",
+			reqBody:           validReqBody,
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   errors.New("user selector error"),
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("user selector error"),
 		},
 		{
-			name:                 "HasherError",
-			reqBody:              validReqBody,
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   sql.ErrNoRows,
-			hasherOutRes:         nil,
-			hasherOutErr:         errors.New("hasher error"),
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("hasher error"),
+			name:              "HasherError",
+			reqBody:           validReqBody,
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
+			hashedPwd:         nil,
+			hasherErr:         errors.New("hasher error"),
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("hasher error"),
 		},
 		{
-			name:                 "UserInserterError",
-			reqBody:              validReqBody,
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   sql.ErrNoRows,
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   errors.New("inserter error"),
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("inserter error"),
+			name:              "UserInserterError",
+			reqBody:           validReqBody,
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   errors.New("inserter error"),
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("inserter error"),
 		},
 		{
-			name:                 "TokenGeneratorError",
-			reqBody:              validReqBody,
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   sql.ErrNoRows,
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "",
-			tokenGeneratorOutErr: errors.New("token generator error"),
-			wantStatusCode:       http.StatusInternalServerError,
+			name:              "TokenGeneratorError",
+			reqBody:           validReqBody,
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: errors.New("token generator error"),
+			wantStatusCode:    http.StatusInternalServerError,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				resBody := &ResBody{}
 				if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
@@ -212,17 +212,17 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
-			name:                 "Success",
-			reqBody:              validReqBody,
-			validatorOutErr:      ValidationErrs{},
-			userInserterOutRes:   userTable.Record{},
-			userSelectorOutErr:   sql.ErrNoRows,
-			hasherOutRes:         nil,
-			hasherOutErr:         nil,
-			userInserterOutErr:   nil,
-			tokenGeneratorOutRes: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorOutErr: nil,
-			wantStatusCode:       http.StatusOK,
+			name:              "Success",
+			reqBody:           validReqBody,
+			validationErrs:    ValidationErrors{},
+			userRecord:        userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusOK,
 			assertFunc: func(
 				t *testing.T, r *http.Response, _ string,
 			) {
@@ -250,14 +250,14 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			validator.outErrs = c.validatorOutErr
-			userSelector.OutRes = c.userInserterOutRes
-			userSelector.OutErr = c.userSelectorOutErr
-			hasher.outHash = c.hasherOutRes
-			hasher.outErr = c.hasherOutErr
-			userInserter.OutErr = c.userInserterOutErr
-			tokenGenerator.OutRes = c.tokenGeneratorOutRes
-			tokenGenerator.OutErr = c.tokenGeneratorOutErr
+			validator.validationErrs = c.validationErrs
+			userSelector.User = c.userRecord
+			userSelector.Err = c.userSelectorErr
+			hasher.hash = c.hashedPwd
+			hasher.err = c.hasherErr
+			userInserter.Err = c.userInserterErr
+			tokenGenerator.AuthToken = c.authToken
+			tokenGenerator.Err = c.tokenGeneratorErr
 
 			// Prepare request and response recorder.
 			reqBody, err := json.Marshal(c.reqBody)

@@ -31,79 +31,79 @@ func TestDELETEHandler(t *testing.T) {
 	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
 
 	for _, c := range []struct {
-		name                        string
-		validatorOutErr             error
-		userBoardSelectorOutIsAdmin bool
-		userBoardSelectorOutErr     error
-		boardDeleterOutErr          error
-		wantStatusCode              int
-		assertFunc                  func(*testing.T, *http.Response, string)
+		name                 string
+		validatorErr         error
+		userIsAdmin          bool
+		userBoardSelectorErr error
+		boardDeleterErr      error
+		wantStatusCode       int
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                        "ValidatorErr",
-			validatorOutErr:             errors.New("some validator err"),
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  emptyAssertFunc,
+			name:                 "ValidatorErr",
+			validatorErr:         errors.New("some validator err"),
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			boardDeleterErr:      nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           emptyAssertFunc,
 		},
 		{
-			name:                        "ConnDone",
-			validatorOutErr:             nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrConnDone,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "ConnDone",
+			validatorErr:         nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrConnDone,
+			boardDeleterErr:      nil,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "UserBoardNotFound",
-			validatorOutErr:             nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrNoRows,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusForbidden,
-			assertFunc:                  emptyAssertFunc,
+			name:                 "UserBoardNotFound",
+			validatorErr:         nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrNoRows,
+			boardDeleterErr:      nil,
+			wantStatusCode:       http.StatusForbidden,
+			assertFunc:           emptyAssertFunc,
 		},
 		{
-			name:                        "NotAdmin",
-			validatorOutErr:             nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusForbidden,
-			assertFunc:                  emptyAssertFunc,
+			name:                 "NotAdmin",
+			validatorErr:         nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardDeleterErr:      nil,
+			wantStatusCode:       http.StatusForbidden,
+			assertFunc:           emptyAssertFunc,
 		},
 		{
-			name:                        "DeleteErr",
-			validatorOutErr:             nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardDeleterOutErr:          errors.New("delete board error"),
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "DeleteErr",
+			validatorErr:         nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			boardDeleterErr:      errors.New("delete board error"),
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				"delete board error",
 			),
 		},
 		{
-			name:                        "Success",
-			validatorOutErr:             nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardDeleterOutErr:          nil,
-			wantStatusCode:              http.StatusOK,
-			assertFunc:                  emptyAssertFunc,
+			name:                 "Success",
+			validatorErr:         nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			boardDeleterErr:      nil,
+			wantStatusCode:       http.StatusOK,
+			assertFunc:           emptyAssertFunc,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			validator.OutErr = c.validatorOutErr
-			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
-			userBoardSelector.OutErr = c.userBoardSelectorOutErr
-			userBoardDeleter.OutErr = c.boardDeleterOutErr
+			validator.Err = c.validatorErr
+			userBoardSelector.IsAdmin = c.userIsAdmin
+			userBoardSelector.Err = c.userBoardSelectorErr
+			userBoardDeleter.Err = c.boardDeleterErr
 
 			// Prepare request and response recorder.
 			req, err := http.NewRequest(http.MethodPost, "", nil)

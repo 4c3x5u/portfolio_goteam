@@ -19,7 +19,7 @@ func (f *FakeMethodHandler) Handle(
 }
 
 // FakeStringValidator is a test fake for StringValidator.
-type FakeStringValidator struct{ OutErr error }
+type FakeStringValidator struct{ Err error }
 
 // Validate implements the StringValidator interface on fakeStringValidator.
-func (f FakeStringValidator) Validate(_ string) error { return f.OutErr }
+func (f FakeStringValidator) Validate(_ string) error { return f.Err }

@@ -48,16 +48,17 @@ func TestHandler(t *testing.T) {
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
+				res := w.Result()
 
 				if err = assert.Equal(
-					http.StatusMethodNotAllowed, w.Result().StatusCode,
+					http.StatusMethodNotAllowed, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
 
 				if err := assert.Equal(
 					http.MethodPost,
-					w.Result().Header.Get("Access-Control-Allow-Methods"),
+					res.Header.Get("Access-Control-Allow-Methods"),
 				); err != nil {
 					t.Error(err)
 				}
@@ -69,100 +70,99 @@ func TestHandler(t *testing.T) {
 	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
 
 	for _, c := range []struct {
-		name                   string
-		validatorOutOK         bool
-		userSelectorOutUser    userTable.Record
-		userSelectorOutErr     error
-		hashComparerOutErr     error
-		tokenGeneratorOutToken string
-		tokenGeneratorOutErr   error
-		wantStatusCode         int
-		wantErr                string
-		assertFunc             func(*testing.T, *http.Response, string)
+		name              string
+		reqIsValid        bool
+		userRecord        userTable.Record
+		userSelectorErr   error
+		hashComparerErr   error
+		authToken         string
+		tokenGeneratorErr error
+		wantStatusCode    int
+		assertFunc        func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                   "InvalidRequest",
-			validatorOutOK:         false,
-			userSelectorOutUser:    userTable.Record{},
-			userSelectorOutErr:     nil,
-			hashComparerOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             emptyAssertFunc,
+			name:              "InvalidRequest",
+			reqIsValid:        false,
+			userRecord:        userTable.Record{},
+			userSelectorErr:   nil,
+			hashComparerErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusBadRequest,
+			assertFunc:        emptyAssertFunc,
 		},
 		{
-			name:                   "UserNotFound",
-			validatorOutOK:         true,
-			userSelectorOutUser:    userTable.Record{},
-			userSelectorOutErr:     sql.ErrNoRows,
-			hashComparerOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             emptyAssertFunc,
+			name:              "UserNotFound",
+			reqIsValid:        true,
+			userRecord:        userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
+			hashComparerErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusBadRequest,
+			assertFunc:        emptyAssertFunc,
 		},
 		{
-			name:                   "UserSelectorError",
-			validatorOutOK:         true,
-			userSelectorOutUser:    userTable.Record{},
-			userSelectorOutErr:     errors.New("user selector error"),
-			hashComparerOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusInternalServerError,
-			assertFunc:             assert.OnLoggedErr("user selector error"),
+			name:              "UserSelectorError",
+			reqIsValid:        true,
+			userRecord:        userTable.Record{},
+			userSelectorErr:   errors.New("user selector error"),
+			hashComparerErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("user selector error"),
 		},
 		{
-			name:           "WrongPassword",
-			validatorOutOK: true,
-			userSelectorOutUser: userTable.Record{
+			name:       "WrongPassword",
+			reqIsValid: true,
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:     nil,
-			hashComparerOutErr:     bcrypt.ErrMismatchedHashAndPassword,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusBadRequest,
-			assertFunc:             emptyAssertFunc,
+			userSelectorErr:   nil,
+			hashComparerErr:   bcrypt.ErrMismatchedHashAndPassword,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusBadRequest,
+			assertFunc:        emptyAssertFunc,
 		},
 		{
-			name:           "HashComparerError",
-			validatorOutOK: true,
-			userSelectorOutUser: userTable.Record{
+			name:       "HashComparerError",
+			reqIsValid: true,
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:     nil,
-			hashComparerOutErr:     errors.New("hash comparer error"),
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusInternalServerError,
-			assertFunc:             assert.OnLoggedErr("hash comparer error"),
+			userSelectorErr:   nil,
+			hashComparerErr:   errors.New("hash comparer error"),
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("hash comparer error"),
 		},
 		{
-			name:           "TokenGeneratorError",
-			validatorOutOK: true,
-			userSelectorOutUser: userTable.Record{
+			name:       "TokenGeneratorError",
+			reqIsValid: true,
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:     nil,
-			hashComparerOutErr:     nil,
-			tokenGeneratorOutToken: "",
-			tokenGeneratorOutErr:   errors.New("token generator error"),
-			wantStatusCode:         http.StatusInternalServerError,
-			assertFunc:             assert.OnLoggedErr("token generator error"),
+			userSelectorErr:   nil,
+			hashComparerErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: errors.New("token generator error"),
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr("token generator error"),
 		},
 		{
-			name:           "Success",
-			validatorOutOK: true,
-			userSelectorOutUser: userTable.Record{
+			name:       "Success",
+			reqIsValid: true,
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorOutErr:     nil,
-			hashComparerOutErr:     nil,
-			tokenGeneratorOutToken: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorOutErr:   nil,
-			wantStatusCode:         http.StatusOK,
+			userSelectorErr:   nil,
+			hashComparerErr:   nil,
+			authToken:         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				authTokenFound := false
 				for _, ck := range r.Cookies() {
@@ -188,12 +188,12 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			validator.outOK = c.validatorOutOK
-			userSelector.OutRes = c.userSelectorOutUser
-			userSelector.OutErr = c.userSelectorOutErr
-			passwordComparer.outErr = c.hashComparerOutErr
-			authTokenGenerator.OutRes = c.tokenGeneratorOutToken
-			authTokenGenerator.OutErr = c.tokenGeneratorOutErr
+			validator.isValid = c.reqIsValid
+			userSelector.User = c.userRecord
+			userSelector.Err = c.userSelectorErr
+			passwordComparer.err = c.hashComparerErr
+			authTokenGenerator.AuthToken = c.authToken
+			authTokenGenerator.Err = c.tokenGeneratorErr
 
 			// Prepare request and response recorder.
 			reqBody, err := json.Marshal(ReqBody{})

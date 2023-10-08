@@ -4,7 +4,9 @@ import "regexp"
 
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
-type ReqValidator interface{ Validate(ReqBody) ValidationErrs }
+type ReqValidator interface {
+	Validate(ReqBody) ValidationErrors
+}
 
 // Validator is the ReqValidator for the register route.
 type Validator struct {
@@ -26,8 +28,8 @@ func NewValidator(
 // sent the register route. It returns an errors object if any of the individual
 // validations fail. It implements the Validator interface on the
 // ReqValidator struct.
-func (v Validator) Validate(req ReqBody) ValidationErrs {
-	return ValidationErrs{
+func (v Validator) Validate(req ReqBody) ValidationErrors {
+	return ValidationErrors{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
 	}

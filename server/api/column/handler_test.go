@@ -71,25 +71,25 @@ func TestHandler(t *testing.T) {
 	})
 
 	for _, c := range []struct {
-		name                        string
-		authTokenValidatorOutSub    string
-		idValidatorOutErr           error
-		columnSelectorOutErr        error
-		userBoardSelectorOutIsAdmin bool
-		userBoardSelectorOutErr     error
-		columnUpdaterOutErr         error
-		wantStatusCode              int
-		assertFunc                  func(*testing.T, *http.Response, string)
+		name                 string
+		sub                  string
+		idValidatorErr       error
+		columnSelectorErr    error
+		userIsAdmin          bool
+		userBoardSelectorErr error
+		columnUpdaterErr     error
+		wantStatusCode       int
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                        "InvalidAuthToken",
-			authTokenValidatorOutSub:    "",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusUnauthorized,
+			name:                 "InvalidAuthToken",
+			sub:                  "",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusUnauthorized,
 			assertFunc: func(t *testing.T, res *http.Response, _ string) {
 				name, value := auth.WWWAuthenticate()
 				if err := assert.Equal(
@@ -100,99 +100,99 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
-			name:                        "IDValidatorErr",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           errors.New("invalid id"),
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  assert.OnResErr("invalid id"),
+			name:                 "IDValidatorErr",
+			sub:                  "bob123",
+			idValidatorErr:       errors.New("invalid id"),
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("invalid id"),
 		},
 		{
-			name:                        "ColumnNotFound",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        sql.ErrNoRows,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusBadRequest,
-			assertFunc:                  assert.OnResErr("Column not found."),
+			name:                 "ColumnNotFound",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    sql.ErrNoRows,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("Column not found."),
 		},
 		{
-			name:                        "ColumnSelectorErr",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        sql.ErrConnDone,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "ColumnSelectorErr",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    sql.ErrConnDone,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "UserBoardNotFound",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrNoRows,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusUnauthorized,
+			name:                 "UserBoardNotFound",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrNoRows,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:                        "UserBoardSelectorErr",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrConnDone,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "UserBoardSelectorErr",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrConnDone,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "NotAdmin",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         nil,
-			wantStatusCode:              http.StatusUnauthorized,
+			name:                 "NotAdmin",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     nil,
+			wantStatusCode:       http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"Only board admins can move tasks.",
 			),
 		},
 		{
-			name:                        "TaskNotFound",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         sql.ErrNoRows,
-			wantStatusCode:              http.StatusNotFound,
-			assertFunc:                  assert.OnResErr("Task not found."),
+			name:                 "TaskNotFound",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     sql.ErrNoRows,
+			wantStatusCode:       http.StatusNotFound,
+			assertFunc:           assert.OnResErr("Task not found."),
 		},
 		{
-			name:                        "ColumnUpdaterErr",
-			authTokenValidatorOutSub:    "bob123",
-			idValidatorOutErr:           nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			columnUpdaterOutErr:         sql.ErrConnDone,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "ColumnUpdaterErr",
+			sub:                  "bob123",
+			idValidatorErr:       nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			columnUpdaterErr:     sql.ErrConnDone,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
@@ -200,12 +200,12 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			authTokenValidator.OutSub = c.authTokenValidatorOutSub
-			idValidator.OutErr = c.idValidatorOutErr
-			columnSelector.OutErr = c.columnSelectorOutErr
-			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
-			userBoardSelector.OutErr = c.userBoardSelectorOutErr
-			columnUpdater.OutErr = c.columnUpdaterOutErr
+			authTokenValidator.Sub = c.sub
+			idValidator.Err = c.idValidatorErr
+			columnSelector.Err = c.columnSelectorErr
+			userBoardSelector.IsAdmin = c.userIsAdmin
+			userBoardSelector.Err = c.userBoardSelectorErr
+			columnUpdater.Err = c.columnUpdaterErr
 
 			// Prepare request and response recorder.
 			tasks, err := json.Marshal([]map[string]int{{"id": 0, "order": 0}})

@@ -37,152 +37,152 @@ func TestPOSTHandler(t *testing.T) {
 	)
 
 	for _, c := range []struct {
-		name                        string
-		taskTitleValidatorOutErr    error
-		subtaskTitleValidatorOutErr error
-		columnSelectorOutErr        error
-		userBoardSelectorOutRes     bool
-		userBoardSelectorOutErr     error
-		taskInserterOutErr          error
-		wantStatusCode              int
-		assertFunc                  func(*testing.T, *http.Response, string)
+		name                     string
+		taskTitleValidatorErr    error
+		subtaskTitleValidatorErr error
+		columnSelectorErr        error
+		userIsAdmin              bool
+		userBoardSelectorErr     error
+		taskInserterErr          error
+		wantStatusCode           int
+		assertFunc               func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                        "TaskTitleEmpty",
-			taskTitleValidatorOutErr:    errTitleEmpty,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                     "TaskTitleEmpty",
+			taskTitleValidatorErr:    errTitleEmpty,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be empty.",
 			),
 		},
 		{
-			name:                        "TaskTitleTooLong",
-			taskTitleValidatorOutErr:    errTitleTooLong,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                     "TaskTitleTooLong",
+			taskTitleValidatorErr:    errTitleTooLong,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be longer than 50 characters.",
 			),
 		},
 		{
-			name:                        "SubtaskTitleEmpty",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: errTitleEmpty,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                     "SubtaskTitleEmpty",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: errTitleEmpty,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be empty.",
 			),
 		},
 		{
-			name:                        "SubtaskTitleTooLong",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: errTitleTooLong,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                     "SubtaskTitleTooLong",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: errTitleTooLong,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be longer than 50 characters.",
 			),
 		},
 		{
-			name:                        "ColumnNotFound",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        sql.ErrNoRows,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusNotFound,
-			assertFunc:                  assert.OnResErr("Column not found."),
+			name:                     "ColumnNotFound",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        sql.ErrNoRows,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusNotFound,
+			assertFunc:               assert.OnResErr("Column not found."),
 		},
 		{
-			name:                        "ColumnSelectorErr",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        sql.ErrConnDone,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                     "ColumnSelectorErr",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        sql.ErrConnDone,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "NoAccess",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     sql.ErrNoRows,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusUnauthorized,
+			name:                     "NoAccess",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     sql.ErrNoRows,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:                        "UserBoardSelectorErr",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     sql.ErrConnDone,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                     "UserBoardSelectorErr",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     sql.ErrConnDone,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "NotAdmin",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     false,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          nil,
-			wantStatusCode:              http.StatusUnauthorized,
+			name:                     "NotAdmin",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusUnauthorized,
 			assertFunc: assert.OnResErr(
 				"Only board admins can create tasks.",
 			),
 		},
 		{
-			name:                        "TaskInserterErr",
-			taskTitleValidatorOutErr:    nil,
-			subtaskTitleValidatorOutErr: nil,
-			columnSelectorOutErr:        nil,
-			userBoardSelectorOutRes:     true,
-			userBoardSelectorOutErr:     nil,
-			taskInserterOutErr:          sql.ErrConnDone,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                     "TaskInserterErr",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              true,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          sql.ErrConnDone,
+			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			taskTitleValidator.OutErr = c.taskTitleValidatorOutErr
-			subtaskTitleValidator.OutErr = c.subtaskTitleValidatorOutErr
-			columnSelector.OutErr = c.columnSelectorOutErr
-			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutRes
-			userBoardSelector.OutErr = c.userBoardSelectorOutErr
-			taskInserter.OutErr = c.taskInserterOutErr
+			taskTitleValidator.Err = c.taskTitleValidatorErr
+			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
+			columnSelector.Err = c.columnSelectorErr
+			userBoardSelector.IsAdmin = c.userIsAdmin
+			userBoardSelector.Err = c.userBoardSelectorErr
+			taskInserter.Err = c.taskInserterErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"title":       "",

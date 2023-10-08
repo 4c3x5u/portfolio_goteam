@@ -83,7 +83,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
-			ResBody{Errs: ValidationErrs{
+			ResBody{Errs: ValidationErrors{
 				Username: []string{"Username is already taken."},
 			}},
 		); errEncode != nil {

@@ -66,8 +66,8 @@ func TestValidator(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			fakeValidatorUsername.outErrs = c.usernameErrs
-			fakeValidatorPassword.outErrs = c.passwordErrs
+			fakeValidatorUsername.errs = c.usernameErrs
+			fakeValidatorPassword.errs = c.passwordErrs
 
 			res := sut.Validate(c.reqBody)
 

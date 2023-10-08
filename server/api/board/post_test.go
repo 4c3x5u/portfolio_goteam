@@ -29,45 +29,45 @@ func TestPOSTHandler(t *testing.T) {
 
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
-			name                   string
-			validatorOutErr        error
-			userBoardCounterOutRes int
-			userBoardCounterOutErr error
-			boardInserterOutErr    error
-			wantStatusCode         int
-			assertFunc             func(*testing.T, *http.Response, string)
+			name                string
+			validatorErr        error
+			userBoardCount      int
+			userBoardCounterErr error
+			boardInserterErr    error
+			wantStatusCode      int
+			assertFunc          func(*testing.T, *http.Response, string)
 		}{
 			{
 				name: "InvalidRequest",
-				validatorOutErr: errors.New(
+				validatorErr: errors.New(
 					"Board name cannot be empty.",
 				),
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: nil,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusBadRequest,
+				userBoardCount:      0,
+				userBoardCounterErr: nil,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Board name cannot be empty.",
 				),
 			},
 			{
-				name:                   "UserBoardCounterErr",
-				validatorOutErr:        nil,
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: sql.ErrConnDone,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusInternalServerError,
+				name:                "UserBoardCounterErr",
+				validatorErr:        nil,
+				userBoardCount:      0,
+				userBoardCounterErr: sql.ErrConnDone,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusInternalServerError,
 				assertFunc: assert.OnLoggedErr(
 					sql.ErrConnDone.Error(),
 				),
 			},
 			{
-				name:                   "MaxBoardsCreated",
-				validatorOutErr:        nil,
-				userBoardCounterOutRes: 3,
-				userBoardCounterOutErr: nil,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusBadRequest,
+				name:                "MaxBoardsCreated",
+				validatorErr:        nil,
+				userBoardCount:      3,
+				userBoardCounterErr: nil,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per user. Please delete one of your boards " +
@@ -75,33 +75,33 @@ func TestPOSTHandler(t *testing.T) {
 				),
 			},
 			{
-				name:                   "BoardInserterErr",
-				validatorOutErr:        nil,
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: sql.ErrNoRows,
-				boardInserterOutErr:    errors.New("create board error"),
-				wantStatusCode:         http.StatusInternalServerError,
+				name:                "BoardInserterErr",
+				validatorErr:        nil,
+				userBoardCount:      0,
+				userBoardCounterErr: sql.ErrNoRows,
+				boardInserterErr:    errors.New("create board error"),
+				wantStatusCode:      http.StatusInternalServerError,
 				assertFunc: assert.OnLoggedErr(
 					"create board error",
 				),
 			},
 			{
-				name:                   "Success",
-				validatorOutErr:        nil,
-				userBoardCounterOutRes: 0,
-				userBoardCounterOutErr: sql.ErrNoRows,
-				boardInserterOutErr:    nil,
-				wantStatusCode:         http.StatusOK,
+				name:                "Success",
+				validatorErr:        nil,
+				userBoardCount:      0,
+				userBoardCounterErr: sql.ErrNoRows,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusOK,
 				assertFunc: func(*testing.T, *http.Response, string) {
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// Set pre-determinate return values for sut's dependencies.
-				validator.OutErr = c.validatorOutErr
-				userBoardCounter.OutRes = c.userBoardCounterOutRes
-				userBoardCounter.OutErr = c.userBoardCounterOutErr
-				boardInserter.OutErr = c.boardInserterOutErr
+				validator.Err = c.validatorErr
+				userBoardCounter.BoardCount = c.userBoardCount
+				userBoardCounter.Err = c.userBoardCounterErr
+				boardInserter.Err = c.boardInserterErr
 
 				// Prepare request and response recorder.
 				reqBody, err := json.Marshal(ReqBody{})

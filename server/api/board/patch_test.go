@@ -38,138 +38,138 @@ func TestPATCHHandler(t *testing.T) {
 	)
 
 	for _, c := range []struct {
-		name                        string
-		idValidatorOutErr           error
-		nameValidatorOutErr         error
-		boardSelectorOutErr         error
-		userBoardSelectorOutIsAdmin bool
-		userBoardSelectorOutErr     error
-		boardUpdaterOutErr          error
-		wantStatusCode              int
-		assertFunc                  func(*testing.T, *http.Response, string)
+		name                 string
+		idValidatorErr       error
+		nameValidatorErr     error
+		boardSelectorErr     error
+		userIsAdmin          bool
+		userBoardSelectorErr error
+		boardUpdaterErr      error
+		wantStatusCode       int
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                        "IDValidatorErr",
-			idValidatorOutErr:           errors.New("Board ID cannot be empty."),
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                 "IDValidatorErr",
+			idValidatorErr:       errors.New("Board ID cannot be empty."),
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Board ID cannot be empty.",
 			),
 		},
 		{
-			name:                        "NameValidatorErr",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         errors.New("Board name cannot be empty."),
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusBadRequest,
+			name:                 "NameValidatorErr",
+			idValidatorErr:       nil,
+			nameValidatorErr:     errors.New("Board name cannot be empty."),
+			boardSelectorErr:     nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Board name cannot be empty.",
 			),
 		},
 		{
-			name:                        "BoardNotFound",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         sql.ErrNoRows,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusNotFound,
-			assertFunc:                  assert.OnResErr("Board not found."),
+			name:                 "BoardNotFound",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     sql.ErrNoRows,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusNotFound,
+			assertFunc:           assert.OnResErr("Board not found."),
 		},
 		{
-			name:                        "BoardSelectorErr",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         sql.ErrConnDone,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "BoardSelectorErr",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     sql.ErrConnDone,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "UserDoesNotHaveAccess",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrNoRows,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusForbidden,
+			name:                 "UserDoesNotHaveAccess",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrNoRows,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:                        "UserBoardSelectorErr",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     sql.ErrConnDone,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "UserBoardSelectorErr",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: sql.ErrConnDone,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                        "NotAdmin",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: false,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusForbidden,
+			name:                 "NotAdmin",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can edit the board.",
 			),
 		},
 		{
-			name:                        "BoardUpdaterErr",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          sql.ErrNoRows,
-			wantStatusCode:              http.StatusInternalServerError,
+			name:                 "BoardUpdaterErr",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      sql.ErrNoRows,
+			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrNoRows.Error(),
 			),
 		},
 		{
-			name:                        "Success",
-			idValidatorOutErr:           nil,
-			nameValidatorOutErr:         nil,
-			boardSelectorOutErr:         nil,
-			userBoardSelectorOutIsAdmin: true,
-			userBoardSelectorOutErr:     nil,
-			boardUpdaterOutErr:          nil,
-			wantStatusCode:              http.StatusOK,
+			name:                 "Success",
+			idValidatorErr:       nil,
+			nameValidatorErr:     nil,
+			boardSelectorErr:     nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			boardUpdaterErr:      nil,
+			wantStatusCode:       http.StatusOK,
 			assertFunc: func(*testing.T, *http.Response, string) {
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			idValidator.OutErr = c.idValidatorOutErr
-			nameValidator.OutErr = c.nameValidatorOutErr
-			boardSelector.OutErr = c.boardSelectorOutErr
-			userBoardSelector.OutIsAdmin = c.userBoardSelectorOutIsAdmin
-			userBoardSelector.OutErr = c.userBoardSelectorOutErr
-			boardUpdater.OutErr = c.boardUpdaterOutErr
+			idValidator.Err = c.idValidatorErr
+			nameValidator.Err = c.nameValidatorErr
+			boardSelector.Err = c.boardSelectorErr
+			userBoardSelector.IsAdmin = c.userIsAdmin
+			userBoardSelector.Err = c.userBoardSelectorErr
+			boardUpdater.Err = c.boardUpdaterErr
 
 			reqBody, err := json.Marshal(ReqBody{})
 			if err != nil {

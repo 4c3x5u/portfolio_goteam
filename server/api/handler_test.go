@@ -67,7 +67,7 @@ func TestHandler(t *testing.T) {
 
 	t.Run("InvalidAuthToken", func(t *testing.T) {
 		// Set pre-determinate return values for sut's dependencies.
-		authTokenValidator.OutSub = ""
+		authTokenValidator.Sub = ""
 
 		// Prepare request and response recorder.
 		req, err := http.NewRequest(http.MethodPost, "", nil)
@@ -101,7 +101,7 @@ func TestHandler(t *testing.T) {
 				wantSub := "somesub"
 
 				// Set pre-determinate return values for sut's dependencies.
-				authTokenValidator.OutSub = wantSub
+				authTokenValidator.Sub = wantSub
 
 				// Prepare request and response recorder.
 				req, err := http.NewRequest(httpMethod, "", nil)
