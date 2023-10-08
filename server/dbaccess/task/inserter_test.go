@@ -22,7 +22,11 @@ func TestInserter(t *testing.T) {
 			`ORDER BY "order" DESC LIMIT 1`
 		sqlInsertTask = `INSERT INTO app.task` +
 			`\(columnID, title, description, \"order\"\)` +
-			`VALUES \(\$1, \$2, \$3, \$4\)`
+			`VALUES \(\$1, \$2, \$3, \$4\) ` +
+			`RETURNING id`
+		sqlInsertSubtask = `INSERT INTO app.subtask` +
+			`\(taskID, title, "order", isDone\) ` +
+			`VALUES\(\$1, \$2, \$3, \$4\)`
 	)
 
 	task := NewTask(
@@ -65,7 +69,7 @@ func TestInserter(t *testing.T) {
 				mock.ExpectQuery(sqlSelectOrder).
 					WithArgs(task.columnID).
 					WillReturnError(sql.ErrNoRows)
-				mock.ExpectExec(sqlInsertTask).
+				mock.ExpectQuery(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 1).
 					WillReturnError(errA)
 			},
@@ -78,7 +82,7 @@ func TestInserter(t *testing.T) {
 				mock.ExpectQuery(sqlSelectOrder).
 					WithArgs(task.columnID).
 					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
-				mock.ExpectExec(sqlInsertTask).
+				mock.ExpectQuery(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 6).
 					WillReturnError(errA)
 			},
@@ -91,16 +95,12 @@ func TestInserter(t *testing.T) {
 				mock.ExpectQuery(sqlSelectOrder).
 					WithArgs(task.columnID).
 					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
-				mock.ExpectExec(sqlInsertTask).
+				mock.ExpectQuery(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 6).
-					WillReturnResult(sqlmock.NewResult(3, 1))
-				mock.ExpectExec(
-					`INSERT INTO app.subtask`+
-						`\(taskID, title, "order", isDone\) `+
-						`VALUES\(\$1, \$2, \$3, \$4\)`,
-				).WithArgs(
-					int64(3), task.subtaskTitles[0], 1, false,
-				).WillReturnError(errA)
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
+				mock.ExpectExec(sqlInsertSubtask).
+					WithArgs(int64(3), task.subtaskTitles[0], 1, false).
+					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
 			wantErrs: []error{errA},
@@ -112,27 +112,63 @@ func TestInserter(t *testing.T) {
 				mock.ExpectQuery(sqlSelectOrder).
 					WithArgs(task.columnID).
 					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
-				mock.ExpectExec(sqlInsertTask).
+				mock.ExpectQuery(sqlInsertTask).
 					WithArgs(task.columnID, task.title, task.description, 6).
-					WillReturnResult(sqlmock.NewResult(3, 1))
-				mock.ExpectExec(
-					`INSERT INTO app.subtask`+
-						`\(taskID, title, "order", isDone\) `+
-						`VALUES\(\$1, \$2, \$3, \$4\)`,
-				).WithArgs(
-					int64(3), task.subtaskTitles[0], 1, false,
-				).WillReturnError(errA)
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
+				mock.ExpectExec(sqlInsertSubtask).
+					WithArgs(int64(3), task.subtaskTitles[0], 1, false).
+					WillReturnError(errA)
 				mock.ExpectRollback().WillReturnError(errB)
 			},
 			wantErrs: []error{errA, errB},
 		},
+		{
+			name: "CommitErr",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(sqlSelectOrder).
+					WithArgs(task.columnID).
+					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
+				mock.ExpectQuery(sqlInsertTask).
+					WithArgs(task.columnID, task.title, task.description, 6).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
+				for i, subtaskTitle := range task.subtaskTitles {
+					mock.ExpectExec(sqlInsertSubtask).
+						WithArgs(int64(3), subtaskTitle, i+1, false).
+						WillReturnResult(sqlmock.NewResult(int64(i+1), 1))
+				}
+				mock.ExpectCommit().WillReturnError(errA)
+			},
+			wantErrs: []error{errA},
+		},
+		{
+			name: "Success",
+			setUpMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectQuery(sqlSelectOrder).
+					WithArgs(task.columnID).
+					WillReturnRows(sqlmock.NewRows([]string{"order"}).AddRow(5))
+				mock.ExpectQuery(sqlInsertTask).
+					WithArgs(task.columnID, task.title, task.description, 6).
+					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
+				for i, subtaskTitle := range task.subtaskTitles {
+					mock.ExpectExec(sqlInsertSubtask).
+						WithArgs(int64(3), subtaskTitle, i+1, false).
+						WillReturnResult(sqlmock.NewResult(int64(i+1), 1))
+				}
+				mock.ExpectCommit()
+			},
+			wantErrs: []error{nil},
+		},
 	} {
-		c.setUpMock(mock)
-		err := sut.Insert(task)
-		for _, wantErr := range c.wantErrs {
-			if assertErr := assert.SameError(wantErr, err); assertErr != nil {
-				t.Error(assertErr)
+		t.Run(c.name, func(t *testing.T) {
+			c.setUpMock(mock)
+			err := sut.Insert(task)
+			for _, wantErr := range c.wantErrs {
+				if assertErr := assert.SameError(wantErr, err); assertErr != nil {
+					t.Error(assertErr)
+				}
 			}
-		}
+		})
 	}
 }

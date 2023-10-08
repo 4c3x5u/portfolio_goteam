@@ -40,6 +40,7 @@ func (i Inserter) Insert(task Task) error {
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
 	// Get the task with the highest order that is associated with the same
 	// column that the new task is.
@@ -56,29 +57,26 @@ func (i Inserter) Insert(task Task) error {
 	}
 
 	// Insert a record into task table with the given data and the order of 1
-	// higher than the highest order found in this table.
-	res, err := tx.ExecContext(
+	// higher than the highest order found in this table. Return task ID to use
+	// is subtask insertions.
+	var taskID int
+	if err = tx.QueryRowContext(
 		ctx,
 		`INSERT INTO app.task(columnID, title, description, "order")`+
-			`VALUES ($1, $2, $3, $4)`,
+			`VALUES ($1, $2, $3, $4) RETURNING id`,
 		task.columnID, task.title, task.description, highestOrder+1,
-	)
-	if err != nil {
-		return err
-	}
-	// Get the task ID for subtasks.
-	taskID, err := res.LastInsertId()
-	if err != nil {
+	).Scan(&taskID); err != nil {
 		return err
 	}
 
 	// Insert subtasks for the task into the database.
-	for order, subtaskTitle := range task.subtaskTitles {
+	for j, subtaskTitle := range task.subtaskTitles {
+		order := j + 1
 		_, err = tx.ExecContext(
 			ctx,
 			`INSERT INTO app.subtask(taskID, title, "order", isDone) `+
 				`VALUES($1, $2, $3, $4)`,
-			taskID, subtaskTitle, order+1, false,
+			taskID, subtaskTitle, order, false,
 		)
 		if err != nil {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
@@ -88,5 +86,5 @@ func (i Inserter) Insert(task Task) error {
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
