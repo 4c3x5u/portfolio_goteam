@@ -159,7 +159,11 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	_, err = h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
+	// Select the isAdmin column of the user-board relationship record from the
+	// database with the user's username and column's ID.
+	_, err = h.userBoardSelector.Select(
+		username, strconv.Itoa(column.BoardID),
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(ResBody{
@@ -175,4 +179,13 @@ func (h *PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	if err := json.NewEncoder(w).Encode(ResBody{
+		Error: "Only board admins can edit tasks.",
+	}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+	}
+	return
 }

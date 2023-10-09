@@ -372,6 +372,18 @@ func TestTaskHandler(t *testing.T) {
 				wantStatusCode: http.StatusUnauthorized,
 				wantErrMsg:     "You do not have access to this board.",
 			},
+			{
+				name:   "NotAdmin",
+				taskID: "8",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{"Some Subtask"},
+				},
+				wantStatusCode: http.StatusUnauthorized,
+				wantErrMsg:     "Only board admins can edit tasks.",
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				reqBodyBytes, err := json.Marshal(c.reqBody)

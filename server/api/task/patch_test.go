@@ -242,6 +242,20 @@ func TestPATCHHandler(t *testing.T) {
 				"You do not have access to this board.",
 			),
 		},
+		{
+			name:                     "NotAdmin",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			wantStatusCode:           http.StatusUnauthorized,
+			assertFunc: assert.OnResErr(
+				"Only board admins can edit tasks.",
+			),
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			taskIDValidator.Err = c.taskIDValidatorErr
