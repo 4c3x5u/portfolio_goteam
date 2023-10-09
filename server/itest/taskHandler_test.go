@@ -276,6 +276,17 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg: "Task ID cannot be empty.",
 			},
 			{
+				name:   "TaskIDNotInt",
+				taskID: "A",
+				reqBody: map[string]any{
+					"title":       "",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{},
+				},
+				wantErrMsg: "Task ID must be an integer.",
+			},
+			{
 				name:   "TaskTitleEmpty",
 				taskID: "0",
 				reqBody: map[string]any{

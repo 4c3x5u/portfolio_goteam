@@ -21,12 +21,12 @@ func TestTitleValidator(t *testing.T) {
 		{
 			name:    "TitleEmpty",
 			title:   "",
-			wantErr: api.ErrValueEmpty,
+			wantErr: api.ErrStrEmpty,
 		},
 		{
 			name:    "TitleTooLong",
 			title:   "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
-			wantErr: api.ErrValueTooLong,
+			wantErr: api.ErrStrTooLong,
 		},
 		{
 			name:    "Success",
@@ -56,11 +56,16 @@ func TestIDValidator(t *testing.T) {
 		{
 			name:    "Empty",
 			id:      "",
-			wantErr: api.ErrValueEmpty,
+			wantErr: api.ErrStrEmpty,
+		},
+		{
+			name:    "NotInt",
+			id:      "A",
+			wantErr: api.ErrStrNotInt,
 		},
 		{
 			name:    "Success",
-			id:      "12",
+			id:      "1",
 			wantErr: nil,
 		},
 	} {

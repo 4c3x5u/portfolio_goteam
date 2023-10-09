@@ -37,22 +37,29 @@ func TestPATCHHandler(t *testing.T) {
 	}{
 		{
 			name:                     "TaskIDEmpty",
-			taskIDValidatorErr:       api.ErrValueEmpty,
+			taskIDValidatorErr:       api.ErrStrEmpty,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			wantErrMsg:               "Task ID cannot be empty.",
 		},
 		{
+			name:                     "TaskIDNotInt",
+			taskIDValidatorErr:       api.ErrStrNotInt,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			wantErrMsg:               "Task ID must be an integer.",
+		},
+		{
 			name:                     "TaskTitleEmpty",
 			taskIDValidatorErr:       nil,
-			taskTitleValidatorErr:    api.ErrValueEmpty,
+			taskTitleValidatorErr:    api.ErrStrEmpty,
 			subtaskTitleValidatorErr: nil,
 			wantErrMsg:               "Task title cannot be empty.",
 		},
 		{
 			name:                     "TaskTitleTooLong",
 			taskIDValidatorErr:       nil,
-			taskTitleValidatorErr:    api.ErrValueTooLong,
+			taskTitleValidatorErr:    api.ErrStrTooLong,
 			subtaskTitleValidatorErr: nil,
 			wantErrMsg: "Task title cannot be longer than 50 " +
 				"characters.",
@@ -61,14 +68,14 @@ func TestPATCHHandler(t *testing.T) {
 			name:                     "SubtaskTitleEmpty",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: api.ErrValueEmpty,
+			subtaskTitleValidatorErr: api.ErrStrEmpty,
 			wantErrMsg:               "Subtask title cannot be empty.",
 		},
 		{
 			name:                     "SubtaskTitleTooLong",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: api.ErrValueTooLong,
+			subtaskTitleValidatorErr: api.ErrStrTooLong,
 			wantErrMsg: "Subtask title cannot be longer than 50 " +
 				"characters.",
 		},

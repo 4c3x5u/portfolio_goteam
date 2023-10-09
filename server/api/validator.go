@@ -3,13 +3,17 @@ package api
 import "errors"
 
 var (
-	// ErrValueEmpty is the error returned from StringValidator or IntValidator
+	// ErrStrEmpty is the error returned from StringValidator or IntValidator
 	// when the value passed in is empty.
-	ErrValueEmpty = errors.New("value empty")
+	ErrStrEmpty = errors.New("string empty")
 
-	// ErrValueTooLong is the error returned from StringValidator when the value
-	// passed in is too long.
-	ErrValueTooLong = errors.New("value too long")
+	// ErrStrTooLong is the error returned from StringValidator when the value
+	// passed in exceeds the maximum length allowed.
+	ErrStrTooLong = errors.New("string too long")
+
+	// ErrStrNotInt is the error returned from StringValidator when the value
+	// passed in is expected to contain an integer only but does not.
+	ErrStrNotInt = errors.New("string not an integer")
 )
 
 // StringValidator describes a type that can be used to validate a string.
