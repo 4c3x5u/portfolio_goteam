@@ -361,7 +361,7 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg:     "Task not found.",
 			},
 			{
-				name:   "NoAccess",
+				name:   "SourceNoAccess",
 				taskID: "7",
 				reqBody: map[string]any{
 					"title":       "Some Task",
@@ -373,12 +373,36 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg:     "You do not have access to this board.",
 			},
 			{
-				name:   "NotAdmin",
+				name:   "SourceNotAdmin",
 				taskID: "8",
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      0,
+					"subtasks":    []string{"Some Subtask"},
+				},
+				wantStatusCode: http.StatusUnauthorized,
+				wantErrMsg:     "Only board admins can edit tasks.",
+			},
+			{
+				name:   "TargetNoAccess",
+				taskID: "9",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      12,
+					"subtasks":    []string{"Some Subtask"},
+				},
+				wantStatusCode: http.StatusUnauthorized,
+				wantErrMsg:     "You do not have access to this board.",
+			},
+			{
+				name:   "TargetNotAdmin",
+				taskID: "9",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      13,
 					"subtasks":    []string{"Some Subtask"},
 				},
 				wantStatusCode: http.StatusUnauthorized,

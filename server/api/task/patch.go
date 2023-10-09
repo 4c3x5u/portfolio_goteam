@@ -129,6 +129,12 @@ func (h *PATCHHandler) Handle(
 		}
 	}
 
+	// AUTHORIZATION:
+	// To authorise this user, we must check that both the source column and the
+	// target column belong to a board that the user is the admin of. The ID to
+	// the source column can be retrieved from the task table, and the ID to the
+	// target column is retrieved within the request body.
+
 	// Select the task in the database to get its columnID.
 	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -147,45 +153,48 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// Select the column from the database with the task's columnID to get the
-	// boardID.
-	column, err := h.columnSelector.Select(strconv.Itoa(task.ColumnID))
-	if err != nil {
-		// Return 500 on any error (even sql.ErrNoRows) because if task was
-		// found, so must the column because the columnID is a foreign key for
-		// the column table.
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-
-	// Select the isAdmin column of the user-board relationship record from the
-	// database with the user's username and column's ID.
-	_, err = h.userBoardSelector.Select(
-		username, strconv.Itoa(column.BoardID),
-	)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
-		if err := json.NewEncoder(w).Encode(ResBody{
-			Error: "You do not have access to this board.",
-		}); err != nil {
+	for _, columnID := range []int{task.ColumnID, reqBody.ColumnID} {
+		// Select the column from the database with the columnID to get the
+		// board ID.
+		column, err := h.columnSelector.Select(strconv.Itoa(columnID))
+		if err != nil {
+			// Return 500 on any error (even sql.ErrNoRows) because if task was
+			// found, so must the column because the columnID is a foreign key for
+			// the column table.
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
+			return
 		}
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
 
-	w.WriteHeader(http.StatusUnauthorized)
-	if err := json.NewEncoder(w).Encode(ResBody{
-		Error: "Only board admins can edit tasks.",
-	}); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		// Select the isAdmin column of the user-board relationship record from
+		// the database with the user's username and the column's board ID.
+		isAdmin, err := h.userBoardSelector.Select(
+			username, strconv.Itoa(column.BoardID),
+		)
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusUnauthorized)
+			if err := json.NewEncoder(w).Encode(ResBody{
+				Error: "You do not have access to this board.",
+			}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+		if !isAdmin {
+			w.WriteHeader(http.StatusUnauthorized)
+			if err := json.NewEncoder(w).Encode(ResBody{
+				Error: "Only board admins can edit tasks.",
+			}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
 	}
-	return
 }
