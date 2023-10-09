@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	// Create a log for the app.
+	// Create a logger for the app.
 	log := pkgLog.New()
 
 	// Load environment variables from .env file.

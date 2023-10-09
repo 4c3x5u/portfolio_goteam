@@ -27,8 +27,8 @@ type ResBody struct {
 	Error string `json:"error"`
 }
 
-// POSTHandler is an api.MethodHandler that can be used to handle POST task
-// requests.
+// POSTHandler is an api.MethodHandler that can be used to handle POST requests
+// sent to the task route.
 type POSTHandler struct {
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
@@ -82,9 +82,9 @@ func (h *POSTHandler) Handle(
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+		if err = json.NewEncoder(w).Encode(ResBody{
 			Error: errMsg,
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
