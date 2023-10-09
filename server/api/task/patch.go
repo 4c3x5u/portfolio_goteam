@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"server/api"
 	"server/dbaccess"
+	columnTable "server/dbaccess/column"
 	taskTable "server/dbaccess/task"
 	pkgLog "server/log"
 )
@@ -19,6 +21,8 @@ type PATCHHandler struct {
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
 	taskSelector          dbaccess.Selector[taskTable.Record]
+	columnSelector        dbaccess.Selector[columnTable.Record]
+	userBoardSelector     dbaccess.RelSelector[bool]
 	log                   pkgLog.Errorer
 }
 
@@ -35,13 +39,15 @@ func NewPATCHHandler(
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
 		taskSelector:          taskSelector,
+		columnSelector:        columnSelector,
+		userBoardSelector:     userBoardSelector,
 		log:                   log,
 	}
 }
 
 // Handle handles the PATCH requests sent to the task route.
 func (h *PATCHHandler) Handle(
-	w http.ResponseWriter, r *http.Request, _ string,
+	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); err != nil {
@@ -121,8 +127,8 @@ func (h *PATCHHandler) Handle(
 		}
 	}
 
-	// Find the task in the database to get its columnID.
-	_, err := h.taskSelector.Select(id)
+	// Select the task in the database to get its columnID.
+	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(ResBody{
@@ -138,4 +144,25 @@ func (h *PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+
+	// Select the column from the database with the task's columnID to get the
+	// boardID.
+	_, err = h.columnSelector.Select(strconv.Itoa(task.ColumnID))
+	if err != nil {
+		// Return 500 on any error (even sql.ErrNoRows) because if task was
+		// found, so must the column because the columnID is a foreign key for
+		// the column table.
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusUnauthorized)
+	if err := json.NewEncoder(w).Encode(ResBody{
+		Error: "You do not have access to this board.",
+	}); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+	}
+	return
 }

@@ -12,7 +12,9 @@ import (
 
 	"server/api"
 	"server/assert"
+	columnTable "server/dbaccess/column"
 	taskTable "server/dbaccess/task"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -23,12 +25,16 @@ func TestPATCHHandler(t *testing.T) {
 	taskTitleValidator := &api.FakeStringValidator{}
 	subtaskTitleValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
+	columnSelector := &columnTable.FakeSelector{}
+	userBoardSelector := &userboardTable.FakeSelector{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
 		taskIDValidator,
 		taskTitleValidator,
 		subtaskTitleValidator,
 		taskSelector,
+		columnSelector,
+		userBoardSelector,
 		log,
 	)
 
@@ -38,6 +44,9 @@ func TestPATCHHandler(t *testing.T) {
 		taskTitleValidatorErr    error
 		subtaskTitleValidatorErr error
 		taskSelectorErr          error
+		columnSelectorErr        error
+		userIsAdmin              bool
+		userBoardSelectorErr     error
 		wantStatusCode           int
 		assertFunc               func(*testing.T, *http.Response, string)
 	}{
@@ -47,6 +56,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task ID cannot be empty.",
@@ -58,6 +70,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task ID must be an integer.",
@@ -69,6 +84,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrTooLong.Error(),
@@ -80,6 +98,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrEmpty,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be empty.",
@@ -91,6 +112,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrTooLong,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be longer than 50 characters.",
@@ -102,6 +126,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrNotInt,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrNotInt.Error(),
@@ -113,6 +140,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be empty.",
@@ -124,6 +154,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrTooLong,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be longer than 50 characters.",
@@ -135,6 +168,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrNotInt,
 			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrNotInt.Error(),
@@ -146,6 +182,9 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          sql.ErrNoRows,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusNotFound,
 			assertFunc:               assert.OnResErr("Task not found."),
 		},
@@ -155,9 +194,38 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          sql.ErrConnDone,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
+			),
+		},
+		{
+			name:                     "ColumnSelectorErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        sql.ErrNoRows,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:                     "NoAccess",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     sql.ErrNoRows,
+			wantStatusCode:           http.StatusUnauthorized,
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
 			),
 		},
 	} {
@@ -166,6 +234,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 			taskSelector.Err = c.taskSelectorErr
+			columnSelector.Err = c.columnSelectorErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"column":      0,

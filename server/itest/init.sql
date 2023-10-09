@@ -87,7 +87,8 @@ VALUES
     (3,  'task C', 1), -- id: 3
     (4,  'task D', 1), -- id: 4
     (10, 'task E', 1), -- id: 5
-    (10, 'task F', 2); -- id: 6
+    (10, 'task F', 2), -- id: 6
+    (8,  'task G', 1); -- id: 7
 
 -- insert a subtask into each task for testing recursive board deletion
 INSERT INTO app.subtask(taskID, title, "order", isDone)

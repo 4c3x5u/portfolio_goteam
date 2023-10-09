@@ -41,6 +41,8 @@ func TestTaskHandler(t *testing.T) {
 				titleValidator,
 				titleValidator,
 				taskTable.NewSelector(db),
+				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
 				log,
 			),
 		},
@@ -356,7 +358,20 @@ func TestTaskHandler(t *testing.T) {
 					"subtasks":    []string{"Some Subtask"},
 				},
 				wantStatusCode: http.StatusNotFound,
-				wantErrMsg:     "Task not found."},
+				wantErrMsg:     "Task not found.",
+			},
+			{
+				name:   "NoAccess",
+				taskID: "7",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{"Some Subtask"},
+				},
+				wantStatusCode: http.StatusUnauthorized,
+				wantErrMsg:     "You do not have access to this board.",
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				reqBodyBytes, err := json.Marshal(c.reqBody)

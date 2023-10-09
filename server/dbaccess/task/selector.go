@@ -7,7 +7,7 @@ type Record struct {
 	ID          int
 	ColumnID    int
 	Title       string
-	Description string
+	Description *string // pointer to allow null return from db
 	Order       int
 }
 
