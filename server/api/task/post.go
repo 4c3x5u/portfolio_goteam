@@ -71,9 +71,9 @@ func (h *POSTHandler) Handle(
 	// Validate task title.
 	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
-		if errors.Is(err, errTitleEmpty) {
+		if errors.Is(err, api.ErrValueEmpty) {
 			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, errTitleTooLong) {
+		} else if errors.Is(err, api.ErrValueTooLong) {
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -95,9 +95,9 @@ func (h *POSTHandler) Handle(
 	for _, title := range reqBody.SubtaskTitles {
 		if err := h.subtaskTitleValidator.Validate(title); err != nil {
 			var errMsg string
-			if errors.Is(err, errTitleEmpty) {
+			if errors.Is(err, api.ErrValueEmpty) {
 				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, errTitleTooLong) {
+			} else if errors.Is(err, api.ErrValueTooLong) {
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

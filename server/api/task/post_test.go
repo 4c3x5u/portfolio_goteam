@@ -49,7 +49,7 @@ func TestPOSTHandler(t *testing.T) {
 	}{
 		{
 			name:                     "TaskTitleEmpty",
-			taskTitleValidatorErr:    errTitleEmpty,
+			taskTitleValidatorErr:    api.ErrValueEmpty,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
 			userIsAdmin:              false,
@@ -62,7 +62,7 @@ func TestPOSTHandler(t *testing.T) {
 		},
 		{
 			name:                     "TaskTitleTooLong",
-			taskTitleValidatorErr:    errTitleTooLong,
+			taskTitleValidatorErr:    api.ErrValueTooLong,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
 			userIsAdmin:              false,
@@ -76,7 +76,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:                     "SubtaskTitleEmpty",
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: errTitleEmpty,
+			subtaskTitleValidatorErr: api.ErrValueEmpty,
 			columnSelectorErr:        nil,
 			userIsAdmin:              false,
 			userBoardSelectorErr:     nil,
@@ -89,7 +89,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:                     "SubtaskTitleTooLong",
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: errTitleTooLong,
+			subtaskTitleValidatorErr: api.ErrValueTooLong,
 			columnSelectorErr:        nil,
 			userIsAdmin:              false,
 			userBoardSelectorErr:     nil,

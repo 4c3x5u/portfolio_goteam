@@ -1,15 +1,7 @@
 package task
 
-import "errors"
-
-var (
-	// errTitleEmpty is returned from TitleValidator.Validate when the
-	// given title is empty.
-	errTitleEmpty = errors.New("title empty")
-
-	// errTitleTooLong is returned from TitleValidator.Validate when the
-	// given title is longer than 50 characters.
-	errTitleTooLong = errors.New("title too long")
+import (
+	"server/api"
 )
 
 // TitleValidator can be used to validate a task title.
@@ -21,10 +13,24 @@ func NewTitleValidator() TitleValidator { return TitleValidator{} }
 // Validate validates a given task title.
 func (v TitleValidator) Validate(title string) error {
 	if title == "" {
-		return errTitleEmpty
+		return api.ErrValueEmpty
 	}
 	if len(title) > 50 {
-		return errTitleTooLong
+		return api.ErrValueTooLong
+	}
+	return nil
+}
+
+// IDValidator can be used to validate a board ID.
+type IDValidator struct{}
+
+// NewIDValidator creates and returns a new IDValidator.
+func NewIDValidator() IDValidator { return IDValidator{} }
+
+// Validate validates a given board ID.
+func (i IDValidator) Validate(id string) error {
+	if id == "" {
+		return api.ErrValueEmpty
 	}
 	return nil
 }

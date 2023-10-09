@@ -17,40 +17,58 @@ import (
 // TestPATCHHandler tests the Handle method of PATCHHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPATCHHandler(t *testing.T) {
+	taskIDValidator := &api.FakeStringValidator{}
 	taskTitleValidator := &api.FakeStringValidator{}
 	subtaskTitleValidator := &api.FakeStringValidator{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPATCHHandler(taskTitleValidator, subtaskTitleValidator, log)
+	sut := NewPATCHHandler(
+		taskIDValidator,
+		taskTitleValidator,
+		subtaskTitleValidator,
+		log,
+	)
 
 	for _, c := range []struct {
 		name                     string
+		taskIDValidatorErr       error
 		taskTitleValidatorErr    error
 		subtaskTitleValidatorErr error
 		wantErrMsg               string
 	}{
 		{
+			name:                     "TaskIDEmpty",
+			taskIDValidatorErr:       api.ErrValueEmpty,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			wantErrMsg:               "Task ID cannot be empty.",
+		},
+		{
 			name:                     "TaskTitleEmpty",
-			taskTitleValidatorErr:    errTitleEmpty,
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    api.ErrValueEmpty,
 			subtaskTitleValidatorErr: nil,
 			wantErrMsg:               "Task title cannot be empty.",
 		},
 		{
 			name:                     "TaskTitleTooLong",
-			taskTitleValidatorErr:    errTitleTooLong,
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    api.ErrValueTooLong,
 			subtaskTitleValidatorErr: nil,
 			wantErrMsg: "Task title cannot be longer than 50 " +
 				"characters.",
 		},
 		{
 			name:                     "SubtaskTitleEmpty",
+			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: errTitleEmpty,
+			subtaskTitleValidatorErr: api.ErrValueEmpty,
 			wantErrMsg:               "Subtask title cannot be empty.",
 		},
 		{
 			name:                     "SubtaskTitleTooLong",
+			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: errTitleTooLong,
+			subtaskTitleValidatorErr: api.ErrValueTooLong,
 			wantErrMsg: "Subtask title cannot be longer than 50 " +
 				"characters.",
 		},
@@ -58,6 +76,7 @@ func TestPATCHHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			wantStatusCode := http.StatusBadRequest
 
+			taskIDValidator.Err = c.taskIDValidatorErr
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 

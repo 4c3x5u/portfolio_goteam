@@ -37,6 +37,7 @@ func TestTaskHandler(t *testing.T) {
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
+				taskAPI.NewIDValidator(),
 				titleValidator,
 				titleValidator,
 				log,
@@ -259,11 +260,24 @@ func TestTaskHandler(t *testing.T) {
 	t.Run(http.MethodPatch, func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
+			taskID     string
 			reqBody    map[string]any
 			wantErrMsg string
 		}{
 			{
-				name: "TaskTitleEmpty",
+				name:   "TaskIDEmpty",
+				taskID: "",
+				reqBody: map[string]any{
+					"title":       "",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{},
+				},
+				wantErrMsg: "Task ID cannot be empty.",
+			},
+			{
+				name:   "TaskTitleEmpty",
+				taskID: "0",
 				reqBody: map[string]any{
 					"title":       "",
 					"description": "",
@@ -273,7 +287,8 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg: "Task title cannot be empty.",
 			},
 			{
-				name: "TaskTitleTooLong",
+				name:   "TaskTitleTooLong",
+				taskID: "0",
 				reqBody: map[string]any{
 					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
 						"qweasd",
@@ -284,7 +299,8 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg: "Task title cannot be longer than 50 characters.",
 			},
 			{
-				name: "SubtaskTitleEmpty",
+				name:   "SubtaskTitleEmpty",
+				taskID: "0",
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
@@ -294,7 +310,8 @@ func TestTaskHandler(t *testing.T) {
 				wantErrMsg: "Subtask title cannot be empty.",
 			},
 			{
-				name: "SubtaskTitleTooLong",
+				name:   "SubtaskTitleTooLong",
+				taskID: "0",
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
@@ -315,7 +332,9 @@ func TestTaskHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPatch, "", bytes.NewReader(reqBodyBytes),
+					http.MethodPatch,
+					"?id="+c.taskID,
+					bytes.NewReader(reqBodyBytes),
 				)
 				if err != nil {
 					t.Fatal(err)
