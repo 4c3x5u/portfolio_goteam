@@ -1,11 +1,14 @@
 package task
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"server/api"
+	"server/dbaccess"
+	taskTable "server/dbaccess/task"
 	pkgLog "server/log"
 )
 
@@ -15,6 +18,7 @@ type PATCHHandler struct {
 	idValidator           api.StringValidator
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
+	taskSelector          dbaccess.Selector[taskTable.Record]
 	log                   pkgLog.Errorer
 }
 
@@ -23,12 +27,14 @@ func NewPATCHHandler(
 	idValidator api.StringValidator,
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
+	taskSelector dbaccess.Selector[taskTable.Record],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
 		idValidator:           idValidator,
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
+		taskSelector:          taskSelector,
 		log:                   log,
 	}
 }
@@ -113,5 +119,23 @@ func (h *PATCHHandler) Handle(
 			}
 			return
 		}
+	}
+
+	// Find the task in the database to get its columnID.
+	_, err := h.taskSelector.Select(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "Task not found.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
 	}
 }

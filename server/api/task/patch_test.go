@@ -4,6 +4,7 @@ package task
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +12,7 @@ import (
 
 	"server/api"
 	"server/assert"
+	taskTable "server/dbaccess/task"
 	pkgLog "server/log"
 )
 
@@ -20,11 +22,13 @@ func TestPATCHHandler(t *testing.T) {
 	taskIDValidator := &api.FakeStringValidator{}
 	taskTitleValidator := &api.FakeStringValidator{}
 	subtaskTitleValidator := &api.FakeStringValidator{}
+	taskSelector := &taskTable.FakeSelector{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
 		taskIDValidator,
 		taskTitleValidator,
 		subtaskTitleValidator,
+		taskSelector,
 		log,
 	)
 
@@ -33,6 +37,7 @@ func TestPATCHHandler(t *testing.T) {
 		taskIDValidatorErr       error
 		taskTitleValidatorErr    error
 		subtaskTitleValidatorErr error
+		taskSelectorErr          error
 		wantStatusCode           int
 		assertFunc               func(*testing.T, *http.Response, string)
 	}{
@@ -41,6 +46,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       api.ErrStrEmpty,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task ID cannot be empty.",
@@ -51,6 +57,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       api.ErrStrNotInt,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task ID must be an integer.",
@@ -61,6 +68,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       api.ErrStrTooLong,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrTooLong.Error(),
@@ -71,6 +79,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    api.ErrStrEmpty,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be empty.",
@@ -81,6 +90,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    api.ErrStrTooLong,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Task title cannot be longer than 50 characters.",
@@ -91,6 +101,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    api.ErrStrNotInt,
 			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrNotInt.Error(),
@@ -101,6 +112,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be empty.",
@@ -111,6 +123,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrTooLong,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be longer than 50 characters.",
@@ -121,9 +134,30 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrNotInt,
+			taskSelectorErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				api.ErrStrNotInt.Error(),
+			),
+		},
+		{
+			name:                     "TaskNotFound",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          sql.ErrNoRows,
+			wantStatusCode:           http.StatusNotFound,
+			assertFunc:               assert.OnResErr("Task not found."),
+		},
+		{
+			name:                     "TaskSelectorErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          sql.ErrConnDone,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
 			),
 		},
 	} {
@@ -131,6 +165,7 @@ func TestPATCHHandler(t *testing.T) {
 			taskIDValidator.Err = c.taskIDValidatorErr
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
+			taskSelector.Err = c.taskSelectorErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"column":      0,

@@ -40,6 +40,7 @@ func TestTaskHandler(t *testing.T) {
 				taskAPI.NewIDValidator(),
 				titleValidator,
 				titleValidator,
+				taskTable.NewSelector(),
 				log,
 			),
 		},
@@ -259,10 +260,11 @@ func TestTaskHandler(t *testing.T) {
 
 	t.Run(http.MethodPatch, func(t *testing.T) {
 		for _, c := range []struct {
-			name       string
-			taskID     string
-			reqBody    map[string]any
-			wantErrMsg string
+			name           string
+			taskID         string
+			reqBody        map[string]any
+			wantStatusCode int
+			wantErrMsg     string
 		}{
 			{
 				name:   "TaskIDEmpty",
@@ -273,7 +275,8 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				wantErrMsg: "Task ID cannot be empty.",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task ID cannot be empty.",
 			},
 			{
 				name:   "TaskIDNotInt",
@@ -284,7 +287,8 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				wantErrMsg: "Task ID must be an integer.",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task ID must be an integer.",
 			},
 			{
 				name:   "TaskTitleEmpty",
@@ -295,7 +299,8 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				wantErrMsg: "Task title cannot be empty.",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task title cannot be empty.",
 			},
 			{
 				name:   "TaskTitleTooLong",
@@ -307,7 +312,8 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				wantErrMsg: "Task title cannot be longer than 50 characters.",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task title cannot be longer than 50 characters.",
 			},
 			{
 				name:   "SubtaskTitleEmpty",
@@ -318,7 +324,8 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{""},
 				},
-				wantErrMsg: "Subtask title cannot be empty.",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Subtask title cannot be empty.",
 			},
 			{
 				name:   "SubtaskTitleTooLong",
@@ -331,13 +338,23 @@ func TestTaskHandler(t *testing.T) {
 						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					},
 				},
+				wantStatusCode: http.StatusBadRequest,
 				wantErrMsg: "Subtask title cannot be longer than 50 " +
 					"characters.",
 			},
+			{
+				name:   "TaskNotFound",
+				taskID: "0",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{"Some Subtask"},
+				},
+				wantStatusCode: http.StatusNotFound,
+				wantErrMsg:     "Task not found."},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				wantStatusCode := http.StatusBadRequest
-
 				reqBodyBytes, err := json.Marshal(c.reqBody)
 				if err != nil {
 					t.Fatal(err)
@@ -359,7 +376,7 @@ func TestTaskHandler(t *testing.T) {
 				res := w.Result()
 
 				if err = assert.Equal(
-					wantStatusCode, res.StatusCode,
+					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
 				}
