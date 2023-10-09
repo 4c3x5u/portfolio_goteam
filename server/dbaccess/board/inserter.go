@@ -6,16 +6,15 @@ import (
 	"errors"
 )
 
-// Board describes the data needed to insert a board into the database. It
-// doesn't represent the final record in the board table - see Record for that.
-type Board struct {
+// InRecord describes the data needed to insert a board into the database.
+type InRecord struct {
 	name    string
 	adminID string
 }
 
-// NewBoard creates and returns a new Board.
-func NewBoard(name string, adminID string) Board {
-	return Board{name: name, adminID: adminID}
+// NewInRecord creates and returns a new InRecord.
+func NewInRecord(name string, adminID string) InRecord {
+	return InRecord{name: name, adminID: adminID}
 }
 
 // Inserter can be used to create a new record in the board table.
@@ -25,7 +24,7 @@ type Inserter struct{ db *sql.DB }
 func NewInserter(db *sql.DB) Inserter { return Inserter{db: db} }
 
 // Insert creates a new record in the board table.
-func (i Inserter) Insert(board Board) error {
+func (i Inserter) Insert(board InRecord) error {
 	// Begin transaction with new empty context.
 	ctx := context.Background()
 	tx, err := i.db.BeginTx(ctx, nil)

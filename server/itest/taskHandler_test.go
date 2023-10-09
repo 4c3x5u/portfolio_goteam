@@ -43,6 +43,7 @@ func TestTaskHandler(t *testing.T) {
 				taskTable.NewSelector(db),
 				columnTable.NewSelector(db),
 				userboardTable.NewSelector(db),
+				taskTable.NewUpdater(db),
 				log,
 			),
 		},
@@ -270,7 +271,7 @@ func TestTaskHandler(t *testing.T) {
 			taskID         string
 			reqBody        map[string]any
 			wantStatusCode int
-			wantErrMsg     string
+			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:   "TaskIDEmpty",
@@ -278,11 +279,10 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+					"subtasks":    []map[string]any{},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task ID cannot be empty.",
+				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
 			{
 				name:   "TaskIDNotInt",
@@ -290,11 +290,10 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+					"subtasks":    []map[string]any{},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task ID must be an integer.",
+				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
 			{
 				name:   "TaskTitleEmpty",
@@ -302,11 +301,10 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+					"subtasks":    []map[string]any{},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task title cannot be empty.",
+				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
 			{
 				name:   "TaskTitleTooLong",
@@ -315,11 +313,12 @@ func TestTaskHandler(t *testing.T) {
 					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
 						"qweasd",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+					"subtasks":    []map[string]any{},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task title cannot be longer than 50 characters.",
+				assertFunc: assert.OnResErr(
+					"Task title cannot be longer than 50 characters.",
+				),
 			},
 			{
 				name:   "SubtaskTitleEmpty",
@@ -327,11 +326,14 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{""},
+					"subtasks": []map[string]any{
+						{"title": ""},
+					},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Subtask title cannot be empty.",
+				assertFunc: assert.OnResErr(
+					"Subtask title cannot be empty.",
+				),
 			},
 			{
 				name:   "SubtaskTitleTooLong",
@@ -339,14 +341,15 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      0,
-					"subtasks": []string{
-						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
-					},
+					"subtasks": []map[string]any{{
+						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqwea" +
+							"sdqweasd",
+					}},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg: "Subtask title cannot be longer than 50 " +
-					"characters.",
+				assertFunc: assert.OnResErr(
+					"Subtask title cannot be longer than 50 characters.",
+				),
 			},
 			{
 				name:   "TaskNotFound",
@@ -354,11 +357,10 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{"Some Subtask"},
+					"subtasks":    []map[string]any{{"title": "Some Subtask"}},
 				},
 				wantStatusCode: http.StatusNotFound,
-				wantErrMsg:     "Task not found.",
+				assertFunc:     assert.OnResErr("Task not found."),
 			},
 			{
 				name:   "SourceNoAccess",
@@ -366,11 +368,14 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{"Some Subtask"},
+					"subtasks": []map[string]any{{
+						"title": "Some Subtask",
+					}},
 				},
 				wantStatusCode: http.StatusUnauthorized,
-				wantErrMsg:     "You do not have access to this board.",
+				assertFunc: assert.OnResErr(
+					"You do not have access to this board.",
+				),
 			},
 			{
 				name:   "SourceNotAdmin",
@@ -378,35 +383,96 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      0,
-					"subtasks":    []string{"Some Subtask"},
+					"subtasks": []map[string]any{{
+						"title": "Some Subtask",
+					}},
 				},
 				wantStatusCode: http.StatusUnauthorized,
-				wantErrMsg:     "Only board admins can edit tasks.",
+				assertFunc: assert.OnResErr(
+					"Only board admins can edit tasks.",
+				),
 			},
 			{
-				name:   "TargetNoAccess",
+				name:   "Success",
 				taskID: "9",
 				reqBody: map[string]any{
 					"title":       "Some Task",
-					"description": "",
-					"column":      12,
-					"subtasks":    []string{"Some Subtask"},
+					"description": "Some Description",
+					"subtasks": []map[string]any{
+						{
+							"title": "Some Subtask",
+							"order": 1,
+							"done":  false,
+						},
+						{
+							"title": "Some Other Subtask",
+							"order": 2,
+							"done":  true,
+						},
+					},
 				},
-				wantStatusCode: http.StatusUnauthorized,
-				wantErrMsg:     "You do not have access to this board.",
-			},
-			{
-				name:   "TargetNotAdmin",
-				taskID: "9",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      13,
-					"subtasks":    []string{"Some Subtask"},
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+					var (
+						title       string
+						description *string
+						columnID    int
+						order       int
+					)
+					if err := db.QueryRow(
+						`SELECT title, description, columnID, "order" `+
+							`FROM app.task WHERE id = 9`,
+					).Scan(&title, &description, &columnID, &order); err != nil {
+						t.Error(err)
+					}
+
+					if err := assert.Equal("Some Task", title); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"Some Description", *description,
+					); err != nil {
+						t.Error(err)
+					}
+
+					rows, err := db.Query(
+						`SELECT title, "order", isDone FROM app.subtask WHERE taskID = 9`,
+					)
+					if err != nil {
+						t.Fatal(err)
+					}
+					var subtasks []taskTable.Subtask
+					for rows.Next() {
+						var subtask taskTable.Subtask
+						if err := rows.Scan(
+							&subtask.Title, &subtask.Order, &subtask.IsDone,
+						); err != nil {
+							t.Fatal(err)
+						}
+						subtasks = append(subtasks, subtask)
+					}
+					if err = assert.Equal(2, len(subtasks)); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal("Some Subtask", subtasks[0].Title); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(1, subtasks[0].Order); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(false, subtasks[0].IsDone); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal("Some Other Subtask", subtasks[1].Title); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(2, subtasks[1].Order); err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(true, subtasks[1].IsDone); err != nil {
+						t.Error(err)
+					}
 				},
-				wantStatusCode: http.StatusUnauthorized,
-				wantErrMsg:     "Only board admins can edit tasks.",
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -436,7 +502,7 @@ func TestTaskHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				assert.OnResErr(c.wantErrMsg)(t, res, "")
+				c.assertFunc(t, res, "")
 			})
 		}
 	})

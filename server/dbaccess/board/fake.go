@@ -8,8 +8,8 @@ func (f *FakeSelector) Select(_ string) (Record, error) {
 	return Record{}, f.Err
 }
 
-// FakeInserter is a test fake for Inserter[Board].
+// FakeInserter is a test fake for Inserter[InRecord].
 type FakeInserter struct{ Err error }
 
-// Insert implements the Inserter[Board] interface on FakeInserter.
-func (f *FakeInserter) Insert(_ Board) error { return f.Err }
+// Insert implements the Inserter[InRecord] interface on FakeInserter.
+func (f *FakeInserter) Insert(_ InRecord) error { return f.Err }

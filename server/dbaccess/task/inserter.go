@@ -6,20 +6,19 @@ import (
 	"errors"
 )
 
-// Task describes the data needed to insert a task into the database. It doesn't
-// represent the final record in the task table.
-type Task struct {
+// InRecord describes the data needed to insert a task into the database.
+type InRecord struct {
 	columnID      int
 	title         string
 	description   string
 	subtaskTitles []string
 }
 
-// NewTask creates and returns a new Task.
-func NewTask(
+// NewInRecord creates and returns a new InRecord.
+func NewInRecord(
 	columnID int, title string, description string, subtaskTitles []string,
-) Task {
-	return Task{
+) InRecord {
+	return InRecord{
 		columnID:      columnID,
 		title:         title,
 		description:   description,
@@ -34,7 +33,7 @@ type Inserter struct{ db *sql.DB }
 func NewInserter(db *sql.DB) Inserter { return Inserter{db: db} }
 
 // Insert creates a new record in the user table.
-func (i Inserter) Insert(task Task) error {
+func (i Inserter) Insert(task InRecord) error {
 	ctx := context.Background()
 	tx, err := i.db.BeginTx(ctx, nil)
 	if err != nil {

@@ -29,7 +29,7 @@ func TestInserter(t *testing.T) {
 			`VALUES \(\$1, \$2\)`
 		errA  = errors.New("an error occurred")
 		errB  = errors.New("another error occurred")
-		board = NewBoard("someboard", "bob123")
+		board = NewInRecord("someboard", "bob123")
 	)
 
 	for _, c := range []struct {

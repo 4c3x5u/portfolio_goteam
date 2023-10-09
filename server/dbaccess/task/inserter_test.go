@@ -29,7 +29,7 @@ func TestInserter(t *testing.T) {
 			`VALUES\(\$1, \$2, \$3, \$4\)`
 	)
 
-	task := NewTask(
+	task := NewInRecord(
 		2, "Task A", "Description A", []string{"Subtask A", "Subtask B"},
 	)
 	errA := errors.New("an error occurred")

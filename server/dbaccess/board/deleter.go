@@ -24,7 +24,6 @@ func (d Deleter) Delete(id string) error {
 	if err != nil {
 		return err
 	}
-	//goland:noinspection GoUnhandledErrorResult
 	defer tx.Rollback()
 
 	// Delete all records from the user_board table with the given board ID.

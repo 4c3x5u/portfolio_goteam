@@ -14,17 +14,12 @@ import (
 	pkgLog "server/log"
 )
 
-// ReqBody defines the request body for requests handled by method handlers.
-type ReqBody struct {
+// POSTReqBody defines the request body for requests handled by POSTHandler.
+type POSTReqBody struct {
 	ColumnID      int      `json:"column"`
 	Title         string   `json:"title"`
 	Description   string   `json:"description"`
 	SubtaskTitles []string `json:"subtasks"`
-}
-
-// ResBody defines the response body for requests handled by method handlers.
-type ResBody struct {
-	Error string `json:"error"`
 }
 
 // POSTHandler is an api.MethodHandler that can be used to handle POST requests
@@ -34,7 +29,7 @@ type POSTHandler struct {
 	subtaskTitleValidator api.StringValidator
 	columnSelector        dbaccess.Selector[columnTable.Record]
 	userBoardSelector     dbaccess.RelSelector[bool]
-	taskInserter          dbaccess.Inserter[taskTable.Task]
+	taskInserter          dbaccess.Inserter[taskTable.InRecord]
 	log                   pkgLog.Errorer
 }
 
@@ -44,7 +39,7 @@ func NewPOSTHandler(
 	subtaskTitleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
-	taskInserter dbaccess.Inserter[taskTable.Task],
+	taskInserter dbaccess.Inserter[taskTable.InRecord],
 	log pkgLog.Errorer,
 ) *POSTHandler {
 	return &POSTHandler{
@@ -61,7 +56,7 @@ func NewPOSTHandler(
 func (h *POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	var reqBody ReqBody
+	var reqBody POSTReqBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
@@ -167,7 +162,7 @@ func (h *POSTHandler) Handle(
 	}
 
 	// Insert task and subtasks into the database.
-	if err = h.taskInserter.Insert(taskTable.NewTask(
+	if err = h.taskInserter.Insert(taskTable.NewInRecord(
 		reqBody.ColumnID,
 		reqBody.Title,
 		reqBody.Description,
