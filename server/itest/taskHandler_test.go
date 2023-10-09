@@ -40,7 +40,7 @@ func TestTaskHandler(t *testing.T) {
 				taskAPI.NewIDValidator(),
 				titleValidator,
 				titleValidator,
-				taskTable.NewSelector(),
+				taskTable.NewSelector(db),
 				log,
 			),
 		},
@@ -104,8 +104,8 @@ func TestTaskHandler(t *testing.T) {
 			{
 				name: "TaskTitleTooLong",
 				reqBody: map[string]any{
-					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
-						"asd",
+					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
+						"qweasd",
 					"description": "",
 					"column":      0,
 					"subtasks":    []string{},
@@ -124,7 +124,9 @@ func TestTaskHandler(t *testing.T) {
 					"subtasks":    []string{""},
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Subtask title cannot be empty."),
+				assertFunc: assert.OnResErr(
+					"Subtask title cannot be empty.",
+				),
 			},
 			{
 				name: "SubtaskTitleTooLong",
@@ -184,7 +186,9 @@ func TestTaskHandler(t *testing.T) {
 					"title":       "Some Task",
 					"description": "Do something. Then, do something else.",
 					"column":      10,
-					"subtasks":    []string{"Some Subtask", "Some Other Subtask"},
+					"subtasks": []string{
+						"Some Subtask", "Some Other Subtask",
+					},
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
@@ -344,7 +348,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name:   "TaskNotFound",
-				taskID: "0",
+				taskID: "1001",
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
