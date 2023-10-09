@@ -22,4 +22,4 @@ func (f *FakeMethodHandler) Handle(
 type FakeStringValidator struct{ Err error }
 
 // Validate implements the StringValidator interface on fakeStringValidator.
-func (f FakeStringValidator) Validate(_ string) error { return f.Err }
+func (f *FakeStringValidator) Validate(_ string) error { return f.Err }

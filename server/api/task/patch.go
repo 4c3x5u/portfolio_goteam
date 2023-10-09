@@ -2,7 +2,9 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+
 	"server/api"
 	pkgLog "server/log"
 )
@@ -25,12 +27,32 @@ func NewPATCHHandler(
 func (h *PATCHHandler) Handle(
 	w http.ResponseWriter, r *http.Request, _ string,
 ) {
-	w.WriteHeader(http.StatusBadRequest)
-	if err := json.NewEncoder(w).Encode(ResBody{
-		Error: "Task title cannot be empty.",
-	}); err != nil {
+	var reqBody ReqBody
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
 	}
-	return
+
+	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
+		var errMsg string
+		if errors.Is(err, errTitleEmpty) {
+			errMsg = "Task title cannot be empty."
+		} else if errors.Is(err, errTitleTooLong) {
+			errMsg = "Task title cannot be longer than 50 characters."
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: errMsg,
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
 }

@@ -257,11 +257,48 @@ func TestTaskHandler(t *testing.T) {
 
 	t.Run(http.MethodPatch, func(t *testing.T) {
 		t.Run("TaskTitleEmpty", func(t *testing.T) {
-			wantErrMsg := "Task title cannot be empty."
 			wantStatusCode := http.StatusBadRequest
+			wantErrMsg := "Task title cannot be empty."
 
 			task, err := json.Marshal(map[string]any{
 				"title":       "",
+				"description": "",
+				"column":      0,
+				"subtasks":    []string{},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			req, err := http.NewRequest(
+				http.MethodPatch, "", bytes.NewReader(task),
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			addBearerAuth(jwtBob123)(req)
+
+			w := httptest.NewRecorder()
+
+			sut.ServeHTTP(w, req)
+			res := w.Result()
+
+			if err = assert.Equal(
+				wantStatusCode, res.StatusCode,
+			); err != nil {
+				t.Error(err)
+			}
+
+			assert.OnResErr(wantErrMsg)(t, res, "")
+		})
+
+		t.Run("TaskTitleTooLong", func(t *testing.T) {
+			wantStatusCode := http.StatusBadRequest
+			wantErrMsg := "Task title cannot be longer than 50 characters."
+
+			task, err := json.Marshal(map[string]any{
+				"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
+					"asd",
 				"description": "",
 				"column":      0,
 				"subtasks":    []string{},
