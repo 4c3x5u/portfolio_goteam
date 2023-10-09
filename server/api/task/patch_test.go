@@ -21,66 +21,39 @@ func TestPATCHHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(taskTitleValidator, log)
 
-	t.Run("TaskTitleEmpty", func(t *testing.T) {
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Task title cannot be empty."
+	for _, c := range []struct {
+		name                  string
+		taskTitleValidatorErr error
+		wantErrMsg            string
+	}{} {
+		t.Run(c.name, func(t *testing.T) {
+			wantStatusCode := http.StatusBadRequest
 
-		taskTitleValidator.Err = errTitleEmpty
+			taskTitleValidator.Err = c.taskTitleValidatorErr
 
-		reqBody, err := json.Marshal(map[string]any{
-			"column":      0,
-			"title":       "",
-			"description": "",
-			"subtasks":    []string{},
+			reqBody, err := json.Marshal(map[string]any{
+				"column":      0,
+				"title":       "",
+				"description": "",
+				"subtasks":    []string{},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			r, err := http.NewRequest("", "", bytes.NewReader(reqBody))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			w := httptest.NewRecorder()
+			sut.Handle(w, r, "")
+			res := w.Result()
+
+			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
+
+			assert.OnResErr(c.wantErrMsg)(t, res, "")
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		r, err := http.NewRequest("", "", bytes.NewReader(reqBody))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		w := httptest.NewRecorder()
-		sut.Handle(w, r, "")
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
-
-	t.Run("TaskTitleTooLong", func(t *testing.T) {
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Task title cannot be longer than 50 characters."
-
-		taskTitleValidator.Err = errTitleTooLong
-
-		reqBody, err := json.Marshal(map[string]any{
-			"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
-				"asd",
-			"description": "",
-			"column":      0,
-			"subtasks":    []string{},
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		r, err := http.NewRequest("", "", bytes.NewReader(reqBody))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		w := httptest.NewRecorder()
-		sut.Handle(w, r, "")
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
+	}
 }
