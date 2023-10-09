@@ -32,6 +32,8 @@ func NewPATCHHandler(
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
+	columnSelector dbaccess.Selector[columnTable.Record],
+	userBoardSelector dbaccess.RelSelector[bool],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
@@ -147,7 +149,7 @@ func (h *PATCHHandler) Handle(
 
 	// Select the column from the database with the task's columnID to get the
 	// boardID.
-	_, err = h.columnSelector.Select(strconv.Itoa(task.ColumnID))
+	column, err := h.columnSelector.Select(strconv.Itoa(task.ColumnID))
 	if err != nil {
 		// Return 500 on any error (even sql.ErrNoRows) because if task was
 		// found, so must the column because the columnID is a foreign key for
@@ -157,12 +159,20 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	w.WriteHeader(http.StatusUnauthorized)
-	if err := json.NewEncoder(w).Encode(ResBody{
-		Error: "You do not have access to this board.",
-	}); err != nil {
+	_, err = h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
 	}
-	return
 }

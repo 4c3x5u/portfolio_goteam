@@ -215,6 +215,20 @@ func TestPATCHHandler(t *testing.T) {
 			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
+			name:                     "UserBoardSelectorErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     sql.ErrConnDone,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
+		},
+		{
 			name:                     "NoAccess",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
@@ -235,6 +249,8 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 			taskSelector.Err = c.taskSelectorErr
 			columnSelector.Err = c.columnSelectorErr
+			userBoardSelector.IsAdmin = c.userIsAdmin
+			userBoardSelector.Err = c.userBoardSelectorErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"column":      0,
