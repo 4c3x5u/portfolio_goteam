@@ -12,15 +12,22 @@ import (
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the task route.
 type PATCHHandler struct {
-	taskTitleValidator api.StringValidator
-	log                pkgLog.Errorer
+	taskTitleValidator    api.StringValidator
+	subtaskTitleValidator api.StringValidator
+	log                   pkgLog.Errorer
 }
 
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
-	taskTitleValidator api.StringValidator, log pkgLog.Errorer,
+	taskTitleValidator api.StringValidator,
+	subtaskTitleValidator api.StringValidator,
+	log pkgLog.Errorer,
 ) *PATCHHandler {
-	return &PATCHHandler{taskTitleValidator: taskTitleValidator, log: log}
+	return &PATCHHandler{
+		taskTitleValidator:    taskTitleValidator,
+		subtaskTitleValidator: subtaskTitleValidator,
+		log:                   log,
+	}
 }
 
 // Handle handles the PATCH requests sent to the task route.
@@ -34,6 +41,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
+	// Validate task title.
 	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, errTitleEmpty) {
@@ -54,5 +62,30 @@ func (h *PATCHHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
+	}
+
+	// Validate subtask titles
+	for _, title := range reqBody.SubtaskTitles {
+		if err := h.subtaskTitleValidator.Validate(title); err != nil {
+			var errMsg string
+			if errors.Is(err, errTitleEmpty) {
+				errMsg = "Subtask title cannot be empty."
+			} else if errors.Is(err, errTitleTooLong) {
+				errMsg = "Subtask title cannot be longer than 50 characters."
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			}
+
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(ResBody{
+				Error: errMsg,
+			}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
 	}
 }

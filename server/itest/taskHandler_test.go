@@ -38,6 +38,7 @@ func TestTaskHandler(t *testing.T) {
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
 				titleValidator,
+				titleValidator,
 				log,
 			),
 		},
@@ -83,13 +84,13 @@ func TestTaskHandler(t *testing.T) {
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
-			task           map[string]any
+			reqBody        map[string]any
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
 				name: "TaskTitleEmpty",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "",
 					"description": "",
 					"column":      0,
@@ -100,7 +101,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "TaskTitleTooLong",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
 						"asd",
 					"description": "",
@@ -114,7 +115,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "SubtaskTitleEmpty",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      0,
@@ -125,7 +126,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "SubtaskTitleTooLong",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      0,
@@ -140,7 +141,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "ColumnNotFound",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      1001,
@@ -151,7 +152,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "NoAccess",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      8,
@@ -164,7 +165,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "NotAdmin",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
 					"column":      9,
@@ -177,7 +178,7 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "Success",
-				task: map[string]any{
+				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "Do something. Then, do something else.",
 					"column":      10,
@@ -226,12 +227,12 @@ func TestTaskHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				task, err := json.Marshal(c.task)
+				reqBodyBytes, err := json.Marshal(c.reqBody)
 				if err != nil {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(task),
+					http.MethodPost, "", bytes.NewReader(reqBodyBytes),
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -258,35 +259,63 @@ func TestTaskHandler(t *testing.T) {
 	t.Run(http.MethodPatch, func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
-			taskTitle  string
+			reqBody    map[string]any
 			wantErrMsg string
 		}{
 			{
-				name:       "TaskTitleEmpty",
-				taskTitle:  "",
+				name: "TaskTitleEmpty",
+				reqBody: map[string]any{
+					"title":       "",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{},
+				},
 				wantErrMsg: "Task title cannot be empty.",
 			},
 			{
 				name: "TaskTitleTooLong",
-				taskTitle: "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqwe" +
-					"asd",
+				reqBody: map[string]any{
+					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
+						"qweasd",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{},
+				},
 				wantErrMsg: "Task title cannot be longer than 50 characters.",
+			},
+			{
+				name: "SubtaskTitleEmpty",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      0,
+					"subtasks":    []string{""},
+				},
+				wantErrMsg: "Subtask title cannot be empty.",
+			},
+			{
+				name: "SubtaskTitleTooLong",
+				reqBody: map[string]any{
+					"title":       "Some Task",
+					"description": "",
+					"column":      0,
+					"subtasks": []string{
+						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
+					},
+				},
+				wantErrMsg: "Subtask title cannot be longer than 50 " +
+					"characters.",
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				wantStatusCode := http.StatusBadRequest
 
-				task, err := json.Marshal(map[string]any{
-					"title":       c.taskTitle,
-					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
-				})
+				reqBodyBytes, err := json.Marshal(c.reqBody)
 				if err != nil {
 					t.Fatal(err)
 				}
 				req, err := http.NewRequest(
-					http.MethodPatch, "", bytes.NewReader(task),
+					http.MethodPatch, "", bytes.NewReader(reqBodyBytes),
 				)
 				if err != nil {
 					t.Fatal(err)

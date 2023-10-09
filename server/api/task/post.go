@@ -106,9 +106,9 @@ func (h *POSTHandler) Handle(
 			}
 
 			w.WriteHeader(http.StatusBadRequest)
-			if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			if err = json.NewEncoder(w).Encode(ResBody{
 				Error: errMsg,
-			}); encodeErr != nil {
+			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.log.Error(err.Error())
 			}

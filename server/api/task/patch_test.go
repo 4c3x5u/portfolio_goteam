@@ -18,24 +18,54 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPATCHHandler(t *testing.T) {
 	taskTitleValidator := &api.FakeStringValidator{}
+	subtaskTitleValidator := &api.FakeStringValidator{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPATCHHandler(taskTitleValidator, log)
+	sut := NewPATCHHandler(taskTitleValidator, subtaskTitleValidator, log)
 
 	for _, c := range []struct {
-		name                  string
-		taskTitleValidatorErr error
-		wantErrMsg            string
-	}{} {
+		name                     string
+		taskTitleValidatorErr    error
+		subtaskTitleValidatorErr error
+		wantErrMsg               string
+	}{
+		{
+			name:                     "TaskTitleEmpty",
+			taskTitleValidatorErr:    errTitleEmpty,
+			subtaskTitleValidatorErr: nil,
+			wantErrMsg:               "Task title cannot be empty.",
+		},
+		{
+			name:                     "TaskTitleTooLong",
+			taskTitleValidatorErr:    errTitleTooLong,
+			subtaskTitleValidatorErr: nil,
+			wantErrMsg: "Task title cannot be longer than 50 " +
+				"characters.",
+		},
+		{
+			name:                     "SubtaskTitleEmpty",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: errTitleEmpty,
+			wantErrMsg:               "Subtask title cannot be empty.",
+		},
+		{
+			name:                     "SubtaskTitleTooLong",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: errTitleTooLong,
+			wantErrMsg: "Subtask title cannot be longer than 50 " +
+				"characters.",
+		},
+	} {
 		t.Run(c.name, func(t *testing.T) {
 			wantStatusCode := http.StatusBadRequest
 
 			taskTitleValidator.Err = c.taskTitleValidatorErr
+			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 
 			reqBody, err := json.Marshal(map[string]any{
 				"column":      0,
 				"title":       "",
 				"description": "",
-				"subtasks":    []string{},
+				"subtasks":    []string{""},
 			})
 			if err != nil {
 				t.Fatal(err)
