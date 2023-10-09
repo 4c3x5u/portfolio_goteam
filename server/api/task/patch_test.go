@@ -33,56 +33,101 @@ func TestPATCHHandler(t *testing.T) {
 		taskIDValidatorErr       error
 		taskTitleValidatorErr    error
 		subtaskTitleValidatorErr error
-		wantErrMsg               string
+		wantStatusCode           int
+		assertFunc               func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:                     "TaskIDEmpty",
 			taskIDValidatorErr:       api.ErrStrEmpty,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
-			wantErrMsg:               "Task ID cannot be empty.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task ID cannot be empty.",
+			),
 		},
 		{
 			name:                     "TaskIDNotInt",
 			taskIDValidatorErr:       api.ErrStrNotInt,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
-			wantErrMsg:               "Task ID must be an integer.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task ID must be an integer.",
+			),
+		},
+		{
+			name:                     "TaskIDUnexpectedErr",
+			taskIDValidatorErr:       api.ErrStrTooLong,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrStrTooLong.Error(),
+			),
 		},
 		{
 			name:                     "TaskTitleEmpty",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    api.ErrStrEmpty,
 			subtaskTitleValidatorErr: nil,
-			wantErrMsg:               "Task title cannot be empty.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task title cannot be empty.",
+			),
 		},
 		{
 			name:                     "TaskTitleTooLong",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    api.ErrStrTooLong,
 			subtaskTitleValidatorErr: nil,
-			wantErrMsg: "Task title cannot be longer than 50 " +
-				"characters.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task title cannot be longer than 50 characters.",
+			),
+		},
+		{
+			name:                     "TaskTitleUnexpectedErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    api.ErrStrNotInt,
+			subtaskTitleValidatorErr: nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrStrNotInt.Error(),
+			),
 		},
 		{
 			name:                     "SubtaskTitleEmpty",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
-			wantErrMsg:               "Subtask title cannot be empty.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Subtask title cannot be empty.",
+			),
 		},
 		{
 			name:                     "SubtaskTitleTooLong",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrTooLong,
-			wantErrMsg: "Subtask title cannot be longer than 50 " +
-				"characters.",
+			wantStatusCode:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Subtask title cannot be longer than 50 characters.",
+			),
+		},
+		{
+			name:                     "SubtaskTitleUnexpectedErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: api.ErrStrNotInt,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrStrNotInt.Error(),
+			),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			wantStatusCode := http.StatusBadRequest
-
 			taskIDValidator.Err = c.taskIDValidatorErr
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
@@ -105,11 +150,13 @@ func TestPATCHHandler(t *testing.T) {
 			sut.Handle(w, r, "")
 			res := w.Result()
 
-			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
 				t.Error(err)
 			}
 
-			assert.OnResErr(c.wantErrMsg)(t, res, "")
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }

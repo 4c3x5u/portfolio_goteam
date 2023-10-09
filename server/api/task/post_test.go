@@ -74,6 +74,19 @@ func TestPOSTHandler(t *testing.T) {
 			),
 		},
 		{
+			name:                     "TaskTitleUnexpectedErr",
+			taskTitleValidatorErr:    api.ErrStrNotInt,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrStrNotInt.Error(),
+			),
+		},
+		{
 			name:                     "SubtaskTitleEmpty",
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
@@ -97,6 +110,19 @@ func TestPOSTHandler(t *testing.T) {
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Subtask title cannot be longer than 50 characters.",
+			),
+		},
+		{
+			name:                     "SubtaskTitleUnexpectedErr",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: api.ErrStrNotInt,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     nil,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrStrNotInt.Error(),
 			),
 		},
 		{
