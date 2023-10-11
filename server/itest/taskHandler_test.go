@@ -510,47 +510,44 @@ func TestTaskHandler(t *testing.T) {
 	})
 
 	t.Run(http.MethodDelete, func(t *testing.T) {
-		t.Run("IDEmpty", func(t *testing.T) {
-			wantStatusCode := http.StatusBadRequest
-			wantErrMsg := "Task ID cannot be empty."
+		for _, c := range []struct {
+			name           string
+			id             string
+			wantStatusCode int
+			wantErrMsg     string
+		}{
+			{
+				name:           "IDEmpty",
+				id:             "",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task ID cannot be empty.",
+			},
+			{
+				name:           "IDNotInt",
+				id:             "A",
+				wantStatusCode: http.StatusBadRequest,
+				wantErrMsg:     "Task ID must be an integer.",
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				r, err := http.NewRequest(http.MethodDelete, "?id="+c.id, nil)
+				if err != nil {
+					t.Fatal(err)
+				}
+				addBearerAuth(jwtBob123)(r)
+				w := httptest.NewRecorder()
 
-			r, err := http.NewRequest(http.MethodDelete, "?id=", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			addBearerAuth(jwtBob123)(r)
-			w := httptest.NewRecorder()
+				sut.ServeHTTP(w, r)
+				res := w.Result()
 
-			sut.ServeHTTP(w, r)
-			res := w.Result()
+				if err = assert.Equal(
+					c.wantStatusCode, res.StatusCode,
+				); err != nil {
+					t.Error(err)
+				}
 
-			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-				t.Error(err)
-			}
-
-			assert.OnResErr(wantErrMsg)(t, res, "")
-		})
-
-		t.Run("IDNotInt", func(t *testing.T) {
-			id := "A"
-			wantStatusCode := http.StatusBadRequest
-			wantErrMsg := "Task ID must be an integer."
-
-			r, err := http.NewRequest(http.MethodDelete, "?id="+id, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			addBearerAuth(jwtBob123)(r)
-			w := httptest.NewRecorder()
-
-			sut.ServeHTTP(w, r)
-			res := w.Result()
-
-			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-				t.Error(err)
-			}
-
-			assert.OnResErr(wantErrMsg)(t, res, "")
-		})
+				assert.OnResErr(c.wantErrMsg)(t, res, "")
+			})
+		}
 	})
 }

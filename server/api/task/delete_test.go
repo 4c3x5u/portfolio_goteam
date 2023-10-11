@@ -18,47 +18,44 @@ func TestDELETEHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(idValidator, log)
 
-	t.Run("IDEmpty", func(t *testing.T) {
-		idValidator.Err = api.ErrStrEmpty
+	for _, c := range []struct {
+		name           string
+		idValidatorErr error
+		wantStatusCode int
+		wantErrMsg     string
+	}{
+		{
+			name:           "IDEmpty",
+			idValidatorErr: api.ErrStrEmpty,
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Task ID cannot be empty.",
+		},
+		{
+			name:           "IDNotInt",
+			idValidatorErr: api.ErrStrNotInt,
+			wantStatusCode: http.StatusBadRequest,
+			wantErrMsg:     "Task ID must be an integer.",
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			idValidator.Err = c.idValidatorErr
 
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Task ID cannot be empty."
+			r, err := http.NewRequest("", "", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
 
-		r, err := http.NewRequest("", "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
+			sut.Handle(w, r, "")
+			res := w.Result()
 
-		sut.Handle(w, r, "")
-		res := w.Result()
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
+				t.Error(err)
+			}
 
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
-
-	t.Run("IDNotInt", func(t *testing.T) {
-		idValidator.Err = api.ErrStrNotInt
-
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Task ID must be an integer."
-
-		r, err := http.NewRequest("", "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
-
-		sut.Handle(w, r, "")
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
+			assert.OnResErr(c.wantErrMsg)(t, res, "")
+		})
+	}
 }
