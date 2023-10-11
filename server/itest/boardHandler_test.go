@@ -134,7 +134,7 @@ func TestBoardHandler(t *testing.T) {
 					var boardCount int
 					err := db.QueryRow(
 						"SELECT COUNT(*) FROM app.user_board " +
-							"WHERE boardID = 7 " +
+							"WHERE boardID = 8 " +
 							"AND username = 'bob124' " +
 							"AND isAdmin = TRUE",
 					).Scan(&boardCount)
@@ -150,7 +150,7 @@ func TestBoardHandler(t *testing.T) {
 						var columnCount int
 						err = db.QueryRow(
 							`SELECT COUNT(*) FROM app."column" `+
-								`WHERE boardID = 7 AND "order" = $1`,
+								`WHERE boardID = 8 AND "order" = $1`,
 							order,
 						).Scan(&columnCount)
 						if err != nil {

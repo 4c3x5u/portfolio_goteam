@@ -10,7 +10,9 @@ import (
 
 	"server/api"
 	"server/assert"
+	columnTable "server/dbaccess/column"
 	taskTable "server/dbaccess/task"
+	userboardTable "server/dbaccess/userboard"
 	pkgLog "server/log"
 )
 
@@ -19,9 +21,11 @@ import (
 func TestDELETEHandler(t *testing.T) {
 	idValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
+	columnSelector := &columnTable.FakeSelector{}
+	userBoardSelector := &userboardTable.FakeSelector{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
-		idValidator, taskSelector, log,
+		idValidator, taskSelector, columnSelector, userBoardSelector, log,
 	)
 
 	for _, c := range []struct {
@@ -34,49 +38,85 @@ func TestDELETEHandler(t *testing.T) {
 		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:              "IDEmpty",
-			idValidatorErr:    api.ErrStrEmpty,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID cannot be empty."),
+			name:                 "IDEmpty",
+			idValidatorErr:       api.ErrStrEmpty,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("Task ID cannot be empty."),
 		},
 		{
-			name:              "IDNotInt",
-			idValidatorErr:    api.ErrStrNotInt,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID must be an integer."),
+			name:                 "IDNotInt",
+			idValidatorErr:       api.ErrStrNotInt,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("Task ID must be an integer."),
 		},
 		{
-			name:              "IDUnexpectedErr",
-			idValidatorErr:    api.ErrStrTooLong,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(api.ErrStrTooLong.Error()),
+			name:                 "IDUnexpectedErr",
+			idValidatorErr:       api.ErrStrTooLong,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(api.ErrStrTooLong.Error()),
 		},
 		{
-			name:              "TaskSelectorErr",
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrConnDone,
-			columnSelectorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			name:                 "TaskSelectorErr",
+			idValidatorErr:       nil,
+			taskSelectorErr:      sql.ErrConnDone,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
-			name:              "TaskNotFound",
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrNoRows,
-			columnSelectorErr: nil,
-			wantStatusCode:    http.StatusNotFound,
-			assertFunc:        assert.OnResErr("Task not found."),
+			name:                 "TaskNotFound",
+			idValidatorErr:       nil,
+			taskSelectorErr:      sql.ErrNoRows,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusNotFound,
+			assertFunc:           assert.OnResErr("Task not found."),
+		},
+		{
+			name:                 "ColumnSelectorErr",
+			idValidatorErr:       nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    sql.ErrNoRows,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:                 "UserBoardSelectorErr",
+			idValidatorErr:       nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: sql.ErrConnDone,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
+		},
+		{
+			name:                 "NoAccess",
+			idValidatorErr:       nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userBoardSelectorErr: sql.ErrNoRows,
+			wantStatusCode:       http.StatusForbidden,
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
+			),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			idValidator.Err = c.idValidatorErr
 			taskSelector.Err = c.taskSelectorErr
+			columnSelector.Err = c.columnSelectorErr
+			userBoardSelector.Err = c.userBoardSelectorErr
 
 			r, err := http.NewRequest("", "", nil)
 			if err != nil {

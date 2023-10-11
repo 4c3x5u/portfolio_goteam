@@ -53,6 +53,8 @@ func TestTaskHandler(t *testing.T) {
 			http.MethodDelete: taskAPI.NewDELETEHandler(
 				idValidator,
 				taskSelector,
+				columnSelector,
+				userBoardSelector,
 				log,
 			),
 		},
@@ -540,6 +542,12 @@ func TestTaskHandler(t *testing.T) {
 				id:             "1001",
 				wantStatusCode: http.StatusNotFound,
 				wantErrMsg:     "Task not found.",
+			},
+			{
+				name:           "NoAccess",
+				id:             "10",
+				wantStatusCode: http.StatusForbidden,
+				wantErrMsg:     "You do not have access to this board.",
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
