@@ -254,7 +254,7 @@ func TestPATCHHandler(t *testing.T) {
 			userIsAdmin:              false,
 			userBoardSelectorErr:     sql.ErrNoRows,
 			taskUpdaterErr:           nil,
-			wantStatusCode:           http.StatusUnauthorized,
+			wantStatusCode:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
@@ -269,7 +269,7 @@ func TestPATCHHandler(t *testing.T) {
 			userIsAdmin:              false,
 			userBoardSelectorErr:     nil,
 			taskUpdaterErr:           nil,
-			wantStatusCode:           http.StatusUnauthorized,
+			wantStatusCode:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can edit tasks.",
 			),

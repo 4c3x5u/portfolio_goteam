@@ -184,7 +184,7 @@ func (h *PATCHHandler) Handle(
 		username, strconv.Itoa(column.BoardID),
 	)
 	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(ResBody{
 			Error: "You do not have access to this board.",
 		}); err != nil {
@@ -199,7 +199,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 	if !isAdmin {
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(ResBody{
 			Error: "Only board admins can edit tasks.",
 		}); err != nil {

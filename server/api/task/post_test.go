@@ -150,19 +150,6 @@ func TestPOSTHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                     "NoAccess",
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     sql.ErrNoRows,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusUnauthorized,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
-			),
-		},
-		{
 			name:                     "UserBoardSelectorErr",
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
@@ -176,6 +163,19 @@ func TestPOSTHandler(t *testing.T) {
 			),
 		},
 		{
+			name:                     "NoAccess",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			userIsAdmin:              false,
+			userBoardSelectorErr:     sql.ErrNoRows,
+			taskInserterErr:          nil,
+			wantStatusCode:           http.StatusForbidden,
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
+			),
+		},
+		{
 			name:                     "NotAdmin",
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
@@ -183,7 +183,7 @@ func TestPOSTHandler(t *testing.T) {
 			userIsAdmin:              false,
 			userBoardSelectorErr:     nil,
 			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusUnauthorized,
+			wantStatusCode:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can create tasks.",
 			),

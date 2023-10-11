@@ -167,7 +167,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      8,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
@@ -180,7 +180,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      9,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can create tasks.",
 				),
@@ -374,7 +374,7 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
@@ -389,7 +389,7 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
-				wantStatusCode: http.StatusUnauthorized,
+				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can edit tasks.",
 				),
