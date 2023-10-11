@@ -24,6 +24,9 @@ import (
 func TestTaskHandler(t *testing.T) {
 	idValidator := taskAPI.NewIDValidator()
 	titleValidator := taskAPI.NewTitleValidator()
+	taskSelector := taskTable.NewSelector(db)
+	columnSelector := columnTable.NewSelector(db)
+	userBoardSelector := userboardTable.NewSelector(db)
 	log := pkgLog.New()
 	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
@@ -32,8 +35,8 @@ func TestTaskHandler(t *testing.T) {
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				titleValidator,
 				titleValidator,
-				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				columnSelector,
+				userBoardSelector,
 				taskTable.NewInserter(db),
 				log,
 			),
@@ -41,13 +44,17 @@ func TestTaskHandler(t *testing.T) {
 				idValidator,
 				titleValidator,
 				titleValidator,
-				taskTable.NewSelector(db),
-				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				taskSelector,
+				columnSelector,
+				userBoardSelector,
 				taskTable.NewUpdater(db),
 				log,
 			),
-			http.MethodDelete: taskAPI.NewDELETEHandler(idValidator, log),
+			http.MethodDelete: taskAPI.NewDELETEHandler(
+				idValidator,
+				taskSelector,
+				log,
+			),
 		},
 	)
 
@@ -527,6 +534,12 @@ func TestTaskHandler(t *testing.T) {
 				id:             "A",
 				wantStatusCode: http.StatusBadRequest,
 				wantErrMsg:     "Task ID must be an integer.",
+			},
+			{
+				name:           "TaskNotFound",
+				id:             "1001",
+				wantStatusCode: http.StatusNotFound,
+				wantErrMsg:     "Task not found.",
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {

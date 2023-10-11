@@ -1,26 +1,36 @@
 package task
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
+
 	"server/api"
+	"server/dbaccess"
+	taskTable "server/dbaccess/task"
 	pkgLog "server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE
 // requests sent to the task route.
 type DELETEHandler struct {
-	idValidator api.StringValidator
-	log         pkgLog.Errorer
+	idValidator  api.StringValidator
+	taskSelector dbaccess.Selector[taskTable.Record]
+	log          pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
 	idValidator api.StringValidator,
+	taskSelector dbaccess.Selector[taskTable.Record],
 	log pkgLog.Errorer,
 ) DELETEHandler {
-	return DELETEHandler{idValidator: idValidator, log: log}
+	return DELETEHandler{
+		idValidator:  idValidator,
+		taskSelector: taskSelector,
+		log:          log,
+	}
 }
 
 // Handle handles the DELETE requests sent to the task route.
@@ -37,11 +47,33 @@ func (h DELETEHandler) Handle(
 			h.log.Error(err.Error())
 			return
 		}
+	} else if errors.Is(err, api.ErrStrNotInt) {
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(ResBody{
+			Error: "Task ID must be an integer.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
 	}
-	w.WriteHeader(http.StatusBadRequest)
-	if err := json.NewEncoder(w).Encode(ResBody{
-		Error: "Task ID must be an integer.",
-	}); err != nil {
+
+	_, err := h.taskSelector.Select(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		if err = json.NewEncoder(w).Encode(ResBody{
+			Error: "Task not found.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
