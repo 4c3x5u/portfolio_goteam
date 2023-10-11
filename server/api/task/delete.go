@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"server/api"
 	pkgLog "server/log"
@@ -24,11 +25,22 @@ func NewDELETEHandler(
 
 // Handle handles the DELETE requests sent to the task route.
 func (h DELETEHandler) Handle(
-	w http.ResponseWriter, _ *http.Request, _ string,
+	w http.ResponseWriter, r *http.Request, _ string,
 ) {
+	id := r.URL.Query().Get("id")
+	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrStrEmpty) {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "Task ID cannot be empty.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	}
 	w.WriteHeader(http.StatusBadRequest)
 	if err := json.NewEncoder(w).Encode(ResBody{
-		Error: "Task ID cannot be empty.",
+		Error: "Task ID must be an integer.",
 	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())

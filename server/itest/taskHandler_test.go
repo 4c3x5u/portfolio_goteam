@@ -530,5 +530,27 @@ func TestTaskHandler(t *testing.T) {
 
 			assert.OnResErr(wantErrMsg)(t, res, "")
 		})
+
+		t.Run("IDNotInt", func(t *testing.T) {
+			id := "A"
+			wantStatusCode := http.StatusBadRequest
+			wantErrMsg := "Task ID must be an integer."
+
+			r, err := http.NewRequest(http.MethodDelete, "?id="+id, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			addBearerAuth(jwtBob123)(r)
+			w := httptest.NewRecorder()
+
+			sut.ServeHTTP(w, r)
+			res := w.Result()
+
+			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
+
+			assert.OnResErr(wantErrMsg)(t, res, "")
+		})
 	})
 }
