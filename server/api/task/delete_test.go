@@ -10,6 +10,7 @@ import (
 
 	"server/api"
 	"server/assert"
+	"server/dbaccess"
 	columnTable "server/dbaccess/column"
 	taskTable "server/dbaccess/task"
 	userboardTable "server/dbaccess/userboard"
@@ -23,9 +24,15 @@ func TestDELETEHandler(t *testing.T) {
 	taskSelector := &taskTable.FakeSelector{}
 	columnSelector := &columnTable.FakeSelector{}
 	userBoardSelector := &userboardTable.FakeSelector{}
+	taskDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
-		idValidator, taskSelector, columnSelector, userBoardSelector, log,
+		idValidator,
+		taskSelector,
+		columnSelector,
+		userBoardSelector,
+		taskDeleter,
+		log,
 	)
 
 	for _, c := range []struct {
@@ -35,6 +42,7 @@ func TestDELETEHandler(t *testing.T) {
 		columnSelectorErr    error
 		userIsAdmin          bool
 		userBoardSelectorErr error
+		taskDeleterErr       error
 		wantStatusCode       int
 		assertFunc           func(*testing.T, *http.Response, string)
 	}{
@@ -45,6 +53,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Task ID cannot be empty."),
 		},
@@ -55,6 +64,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Task ID must be an integer."),
 		},
@@ -65,6 +75,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(api.ErrStrTooLong.Error()),
 		},
@@ -75,6 +86,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
@@ -85,6 +97,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusNotFound,
 			assertFunc:           assert.OnResErr("Task not found."),
 		},
@@ -95,6 +108,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    sql.ErrNoRows,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
@@ -105,6 +119,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: sql.ErrConnDone,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
@@ -115,6 +130,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: sql.ErrNoRows,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
@@ -127,10 +143,33 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelectorErr:    nil,
 			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
 			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can delete tasks.",
 			),
+		},
+		{
+			name:                 "TaskDeleterErr",
+			idValidatorErr:       nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			taskDeleterErr:       sql.ErrNoRows,
+			wantStatusCode:       http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:                 "Success",
+			idValidatorErr:       nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          true,
+			userBoardSelectorErr: nil,
+			taskDeleterErr:       nil,
+			wantStatusCode:       http.StatusOK,
+			assertFunc:           func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -139,6 +178,7 @@ func TestDELETEHandler(t *testing.T) {
 			columnSelector.Err = c.columnSelectorErr
 			userBoardSelector.IsAdmin = c.userIsAdmin
 			userBoardSelector.Err = c.userBoardSelectorErr
+			taskDeleter.Err = c.taskDeleterErr
 
 			r, err := http.NewRequest("", "", nil)
 			if err != nil {

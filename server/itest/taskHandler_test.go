@@ -55,6 +55,7 @@ func TestTaskHandler(t *testing.T) {
 				taskSelector,
 				columnSelector,
 				userBoardSelector,
+				taskTable.NewDeleter(db),
 				log,
 			),
 		},
@@ -523,37 +524,55 @@ func TestTaskHandler(t *testing.T) {
 			name           string
 			id             string
 			wantStatusCode int
-			wantErrMsg     string
+			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:           "IDEmpty",
 				id:             "",
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task ID cannot be empty.",
+				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
 			{
 				name:           "IDNotInt",
 				id:             "A",
 				wantStatusCode: http.StatusBadRequest,
-				wantErrMsg:     "Task ID must be an integer.",
+				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
 			{
 				name:           "TaskNotFound",
 				id:             "1001",
 				wantStatusCode: http.StatusNotFound,
-				wantErrMsg:     "Task not found.",
+				assertFunc:     assert.OnResErr("Task not found."),
 			},
 			{
 				name:           "NoAccess",
 				id:             "10",
 				wantStatusCode: http.StatusForbidden,
-				wantErrMsg:     "You do not have access to this board.",
+				assertFunc: assert.OnResErr(
+					"You do not have access to this board.",
+				),
 			},
 			{
 				name:           "NotAdmin",
 				id:             "11",
 				wantStatusCode: http.StatusForbidden,
-				wantErrMsg:     "Only board admins can delete tasks.",
+				assertFunc: assert.OnResErr(
+					"Only board admins can delete tasks.",
+				),
+			},
+			{
+				name:           "Success",
+				id:             "12",
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+					var count int
+					err := db.QueryRow(
+						"SELECT COUNT(*) FROM app.task WHERE id = 12",
+					).Scan(&count)
+					if err = assert.Equal(0, count); err != nil {
+						t.Error(err)
+					}
+				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
@@ -573,7 +592,7 @@ func TestTaskHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				assert.OnResErr(c.wantErrMsg)(t, res, "")
+				c.assertFunc(t, res, "")
 			})
 		}
 	})

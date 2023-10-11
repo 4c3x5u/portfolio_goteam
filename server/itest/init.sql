@@ -48,14 +48,15 @@ VALUES
 
 INSERT INTO app.board(name) 
 VALUES
-    ('Board #1'), -- id: 1 (used for board DELETE tests)
-    ('Board #2'), -- id: 2
-    ('Board #3'), -- id: 3
-    ('Board #4'), -- id: 4
-    ('Board #5'), -- id: 5
-    ('Board #6'), -- id: 6
-    ('Board #7'), -- id: 7
-    ('Board #8'); -- id: 8
+    ('Board #1'), -- used for DELETE board test
+    ('Board #2'),
+    ('Board #3'),
+    ('Board #4'),
+    ('Board #5'),
+    ('Board #6'),
+    ('Board #7'),
+    ('Board #8'),
+    ('Board #9');
 -- a record is inserted here with the id of 6 during board POST tests.
 
 INSERT INTO app.user_board(username, boardID, isAdmin)
@@ -64,7 +65,8 @@ VALUES
   ('bob123', 2, TRUE),
   ('bob123', 3, TRUE),
   ('bob123', 4, FALSE),
-  ('bob123', 8, FALSE);
+  ('bob123', 8, FALSE),
+  ('bob123', 9, TRUE);
 -- a board is inserted here with the values of ('bob124', 6, TRUE) during board
 -- POST tests.
 
@@ -86,30 +88,32 @@ VALUES
     (4, 3), -- id: 13
     (3, 3), -- id: 14
     (7, 1), -- id: 15
-    (8, 1); -- id: 16
+    (8, 1), -- id: 16
+    (9, 1); -- id: 17
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
 VALUES
-    (1,  'task A', 1), -- id: 1 (used for board DELETE tests)
-    (2,  'task B', 1), -- id: 2
-    (3,  'task C', 1), -- id: 3
-    (4,  'task D', 1), -- id: 4
-    (10, 'task E', 1), -- id: 5
-    (10, 'task F', 2), -- id: 6
-    (8,  'task G', 1), -- id: 7
-    (9,  'task H', 1), -- id: 8
-    (11, 'task I', 1), -- id: 9
-    (15, 'task J', 1), -- id: 10
-    (16, 'task K', 1); -- id: 11
+    (1,  'task 1', 1), -- (used for board DELETE board tests)
+    (2,  'task 2', 1),
+    (3,  'task 3', 1),
+    (4,  'task 4', 1),
+    (10, 'task 5', 1),
+    (10, 'task 6', 2),
+    (8,  'task 7', 1),
+    (9,  'task 8', 1),
+    (11, 'task 9', 1),
+    (15, 'task 10', 1),
+    (16, 'task 11', 1),
+    (17, 'task 12', 1);
 
 -- insert a subtask into each task for testing recursive board deletion
 INSERT INTO app.subtask(taskID, title, "order", isDone)
 VALUES
-    (1, 'subtask A', 1, false),
-    (2, 'subtask B', 1, false),
-    (3, 'subtask C', 1, false),
-    (4, 'subtask C', 1, false),
-    (9, 'subtask D', 1, false);
+    (1, 'subtask 1', 1, false),
+    (2, 'subtask 2', 1, false),
+    (3, 'subtask 3', 1, false),
+    (4, 'subtask 4', 1, false),
+    (9, 'subtask 5', 1, false);
 
 

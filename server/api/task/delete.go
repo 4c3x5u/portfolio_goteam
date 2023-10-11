@@ -21,6 +21,7 @@ type DELETEHandler struct {
 	taskSelector      dbaccess.Selector[taskTable.Record]
 	columnSelector    dbaccess.Selector[columnTable.Record]
 	userBoardSelector dbaccess.RelSelector[bool]
+	taskDeleter       dbaccess.Deleter
 	log               pkgLog.Errorer
 }
 
@@ -30,6 +31,7 @@ func NewDELETEHandler(
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
+	taskDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
@@ -37,6 +39,7 @@ func NewDELETEHandler(
 		taskSelector:      taskSelector,
 		columnSelector:    columnSelector,
 		userBoardSelector: userBoardSelector,
+		taskDeleter:       taskDeleter,
 		log:               log,
 	}
 }
@@ -45,6 +48,7 @@ func NewDELETEHandler(
 func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Read and validate task ID.
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrStrEmpty) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -70,6 +74,7 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// Select task from the database to access its column ID.
 	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
@@ -87,6 +92,7 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// Select column from the database to access its board ID.
 	column, err := h.columnSelector.Select(strconv.Itoa(task.ColumnID))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -94,6 +100,7 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// Authorize the user.
 	isAdmin, err := h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
@@ -119,5 +126,12 @@ func (h DELETEHandler) Handle(
 			h.log.Error(err.Error())
 			return
 		}
+	}
+
+	// Delete the record from task table that has the given ID.
+	if err = h.taskDeleter.Delete(id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
 	}
 }
