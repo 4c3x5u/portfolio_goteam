@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"server/api"
-	"server/auth"
-	"server/dbaccess"
-	userTable "server/dbaccess/user"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/auth"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )

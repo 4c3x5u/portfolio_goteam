@@ -5,7 +5,7 @@ package login
 import (
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestValidator tests the Validate method of Validator to assert that it

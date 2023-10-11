@@ -3,9 +3,10 @@
 package task
 
 import (
-	"server/api"
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestTitleValidator tests the Validate method of TitleValidator to assert that

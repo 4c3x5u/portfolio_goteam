@@ -10,12 +10,12 @@ import (
 	"testing"
 
 	"database/sql"
-	"server/api"
-	"server/assert"
-	columnTable "server/dbaccess/column"
-	taskTable "server/dbaccess/task"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it

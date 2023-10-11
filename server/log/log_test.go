@@ -7,7 +7,7 @@ import (
 	"log"
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 func TestLog(t *testing.T) {

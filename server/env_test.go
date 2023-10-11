@@ -4,8 +4,9 @@ package main
 
 import (
 	"os"
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 func TestEnv(t *testing.T) {

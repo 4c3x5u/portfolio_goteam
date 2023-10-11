@@ -4,10 +4,10 @@ package user
 
 import (
 	"errors"
-	"server/dbaccess"
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )

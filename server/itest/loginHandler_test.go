@@ -9,11 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	loginAPI "server/api/login"
-	"server/assert"
-	"server/auth"
-	userTable "server/dbaccess/user"
-	"server/log"
+	loginAPI "github.com/kxplxn/goteam/server/api/login"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
+	"github.com/kxplxn/goteam/server/log"
 
 	"github.com/golang-jwt/jwt/v4"
 )

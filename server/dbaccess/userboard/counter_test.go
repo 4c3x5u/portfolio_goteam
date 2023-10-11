@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"testing"
 
-	"server/assert"
-	"server/dbaccess"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
 )
 
 // TestCounter tests the Count method of Counter to assert that it executes the

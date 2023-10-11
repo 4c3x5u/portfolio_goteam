@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"server/api"
-	"server/dbaccess"
-	columnTable "server/dbaccess/column"
-	taskTable "server/dbaccess/task"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE

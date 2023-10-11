@@ -9,14 +9,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	taskAPI "server/api/task"
-	"server/assert"
-	"server/auth"
-	columnTable "server/dbaccess/column"
-	taskTable "server/dbaccess/task"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	taskAPI "github.com/kxplxn/goteam/server/api/task"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestTaskHandler tests the http.Handler for the task API route and asserts

@@ -4,8 +4,9 @@ package api
 
 import (
 	"net/http"
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestAllowedMethods tests the AllowedMethods function to assert that it

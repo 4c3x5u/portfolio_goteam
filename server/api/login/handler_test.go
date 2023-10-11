@@ -12,10 +12,10 @@ import (
 	"testing"
 	"time"
 
-	"server/assert"
-	"server/auth"
-	userTable "server/dbaccess/user"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 
 	"golang.org/x/crypto/bcrypt"
 )

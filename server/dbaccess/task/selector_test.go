@@ -4,10 +4,12 @@ package task
 
 import (
 	"database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"server/assert"
-	"server/dbaccess"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 // TestSelector tests the Select method of Selector to assert that it sends the

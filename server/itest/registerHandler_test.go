@@ -9,11 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	registerAPI "server/api/register"
-	"server/assert"
-	"server/auth"
-	userTable "server/dbaccess/user"
-	"server/log"
+	registerAPI "github.com/kxplxn/goteam/server/api/register"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
+	"github.com/kxplxn/goteam/server/log"
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"

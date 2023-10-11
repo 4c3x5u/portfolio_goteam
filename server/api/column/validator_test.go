@@ -3,8 +3,9 @@
 package column
 
 import (
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestIDValidator tests the Validate method of IDValidator to assert

@@ -11,11 +11,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	"server/assert"
-	"server/dbaccess"
-	boardTable "server/dbaccess/board"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it

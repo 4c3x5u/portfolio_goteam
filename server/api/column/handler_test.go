@@ -11,12 +11,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	"server/assert"
-	"server/auth"
-	columnTable "server/dbaccess/column"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves

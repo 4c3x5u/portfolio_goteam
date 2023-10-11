@@ -1,4 +1,4 @@
-module server
+module github.com/kxplxn/goteam/server
 
 go 1.21.0
 

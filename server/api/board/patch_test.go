@@ -11,12 +11,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	"server/assert"
-	"server/dbaccess"
-	boardTable "server/dbaccess/board"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestPATCHHandler tests the Handle method of PATCHHandler to assert that it

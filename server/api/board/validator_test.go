@@ -3,8 +3,9 @@
 package board
 
 import (
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestNameValidator tests the Validate method of NameValidator to assert that

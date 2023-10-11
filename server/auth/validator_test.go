@@ -5,7 +5,7 @@ package auth
 import (
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestJWTValidator tests the Validate method of the JWTValidator to assert

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"server/assert"
-	"server/dbaccess"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
 )
 
 // TestSelector tests the Select method of Selector to assert that it sends the

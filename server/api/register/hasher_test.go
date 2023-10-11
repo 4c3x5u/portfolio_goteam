@@ -5,7 +5,7 @@ package register
 import (
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 
 	"golang.org/x/crypto/bcrypt"
 )

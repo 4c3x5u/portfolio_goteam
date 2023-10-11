@@ -5,7 +5,7 @@ package register
 import (
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // These constants are declared separately from the strings that are actually

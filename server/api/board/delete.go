@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"server/api"
-	"server/dbaccess"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"server/auth"
+	"github.com/kxplxn/goteam/server/auth"
 )
 
 // MethodHandler describes a type that can be used to serve a certain part of an

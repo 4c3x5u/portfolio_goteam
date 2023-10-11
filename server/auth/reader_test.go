@@ -5,7 +5,7 @@ package auth
 import (
 	"testing"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestBearerTokenReader tests the Read method of BearerTokenReader.

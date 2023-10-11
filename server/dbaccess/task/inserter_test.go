@@ -7,8 +7,8 @@ import (
 	"errors"
 	"testing"
 
-	"server/assert"
-	"server/dbaccess"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )

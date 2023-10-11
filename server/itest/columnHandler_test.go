@@ -9,12 +9,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	columnAPI "server/api/column"
-	"server/assert"
-	"server/auth"
-	columnTable "server/dbaccess/column"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	columnAPI "github.com/kxplxn/goteam/server/api/column"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestColumnHandler tests the http.Handler for the column API route and asserts

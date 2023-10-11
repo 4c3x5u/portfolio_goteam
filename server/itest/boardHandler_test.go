@@ -9,13 +9,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	boardAPI "server/api/board"
-	"server/assert"
-	"server/auth"
-	boardTable "server/dbaccess/board"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	boardAPI "github.com/kxplxn/goteam/server/api/board"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestBoardHandler tests the http.Handler for the board API route and asserts

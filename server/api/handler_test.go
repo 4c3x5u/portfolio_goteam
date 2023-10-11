@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"server/assert"
-	"server/auth"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/auth"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves

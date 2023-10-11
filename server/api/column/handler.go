@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"server/dbaccess"
 	"strconv"
 
-	"server/api"
-	"server/auth"
-	columnTable "server/dbaccess/column"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/auth"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // Handler is a http.Handler that can be used to handle column requests.

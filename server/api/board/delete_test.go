@@ -9,11 +9,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"server/api"
-	"server/assert"
-	"server/dbaccess"
-	userboardTable "server/dbaccess/userboard"
-	pkgLog "server/log"
+	"github.com/kxplxn/goteam/server/api"
+	"github.com/kxplxn/goteam/server/assert"
+	"github.com/kxplxn/goteam/server/dbaccess"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it

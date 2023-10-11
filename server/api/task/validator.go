@@ -1,8 +1,9 @@
 package task
 
 import (
-	"server/api"
 	"strconv"
+
+	"github.com/kxplxn/goteam/server/api"
 )
 
 // TitleValidator can be used to validate a task title.

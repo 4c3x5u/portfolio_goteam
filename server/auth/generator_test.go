@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"server/assert"
+	"github.com/kxplxn/goteam/server/assert"
 
 	"github.com/golang-jwt/jwt/v4"
 )

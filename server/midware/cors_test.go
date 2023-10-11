@@ -5,8 +5,9 @@ package midware
 import (
 	"net/http"
 	"net/http/httptest"
-	"server/assert"
 	"testing"
+
+	"github.com/kxplxn/goteam/server/assert"
 )
 
 // TestCORS tests the CORS middleware to assert that it returns the correct
