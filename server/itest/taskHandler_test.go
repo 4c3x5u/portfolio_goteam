@@ -549,6 +549,12 @@ func TestTaskHandler(t *testing.T) {
 				wantStatusCode: http.StatusForbidden,
 				wantErrMsg:     "You do not have access to this board.",
 			},
+			{
+				name:           "NotAdmin",
+				id:             "11",
+				wantStatusCode: http.StatusForbidden,
+				wantErrMsg:     "Only board admins can delete tasks.",
+			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				r, err := http.NewRequest(http.MethodDelete, "?id="+c.id, nil)

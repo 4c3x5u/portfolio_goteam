@@ -94,7 +94,7 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
-	_, err = h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
+	isAdmin, err := h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(ResBody{
@@ -109,5 +109,15 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
+	}
+	if !isAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(ResBody{
+			Error: "Only board admins can delete tasks.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
 	}
 }
