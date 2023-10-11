@@ -8,64 +8,42 @@ import (
 	"strconv"
 
 	"github.com/kxplxn/goteam/server/api"
-	"github.com/kxplxn/goteam/server/auth"
 	"github.com/kxplxn/goteam/server/dbaccess"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// Handler is a http.Handler that can be used to handle column requests.
-type Handler struct {
-	authHeaderReader   auth.HeaderReader
-	authTokenValidator auth.TokenValidator
-	idValidator        api.StringValidator
-	columnSelector     dbaccess.Selector[columnTable.Record]
-	userBoardSelector  dbaccess.RelSelector[bool]
-	columnUpdater      dbaccess.Updater[[]columnTable.Task]
-	log                pkgLog.Errorer
+// PATCHHandler is an api.MethodHandler that can be used to handle PATCH
+// requests sent to the column route.
+type PATCHHandler struct {
+	idValidator       api.StringValidator
+	columnSelector    dbaccess.Selector[columnTable.Record]
+	userBoardSelector dbaccess.RelSelector[bool]
+	columnUpdater     dbaccess.Updater[[]columnTable.Task]
+	log               pkgLog.Errorer
 }
 
-// NewHandler creates and returns a new Handler.
-func NewHandler(
-	authHeaderReader auth.HeaderReader,
-	authTokenValidator auth.TokenValidator,
+// NewPATCHHandler creates and returns a new PATCHHandler.
+func NewPATCHHandler(
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
-) Handler {
-	return Handler{
-		authHeaderReader:   authHeaderReader,
-		authTokenValidator: authTokenValidator,
-		idValidator:        idValidator,
-		columnSelector:     columnSelector,
-		userBoardSelector:  userBoardSelector,
-		columnUpdater:      columnUpdater,
-		log:                log,
+) PATCHHandler {
+	return PATCHHandler{
+		idValidator:       idValidator,
+		columnSelector:    columnSelector,
+		userBoardSelector: userBoardSelector,
+		columnUpdater:     columnUpdater,
+		log:               log,
 	}
 }
 
-// ServeHTTP responds to requests made to the column route.
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Only allow PATCH requests.
-	if r.Method != http.MethodPatch {
-		w.Header().Add(api.AllowedMethods([]string{http.MethodPost}))
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-
-	// Get auth token from Authorization header, validate it, and get
-	// the subject of the token.
-	authToken := h.authHeaderReader.Read(
-		r.Header.Get(auth.AuthorizationHeader),
-	)
-	sub := h.authTokenValidator.Validate(authToken)
-	if sub == "" {
-		w.Header().Set(auth.WWWAuthenticate())
-		w.WriteHeader(http.StatusUnauthorized)
-		return
-	}
-
+// Handle handles the PATCH requests sent to the column route.
+func (h PATCHHandler) Handle(
+	w http.ResponseWriter, r *http.Request, username string,
+) {
 	// Get and validate the column ID.
 	columnID := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(columnID); err != nil {
@@ -100,7 +78,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Check whether the user has the right to edit this column.
 	if isAdmin, err := h.userBoardSelector.Select(
-		sub, strconv.Itoa(column.BoardID),
+		username, strconv.Itoa(column.BoardID),
 	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(

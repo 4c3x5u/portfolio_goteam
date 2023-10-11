@@ -43,7 +43,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	// Create dependencies that are shared by multiple handlers.
+	// Create dependencies that are used by multiple handlers.
 	db, err := sql.Open("postgres", env.DBConnStr)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -54,7 +54,11 @@ func main() {
 		os.Exit(4)
 	}
 	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
+	bearerTokenReader := auth.NewBearerTokenReader()
+	jwtValidator := auth.NewJWTValidator(env.JWTKey)
 	userSelector := userTable.NewSelector(db)
+	columnSelector := columnTable.NewSelector(db)
+	userBoardSelector := userboardTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -79,54 +83,60 @@ func main() {
 		log,
 	))
 
+	boardIDValidator := boardAPI.NewIDValidator()
+	boardNameValidator := boardAPI.NewNameValidator()
 	mux.Handle("/board", api.NewHandler(
-		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(env.JWTKey),
+		bearerTokenReader,
+		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewNameValidator(),
+				boardNameValidator,
 				userboardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewIDValidator(),
-				userboardTable.NewSelector(db),
+				boardIDValidator,
+				userBoardSelector,
 				boardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
-				boardAPI.NewIDValidator(),
-				boardAPI.NewNameValidator(),
+				boardIDValidator,
+				boardNameValidator,
 				boardTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				userBoardSelector,
 				boardTable.NewUpdater(db),
 				log,
 			),
 		},
 	))
 
-	mux.Handle("/column", columnAPI.NewHandler(
-		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(env.JWTKey),
-		columnAPI.NewIDValidator(),
-		columnTable.NewSelector(db),
-		userboardTable.NewSelector(db),
-		columnTable.NewUpdater(db),
-		log,
+	mux.Handle("/column", api.NewHandler(
+		bearerTokenReader,
+		jwtValidator,
+		map[string]api.MethodHandler{
+			http.MethodPatch: columnAPI.NewPATCHHandler(
+				columnAPI.NewIDValidator(),
+				columnSelector,
+				userBoardSelector,
+				columnTable.NewUpdater(db),
+				log,
+			),
+		},
 	))
 
 	mux.Handle("/task", api.NewHandler(
-		auth.NewBearerTokenReader(),
-		auth.NewJWTValidator(jwtKey),
+		bearerTokenReader,
+		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
 				taskAPI.NewTitleValidator(),
 				taskAPI.NewTitleValidator(),
-				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				columnSelector,
+				userBoardSelector,
 				taskTable.NewInserter(db),
-				pkgLog.New(),
+				log,
 			),
 		},
 	))

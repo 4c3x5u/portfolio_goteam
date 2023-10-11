@@ -5,6 +5,7 @@ package itest
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/kxplxn/goteam/server/api"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,14 +23,18 @@ import (
 func TestColumnHandler(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
-	sut := columnAPI.NewHandler(
+	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
-		columnAPI.NewIDValidator(),
-		columnTable.NewSelector(db),
-		userboardTable.NewSelector(db),
-		columnTable.NewUpdater(db),
-		log,
+		map[string]api.MethodHandler{
+			http.MethodPatch: columnAPI.NewPATCHHandler(
+				columnAPI.NewIDValidator(),
+				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
+				columnTable.NewUpdater(db),
+				log,
+			),
+		},
 	)
 
 	t.Run("Auth", func(t *testing.T) {
