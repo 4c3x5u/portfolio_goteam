@@ -22,6 +22,7 @@ import (
 // TestTaskHandler tests the http.Handler for the task API route and asserts
 // that it behaves correctly during various execution paths.
 func TestTaskHandler(t *testing.T) {
+	idValidator := taskAPI.NewIDValidator()
 	titleValidator := taskAPI.NewTitleValidator()
 	log := pkgLog.New()
 	sut := api.NewHandler(
@@ -37,7 +38,7 @@ func TestTaskHandler(t *testing.T) {
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
-				taskAPI.NewIDValidator(),
+				idValidator,
 				titleValidator,
 				titleValidator,
 				taskTable.NewSelector(db),
@@ -46,6 +47,7 @@ func TestTaskHandler(t *testing.T) {
 				taskTable.NewUpdater(db),
 				log,
 			),
+			http.MethodDelete: taskAPI.NewDELETEHandler(idValidator, log),
 		},
 	)
 
@@ -505,5 +507,28 @@ func TestTaskHandler(t *testing.T) {
 				c.assertFunc(t, res, "")
 			})
 		}
+	})
+
+	t.Run(http.MethodDelete, func(t *testing.T) {
+		t.Run("IDEmpty", func(t *testing.T) {
+			wantStatusCode := http.StatusBadRequest
+			wantErrMsg := "Task ID cannot be empty."
+
+			r, err := http.NewRequest(http.MethodDelete, "?id=", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			addBearerAuth(jwtBob123)(r)
+			w := httptest.NewRecorder()
+
+			sut.ServeHTTP(w, r)
+			res := w.Result()
+
+			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
+
+			assert.OnResErr(wantErrMsg)(t, res, "")
+		})
 	})
 }
