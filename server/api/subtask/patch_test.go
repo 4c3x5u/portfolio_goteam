@@ -19,69 +19,50 @@ func TestPATCHHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(idValidator, log)
 
-	t.Run("IDEmpty", func(t *testing.T) {
-		idValidator.Err = api.ErrStrEmpty
+	for _, c := range []struct {
+		name           string
+		idValidatorErr error
+		wantStatusCode int
+		assertFunc     func(*testing.T, *http.Response, string)
+	}{
+		{
+			name:           "IDEmpty",
+			idValidatorErr: api.ErrStrEmpty,
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     assert.OnResErr("Subtask ID cannot be empty."),
+		},
+		{
+			name:           "IDNotInt",
+			idValidatorErr: api.ErrStrNotInt,
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     assert.OnResErr("Subtask ID must be an integer."),
+		},
+		{
+			name:           "IDUnexpectedErr",
+			idValidatorErr: api.ErrStrTooLong,
+			wantStatusCode: http.StatusInternalServerError,
+			assertFunc:     assert.OnLoggedErr(api.ErrStrTooLong.Error()),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			idValidator.Err = c.idValidatorErr
 
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Subtask ID cannot be empty."
+			r, err := http.NewRequest("", "?id=", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w := httptest.NewRecorder()
 
-		r, err := http.NewRequest("", "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
+			sut.Handle(w, r, "")
+			res := w.Result()
 
-		sut.Handle(w, r, "")
-		res := w.Result()
+			if err = assert.Equal(
+				c.wantStatusCode, res.StatusCode,
+			); err != nil {
+				t.Error(err)
+			}
 
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
-
-	t.Run("IDNotInt", func(t *testing.T) {
-		idValidator.Err = api.ErrStrNotInt
-
-		wantStatusCode := http.StatusBadRequest
-		wantErrMsg := "Subtask ID must be an integer."
-
-		r, err := http.NewRequest("", "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
-
-		sut.Handle(w, r, "")
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr(wantErrMsg)(t, res, "")
-	})
-
-	t.Run("IDUnexpectedErr", func(t *testing.T) {
-		idValidator.Err = api.ErrStrTooLong
-
-		wantStatusCode := http.StatusInternalServerError
-		wantLoggedErr := api.ErrStrTooLong.Error()
-
-		r, err := http.NewRequest("", "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		w := httptest.NewRecorder()
-
-		sut.Handle(w, r, "")
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnLoggedErr(wantLoggedErr)(t, res, log.InMessage)
-	})
+			c.assertFunc(t, res, log.InMessage)
+		})
+	}
 }

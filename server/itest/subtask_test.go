@@ -28,41 +28,40 @@ func TestSubtaskHandler(t *testing.T) {
 		},
 	)
 
-	t.Run("IDEmpty", func(t *testing.T) {
-		wantStatusCode := http.StatusBadRequest
-		r, err := http.NewRequest(http.MethodPatch, "?id=", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		addBearerAuth(jwtBob123)(r)
-		w := httptest.NewRecorder()
+	for _, c := range []struct {
+		name       string
+		id         string
+		wantErrMsg string
+	}{
+		{
+			name:       "IDEmpty",
+			id:         "",
+			wantErrMsg: "Subtask ID cannot be empty.",
+		},
+		{
+			name:       "IDNotInt",
+			id:         "A",
+			wantErrMsg: "Subtask ID must be an integer.",
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			wantStatusCode := http.StatusBadRequest
 
-		sut.ServeHTTP(w, r)
-		res := w.Result()
+			r, err := http.NewRequest(http.MethodPatch, "?id="+c.id, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			addBearerAuth(jwtBob123)(r)
+			w := httptest.NewRecorder()
 
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
+			sut.ServeHTTP(w, r)
+			res := w.Result()
 
-		assert.OnResErr("Subtask ID cannot be empty.")(t, res, "")
-	})
+			if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
 
-	t.Run("IDNotInt", func(t *testing.T) {
-		wantStatusCode := http.StatusBadRequest
-		r, err := http.NewRequest(http.MethodPatch, "?id=A", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		addBearerAuth(jwtBob123)(r)
-		w := httptest.NewRecorder()
-
-		sut.ServeHTTP(w, r)
-		res := w.Result()
-
-		if err = assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
-
-		assert.OnResErr("Subtask ID must be an integer.")(t, res, "")
-	})
+			assert.OnResErr(c.wantErrMsg)(t, res, "")
+		})
+	}
 }
