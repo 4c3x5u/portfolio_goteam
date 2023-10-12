@@ -15,6 +15,11 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// ReqBody defines the request body for requests handled by PATCHHandler.
+type ReqBody struct {
+	IsDone bool `json:"done"`
+}
+
 // ResBody defines the response body for requests handled by PATCHHandler.
 type ResBody struct {
 	Error string `json:"error"`
@@ -28,6 +33,7 @@ type PATCHHandler struct {
 	taskSelector      dbaccess.Selector[taskTable.Record]
 	columnSelector    dbaccess.Selector[columnTable.Record]
 	userBoardSelector dbaccess.RelSelector[bool]
+	subtaskUpdater    dbaccess.Updater[subtaskTable.UpRecord]
 	log               pkgLog.Errorer
 }
 
@@ -38,6 +44,7 @@ func NewPATCHHandler(
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
 	userBoardSelector dbaccess.RelSelector[bool],
+	subtaskUpdater dbaccess.Updater[subtaskTable.UpRecord],
 	log pkgLog.Errorer,
 ) PATCHHandler {
 	return PATCHHandler{
@@ -46,6 +53,7 @@ func NewPATCHHandler(
 		taskSelector:      taskSelector,
 		columnSelector:    columnSelector,
 		userBoardSelector: userBoardSelector,
+		subtaskUpdater:    subtaskUpdater,
 		log:               log,
 	}
 }
@@ -140,6 +148,21 @@ func (h PATCHHandler) Handle(
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
+		return
+	}
+
+	// Update subtask based on request body.
+	var reqBody ReqBody
+	if err = json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if err = h.subtaskUpdater.Update(
+		id, subtaskTable.NewUpRecord(reqBody.IsDone),
+	); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 }

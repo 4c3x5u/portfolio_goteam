@@ -58,7 +58,8 @@ VALUES
     ('board 8'),
     ('board 9'),
     ('board 10'),
-    ('board 11');
+    ('board 11'),
+    ('board 12');
 -- a record is inserted here with the id of 6 during board POST tests.
 
 INSERT INTO app.user_board(username, boardID, isAdmin)
@@ -69,7 +70,8 @@ VALUES
   ('bob123', 4,  FALSE),
   ('bob123', 8,  FALSE),
   ('bob123', 9,  TRUE),
-  ('bob123', 11, FALSE);
+  ('bob123', 11, FALSE),
+  ('bob123', 12, TRUE);
 -- a board is inserted here with the values of ('bob124', 6, TRUE) during board
 -- POST tests.
 
@@ -94,7 +96,8 @@ VALUES
     (8,  1), -- id: 16
     (9,  1), -- id: 17
     (10, 1), -- id: 18
-    (11, 1); -- id: 19
+    (11, 1), -- id: 19
+    (12, 1); -- id: 20
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
@@ -112,7 +115,8 @@ VALUES
     (16, 'task 11', 1),
     (17, 'task 12', 1),
     (18, 'task 13', 1),
-    (19, 'task 14', 1);
+    (19, 'task 14', 1),
+    (20, 'task 15', 1);
 
 -- insert a subtask into each task for testing recursive board deletion
 INSERT INTO app.subtask(taskID, title, "order", isDone)
@@ -123,6 +127,7 @@ VALUES
     (4,  'subtask 4', 1, false),
     (9,  'subtask 5', 1, false),
     (13, 'subtask 6', 1, false),
-    (14, 'subtask 7', 1, false);
+    (14, 'subtask 7', 1, false),
+    (15, 'subtask 8', 1, false);
 
 

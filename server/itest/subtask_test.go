@@ -3,9 +3,8 @@
 package itest
 
 import (
-	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +13,10 @@ import (
 	subtaskAPI "github.com/kxplxn/goteam/server/api/subtask"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/server/dbaccess/subtask"
+	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -31,6 +33,7 @@ func TestSubtaskHandler(t *testing.T) {
 				taskTable.NewSelector(db),
 				columnTable.NewSelector(db),
 				userboardTable.NewSelector(db),
+				subtaskTable.NewUpdater(db),
 				pkgLog.New(),
 			),
 		},
@@ -40,41 +43,67 @@ func TestSubtaskHandler(t *testing.T) {
 		name           string
 		id             string
 		wantStatusCode int
-		wantErrMsg     string
+		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:           "IDEmpty",
 			id:             "",
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg:     "Subtask ID cannot be empty.",
+			assertFunc:     assert.OnResErr("Subtask ID cannot be empty."),
 		},
 		{
 			name:           "IDNotInt",
 			id:             "A",
 			wantStatusCode: http.StatusBadRequest,
-			wantErrMsg:     "Subtask ID must be an integer.",
+			assertFunc:     assert.OnResErr("Subtask ID must be an integer."),
 		},
 		{
 			name:           "SubtaskNotFound",
 			id:             "1001",
 			wantStatusCode: http.StatusNotFound,
-			wantErrMsg:     "Subtask not found.",
+			assertFunc:     assert.OnResErr("Subtask not found."),
 		},
 		{
 			name:           "NoAccess",
 			id:             "6",
 			wantStatusCode: http.StatusForbidden,
-			wantErrMsg:     "You do not have access to this board.",
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
+			),
 		},
 		{
 			name:           "NotAdmin",
 			id:             "7",
 			wantStatusCode: http.StatusForbidden,
-			wantErrMsg:     "Only board admins can edit subtasks.",
+			assertFunc: assert.OnResErr(
+				"Only board admins can edit subtasks.",
+			),
+		},
+		{
+			name:           "Success",
+			id:             "8",
+			wantStatusCode: http.StatusOK,
+			assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				var isDone bool
+				if err := db.QueryRow(
+					"SELECT isDone FROM app.subtask WHERE id = 8",
+				).Scan(&isDone); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.True(isDone); err != nil {
+					t.Error(err)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			r, err := http.NewRequest(http.MethodPatch, "?id="+c.id, nil)
+			reqBody, err := json.Marshal(map[string]any{"done": true})
+			if err != nil {
+				t.Fatal(err)
+			}
+			r, err := http.NewRequest(
+				http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
+			)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -90,7 +119,7 @@ func TestSubtaskHandler(t *testing.T) {
 				t.Error(err)
 			}
 
-			assert.OnResErr(c.wantErrMsg)(t, res, "")
+			c.assertFunc(t, res, "")
 		})
 	}
 }
