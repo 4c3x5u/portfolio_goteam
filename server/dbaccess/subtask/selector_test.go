@@ -50,7 +50,7 @@ func TestSelector(t *testing.T) {
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(wantColumnID, subtask.taskID); err != nil {
+		if err = assert.Equal(wantColumnID, subtask.TaskID); err != nil {
 			t.Error(err)
 		}
 	})

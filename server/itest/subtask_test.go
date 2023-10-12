@@ -3,6 +3,9 @@
 package itest
 
 import (
+	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,6 +28,9 @@ func TestSubtaskHandler(t *testing.T) {
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(
 				subtaskAPI.NewIDValidator(),
 				subtaskTable.NewSelector(db),
+				taskTable.NewSelector(db),
+				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
 				pkgLog.New(),
 			),
 		},
@@ -53,6 +59,12 @@ func TestSubtaskHandler(t *testing.T) {
 			id:             "1001",
 			wantStatusCode: http.StatusNotFound,
 			wantErrMsg:     "Subtask not found.",
+		},
+		{
+			name:           "NoAccess",
+			id:             "6",
+			wantStatusCode: http.StatusForbidden,
+			wantErrMsg:     "You do not have access to this board.",
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

@@ -3,7 +3,7 @@ package subtask
 import "database/sql"
 
 // Record defines the subtask data returned from Selector.Select.
-type Record struct{ taskID int }
+type Record struct{ TaskID int }
 
 // Selector can be used to select a record from the task table.
 type Selector struct{ db *sql.DB }
@@ -16,7 +16,7 @@ func (s Selector) Select(id string) (Record, error) {
 	var rec Record
 	if err := s.db.QueryRow(
 		`SELECT taskID FROM app.subtask WHERE id = $1`, id,
-	).Scan(&rec.taskID); err != nil {
+	).Scan(&rec.TaskID); err != nil {
 		return Record{}, err
 	}
 	return rec, nil
