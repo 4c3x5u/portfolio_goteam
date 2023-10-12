@@ -1,4 +1,4 @@
-// Package cookie contains code for working with HTTP cookies.
+// Package auth contains code for authenticating users.
 package auth
 
 import (
