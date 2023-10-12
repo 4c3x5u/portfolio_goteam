@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+// import cookies from 'js-cookie';
 
 import AppContext from '../../AppContext';
 import AuthAPI from '../../api/AuthAPI';
@@ -31,11 +32,7 @@ const Login = () => {
 
       AuthAPI
         .login(username, password)
-        .then((res) => {
-          sessionStorage.setItem('username', res.data.username);
-          sessionStorage.setItem('auth-token', res.data.token);
-          loadBoard();
-        })
+        .then(() => loadBoard())
         .catch((err) => {
           const serverErrors = {
             username: err?.response?.data?.username || '',

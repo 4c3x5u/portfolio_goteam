@@ -1,22 +1,21 @@
 import axios from 'axios';
-import { getAuthHeaders } from '../misc/util';
 
 const BoardAPI = {
   post: (boardData) => axios.post(
-    `${process.env.SERVER_URL}/board`,
+    `${process.env.REACT_APP_SERVER_URL}/board`,
     boardData,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 
   delete: (boardId) => axios.delete(
-    `${process.env.SERVER_URL}/board?id=${boardId}`,
-    getAuthHeaders(),
+    `${process.env.REACT_APP_SERVER_URL}/board?id=${boardId}`,
+    { withCredentials: true },
   ),
 
   patch: (boardId, boardData) => axios.patch(
-    `${process.env.SERVER_URL}/board?id=${boardId}`,
+    `${process.env.REACT_APP_SERVER_URL}/board?id=${boardId}`,
     boardData,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 };
 

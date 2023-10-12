@@ -9,7 +9,7 @@ import _ from 'lodash/core';
 
 import Task from './Task/Task';
 import columnOrder from './columnOrder';
-import { capFirstLetterOf } from '../../../../misc/util';
+import capFirstLetterOf from '../../../../misc/util';
 import AppContext from '../../../../AppContext';
 
 import './column.sass';

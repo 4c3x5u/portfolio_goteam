@@ -5,6 +5,7 @@ import {
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
+import cookies from 'js-cookie';
 
 import AppContext from '../../../AppContext';
 import InitialStates from '../../../misc/InitialStates';
@@ -34,8 +35,7 @@ const Header = ({ activeWindow, handleActivate }) => {
     setBoards(InitialStates.boards);
     setActiveBoard(InitialStates.activeBoard);
 
-    sessionStorage.removeItem('username');
-    sessionStorage.removeItem('auth-token');
+    cookies.remove('auth-token');
     sessionStorage.removeItem('board-id');
     setActiveBoard(InitialStates.activeBoard);
     loadBoard();

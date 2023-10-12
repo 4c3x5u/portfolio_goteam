@@ -128,9 +128,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		http.SetCookie(w, &http.Cookie{
-			Name:    auth.CookieName,
-			Value:   authToken,
-			Expires: expiry,
+			Name:     auth.CookieName,
+			Value:    authToken,
+			Expires:  expiry,
+			SameSite: http.SameSiteNoneMode,
+			Secure:   true,
 		})
 		w.WriteHeader(http.StatusOK)
 	}

@@ -1,22 +1,21 @@
 import axios from 'axios';
-import { getAuthHeaders } from '../misc/util';
 
 const TaskAPI = {
   post: (task) => axios.post(
-    `${process.env.REACT_APP_BACKEND_URL}/task`,
+    `${process.env.REACT_APP_SERVER_URL}/task`,
     task,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 
   patch: (taskId, data) => axios.patch(
-    `${process.env.REACT_APP_BACKEND_URL}/task?id=${taskId}`,
+    `${process.env.REACT_APP_SERVER_URL}/task?id=${taskId}`,
     data,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 
   delete: (taskId) => axios.delete(
-    `${process.env.REACT_APP_BACKEND_URL}/task?id=${taskId}`,
-    getAuthHeaders(),
+    `${process.env.REACT_APP_SERVER_URL}/task?id=${taskId}`,
+    { withCredentials: true },
   ),
 };
 

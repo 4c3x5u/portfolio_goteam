@@ -44,21 +44,11 @@ const Register = () => {
       setIsLoading(true);
       AuthAPI
         .register(username, password)
-        .then((res) => {
-          sessionStorage.setItem('username', res.data.username);
-          // do you need this if the token is returned in cookies header?
-          sessionStorage.setItem('auth-token', res.data.token);
-          loadBoard();
-        })
+        .then(() => loadBoard())
         .catch((err) => {
           const serverErrors = {
-            username:
-              err?.response?.data?.username || '',
-            password:
-              err?.response?.data?.password || '',
-            passwordConfirmation:
-              // eslint-disable-next-line camelcase
-              err?.response?.data?.password_confirmation || '',
+            username: err?.response?.data?.username || '',
+            password: err?.response?.data?.password || '',
           };
 
           if (

@@ -1,11 +1,10 @@
 import axios from 'axios';
-import { getAuthHeaders } from '../misc/util';
 
 const SubtaskAPI = {
   patch: (id, data) => axios.patch(
-    `${process.env.SERVER_URL}/subtask?id=${id}`,
+    `${process.env.REACT_APP_SERVER_URL}/subtask?id=${id}`,
     data,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 };
 

@@ -8,13 +8,13 @@ import {
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
 import axios from 'axios';
+import cookies from 'js-cookie';
 
 import AppContext from './AppContext';
 import InitialStates from './misc/InitialStates';
 import Home from './components/Home/Home';
 import Login from './components/Login/Login';
 import Register from './components/Register/Register';
-import { getAuthHeaders } from './misc/util';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
@@ -35,17 +35,14 @@ const App = () => {
   );
 
   const loadBoard = (boardId) => {
-    const authHeaders = getAuthHeaders();
-    if (
-      authHeaders.headers['auth-user'] && authHeaders.headers['auth-token']
-    ) {
+    if (cookies.get('auth-token')) {
       const uri = `${
         process.env.REACT_APP_BACKEND_URL
       }/client-state/?boardId=${
         boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
       }`;
       axios
-        .get(uri, authHeaders)
+        .get(uri, { withCredentials: true })
         .then((res) => {
           // Update app state one by one
           setUser(res.data.user);
@@ -59,8 +56,7 @@ const App = () => {
 
           // remove username and auth token if verify-token failed
           if (err?.config?.url?.includes('verify-token')) {
-            sessionStorage.removeItem('username');
-            sessionStorage.removeItem('auth-token');
+            cookies.remove('auth-token');
             setIsLoading(false);
             return;
           }
@@ -73,8 +69,7 @@ const App = () => {
               'Inactive Credentials',
               err?.response?.data?.board,
             );
-            sessionStorage.removeItem('username');
-            sessionStorage.removeItem('auth-token');
+            cookies.remove('auth-token');
             return;
           }
 

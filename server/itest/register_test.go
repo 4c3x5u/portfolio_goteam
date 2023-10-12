@@ -155,16 +155,19 @@ func TestRegisterHandler(t *testing.T) {
 
 				// assert that the returned JWT is valid and has the correct
 				// subject
-				var token string
-				for _, ck := range res.Cookies() {
-					if ck.Name == "auth-token" {
-						token = ck.Value
-					}
+				cookie := res.Cookies()[0]
+				if err := assert.True(cookie.Secure); err != nil {
+					t.Error(err)
+				}
+				if err := assert.Equal(
+					http.SameSiteNoneMode, cookie.SameSite,
+				); err != nil {
+					t.Error(err)
 				}
 
 				claims := jwt.RegisteredClaims{}
 				if _, err = jwt.ParseWithClaims(
-					token, &claims, func(token *jwt.Token) (any, error) {
+					cookie.Value, &claims, func(token *jwt.Token) (any, error) {
 						return []byte(jwtKey), nil
 					},
 				); err != nil {

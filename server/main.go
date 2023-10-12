@@ -141,8 +141,8 @@ func main() {
 		},
 	))
 
-	// Set up CORS.
-	handler := midware.NewCORS(mux, env.ClientOrigin)
+	// Set up access control headers required by the endpoints.
+	handler := midware.NewAccessControl(mux, env.ClientOrigin)
 
 	// Serve the app using the ServeMux.
 	log.Info("running server at port " + env.Port)

@@ -10,12 +10,14 @@ import (
 	"github.com/kxplxn/goteam/server/assert"
 )
 
-// TestCORS tests the CORS middleware to assert that it returns the correct
-// headers.
-func TestCORS(t *testing.T) {
-	wantAllowedOrigin := "http://allowedorigin.com"
-	wantAllowedHeaders := "Content-Type"
-	sut := NewCORS(nil, wantAllowedOrigin)
+// TestAccessControl tests the AccessControl middleware to assert that it
+// returns the correct headers.
+func TestAccessControl(t *testing.T) {
+	wantAllowOrigin := "http://allowedorigin.com"
+	wantAllowHeaders := "Content-Type"
+	wantAllowCredentials := "true"
+
+	sut := NewAccessControl(nil, wantAllowOrigin)
 	req, err := http.NewRequest(http.MethodOptions, "/", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -28,14 +30,20 @@ func TestCORS(t *testing.T) {
 		t.Error(err)
 	}
 	if err = assert.Equal(
-		wantAllowedOrigin,
+		wantAllowOrigin,
 		w.Result().Header.Get("Access-Control-Allow-Origin"),
 	); err != nil {
 		t.Error(err)
 	}
 	if err = assert.Equal(
-		wantAllowedHeaders,
+		wantAllowHeaders,
 		w.Result().Header.Get("Access-Control-Allow-Headers"),
+	); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(
+		wantAllowCredentials,
+		w.Result().Header.Get("Access-Control-Allow-Credentials"),
 	); err != nil {
 		t.Error(err)
 	}

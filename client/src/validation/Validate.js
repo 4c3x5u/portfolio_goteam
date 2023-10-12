@@ -1,4 +1,4 @@
-import { capFirstLetterOf } from '../misc/util';
+import capFirstLetterOf from '../misc/util';
 
 const Validate = {
   requiredString: (field, maxLength, minLength) => (value) => {

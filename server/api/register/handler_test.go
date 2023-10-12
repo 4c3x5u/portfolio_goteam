@@ -240,6 +240,14 @@ func TestHandler(t *testing.T) {
 						); err != nil {
 							t.Error(err)
 						}
+						if err := assert.True(ck.Secure); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							http.SameSiteNoneMode, ck.SameSite,
+						); err != nil {
+							t.Error(err)
+						}
 					}
 				}
 				if !authTokenFound {

@@ -70,16 +70,20 @@ func TestLoginHandler(t *testing.T) {
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusOK,
 			assertFunc: func(t *testing.T, res *http.Response) {
-				var token string
-				for _, ck := range res.Cookies() {
-					if ck.Name == "auth-token" {
-						token = ck.Value
-					}
+				cookie := res.Cookies()[0]
+
+				if err := assert.True(cookie.Secure); err != nil {
+					t.Error(err)
+				}
+				if err := assert.Equal(
+					http.SameSiteNoneMode, cookie.SameSite,
+				); err != nil {
+					t.Error(err)
 				}
 
 				claims := jwt.RegisteredClaims{}
 				if _, err := jwt.ParseWithClaims(
-					token, &claims, func(token *jwt.Token) (any, error) {
+					cookie.Value, &claims, func(token *jwt.Token) (any, error) {
 						return []byte(jwtKey), nil
 					},
 				); err != nil {

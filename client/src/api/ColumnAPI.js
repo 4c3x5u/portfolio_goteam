@@ -1,11 +1,10 @@
 import axios from 'axios';
-import { getAuthHeaders } from '../misc/util';
 
 const ColumnAPI = {
   patch: (columnId, data) => axios.patch(
-    `${process.env.SERVER_URL}/column?id=${columnId}`,
+    `${process.env.REACT_APP_SERVER_URL}/column?id=${columnId}`,
     data,
-    getAuthHeaders(),
+    { withCredentials: true },
   ),
 };
 
