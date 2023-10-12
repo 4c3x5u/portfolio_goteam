@@ -114,7 +114,9 @@ func (h PATCHHandler) Handle(
 	}
 
 	// Authorize the user.
-	_, err = h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
+	isAdmin, err := h.userBoardSelector.Select(
+		username, strconv.Itoa(column.BoardID),
+	)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
@@ -128,6 +130,16 @@ func (h PATCHHandler) Handle(
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	}
+	if !isAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "Only board admins can edit subtasks."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
 }

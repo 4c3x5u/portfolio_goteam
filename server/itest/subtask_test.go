@@ -66,6 +66,12 @@ func TestSubtaskHandler(t *testing.T) {
 			wantStatusCode: http.StatusForbidden,
 			wantErrMsg:     "You do not have access to this board.",
 		},
+		{
+			name:           "NotAdmin",
+			id:             "7",
+			wantStatusCode: http.StatusForbidden,
+			wantErrMsg:     "Only board admins can edit subtasks.",
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			r, err := http.NewRequest(http.MethodPatch, "?id="+c.id, nil)

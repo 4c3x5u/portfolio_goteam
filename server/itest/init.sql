@@ -48,26 +48,28 @@ VALUES
 
 INSERT INTO app.board(name) 
 VALUES
-    ('Board #1'), -- used for DELETE board test
-    ('Board #2'),
-    ('Board #3'),
-    ('Board #4'),
-    ('Board #5'),
-    ('Board #6'),
-    ('Board #7'),
-    ('Board #8'),
-    ('Board #9'),
-    ('Board #10');
+    ('board 1'), -- used for DELETE board test
+    ('board 2'),
+    ('board 3'),
+    ('board 4'),
+    ('board 5'),
+    ('board 6'),
+    ('board 7'),
+    ('board 8'),
+    ('board 9'),
+    ('board 10'),
+    ('board 11');
 -- a record is inserted here with the id of 6 during board POST tests.
 
 INSERT INTO app.user_board(username, boardID, isAdmin)
 VALUES
-  ('bob123', 1, TRUE),
-  ('bob123', 2, TRUE),
-  ('bob123', 3, TRUE),
-  ('bob123', 4, FALSE),
-  ('bob123', 8, FALSE),
-  ('bob123', 9, TRUE);
+  ('bob123', 1,  TRUE),
+  ('bob123', 2,  TRUE),
+  ('bob123', 3,  TRUE),
+  ('bob123', 4,  FALSE),
+  ('bob123', 8,  FALSE),
+  ('bob123', 9,  TRUE),
+  ('bob123', 11, FALSE);
 -- a board is inserted here with the values of ('bob124', 6, TRUE) during board
 -- POST tests.
 
@@ -91,7 +93,8 @@ VALUES
     (7,  1), -- id: 15
     (8,  1), -- id: 16
     (9,  1), -- id: 17
-    (10, 1); -- id: 18
+    (10, 1), -- id: 18
+    (11, 1); -- id: 19
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
@@ -108,7 +111,8 @@ VALUES
     (15, 'task 10', 1),
     (16, 'task 11', 1),
     (17, 'task 12', 1),
-    (18, 'task 13', 1);
+    (18, 'task 13', 1),
+    (19, 'task 14', 1);
 
 -- insert a subtask into each task for testing recursive board deletion
 INSERT INTO app.subtask(taskID, title, "order", isDone)
@@ -118,6 +122,7 @@ VALUES
     (3,  'subtask 3', 1, false),
     (4,  'subtask 4', 1, false),
     (9,  'subtask 5', 1, false),
-    (13, 'subtask 6', 1, false);
+    (13, 'subtask 6', 1, false),
+    (14, 'subtask 7', 1, false);
 
 

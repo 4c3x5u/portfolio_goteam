@@ -41,6 +41,7 @@ func TestPATCHHandler(t *testing.T) {
 		subtaskSelectorErr   error
 		taskSelectorErr      error
 		columnSelectorErr    error
+		userIsAdmin          bool
 		userBoardSelectorErr error
 		wantStatusCode       int
 		assertFunc           func(*testing.T, *http.Response, string)
@@ -51,6 +52,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Subtask ID cannot be empty."),
@@ -61,6 +63,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Subtask ID must be an integer."),
@@ -71,6 +74,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(api.ErrStrTooLong.Error()),
@@ -81,6 +85,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   sql.ErrConnDone,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
@@ -91,6 +96,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   sql.ErrNoRows,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusNotFound,
 			assertFunc:           assert.OnResErr("Subtask not found."),
@@ -101,6 +107,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      sql.ErrNoRows,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
@@ -111,6 +118,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    sql.ErrNoRows,
+			userIsAdmin:          false,
 			userBoardSelectorErr: nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
@@ -121,6 +129,7 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: sql.ErrConnDone,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr(sql.ErrConnDone.Error()),
@@ -131,10 +140,24 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskSelectorErr:   nil,
 			taskSelectorErr:      nil,
 			columnSelectorErr:    nil,
+			userIsAdmin:          false,
 			userBoardSelectorErr: sql.ErrNoRows,
 			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
+			),
+		},
+		{
+			name:                 "NotAdmin",
+			idValidatorErr:       nil,
+			subtaskSelectorErr:   nil,
+			taskSelectorErr:      nil,
+			columnSelectorErr:    nil,
+			userIsAdmin:          false,
+			userBoardSelectorErr: nil,
+			wantStatusCode:       http.StatusForbidden,
+			assertFunc: assert.OnResErr(
+				"Only board admins can edit subtasks.",
 			),
 		},
 	} {
