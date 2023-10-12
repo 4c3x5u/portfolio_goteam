@@ -22,7 +22,7 @@ func TestDeleter(t *testing.T) {
 	defer teardown()
 	sut := NewDeleter(db)
 
-	t.Run("Err", func(t *testing.T) {
+	t.Run("Error", func(t *testing.T) {
 		mock.ExpectExec(sqlDeleteTask).
 			WithArgs(id).
 			WillReturnError(sql.ErrNoRows)
