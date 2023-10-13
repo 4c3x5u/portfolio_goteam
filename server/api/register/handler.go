@@ -10,6 +10,7 @@ import (
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/auth"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
@@ -18,6 +19,7 @@ import (
 type Handler struct {
 	userValidator       ReqValidator
 	inviteCodeValidator api.StringValidator
+	teamSelector        dbaccess.Selector[teamTable.Record]
 	userSelector        dbaccess.Selector[userTable.Record]
 	hasher              Hasher
 	userInserter        dbaccess.Inserter[userTable.Record]
@@ -29,6 +31,7 @@ type Handler struct {
 func NewHandler(
 	userValidator ReqValidator,
 	inviteCodeValidator api.StringValidator,
+	teamSelector dbaccess.Selector[teamTable.Record],
 	userSelector dbaccess.Selector[userTable.Record],
 	hasher Hasher,
 	userInserter dbaccess.Inserter[userTable.Record],
@@ -38,6 +41,7 @@ func NewHandler(
 	return Handler{
 		userValidator:       userValidator,
 		inviteCodeValidator: inviteCodeValidator,
+		teamSelector:        teamSelector,
 		userSelector:        userSelector,
 		hasher:              hasher,
 		userInserter:        userInserter,
@@ -84,6 +88,17 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(
 				ResBody{Err: "Invalid invite code."},
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+		_, err := h.teamSelector.Select(inviteCode)
+		if errors.Is(err, sql.ErrNoRows) {
+			w.WriteHeader(http.StatusNotFound)
+			if err := json.NewEncoder(w).Encode(
+				ResBody{Err: "Team not found."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.log.Error(err.Error())

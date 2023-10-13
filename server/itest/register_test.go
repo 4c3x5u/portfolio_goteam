@@ -5,6 +5,7 @@ package itest
 import (
 	"bytes"
 	"encoding/json"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,6 +29,7 @@ func TestRegisterHandler(t *testing.T) {
 			registerAPI.NewPasswordValidator(),
 		),
 		registerAPI.NewInviteCodeValidator(),
+		teamTable.NewSelector(db),
 		userTable.NewSelector(db),
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),
@@ -55,6 +57,22 @@ func TestRegisterHandler(t *testing.T) {
 			if err := assert.EqualArr(
 				wantPasswordErrs,
 				resBody.ValidationErrs.Password,
+			); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	assertOnResErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *http.Response, string) {
+		return func(t *testing.T, res *http.Response, _ string) {
+			var resBody registerAPI.ResBody
+			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+				t.Fatal(err)
+			}
+			if err := assert.Equal(
+				wantErrMsg, resBody.Err,
 			); err != nil {
 				t.Error(err)
 			}
@@ -142,17 +160,15 @@ func TestRegisterHandler(t *testing.T) {
 			password:       "Myp4ssw0rd!",
 			inviteCode:     "10249812049182",
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response, _ string) {
-				var resBody registerAPI.ResBody
-				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Invalid invite code.", resBody.Err,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:     assertOnResErr("Invalid invite code."),
+		},
+		{
+			name:           "TeamNotFound",
+			username:       "bob321",
+			password:       "Myp4ssw0rd!",
+			inviteCode:     "ca9512b0-d448-46da-9a25-2a6b7d4b405e",
+			wantStatusCode: http.StatusNotFound,
+			assertFunc:     assertOnResErr("Team not found."),
 		},
 		{
 			name:           "Success",

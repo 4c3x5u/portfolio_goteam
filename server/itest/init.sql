@@ -2,6 +2,11 @@
 
 CREATE SCHEMA app;
 
+CREATE TABLE app.team (
+    id         INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    inviteCode UUID    NOT NULL
+);
+
 CREATE TABLE app."user" (
   username VARCHAR(15) PRIMARY KEY,
   password BYTEA       NOT NULL

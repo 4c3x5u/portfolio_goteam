@@ -17,6 +17,7 @@ import (
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/server/dbaccess/subtask"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
@@ -71,6 +72,7 @@ func main() {
 			registerAPI.NewPasswordValidator(),
 		),
 		registerAPI.NewInviteCodeValidator(),
+		teamTable.NewSelector(db),
 		userSelector,
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),

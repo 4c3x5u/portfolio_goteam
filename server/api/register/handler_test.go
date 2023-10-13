@@ -15,6 +15,7 @@ import (
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
@@ -25,6 +26,7 @@ func TestHandler(t *testing.T) {
 	var (
 		userValidator       = &fakeUserValidator{}
 		inviteCodeValidator = &api.FakeStringValidator{}
+		teamSelector        = &teamTable.FakeSelector{}
 		userSelector        = &userTable.FakeSelector{}
 		hasher              = &fakeHasher{}
 		userInserter        = &userTable.FakeInserter{}
@@ -34,6 +36,7 @@ func TestHandler(t *testing.T) {
 	sut := NewHandler(
 		userValidator,
 		inviteCodeValidator,
+		teamSelector,
 		userSelector,
 		hasher,
 		userInserter,
@@ -61,6 +64,24 @@ func TestHandler(t *testing.T) {
 			if err := assert.EqualArr(
 				wantValidationErrs.Password,
 				resBody.ValidationErrs.Password,
+			); err != nil {
+				t.Error(err)
+			}
+		}
+	}
+
+	assertOnResErr := func(
+		wantErrMsg string,
+	) func(*testing.T, *http.Response, string) {
+		return func(t *testing.T, res *http.Response, _ string) {
+			var resBody ResBody
+			if err := json.NewDecoder(
+				res.Body,
+			).Decode(&resBody); err != nil {
+				t.Fatal(err)
+			}
+			if err := assert.Equal(
+				wantErrMsg, resBody.Err,
 			); err != nil {
 				t.Error(err)
 			}
@@ -105,6 +126,7 @@ func TestHandler(t *testing.T) {
 		validationErrs    ValidationErrors
 		inviteCode        string
 		inviteCodeErr     error
+		teamSelectorErr   error
 		userRecord        userTable.Record
 		userSelectorErr   error
 		hashedPwd         []byte
@@ -123,6 +145,7 @@ func TestHandler(t *testing.T) {
 			},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   nil,
 			hashedPwd:         nil,
@@ -144,6 +167,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "someinvitecode",
 			inviteCodeErr:     errors.New("an error"),
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   nil,
 			hashedPwd:         nil,
@@ -152,19 +176,24 @@ func TestHandler(t *testing.T) {
 			authToken:         "",
 			tokenGeneratorErr: nil,
 			wantStatusCode:    http.StatusBadRequest,
-			assertFunc: func(t *testing.T, res *http.Response, _ string) {
-				var resBody ResBody
-				if err := json.NewDecoder(
-					res.Body,
-				).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"Invalid invite code.", resBody.Err,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc:        assertOnResErr("Invalid invite code."),
+		},
+		{
+			name:              "TeamNotFound",
+			reqBody:           ReqBody{},
+			validationErrs:    ValidationErrors{},
+			inviteCode:        "someinvitecode",
+			inviteCodeErr:     nil,
+			teamSelectorErr:   sql.ErrNoRows,
+			userRecord:        userTable.Record{},
+			userSelectorErr:   nil,
+			hashedPwd:         nil,
+			hasherErr:         nil,
+			userInserterErr:   nil,
+			authToken:         "",
+			tokenGeneratorErr: nil,
+			wantStatusCode:    http.StatusNotFound,
+			assertFunc:        assertOnResErr("Team not found."),
 		},
 		{
 			name:              "UsernameTaken",
@@ -172,6 +201,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   nil,
 			hashedPwd:         nil,
@@ -192,6 +222,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   errors.New("user selector error"),
 			hashedPwd:         nil,
@@ -208,6 +239,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   sql.ErrNoRows,
 			hashedPwd:         nil,
@@ -224,6 +256,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   sql.ErrNoRows,
 			hashedPwd:         nil,
@@ -240,6 +273,7 @@ func TestHandler(t *testing.T) {
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
+			teamSelectorErr:   nil,
 			userRecord:        userTable.Record{},
 			userSelectorErr:   sql.ErrNoRows,
 			hashedPwd:         nil,
@@ -248,20 +282,11 @@ func TestHandler(t *testing.T) {
 			authToken:         "",
 			tokenGeneratorErr: errors.New("token generator error"),
 			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc: func(t *testing.T, r *http.Response, _ string) {
-				resBody := &ResBody{}
-				if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
-					t.Fatal(err)
-				}
-				if err := assert.Equal(
-					"You have been registered successfully but something "+
-						"went wrong. Please log in using the credentials you "+
-						"registered with.",
-					resBody.Err,
-				); err != nil {
-					t.Error(err)
-				}
-			},
+			assertFunc: assertOnResErr(
+				"You have been registered successfully but something went " +
+					"wrong. Please log in using the credentials you " +
+					"registered with.",
+			),
 		},
 		{
 			name:              "Success",
@@ -313,6 +338,7 @@ func TestHandler(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			userValidator.validationErrs = c.validationErrs
 			inviteCodeValidator.Err = c.inviteCodeErr
+			teamSelector.Err = c.teamSelectorErr
 			userSelector.User = c.userRecord
 			userSelector.Err = c.userSelectorErr
 			hasher.hash = c.hashedPwd
