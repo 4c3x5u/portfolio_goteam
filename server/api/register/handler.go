@@ -105,6 +105,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
 	}
 
 	// Check whether the username is taken.
