@@ -1,5 +1,5 @@
 import React, { useContext, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
@@ -21,6 +21,7 @@ const Register = () => {
     password: '',
     passwordConfirmation: '',
   });
+  const { inviteCode } = useParams();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,24 +44,16 @@ const Register = () => {
     } else {
       setIsLoading(true);
       AuthAPI
-        .register(username, password)
+        .register(username, password, inviteCode)
         .then(() => loadBoard())
         .catch((err) => {
-          const serverErrors = {
-            username: err?.response?.data?.username || '',
-            password: err?.response?.data?.password || '',
-          };
-
-          if (
-            serverErrors.username
-            || serverErrors.password
-            || serverErrors.passwordConfirmation
-          ) {
-            setErrors(serverErrors);
+          const validationErrors = err?.response?.data?.validationErrors;
+          if (validationErrors) {
+            setErrors(validationErrors);
           } else {
             notify(
               'Unable to register.',
-              `${err.message || 'Server Error'}.`,
+              `${err?.response?.data?.error || 'Server Error'}.`,
             );
           }
 

@@ -32,13 +32,35 @@ const (
 		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
 )
 
-// TestValidator tests the Validator's Validate method to ensure that it returns
+// TestInviteCodeValidator tests the InviteCodeValidator to assert that it
+// returns a non-nil error for invalid UUIDs.
+func TestInviteCodeValidator(t *testing.T) {
+	sut := NewInviteCodeValidator()
+
+	t.Run("Error", func(t *testing.T) {
+		inviteCode := "asdfkajsdf"
+		err := sut.Validate(inviteCode)
+		if err == nil {
+			t.Error("no error returned for invalid invite code")
+		}
+	})
+
+	t.Run("Success", func(t *testing.T) {
+		inviteCode := "f45889dc-bfdc-4c4a-9a43-7865a8ada243"
+		err := sut.Validate(inviteCode)
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
+	})
+}
+
+// TestUserValidator tests the UserValidator's Validate method to ensure that it returns
 // whatever error is returned to it by UsernameValidator and PasswordValidator.
-func TestValidator(t *testing.T) {
+func TestUserValidator(t *testing.T) {
 	fakeValidatorUsername := &fakeStringValidator{}
 	fakeValidatorPassword := &fakeStringValidator{}
 
-	sut := NewValidator(fakeValidatorUsername, fakeValidatorPassword)
+	sut := NewUserValidator(fakeValidatorUsername, fakeValidatorPassword)
 
 	for _, c := range []struct {
 		name         string

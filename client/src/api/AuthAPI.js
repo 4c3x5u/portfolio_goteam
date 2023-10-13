@@ -11,7 +11,7 @@ const AuthAPI = {
 
   register: (username, password, inviteCode) => (
     axios.post(
-      `${process.env.REACT_APP_SERVER_URL}/register?invite_code=${inviteCode}`,
+      `${process.env.REACT_APP_SERVER_URL}/register?inviteCode=${inviteCode}`,
       { username, password },
       { withCredentials: true },
     )

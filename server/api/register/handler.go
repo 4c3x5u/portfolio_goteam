@@ -16,17 +16,19 @@ import (
 
 // Handler is a http.Handler that can be used to handle register requests.
 type Handler struct {
-	validator          ReqValidator
-	userSelector       dbaccess.Selector[userTable.Record]
-	hasher             Hasher
-	userInserter       dbaccess.Inserter[userTable.Record]
-	authTokenGenerator auth.TokenGenerator
-	log                pkgLog.Errorer
+	userValidator       ReqValidator
+	inviteCodeValidator api.StringValidator
+	userSelector        dbaccess.Selector[userTable.Record]
+	hasher              Hasher
+	userInserter        dbaccess.Inserter[userTable.Record]
+	authTokenGenerator  auth.TokenGenerator
+	log                 pkgLog.Errorer
 }
 
 // NewHandler is the constructor for Handler.
 func NewHandler(
-	validator ReqValidator,
+	userValidator ReqValidator,
+	inviteCodeValidator api.StringValidator,
 	userSelector dbaccess.Selector[userTable.Record],
 	hasher Hasher,
 	userInserter dbaccess.Inserter[userTable.Record],
@@ -34,12 +36,13 @@ func NewHandler(
 	log pkgLog.Errorer,
 ) Handler {
 	return Handler{
-		validator:          validator,
-		userSelector:       userSelector,
-		hasher:             hasher,
-		userInserter:       userInserter,
-		authTokenGenerator: authTokenGenerator,
-		log:                log,
+		userValidator:       userValidator,
+		inviteCodeValidator: inviteCodeValidator,
+		userSelector:        userSelector,
+		hasher:              hasher,
+		userInserter:        userInserter,
+		authTokenGenerator:  authTokenGenerator,
+		log:                 log,
 	}
 }
 
@@ -61,10 +64,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate request body, write errors if any occur.
-	if validationErrs := h.validator.Validate(reqBody); validationErrs.Any() {
+	if validationErrs := h.userValidator.Validate(
+		reqBody,
+	); validationErrs.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Errs: validationErrs},
+			ResBody{ValidationErrs: validationErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -72,18 +77,27 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate invite code if found.
+	inviteCode := r.URL.Query().Get("inviteCode")
+	if inviteCode != "" {
+		if err := h.inviteCodeValidator.Validate(inviteCode); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(
+				ResBody{Err: "Invalid invite code."},
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+	}
+
 	// Check whether the username is taken.
-	// TODO: This db call can be removed by adding an "ON CONFLICT (username)
-	// DO NOTHING" clause to the query that user inserter uses, and then
-	// returning errUsernameTaken if affected rows come back 0. However, not
-	// sure if that would increase or decrease the performance as hashing will
-	// then occur before exists checks. Test when deployed or when you add
-	// integration tests.
 	_, err := h.userSelector.Select(reqBody.Username)
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
-			ResBody{Errs: ValidationErrors{
+			ResBody{ValidationErrs: ValidationErrors{
 				Username: []string{"Username is already taken."},
 			}},
 		); errEncode != nil {
@@ -119,7 +133,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
 			ResBody{
-				Msg: "You have been registered successfully but something " +
+				Err: "You have been registered successfully but something " +
 					"went wrong. Please log in using the credentials you " +
 					"registered with.",
 			},

@@ -10,8 +10,8 @@ type ReqBody struct {
 
 // ResBody defines the response body for Handler.
 type ResBody struct {
-	Msg  string           `json:"message,omitempty"`
-	Errs ValidationErrors `json:"errors,omitempty"`
+	Err            string           `json:"error,omitempty"`
+	ValidationErrs ValidationErrors `json:"validationErrors,omitempty"`
 }
 
 // ValidationErrors defines the validation errors returned in ResBody.

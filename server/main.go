@@ -66,10 +66,11 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/register", registerAPI.NewHandler(
-		registerAPI.NewValidator(
+		registerAPI.NewUserValidator(
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
+		registerAPI.NewInviteCodeValidator(),
 		userSelector,
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),

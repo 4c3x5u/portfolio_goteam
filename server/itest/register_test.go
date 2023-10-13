@@ -23,10 +23,11 @@ import (
 // asserts that it behaves correctly during various execution paths.
 func TestRegisterHandler(t *testing.T) {
 	sut := registerAPI.NewHandler(
-		registerAPI.NewValidator(
+		registerAPI.NewUserValidator(
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
+		registerAPI.NewInviteCodeValidator(),
 		userTable.NewSelector(db),
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),
@@ -37,8 +38,8 @@ func TestRegisterHandler(t *testing.T) {
 	// Used in status 400 cases to assert on username and password error messages.
 	assertOnValidationErrs := func(
 		wantUsernameErrs, wantPasswordErrs []string,
-	) func(*testing.T, *http.Response) {
-		return func(t *testing.T, res *http.Response) {
+	) func(*testing.T, *http.Response, string) {
+		return func(t *testing.T, res *http.Response, _ string) {
 			var resBody registerAPI.ResBody
 			if err := json.NewDecoder(res.Body).Decode(
 				&resBody,
@@ -47,13 +48,13 @@ func TestRegisterHandler(t *testing.T) {
 			}
 			if err := assert.EqualArr(
 				wantUsernameErrs,
-				resBody.Errs.Username,
+				resBody.ValidationErrs.Username,
 			); err != nil {
 				t.Error(err)
 			}
 			if err := assert.EqualArr(
 				wantPasswordErrs,
-				resBody.Errs.Password,
+				resBody.ValidationErrs.Password,
 			); err != nil {
 				t.Error(err)
 			}
@@ -64,13 +65,15 @@ func TestRegisterHandler(t *testing.T) {
 		name           string
 		username       string
 		password       string
+		inviteCode     string
 		wantStatusCode int
-		assertFunc     func(*testing.T, *http.Response)
+		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:           "UsnEmpty,PwdEmpty",
 			username:       "",
 			password:       "",
+			inviteCode:     "",
 			wantStatusCode: http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
 				[]string{"Username cannot be empty."},
@@ -82,6 +85,7 @@ func TestRegisterHandler(t *testing.T) {
 				"PwdNoDigit,PwdNoSpecial",
 			username:       "bob!",
 			password:       "PASSSSS",
+			inviteCode:     "",
 			wantStatusCode: http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
 				[]string{
@@ -126,17 +130,37 @@ func TestRegisterHandler(t *testing.T) {
 			name:           "UsnTaken",
 			username:       "bob123",
 			password:       "Myp4ssw0rd!",
+			inviteCode:     "",
 			wantStatusCode: http.StatusBadRequest,
 			assertFunc: assertOnValidationErrs(
 				[]string{"Username is already taken."}, []string{},
 			),
 		},
 		{
+			name:           "InviteCodeInvalid",
+			username:       "bob321",
+			password:       "Myp4ssw0rd!",
+			inviteCode:     "10249812049182",
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+				var resBody registerAPI.ResBody
+				if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+					t.Fatal(err)
+				}
+				if err := assert.Equal(
+					"Invalid invite code.", resBody.Err,
+				); err != nil {
+					t.Error(err)
+				}
+			},
+		},
+		{
 			name:           "Success",
 			username:       "bob321",
 			password:       "Myp4ssw0rd!",
+			inviteCode:     "",
 			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, res *http.Response) {
+			assertFunc: func(t *testing.T, res *http.Response, _ string) {
 				// assert that a new user is inserted into the database with
 				// the correct credentials
 				var password string
@@ -188,7 +212,9 @@ func TestRegisterHandler(t *testing.T) {
 				t.Fatal(err)
 			}
 			req, err := http.NewRequest(
-				http.MethodPost, "", bytes.NewReader(reqBody),
+				http.MethodPost,
+				"?inviteCode="+c.inviteCode,
+				bytes.NewReader(reqBody),
 			)
 			if err != nil {
 				t.Fatal(err)
@@ -206,7 +232,7 @@ func TestRegisterHandler(t *testing.T) {
 			}
 
 			// Run case-specific assertions.
-			c.assertFunc(t, res)
+			c.assertFunc(t, res, "")
 		})
 	}
 }

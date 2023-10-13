@@ -1,6 +1,24 @@
 package register
 
-import "regexp"
+import (
+	"github.com/google/uuid"
+	"regexp"
+)
+
+// InviteCodeValidator is the inviteCode query parameter validator for the
+// register route.
+type InviteCodeValidator struct{}
+
+// NewInviteCodeValidator creates and returns a new InviteCodeValidator.
+func NewInviteCodeValidator() InviteCodeValidator {
+	return InviteCodeValidator{}
+}
+
+// Validate validates an invite code.
+func (v InviteCodeValidator) Validate(inviteCode string) error {
+	_, err := uuid.Parse(inviteCode)
+	return err
+}
 
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
@@ -8,17 +26,17 @@ type ReqValidator interface {
 	Validate(ReqBody) ValidationErrors
 }
 
-// Validator is the ReqValidator for the register route.
-type Validator struct {
+// UserValidator is the ReqValidator for the register route.
+type UserValidator struct {
 	UsernameValidator StringValidator
 	PasswordValidator StringValidator
 }
 
-// NewValidator is the constructor for Validator.
-func NewValidator(
+// NewUserValidator creates and returns a new UserValidator.
+func NewUserValidator(
 	usernameValidator, passwordValidator StringValidator,
-) Validator {
-	return Validator{
+) UserValidator {
+	return UserValidator{
 		UsernameValidator: usernameValidator,
 		PasswordValidator: passwordValidator,
 	}
@@ -26,9 +44,9 @@ func NewValidator(
 
 // Validate uses UsernameValidator and PasswordValidator to validate requests
 // sent the register route. It returns an errors object if any of the individual
-// validations fail. It implements the Validator interface on the
+// validations fail. It implements the UserValidator interface on the
 // ReqValidator struct.
-func (v Validator) Validate(req ReqBody) ValidationErrors {
+func (v UserValidator) Validate(req ReqBody) ValidationErrors {
 	return ValidationErrors{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
@@ -74,7 +92,7 @@ func (v UsernameValidator) Validate(username string) (errs []string) {
 // PasswordValidator is the password field validator for the register route.
 type PasswordValidator struct{}
 
-// NewPasswordValidator is the constructor for PasswordValidator.
+// NewPasswordValidator creates and returns a new PasswordValidator.
 func NewPasswordValidator() PasswordValidator { return PasswordValidator{} }
 
 // Validate applies password validation rules to the Password string and returns
