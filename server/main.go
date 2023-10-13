@@ -10,10 +10,12 @@ import (
 	columnAPI "github.com/kxplxn/goteam/server/api/column"
 	loginAPI "github.com/kxplxn/goteam/server/api/login"
 	registerAPI "github.com/kxplxn/goteam/server/api/register"
+	subtaskAPI "github.com/kxplxn/goteam/server/api/subtask"
 	taskAPI "github.com/kxplxn/goteam/server/api/task"
 	"github.com/kxplxn/goteam/server/auth"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	subtaskTable "github.com/kxplxn/goteam/server/dbaccess/subtask"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
@@ -126,17 +128,54 @@ func main() {
 		},
 	))
 
+	taskIDValidator := taskAPI.NewIDValidator()
+	taskTitleValidator := taskAPI.NewTitleValidator()
+	taskSelector := taskTable.NewSelector(db)
 	mux.Handle("/task", api.NewHandler(
 		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
-				taskAPI.NewTitleValidator(),
-				taskAPI.NewTitleValidator(),
+				taskTitleValidator,
+				taskTitleValidator,
 				columnSelector,
 				userBoardSelector,
 				taskTable.NewInserter(db),
 				log,
+			),
+			http.MethodPatch: taskAPI.NewPATCHHandler(
+				taskIDValidator,
+				taskTitleValidator,
+				taskTitleValidator,
+				taskSelector,
+				columnSelector,
+				userBoardSelector,
+				taskTable.NewUpdater(db),
+				log,
+			),
+			http.MethodDelete: taskAPI.NewDELETEHandler(
+				taskIDValidator,
+				taskSelector,
+				columnSelector,
+				userBoardSelector,
+				taskTable.NewDeleter(db),
+				log,
+			),
+		},
+	))
+
+	mux.Handle("/subtask", api.NewHandler(
+		bearerTokenReader,
+		jwtValidator,
+		map[string]api.MethodHandler{
+			http.MethodPatch: subtaskAPI.NewPATCHHandler(
+				subtaskAPI.NewIDValidator(),
+				subtaskTable.NewSelector(db),
+				taskTable.NewSelector(db),
+				columnTable.NewSelector(db),
+				userboardTable.NewSelector(db),
+				subtaskTable.NewUpdater(db),
+				pkgLog.New(),
 			),
 		},
 	))
