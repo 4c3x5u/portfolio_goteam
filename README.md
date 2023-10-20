@@ -5,7 +5,7 @@
 
 This is an old demo application that I _originally developed in 2021_ using Django (Python) and React (JavaScript).
 
-**I have recently started re-writing the backend from the ground up in _Go_ to both learn more about the language and showcase what I have learned both previously and during**.
+I have recently started re-writing the backend from the ground up in _**Go**_ to both learn more about the language and showcase what I have learned both previously and during.
 
 ## The State of the App
 Backend rewrite in Go is very near completion in terms of reaching previous functionality. However, it is not yet complete, and therefore the app is not currently deployed.
