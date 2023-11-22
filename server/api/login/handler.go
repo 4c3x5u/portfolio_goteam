@@ -19,7 +19,7 @@ import (
 // Handler is a http.Handler that can be used to handle login requests.
 type Handler struct {
 	validator          ReqValidator
-	userSelector       dbaccess.Selector[userTable.Record]
+	userSelector       dbaccess.Selector[userTable.InRecord]
 	passwordComparer   Comparator
 	authTokenGenerator auth.TokenGenerator
 	log                pkgLog.Errorer
@@ -28,7 +28,7 @@ type Handler struct {
 // NewHandler creates and returns a new Handler.
 func NewHandler(
 	validator ReqValidator,
-	userSelector dbaccess.Selector[userTable.Record],
+	userSelector dbaccess.Selector[userTable.InRecord],
 	hashComparer Comparator,
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,

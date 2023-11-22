@@ -20,9 +20,9 @@ type Handler struct {
 	userValidator       ReqValidator
 	inviteCodeValidator api.StringValidator
 	teamSelector        dbaccess.Selector[teamTable.Record]
-	userSelector        dbaccess.Selector[userTable.Record]
+	userSelector        dbaccess.Selector[userTable.InRecord]
 	hasher              Hasher
-	userInserter        dbaccess.Inserter[userTable.Record]
+	userInserter        dbaccess.Inserter[userTable.InRecord]
 	authTokenGenerator  auth.TokenGenerator
 	log                 pkgLog.Errorer
 }
@@ -32,9 +32,9 @@ func NewHandler(
 	userValidator ReqValidator,
 	inviteCodeValidator api.StringValidator,
 	teamSelector dbaccess.Selector[teamTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
+	userSelector dbaccess.Selector[userTable.InRecord],
 	hasher Hasher,
-	userInserter dbaccess.Inserter[userTable.Record],
+	userInserter dbaccess.Inserter[userTable.InRecord],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {
@@ -137,7 +137,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else if err = h.userInserter.Insert(
-		userTable.NewRecord(reqBody.Username, pwdHash),
+		userTable.NewInRecord(-1, reqBody.Username, pwdHash),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
