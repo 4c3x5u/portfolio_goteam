@@ -9,13 +9,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v4"
 	loginAPI "github.com/kxplxn/goteam/server/api/login"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	"github.com/kxplxn/goteam/server/log"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 // TestLoginHandler tests the http.Handler for the login API route and asserts

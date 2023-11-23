@@ -37,7 +37,8 @@ func TestBoardHandler(t *testing.T) {
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardAPI.NewIDValidator(),
-				userboardTable.NewSelector(db),
+				userTable.NewSelector(db),
+				boardTable.NewSelector(db),
 				boardTable.NewDeleter(db),
 				log,
 			),
@@ -254,11 +255,14 @@ func TestBoardHandler(t *testing.T) {
 						t.Error(err)
 					}
 
-					var boardID int
+					var count int
 					err = db.QueryRow(
-						"SELECT id FROM app.board WHERE teamID = 2",
-					).Scan(&boardID)
+						"SELECT COUNT(*) FROM app.board WHERE id = 4",
+					).Scan(&count)
 					if err != nil {
+						t.Error(err)
+					}
+					if err = assert.Equal(0, count); err != nil {
 						t.Error(err)
 					}
 
@@ -266,8 +270,7 @@ func TestBoardHandler(t *testing.T) {
 					// deleted.
 					var columnCount int
 					err = db.QueryRow(
-						`SELECT COUNT(*) FROM app."column" WHERE boardID = $1`,
-						boardID,
+						`SELECT COUNT(*) FROM app."column" WHERE boardID = 4`,
 					).Scan(&columnCount)
 					if err != nil {
 						t.Fatal(err)
@@ -318,7 +321,7 @@ func TestBoardHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				addBearerAuth(jwtTeam1Admin)(req)
+				c.authFunc(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)

@@ -81,7 +81,7 @@ VALUES
         'team3Admin',
         '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO',
         3,
-        false
+        true
     );
 
 -- DO NOT insert a board for team 2 because POST board assertions rely on total
@@ -96,10 +96,10 @@ VALUES
 -- insert columns into the second board for testing recursive board deletion
 INSERT INTO app."column"(boardID, "order")
 VALUES
-    (3,  1), -- gets deleted during DELETE board tests
-    (3,  2), -- gets deleted during DELETE board tests
-    (3,  3), -- gets deleted during DELETE board tests
-    (3,  4); -- gets deleted during DELETE board tests
+    (4,  1), -- gets deleted during DELETE board tests
+    (4,  2), -- gets deleted during DELETE board tests
+    (4,  3), -- gets deleted during DELETE board tests
+    (4,  4); -- gets deleted during DELETE board tests
 --     (2,  1), -- id: 5
 --     (4,  1), -- id: 6
 --     (2,  2), -- id: 7
