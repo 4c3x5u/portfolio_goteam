@@ -12,9 +12,9 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 )
 
-func TestBoardCounter(t *testing.T) {
-	cmdCount := `SELECT COUNT\(\*\) FROM app.board ` +
-		`WHERE teamID = \$1`
+// TestCounter tests the Counter.Count to assert that it sends the correct
+func TestCounter(t *testing.T) {
+	cmdCount := `SELECT COUNT\(\*\) FROM app.board WHERE teamID = \$1`
 
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer teardown()
