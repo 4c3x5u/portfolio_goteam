@@ -11,8 +11,8 @@ import (
 	"github.com/kxplxn/goteam/server/dbaccess"
 )
 
-// TestSelector tests Selector to assert that it queries the database and
-// handles the result and error correctly.
+// TestSelector tests Selector to assert that it queries the database correctly
+// and handles the result and error appropriately.
 func TestSelector(t *testing.T) {
 	const (
 		inviteCode    = "someinvitecode"

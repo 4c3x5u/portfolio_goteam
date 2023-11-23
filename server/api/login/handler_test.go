@@ -72,7 +72,7 @@ func TestHandler(t *testing.T) {
 	for _, c := range []struct {
 		name              string
 		reqIsValid        bool
-		userRecord        userTable.InRecord
+		userRecord        userTable.Record
 		userSelectorErr   error
 		hashComparerErr   error
 		authToken         string
@@ -83,7 +83,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:              "InvalidRequest",
 			reqIsValid:        false,
-			userRecord:        userTable.InRecord{},
+			userRecord:        userTable.Record{},
 			userSelectorErr:   nil,
 			hashComparerErr:   nil,
 			authToken:         "",
@@ -94,7 +94,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:              "UserNotFound",
 			reqIsValid:        true,
-			userRecord:        userTable.InRecord{},
+			userRecord:        userTable.Record{},
 			userSelectorErr:   sql.ErrNoRows,
 			hashComparerErr:   nil,
 			authToken:         "",
@@ -105,7 +105,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:              "UserSelectorError",
 			reqIsValid:        true,
-			userRecord:        userTable.InRecord{},
+			userRecord:        userTable.Record{},
 			userSelectorErr:   errors.New("user selector error"),
 			hashComparerErr:   nil,
 			authToken:         "",
@@ -116,7 +116,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:       "WrongPassword",
 			reqIsValid: true,
-			userRecord: userTable.InRecord{
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorErr:   nil,
@@ -129,7 +129,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:       "HashComparerError",
 			reqIsValid: true,
-			userRecord: userTable.InRecord{
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorErr:   nil,
@@ -142,7 +142,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:       "TokenGeneratorError",
 			reqIsValid: true,
-			userRecord: userTable.InRecord{
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorErr:   nil,
@@ -155,7 +155,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:       "Success",
 			reqIsValid: true,
-			userRecord: userTable.InRecord{
+			userRecord: userTable.Record{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			userSelectorErr:   nil,

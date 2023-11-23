@@ -96,7 +96,8 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardNameValidator,
-				userboardTable.NewCounter(db),
+				userTable.NewSelector(db),
+				boardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),

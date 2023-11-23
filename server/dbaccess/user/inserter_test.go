@@ -20,13 +20,13 @@ func TestInserter(t *testing.T) {
 		username      = "bob123"
 		pwdHash       = "asd..fasdf.asdfa/sdf.asdfa.sdfa"
 		cmdInsertUser = `INSERT INTO app.\"user\"\(username, password, ` +
-			`teamID, isAdmin\) VALUES \(\$1, \$2\)`
+			`teamID, isAdmin\) VALUES \(\$1, \$2\, \$3\, \$4\)`
 		cmdInsertTeam = `INSERT INTO app.team\(inviteCode\) VALUES \(\$1\) ` +
 			`RETURNING id`
 	)
 
 	t.Run("ErrBegin", func(t *testing.T) {
-		rec := NewInRecord(-1, "", []byte{})
+		rec := NewRecord("", []byte{}, -1, false)
 		errBegin := errors.New("error beginning transaction")
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
@@ -41,7 +41,7 @@ func TestInserter(t *testing.T) {
 	})
 
 	t.Run("ErrInsertTeam", func(t *testing.T) {
-		rec := NewInRecord(-1, "", []byte{})
+		rec := NewRecord("", []byte{}, -1, true)
 		errInsertTeam := errors.New("error inserting team")
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
@@ -58,15 +58,13 @@ func TestInserter(t *testing.T) {
 	})
 
 	t.Run("ErrInsertUser", func(t *testing.T) {
-		rec := NewInRecord(-1, username, []byte(pwdHash))
+		rec := NewRecord(username, []byte(pwdHash), 21, false)
 		wantErr := errors.New("error inserting user")
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectBegin()
-		mock.ExpectQuery(cmdInsertTeam).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(21))
 		mock.ExpectExec(cmdInsertUser).
-			WithArgs(username, pwdHash, 21, true).
+			WithArgs(username, pwdHash, 21, false).
 			WillReturnError(wantErr)
 		mock.ExpectRollback()
 		sut := NewInserter(db)
@@ -79,7 +77,7 @@ func TestInserter(t *testing.T) {
 	})
 
 	t.Run("OKWithTeam", func(t *testing.T) {
-		rec := NewInRecord(-1, username, []byte(pwdHash))
+		rec := NewRecord(username, []byte(pwdHash), -1, true)
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectBegin()
@@ -99,7 +97,7 @@ func TestInserter(t *testing.T) {
 	})
 
 	t.Run("OK", func(t *testing.T) {
-		rec := NewInRecord(32, username, []byte(pwdHash))
+		rec := NewRecord(username, []byte(pwdHash), 32, false)
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectBegin()

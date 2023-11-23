@@ -20,9 +20,9 @@ type Handler struct {
 	userValidator       ReqValidator
 	inviteCodeValidator api.StringValidator
 	teamSelector        dbaccess.Selector[teamTable.Record]
-	userSelector        dbaccess.Selector[userTable.InRecord]
+	userSelector        dbaccess.Selector[userTable.Record]
 	hasher              Hasher
-	userInserter        dbaccess.Inserter[userTable.InRecord]
+	userInserter        dbaccess.Inserter[userTable.Record]
 	authTokenGenerator  auth.TokenGenerator
 	log                 pkgLog.Errorer
 }
@@ -32,9 +32,9 @@ func NewHandler(
 	userValidator ReqValidator,
 	inviteCodeValidator api.StringValidator,
 	teamSelector dbaccess.Selector[teamTable.Record],
-	userSelector dbaccess.Selector[userTable.InRecord],
+	userSelector dbaccess.Selector[userTable.Record],
 	hasher Hasher,
-	userInserter dbaccess.Inserter[userTable.InRecord],
+	userInserter dbaccess.Inserter[userTable.Record],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
 ) Handler {
@@ -81,6 +81,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Define a user record to progressively populate the fields of.
+	var user userTable.Record
+
 	// Validate invite code if found.
 	inviteCode := r.URL.Query().Get("inviteCode")
 	if inviteCode != "" {
@@ -94,7 +97,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			return
 		}
-		_, err := h.teamSelector.Select(inviteCode)
+		team, err := h.teamSelector.Select(inviteCode)
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
 			if err := json.NewEncoder(w).Encode(
@@ -110,6 +113,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.log.Error(err.Error())
 			return
 		}
+		user.TeamID = team.ID
+		user.IsAdmin = false
+	} else {
+		// This indicates that the user is non-invited and a new team will be
+		// created for them, which they will be the admin of.
+		user.TeamID = -1
+		user.IsAdmin = true
 	}
 
 	// Check whether the username is taken.
@@ -130,15 +140,18 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	user.Username = reqBody.Username
 
 	// Hash password and create user.
-	if pwdHash, err := h.hasher.Hash(reqBody.Password); err != nil {
+	pwdHash, err := h.hasher.Hash(reqBody.Password)
+	if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else if err = h.userInserter.Insert(
-		userTable.NewInRecord(-1, reqBody.Username, pwdHash),
-	); err != nil {
+	}
+	user.Password = pwdHash
+
+	if err = h.userInserter.Insert(user); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

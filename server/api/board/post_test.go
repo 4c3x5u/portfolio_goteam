@@ -15,6 +15,7 @@ import (
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/dbaccess"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -22,15 +23,20 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
 	validator := &api.FakeStringValidator{}
+	userSelector := &userTable.FakeSelector{}
 	userBoardCounter := &dbaccess.FakeCounter{}
 	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPOSTHandler(validator, userBoardCounter, boardInserter, log)
+	sut := NewPOSTHandler(
+		validator, userSelector, userBoardCounter, boardInserter, log,
+	)
 
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
 			name                string
 			validatorErr        error
+			userRecord          userTable.Record
+			userSelectorErr     error
 			userBoardCount      int
 			userBoardCounterErr error
 			boardInserterErr    error
@@ -42,6 +48,8 @@ func TestPOSTHandler(t *testing.T) {
 				validatorErr: errors.New(
 					"Board name cannot be empty.",
 				),
+				userRecord:          userTable.Record{},
+				userSelectorErr:     nil,
 				userBoardCount:      0,
 				userBoardCounterErr: nil,
 				boardInserterErr:    nil,
@@ -51,8 +59,49 @@ func TestPOSTHandler(t *testing.T) {
 				),
 			},
 			{
+				name:                "UserNotRecognised",
+				validatorErr:        nil,
+				userRecord:          userTable.Record{},
+				userSelectorErr:     sql.ErrNoRows,
+				userBoardCount:      0,
+				userBoardCounterErr: nil,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusUnauthorized,
+				assertFunc: assert.OnResErr(
+					"Username is not recognised.",
+				),
+			},
+			{
+				name:                "UserSelectorErr",
+				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: false},
+				userSelectorErr:     sql.ErrConnDone,
+				userBoardCount:      0,
+				userBoardCounterErr: nil,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusInternalServerError,
+				assertFunc: assert.OnLoggedErr(
+					sql.ErrConnDone.Error(),
+				),
+			},
+			{
+				name:                "UserNotAdmin",
+				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: false},
+				userSelectorErr:     nil,
+				userBoardCount:      0,
+				userBoardCounterErr: sql.ErrConnDone,
+				boardInserterErr:    nil,
+				wantStatusCode:      http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can create boards.",
+				),
+			},
+			{
 				name:                "UserBoardCounterErr",
 				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: true},
+				userSelectorErr:     nil,
 				userBoardCount:      0,
 				userBoardCounterErr: sql.ErrConnDone,
 				boardInserterErr:    nil,
@@ -64,6 +113,8 @@ func TestPOSTHandler(t *testing.T) {
 			{
 				name:                "MaxBoardsCreated",
 				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: true},
+				userSelectorErr:     nil,
 				userBoardCount:      3,
 				userBoardCounterErr: nil,
 				boardInserterErr:    nil,
@@ -77,6 +128,8 @@ func TestPOSTHandler(t *testing.T) {
 			{
 				name:                "BoardInserterErr",
 				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: true},
+				userSelectorErr:     nil,
 				userBoardCount:      0,
 				userBoardCounterErr: sql.ErrNoRows,
 				boardInserterErr:    errors.New("create board error"),
@@ -88,6 +141,8 @@ func TestPOSTHandler(t *testing.T) {
 			{
 				name:                "Success",
 				validatorErr:        nil,
+				userRecord:          userTable.Record{IsAdmin: true},
+				userSelectorErr:     nil,
 				userBoardCount:      0,
 				userBoardCounterErr: sql.ErrNoRows,
 				boardInserterErr:    nil,
@@ -99,6 +154,8 @@ func TestPOSTHandler(t *testing.T) {
 			t.Run(c.name, func(t *testing.T) {
 				// Set pre-determinate return values for sut's dependencies.
 				validator.Err = c.validatorErr
+				userSelector.User = c.userRecord
+				userSelector.Err = c.userSelectorErr
 				userBoardCounter.BoardCount = c.userBoardCount
 				userBoardCounter.Err = c.userBoardCounterErr
 				boardInserter.Err = c.boardInserterErr

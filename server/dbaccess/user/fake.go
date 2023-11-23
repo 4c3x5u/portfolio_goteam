@@ -4,15 +4,15 @@ package user
 type FakeInserter struct{ Err error }
 
 // Insert implements the dbaccess.Inserter[Record] interface on FakeInserter.
-func (f *FakeInserter) Insert(_ InRecord) error { return f.Err }
+func (f *FakeInserter) Insert(_ Record) error { return f.Err }
 
 // FakeSelector is a test fake for dbaccess.Selector[Record].
 type FakeSelector struct {
-	User InRecord
+	User Record
 	Err  error
 }
 
 // Select implements the dbaccess.Selector[Record] interface on FakeSelector.
-func (f *FakeSelector) Select(_ string) (InRecord, error) {
+func (f *FakeSelector) Select(_ string) (Record, error) {
 	return f.User, f.Err
 }

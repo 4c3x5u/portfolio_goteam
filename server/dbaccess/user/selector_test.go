@@ -16,7 +16,8 @@ import (
 func TestSelector(t *testing.T) {
 	const (
 		username = "bob123"
-		query    = `SELECT password FROM app.\"user\" WHERE username = \$1`
+		query    = `SELECT password, teamID, isAdmin FROM app.\"user\" ` +
+			`WHERE username = \$1`
 	)
 
 	t.Run("Error", func(t *testing.T) {
@@ -35,13 +36,16 @@ func TestSelector(t *testing.T) {
 		}
 	})
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		wantPwd := "Myp4ssword!"
+		wantTeamID := 21
+		wantIsAdmin := true
 
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
-			mock.NewRows([]string{"password"}).AddRow(wantPwd),
+			mock.NewRows([]string{"password", "teamID", "isAdmin"}).
+				AddRow(wantPwd, wantTeamID, wantIsAdmin),
 		)
 		mock.ExpectClose()
 
@@ -55,6 +59,12 @@ func TestSelector(t *testing.T) {
 			t.Error(err)
 		}
 		if err = assert.Equal(wantPwd, string(user.Password)); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(wantTeamID, user.TeamID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(wantIsAdmin, user.IsAdmin); err != nil {
 			t.Error(err)
 		}
 	})
