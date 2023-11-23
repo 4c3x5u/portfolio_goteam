@@ -4,8 +4,9 @@ import "database/sql"
 
 // Record represents a record in the board table.
 type Record struct {
-	id   int
-	name string
+	ID     int
+	Name   string
+	TeamID int
 }
 
 // Selector can be used to read records from the board table.
@@ -18,7 +19,7 @@ func NewSelector(db *sql.DB) Selector { return Selector{db: db} }
 func (s Selector) Select(id string) (Record, error) {
 	var board Record
 	err := s.db.
-		QueryRow(`SELECT id, name FROM app.board WHERE id = $1`, id).
-		Scan(&board.id, &board.name)
+		QueryRow(`SELECT id, name, teamID FROM app.board WHERE id = $1`, id).
+		Scan(&board.ID, &board.Name, &board.TeamID)
 	return board, err
 }

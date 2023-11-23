@@ -19,13 +19,23 @@ const (
 	// integration testing.
 	jwtKey = "itest-jwt-key-0123456789qwerty"
 
-	// jwtBob123 is the JWT belonging to the bob123 test user.
+	// jwtBob123 is the JWT belonging to the bob123 test user. TODO: remove
 	jwtBob123 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
 		"ib2IxMjMifQ.Y8_6K50EHUEJlJf4X21fNCFhYWhVIqN3Tw1niz8XwZc"
 
-	// jwtBob124 is the JWT belonging to the bob124 test user.
+	// jwtBob124 is the JWT belonging to the bob124 test user. TODO: remove
 	jwtBob124 = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ" +
 		"ib2IxMjQifQ.LqENrj9APUHgQ3X0HRN6-IFMIg6nyo0_n74KfoxA0qI"
+
+	// JWTs to be used for testing purposes
+	jwtTeam1Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMUF" +
+		"kbWluIn0.hdiH2HHc8QFT9VbkpfXKubtV5-mMIT__tmMmYZHMVeA"
+	jwtTeam1Member = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMU" +
+		"1lbWJlciJ9.uJbS6vSFZzH1Nfbbto3ega9COg9dMuo63iYHmMYJ6bc"
+	jwtTeam2Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMkF" +
+		"kbWluIn0.vjQ93bx9-LK7SZEmhuzISf-Mcf_-A2bZ6VbLn27THPY"
+	jwtTeam3Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMk" +
+		"1lbWJlciJ9.g4FxHf1WupHGzzlvvi-8my1shFhpNuaWZKfJSV-Edxs"
 )
 
 // addBearerAuth is used in various test cases to authenticate the request

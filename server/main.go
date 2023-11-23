@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/kxplxn/goteam/server/api"
 	boardAPI "github.com/kxplxn/goteam/server/api/board"
 	columnAPI "github.com/kxplxn/goteam/server/api/column"
@@ -22,9 +23,6 @@ import (
 	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 	"github.com/kxplxn/goteam/server/midware"
-
-	"github.com/joho/godotenv"
-
 	_ "github.com/lib/pq"
 )
 
@@ -90,6 +88,7 @@ func main() {
 
 	boardIDValidator := boardAPI.NewIDValidator()
 	boardNameValidator := boardAPI.NewNameValidator()
+	boardSelector := boardTable.NewSelector(db)
 	mux.Handle("/board", api.NewHandler(
 		bearerTokenReader,
 		jwtValidator,
@@ -103,14 +102,15 @@ func main() {
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				boardIDValidator,
-				userBoardSelector,
+				userSelector,
+				boardSelector,
 				boardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
 				boardIDValidator,
 				boardNameValidator,
-				boardTable.NewSelector(db),
+				boardSelector,
 				userBoardSelector,
 				boardTable.NewUpdater(db),
 				log,

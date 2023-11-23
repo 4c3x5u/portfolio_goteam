@@ -123,7 +123,7 @@ func (h POSTHandler) Handle(
 
 	// Create a new board.
 	if err := h.boardInserter.Insert(
-		boardTable.NewInRecord(reqBody.Name, username),
+		boardTable.NewInRecord(reqBody.Name, user.TeamID),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

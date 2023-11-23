@@ -14,6 +14,7 @@ import (
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
@@ -29,7 +30,8 @@ func TestBoardHandler(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				boardAPI.NewNameValidator(),
-				userboardTable.NewCounter(db),
+				userTable.NewSelector(db),
+				boardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
@@ -91,7 +93,7 @@ func TestBoardHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodPost, func(t *testing.T) {
+	t.Run("POST", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			authFunc       func(*http.Request)
@@ -101,47 +103,55 @@ func TestBoardHandler(t *testing.T) {
 		}{
 			{
 				name:           "EmptyBoardName",
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				boardName:      "",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Board name cannot be empty."),
 			},
 			{
 				name:           "TooLongBoardName",
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				boardName:      "A Board Whose Name Is Just Too Long!",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
-				)},
+				),
+			},
 			{
 				name:           "TooManyBoards",
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				boardName:      "bob123's new board",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per user. Please delete one of your boards " +
 						"to create a new one.",
-				)},
+				),
+			},
 			{
 				name:           "Success",
-				authFunc:       addBearerAuth(jwtBob124),
-				boardName:      "bob124's new board",
+				authFunc:       addBearerAuth(jwtTeam2Admin),
+				boardName:      "Team 2 Board 1",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// Assert that bob124 is assigned to the board as admin.
-					var boardCount int
+					var count int
 					err := db.QueryRow(
-						"SELECT COUNT(*) FROM app.user_board " +
-							"WHERE boardID = 13 " +
-							"AND username = 'bob124' " +
-							"AND isAdmin = TRUE",
-					).Scan(&boardCount)
+						"SELECT COUNT(*) boardID FROM app.board " +
+							"WHERE teamID = 2",
+					).Scan(&count)
 					if err != nil {
 						t.Error(err)
 					}
-					if err = assert.Equal(1, boardCount); err != nil {
+					if err = assert.Equal(1, count); err != nil {
+						t.Error(err)
+					}
+
+					var boardID int
+					err = db.QueryRow(
+						"SELECT id FROM app.board WHERE teamID = 2",
+					).Scan(&boardID)
+					if err != nil {
 						t.Error(err)
 					}
 
@@ -150,7 +160,8 @@ func TestBoardHandler(t *testing.T) {
 						var columnCount int
 						err = db.QueryRow(
 							`SELECT COUNT(*) FROM app."column" `+
-								`WHERE boardID = 13 AND "order" = $1`,
+								`WHERE boardID = $1 AND "order" = $2`,
+							boardID,
 							order,
 						).Scan(&columnCount)
 						if err != nil {
@@ -194,59 +205,47 @@ func TestBoardHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodDelete, func(t *testing.T) {
+	t.Run("DELETE", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			id             string
+			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T)
 		}{
 			{
 				name:           "EmptyID",
 				id:             "",
+				authFunc:       addBearerAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "NonIntID",
 				id:             "qwerty",
+				authFunc:       addBearerAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
-				name:           "UserBoardNotFound",
-				id:             "123",
-				wantStatusCode: http.StatusForbidden,
-				assertFunc:     func(*testing.T) {},
-			},
-			{
 				name:           "NotAdmin",
-				id:             "4",
+				id:             "1",
+				authFunc:       addBearerAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "Success",
-				id:             "1",
+				id:             "4",
+				authFunc:       addBearerAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
 					// Assert that all user_board records with this board ID are
 					// deleted.
-					var userBoardCount int
-					err := db.QueryRow(
-						"SELECT COUNT(*) FROM app.user_board WHERE boardID = 1",
-					).Scan(&userBoardCount)
-					if err != nil {
-						t.Fatal(err)
-					}
-					if err = assert.Equal(0, userBoardCount); err != nil {
-						t.Error(err)
-					}
-
 					// Assert that the board record with this ID is deleted.
 					var boardCount int
-					err = db.QueryRow(
-						"SELECT COUNT(*) FROM app.board WHERE id = 1",
+					err := db.QueryRow(
+						"SELECT COUNT(*) FROM app.board WHERE teamID = 3",
 					).Scan(&boardCount)
 					if err != nil {
 						t.Fatal(err)
@@ -255,11 +254,20 @@ func TestBoardHandler(t *testing.T) {
 						t.Error(err)
 					}
 
+					var boardID int
+					err = db.QueryRow(
+						"SELECT id FROM app.board WHERE teamID = 2",
+					).Scan(&boardID)
+					if err != nil {
+						t.Error(err)
+					}
+
 					// Assert that all column records with this board ID are
 					// deleted.
 					var columnCount int
 					err = db.QueryRow(
-						`SELECT COUNT(*) FROM app."column" WHERE boardID = 1`,
+						`SELECT COUNT(*) FROM app."column" WHERE boardID = $1`,
+						boardID,
 					).Scan(&columnCount)
 					if err != nil {
 						t.Fatal(err)
@@ -310,7 +318,7 @@ func TestBoardHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				addBearerAuth(jwtBob123)(req)
+				addBearerAuth(jwtTeam1Admin)(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
@@ -328,7 +336,7 @@ func TestBoardHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodPatch, func(t *testing.T) {
+	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
 			id         string
@@ -341,7 +349,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "IDEmpty",
 				id:         "",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID cannot be empty."),
 			},
@@ -349,7 +357,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "IDNotInt",
 				id:         "A",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID must be an integer."),
 			},
@@ -357,7 +365,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNameEmpty",
 				id:         "2",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board name cannot be empty."),
 			},
@@ -365,7 +373,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNameTooLong",
 				id:         "2",
 				boardName:  "A Board Whose Name Is Just Too Long!",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
@@ -375,25 +383,15 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNotFound",
 				id:         "1001",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Board not found."),
 			},
 			{
-				name:       "UserBoardNotFound",
-				id:         "3",
-				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtBob124),
-				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"You do not have access to this board.",
-				),
-			},
-			{
 				name:       "NotAdmin",
-				id:         "4",
+				id:         "1",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can edit the board.",
@@ -403,7 +401,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "Success",
 				id:         "2",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var boardName string

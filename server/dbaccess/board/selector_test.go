@@ -7,10 +7,9 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/dbaccess"
-
-	"github.com/DATA-DOG/go-sqlmock"
 )
 
 // TestSelector tests the Select method of Selector to assert that it sends the
@@ -23,9 +22,11 @@ func TestSelector(t *testing.T) {
 	sut := NewSelector(db)
 
 	const (
-		sqlSelectBoard    = "SELECT id, name FROM app.board WHERE id = \\$1"
+		sqlSelectBoard = `SELECT id, name, teamID FROM app.board ` +
+			`WHERE id = \$1`
 		boardID           = "21"
 		existingBoardName = "Board A"
+		teamID            = 21
 	)
 
 	mock.ExpectQuery(sqlSelectBoard).
@@ -35,8 +36,8 @@ func TestSelector(t *testing.T) {
 	mock.ExpectQuery(sqlSelectBoard).
 		WithArgs(boardID).
 		WillReturnRows(
-			sqlmock.NewRows([]string{"id", "name"}).
-				AddRow(boardID, existingBoardName),
+			sqlmock.NewRows([]string{"id", "name", "teamID"}).
+				AddRow(boardID, existingBoardName, teamID),
 		)
 
 	board, err := sut.Select(boardID)
@@ -48,10 +49,13 @@ func TestSelector(t *testing.T) {
 	if err = assert.Nil(err); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(boardID, strconv.Itoa(board.id)); err != nil {
+	if err = assert.Equal(boardID, strconv.Itoa(board.ID)); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(existingBoardName, board.name); err != nil {
+	if err = assert.Equal(existingBoardName, board.Name); err != nil {
+		t.Error(err)
+	}
+	if err = assert.Equal(teamID, board.TeamID); err != nil {
 		t.Error(err)
 	}
 }

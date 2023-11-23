@@ -8,13 +8,13 @@ import (
 
 // InRecord describes the data needed to insert a board into the database.
 type InRecord struct {
-	name    string
-	adminID string
+	name   string
+	teamID int
 }
 
 // NewInRecord creates and returns a new InRecord.
-func NewInRecord(name string, adminID string) InRecord {
-	return InRecord{name: name, adminID: adminID}
+func NewInRecord(name string, teamID int) InRecord {
+	return InRecord{name: name, teamID: teamID}
 }
 
 // Inserter can be used to create a new record in the board table.
@@ -37,27 +37,12 @@ func (i Inserter) Insert(board InRecord) error {
 	// Insert the new board into the board table.
 	var boardID int64
 	err = tx.QueryRowContext(
-		ctx, "INSERT INTO app.board(name) VALUES ($1) RETURNING id", board.name,
+		ctx,
+		"INSERT INTO app.board(name, teamID) VALUES ($1, $2) RETURNING id",
+		board.name,
+		board.teamID,
 	).Scan(&boardID)
 	if err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.Join(err, rollbackErr)
-		}
-		return err
-	}
-
-	// Every time a board is created, the user who creates it must be assigned
-	// to it as its admin, and 4 columns must be assigned to the board.
-
-	// Insert a record into the user_board table with the given user and board
-	// ID, and an isAdmin field of true (i.e. make the user admin of the board).
-	if _, err = tx.ExecContext(
-		ctx,
-		"INSERT INTO app.user_board(username, boardID, isAdmin) "+
-			"VALUES($1, $2, TRUE)",
-		board.adminID,
-		boardID,
-	); err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
 			return errors.Join(err, rollbackErr)
 		}

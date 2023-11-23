@@ -7,30 +7,35 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	validator         api.StringValidator
-	userBoardSelector dbaccess.RelSelector[bool]
-	boardDeleter      dbaccess.Deleter
-	log               pkgLog.Errorer
+	validator     api.StringValidator
+	userSelector  dbaccess.Selector[userTable.Record]
+	boardSelector dbaccess.Selector[boardTable.Record]
+	boardDeleter  dbaccess.Deleter
+	log           pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
 	validator api.StringValidator,
-	userBoardSelector dbaccess.RelSelector[bool],
+	userSelector dbaccess.Selector[userTable.Record],
+	boardSelector dbaccess.Selector[boardTable.Record],
 	boardDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
-		validator:         validator,
-		userBoardSelector: userBoardSelector,
-		boardDeleter:      boardDeleter,
-		log:               log,
+		validator:     validator,
+		userSelector:  userSelector,
+		boardSelector: boardSelector,
+		boardDeleter:  boardDeleter,
+		log:           log,
 	}
 }
 
@@ -49,22 +54,40 @@ func (h DELETEHandler) Handle(
 
 	// Validate that the user making the request is the admin of the board to be
 	// deleted.
-	if isAdmin, err := h.userBoardSelector.Select(
-		username, boardID,
-	); err != nil && !errors.Is(err, sql.ErrNoRows) {
+	user, err := h.userSelector.Select(
+		username,
+	)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
-	} else if errors.Is(err, sql.ErrNoRows) {
+	}
+	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
 		return
-	} else if !isAdmin {
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	board, err := h.boardSelector.Select(boardID)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		h.log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
 	// Delete the board.
-	if err := h.boardDeleter.Delete(boardID); err != nil {
+	if err = h.boardDeleter.Delete(boardID); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
