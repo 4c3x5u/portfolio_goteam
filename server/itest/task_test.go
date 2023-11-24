@@ -98,10 +98,11 @@ func TestTaskHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodPost, func(t *testing.T) {
+	t.Run("POST", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			reqBody        map[string]any
+			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
@@ -113,6 +114,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
@@ -125,6 +127,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -138,6 +141,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{""},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -153,6 +157,7 @@ func TestTaskHandler(t *testing.T) {
 						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -166,6 +171,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      1001,
 					"subtasks":    []string{"Some Subtask"},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Column not found."),
 			},
@@ -177,6 +183,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      8,
 					"subtasks":    []string{"Some Subtask"},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -190,6 +197,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      9,
 					"subtasks":    []string{"Some Subtask"},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can create tasks.",
@@ -205,6 +213,7 @@ func TestTaskHandler(t *testing.T) {
 						"Some Subtask", "Some Other Subtask",
 					},
 				},
+				authFunc:       addBearerAuth(jwtBob123),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// A task with the order of 1 and 2 already exists in the given
@@ -259,7 +268,7 @@ func TestTaskHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				addBearerAuth(jwtBob123)(req)
+				c.authFunc(req)
 
 				w := httptest.NewRecorder()
 

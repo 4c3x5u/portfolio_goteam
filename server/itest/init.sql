@@ -96,11 +96,12 @@ VALUES
 -- insert columns into the second board for testing recursive board deletion
 INSERT INTO app."column"(boardID, "order")
 VALUES
-    (4,  1), -- gets deleted during DELETE board tests
-    (4,  2), -- gets deleted during DELETE board tests
-    (4,  3), -- gets deleted during DELETE board tests
-    (4,  4), -- gets deleted during DELETE board tests
-    (1,  1);
+    (4, 1), -- gets deleted during DELETE board tests
+    (4, 2), -- gets deleted during DELETE board tests
+    (4, 3), -- gets deleted during DELETE board tests
+    (4, 4), -- gets deleted during DELETE board tests
+    (1, 1),
+    (1, 2);
 --     (2,  1), -- id: 5
 --     (4,  1), -- id: 6
 --     (2,  2), -- id: 7
@@ -121,10 +122,11 @@ VALUES
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
 VALUES
-    (1,  'task 1', 1), -- gets deleted during DELETE board tests
-    (2,  'task 2', 1), -- gets deleted during DELETE board tests
-    (3,  'task 3', 1), -- gets deleted during DELETE board tests
-    (4,  'task 4', 1); -- gets deleted during DELETE board tests
+    (1, 'task 1', 1), -- gets deleted during DELETE board tests
+    (2, 'task 2', 1), -- gets deleted during DELETE board tests
+    (3, 'task 3', 1), -- gets deleted during DELETE board tests
+    (4, 'task 4', 1), -- gets deleted during DELETE board tests
+    (5, 'task 5', 1);
 --     (10, 'task 5', 1),
 --     (10, 'task 6', 2),
 --     (8,  'task 7', 1),

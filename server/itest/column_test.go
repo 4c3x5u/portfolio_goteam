@@ -105,7 +105,7 @@ func TestColumnHandler(t *testing.T) {
 				id:         "1001",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Column not found."),
 			},
 			{
@@ -113,17 +113,15 @@ func TestColumnHandler(t *testing.T) {
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtTeam1Member),
-				statusCode: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr(
-					"Only board admins can move tasks.",
-				),
+				statusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr("Only team admins can move tasks."),
 			},
 			{
 				name:       "NoAccess",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
 				authFunc:   addBearerAuth(jwtTeam2Admin),
-				statusCode: http.StatusUnauthorized,
+				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
@@ -138,8 +136,8 @@ func TestColumnHandler(t *testing.T) {
 			},
 			{
 				name:       "Success",
-				id:         "1",
-				reqBody:    columnAPI.ReqBody{{ID: 1, Order: 2}},
+				id:         "6",
+				reqBody:    columnAPI.ReqBody{{ID: 5, Order: 2}},
 				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
@@ -150,7 +148,7 @@ func TestColumnHandler(t *testing.T) {
 					).Scan(&columnID, &order); err != nil {
 						t.Fatal(err)
 					}
-					if err := assert.Equal(7, columnID); err != nil {
+					if err := assert.Equal(6, columnID); err != nil {
 						t.Error(err)
 					}
 					if err := assert.Equal(2, order); err != nil {
