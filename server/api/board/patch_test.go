@@ -15,7 +15,7 @@ import (
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/dbaccess"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -26,139 +26,161 @@ func TestPATCHHandler(t *testing.T) {
 	idValidator := &api.FakeStringValidator{}
 	nameValidator := &api.FakeStringValidator{}
 	boardSelector := &boardTable.FakeSelector{}
-	userBoardSelector := &userboardTable.FakeSelector{}
+	userSelector := &userTable.FakeSelector{}
 	boardUpdater := &dbaccess.FakeUpdater{}
 	sut := NewPATCHHandler(
 		idValidator,
 		nameValidator,
 		boardSelector,
-		userBoardSelector,
+		userSelector,
 		boardUpdater,
 		log,
 	)
 
 	for _, c := range []struct {
-		name                 string
-		idValidatorErr       error
-		nameValidatorErr     error
-		boardSelectorErr     error
-		userIsAdmin          bool
-		userBoardSelectorErr error
-		boardUpdaterErr      error
-		wantStatusCode       int
-		assertFunc           func(*testing.T, *http.Response, string)
+		name             string
+		idValidatorErr   error
+		nameValidatorErr error
+		board            boardTable.Record
+		boardSelectorErr error
+		user             userTable.Record
+		selectUserErr    error
+		boardUpdaterErr  error
+		wantStatusCode   int
+		assertFunc       func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                 "IDValidatorErr",
-			idValidatorErr:       errors.New("Board ID cannot be empty."),
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          false,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:             "IDValidatorErr",
+			idValidatorErr:   errors.New("Board ID cannot be empty."),
+			nameValidatorErr: nil,
+			board:            boardTable.Record{},
+			boardSelectorErr: nil,
+			user:             userTable.Record{},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Board ID cannot be empty.",
 			),
 		},
 		{
-			name:                 "NameValidatorErr",
-			idValidatorErr:       nil,
-			nameValidatorErr:     errors.New("Board name cannot be empty."),
-			boardSelectorErr:     nil,
-			userIsAdmin:          false,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusBadRequest,
+			name:             "NameValidatorErr",
+			idValidatorErr:   nil,
+			nameValidatorErr: errors.New("Board name cannot be empty."),
+			board:            boardTable.Record{},
+			boardSelectorErr: nil,
+			user:             userTable.Record{},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Board name cannot be empty.",
 			),
 		},
 		{
-			name:                 "BoardNotFound",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     sql.ErrNoRows,
-			userIsAdmin:          false,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusNotFound,
-			assertFunc:           assert.OnResErr("Board not found."),
+			name:             "BoardNotFound",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{},
+			boardSelectorErr: sql.ErrNoRows,
+			user:             userTable.Record{},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusNotFound,
+			assertFunc:       assert.OnResErr("Board not found."),
 		},
 		{
-			name:                 "BoardSelectorErr",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     sql.ErrConnDone,
-			userIsAdmin:          false,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusInternalServerError,
+			name:             "BoardSelectorErr",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{},
+			boardSelectorErr: sql.ErrConnDone,
+			user:             userTable.Record{},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
 		},
 		{
-			name:                 "UserDoesNotHaveAccess",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          false,
-			userBoardSelectorErr: sql.ErrNoRows,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusForbidden,
+			name:             "UserNotFound",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{},
+			boardSelectorErr: nil,
+			user:             userTable.Record{},
+			selectUserErr:    sql.ErrNoRows,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusUnauthorized,
+			assertFunc:       assert.OnResErr("Username is not recognised."),
+		},
+		{
+			name:             "UserSelectorErr",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{},
+			boardSelectorErr: nil,
+			user:             userTable.Record{},
+			selectUserErr:    sql.ErrConnDone,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
+		},
+		{
+			name:             "WrongTeamID",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{TeamID: 1},
+			boardSelectorErr: nil,
+			user:             userTable.Record{IsAdmin: true, TeamID: 2},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:                 "UserBoardSelectorErr",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          false,
-			userBoardSelectorErr: sql.ErrConnDone,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:                 "NotAdmin",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          false,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusForbidden,
+			name:             "NotAdmin",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{TeamID: 1},
+			boardSelectorErr: nil,
+			user:             userTable.Record{IsAdmin: false, TeamID: 1},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can edit the board.",
 			),
 		},
 		{
-			name:                 "BoardUpdaterErr",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          true,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      sql.ErrNoRows,
-			wantStatusCode:       http.StatusInternalServerError,
+			name:             "BoardUpdaterErr",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{TeamID: 1},
+			boardSelectorErr: nil,
+			user:             userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:    nil,
+			boardUpdaterErr:  sql.ErrNoRows,
+			wantStatusCode:   http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrNoRows.Error(),
 			),
 		},
 		{
-			name:                 "Success",
-			idValidatorErr:       nil,
-			nameValidatorErr:     nil,
-			boardSelectorErr:     nil,
-			userIsAdmin:          true,
-			userBoardSelectorErr: nil,
-			boardUpdaterErr:      nil,
-			wantStatusCode:       http.StatusOK,
+			name:             "Success",
+			idValidatorErr:   nil,
+			nameValidatorErr: nil,
+			board:            boardTable.Record{TeamID: 1},
+			boardSelectorErr: nil,
+			user:             userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:    nil,
+			boardUpdaterErr:  nil,
+			wantStatusCode:   http.StatusOK,
 			assertFunc: func(*testing.T, *http.Response, string) {
 			},
 		},
@@ -166,9 +188,10 @@ func TestPATCHHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			idValidator.Err = c.idValidatorErr
 			nameValidator.Err = c.nameValidatorErr
+			boardSelector.Board = c.board
 			boardSelector.Err = c.boardSelectorErr
-			userBoardSelector.IsAdmin = c.userIsAdmin
-			userBoardSelector.Err = c.userBoardSelectorErr
+			userSelector.User = c.user
+			userSelector.Err = c.selectUserErr
 			boardUpdater.Err = c.boardUpdaterErr
 
 			reqBody, err := json.Marshal(ReqBody{})

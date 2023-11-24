@@ -15,7 +15,6 @@ import (
 	"github.com/kxplxn/goteam/server/auth"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -46,7 +45,7 @@ func TestBoardHandler(t *testing.T) {
 				boardAPI.NewIDValidator(),
 				boardAPI.NewNameValidator(),
 				boardTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				userTable.NewSelector(db),
 				boardTable.NewUpdater(db),
 				log,
 			),

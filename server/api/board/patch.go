@@ -9,33 +9,34 @@ import (
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 type PATCHHandler struct {
-	idValidator       api.StringValidator
-	nameValidator     api.StringValidator
-	boardSelector     dbaccess.Selector[boardTable.Record]
-	userBoardSelector dbaccess.RelSelector[bool]
-	boardUpdater      dbaccess.Updater[string]
-	log               pkgLog.Errorer
+	idValidator   api.StringValidator
+	nameValidator api.StringValidator
+	boardSelector dbaccess.Selector[boardTable.Record]
+	userSelector  dbaccess.Selector[userTable.Record]
+	boardUpdater  dbaccess.Updater[string]
+	log           pkgLog.Errorer
 }
 
 func NewPATCHHandler(
 	idValidator api.StringValidator,
 	nameValidator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	userSelector dbaccess.Selector[userTable.Record],
 	boardUpdater dbaccess.Updater[string],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
-		idValidator:       idValidator,
-		nameValidator:     nameValidator,
-		boardSelector:     boardSelector,
-		userBoardSelector: userBoardSelector,
-		boardUpdater:      boardUpdater,
-		log:               log,
+		idValidator:   idValidator,
+		nameValidator: nameValidator,
+		boardSelector: boardSelector,
+		userSelector:  userSelector,
+		boardUpdater:  boardUpdater,
+		log:           log,
 	}
 }
 
@@ -74,9 +75,8 @@ func (h *PATCHHandler) Handle(
 	}
 
 	// Validate that the board exists in the database.
-	if _, err := h.boardSelector.Select(
-		boardID,
-	); errors.Is(err, sql.ErrNoRows) {
+	board, err := h.boardSelector.Select(boardID)
+	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(
 			ResBody{Error: "Board not found."},
@@ -85,32 +85,44 @@ func (h *PATCHHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
 	// Validate that the user is a board admin.
-	if isAdmin, err := h.userBoardSelector.Select(
-		username, boardID,
-	); errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "You do not have access to this board."},
+			ResBody{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
-	} else if !isAdmin {
+	}
+	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
 			ResBody{Error: "Only board admins can edit the board."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
