@@ -24,17 +24,7 @@ func (d Deleter) Delete(id string) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-
-	// Delete all records from the user_board table with the given board ID.
-	if _, err = tx.ExecContext(
-		ctx, "DELETE FROM app.user_board WHERE boardID = $1", id,
-	); err != nil {
-		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.Join(err, rollbackErr)
-		}
-		return err
-	}
+	defer func() { _ = tx.Rollback() }()
 
 	// Get IDs of this board's columns so that we can delete the tasks
 	// associated to them.

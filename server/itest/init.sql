@@ -22,13 +22,6 @@ CREATE TABLE app.board (
     teamID INTEGER     NOT NULL    REFERENCES app.team
 );
 
-CREATE TABLE app.user_board (
-    id       INTEGER     PRIMARY KEY GENERATED ALWAYS      AS IDENTITY,
-    username VARCHAR(15) NOT NULL    REFERENCES app."user",
-    boardID  INTEGER     NOT NULL    REFERENCES app.board,
-    isAdmin  BOOLEAN     NOT NULL
-);
-
 CREATE TABLE app."column" (
     id      INTEGER  PRIMARY KEY GENERATED ALWAYS     AS IDENTITY,
     boardID INTEGER  NOT NULL    REFERENCES app.board,
