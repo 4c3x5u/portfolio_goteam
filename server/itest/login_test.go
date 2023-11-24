@@ -65,7 +65,7 @@ func TestLoginHandler(t *testing.T) {
 		},
 		{
 			name:           "Success",
-			username:       "bob123",
+			username:       "team1Member",
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusOK,
 			assertFunc: func(t *testing.T, res *http.Response) {
@@ -88,7 +88,7 @@ func TestLoginHandler(t *testing.T) {
 				); err != nil {
 					t.Fatal(err)
 				}
-				if err := assert.Equal("bob123", claims.Subject); err != nil {
+				if err := assert.Equal("team1Member", claims.Subject); err != nil {
 					t.Error(err)
 				}
 			},

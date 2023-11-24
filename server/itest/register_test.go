@@ -5,18 +5,17 @@ package itest
 import (
 	"bytes"
 	"encoding/json"
-	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang-jwt/jwt/v4"
 	registerAPI "github.com/kxplxn/goteam/server/api/register"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	"github.com/kxplxn/goteam/server/log"
-
-	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -146,7 +145,7 @@ func TestRegisterHandler(t *testing.T) {
 		},
 		{
 			name:           "UsnTaken",
-			username:       "bob123",
+			username:       "team1Member",
 			password:       "Myp4ssw0rd!",
 			inviteCode:     "",
 			wantStatusCode: http.StatusBadRequest,
