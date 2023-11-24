@@ -13,8 +13,10 @@ import (
 	taskAPI "github.com/kxplxn/goteam/server/api/task"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
@@ -36,7 +38,8 @@ func TestTaskHandler(t *testing.T) {
 				titleValidator,
 				titleValidator,
 				columnSelector,
-				userBoardSelector,
+				boardTable.NewSelector(db),
+				userTable.NewSelector(db),
 				taskTable.NewInserter(db),
 				log,
 			),
@@ -71,29 +74,34 @@ func TestTaskHandler(t *testing.T) {
 			{name: "HeaderInvalid", authFunc: addBearerAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				t.Run(http.MethodPost, func(t *testing.T) {
-					req, err := http.NewRequest(http.MethodPost, "", nil)
-					if err != nil {
-						t.Fatal(err)
-					}
-					c.authFunc(req)
-					w := httptest.NewRecorder()
+				for _, httpMethod := range []string{
+					http.MethodPost, http.MethodPatch, http.MethodDelete,
+				} {
+					t.Run(httpMethod, func(t *testing.T) {
+						req, err := http.NewRequest(httpMethod, "", nil)
+						if err != nil {
+							t.Fatal(err)
+						}
+						c.authFunc(req)
+						w := httptest.NewRecorder()
 
-					sut.ServeHTTP(w, req)
-					res := w.Result()
+						sut.ServeHTTP(w, req)
+						res := w.Result()
 
-					if err = assert.Equal(
-						http.StatusUnauthorized, res.StatusCode,
-					); err != nil {
-						t.Error(err)
-					}
+						if err = assert.Equal(
+							http.StatusUnauthorized, res.StatusCode,
+						); err != nil {
+							t.Error(err)
+						}
 
-					if err = assert.Equal(
-						"Bearer", res.Header.Values("WWW-Authenticate")[0],
-					); err != nil {
-						t.Error(err)
-					}
-				})
+						if err = assert.Equal(
+							"Bearer", res.Header.Values("WWW-Authenticate")[0],
+						); err != nil {
+							t.Error(err)
+						}
+					})
+
+				}
 			})
 		}
 	})
@@ -114,7 +122,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
@@ -127,7 +135,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -141,7 +149,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{""},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -157,7 +165,7 @@ func TestTaskHandler(t *testing.T) {
 						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -171,7 +179,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      1001,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Column not found."),
 			},
@@ -180,10 +188,10 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      8,
+					"column":      5,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -194,13 +202,13 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "",
-					"column":      9,
+					"column":      5,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
-					"Only board admins can create tasks.",
+					"Only team admins can create tasks.",
 				),
 			},
 			{
@@ -208,12 +216,12 @@ func TestTaskHandler(t *testing.T) {
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "Do something. Then, do something else.",
-					"column":      10,
+					"column":      7,
 					"subtasks": []string{
 						"Some Subtask", "Some Other Subtask",
 					},
 				},
-				authFunc:       addBearerAuth(jwtBob123),
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// A task with the order of 1 and 2 already exists in the given
@@ -222,13 +230,12 @@ func TestTaskHandler(t *testing.T) {
 					var taskID, taskOrder int
 					if err := db.QueryRow(
 						`SELECT id, "order" FROM app.task `+
-							`WHERE columnID = $1 AND title = $2`,
-						10,
-						"Some Task",
+							`WHERE columnID = $1 AND title = 'Some Task'`,
+						7,
 					).Scan(&taskID, &taskOrder); err != nil {
 						t.Error(err)
 					}
-					if err := assert.Equal(3, taskOrder); err != nil {
+					if err := assert.Equal(2, taskOrder); err != nil {
 						t.Error(err)
 					}
 
@@ -286,7 +293,7 @@ func TestTaskHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodPatch, func(t *testing.T) {
+	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			taskID         string
@@ -528,7 +535,7 @@ func TestTaskHandler(t *testing.T) {
 		}
 	})
 
-	t.Run(http.MethodDelete, func(t *testing.T) {
+	t.Run("DELETE", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			id             string

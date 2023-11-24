@@ -4,17 +4,18 @@ package task
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"database/sql"
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/assert"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -24,14 +25,16 @@ func TestPOSTHandler(t *testing.T) {
 	taskTitleValidator := &api.FakeStringValidator{}
 	subtaskTitleValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
-	userBoardSelector := &userboardTable.FakeSelector{}
+	boardSelector := &boardTable.FakeSelector{}
+	userSelector := &userTable.FakeSelector{}
 	taskInserter := &taskTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(
 		taskTitleValidator,
 		subtaskTitleValidator,
 		columnSelector,
-		userBoardSelector,
+		boardSelector,
+		userSelector,
 		taskInserter,
 		log,
 	)
@@ -41,8 +44,10 @@ func TestPOSTHandler(t *testing.T) {
 		taskTitleValidatorErr    error
 		subtaskTitleValidatorErr error
 		columnSelectorErr        error
-		userIsAdmin              bool
-		userBoardSelectorErr     error
+		board                    boardTable.Record
+		boardSelectorErr         error
+		user                     userTable.Record
+		userSelectorErr          error
 		taskInserterErr          error
 		wantStatusCode           int
 		assertFunc               func(*testing.T, *http.Response, string)
@@ -52,8 +57,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrEmpty,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -65,8 +72,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrTooLong,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -78,8 +87,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    api.ErrStrNotInt,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -91,8 +102,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -104,8 +117,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrTooLong,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -117,8 +132,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: api.ErrStrNotInt,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -130,8 +147,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        sql.ErrNoRows,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusNotFound,
 			assertFunc:               assert.OnResErr("Column not found."),
@@ -141,8 +160,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        sql.ErrConnDone,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -150,12 +171,14 @@ func TestPOSTHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                     "UserBoardSelectorErr",
+			name:                     "BoardSelectorErr",
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     sql.ErrConnDone,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         sql.ErrConnDone,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -163,16 +186,18 @@ func TestPOSTHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                     "NoAccess",
+			name:                     "UserSelectorErr",
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     sql.ErrNoRows,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          sql.ErrConnDone,
 			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
 			),
 		},
 		{
@@ -180,12 +205,31 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{IsAdmin: false},
+			userSelectorErr:          nil,
 			taskInserterErr:          nil,
 			wantStatusCode:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
-				"Only board admins can create tasks.",
+				"Only team admins can create tasks.",
+			),
+		},
+		{
+			name:                     "BoardWrongTeam",
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			columnSelectorErr:        nil,
+			board:                    boardTable.Record{TeamID: 1},
+			boardSelectorErr:         nil,
+			user: userTable.Record{
+				IsAdmin: true, TeamID: 2,
+			},
+			userSelectorErr: nil,
+			taskInserterErr: nil,
+			wantStatusCode:  http.StatusForbidden,
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
 			),
 		},
 		{
@@ -193,10 +237,14 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              true,
-			userBoardSelectorErr:     nil,
-			taskInserterErr:          sql.ErrConnDone,
-			wantStatusCode:           http.StatusInternalServerError,
+			board:                    boardTable.Record{TeamID: 1},
+			boardSelectorErr:         nil,
+			user: userTable.Record{
+				IsAdmin: true, TeamID: 1,
+			},
+			userSelectorErr: nil,
+			taskInserterErr: sql.ErrConnDone,
+			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
@@ -206,8 +254,10 @@ func TestPOSTHandler(t *testing.T) {
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 			columnSelector.Err = c.columnSelectorErr
-			userBoardSelector.IsAdmin = c.userIsAdmin
-			userBoardSelector.Err = c.userBoardSelectorErr
+			boardSelector.Board = c.board
+			boardSelector.Err = c.boardSelectorErr
+			userSelector.User = c.user
+			userSelector.Err = c.userSelectorErr
 			taskInserter.Err = c.taskInserterErr
 
 			reqBody, err := json.Marshal(map[string]any{

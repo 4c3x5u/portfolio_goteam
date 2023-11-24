@@ -9,8 +9,10 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -28,7 +30,8 @@ type POSTHandler struct {
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
 	columnSelector        dbaccess.Selector[columnTable.Record]
-	userBoardSelector     dbaccess.RelSelector[bool]
+	boardSelector         dbaccess.Selector[boardTable.Record]
+	userSelector          dbaccess.Selector[userTable.Record]
 	taskInserter          dbaccess.Inserter[taskTable.InRecord]
 	log                   pkgLog.Errorer
 }
@@ -38,7 +41,8 @@ func NewPOSTHandler(
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	taskInserter dbaccess.Inserter[taskTable.InRecord],
 	log pkgLog.Errorer,
 ) *POSTHandler {
@@ -46,7 +50,8 @@ func NewPOSTHandler(
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
 		columnSelector:        columnSelector,
-		userBoardSelector:     userBoardSelector,
+		boardSelector:         boardSelector,
+		userSelector:          userSelector,
 		taskInserter:          taskInserter,
 		log:                   log,
 	}
@@ -131,10 +136,17 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
+	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
+	if err != nil {
+		// Since boardID is used from a column retrieved from the database,
+		// any error selecting board including ErrNoRows is a 500.
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
 	// Check if the user is admin on the board the column is associated with.
-	isAdmin, err := h.userBoardSelector.Select(
-		username, strconv.Itoa(column.BoardID),
-	)
+	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusForbidden)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
@@ -150,10 +162,20 @@ func (h *POSTHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if !isAdmin {
+	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
-			Error: "Only board admins can create tasks.",
+			Error: "Only team admins can create tasks.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

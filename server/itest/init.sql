@@ -88,9 +88,9 @@ VALUES
 -- board count
 INSERT INTO app.board(name, teamID)
 VALUES
-    ('Team 1 Board 1',  1),
-    ('Team 1 Board 2',  1),
-    ('Team 1 Board 3',  1),
+    ('Team 1 Board 1',  1), -- used to verify max boards case for POST board
+    ('Team 1 Board 2',  1), -- used to verify max boards case for POST board
+    ('Team 1 Board 3',  1), -- used to verify max boards case for POST board
     ('Team 3 Board 1',  3); -- gets deleted during DELETE board tests
 
 -- insert columns into the second board for testing recursive board deletion
@@ -100,24 +100,9 @@ VALUES
     (4, 2), -- gets deleted during DELETE board tests
     (4, 3), -- gets deleted during DELETE board tests
     (4, 4), -- gets deleted during DELETE board tests
-    (1, 1),
-    (1, 2);
---     (2,  1), -- id: 5
---     (4,  1), -- id: 6
---     (2,  2), -- id: 7
---     (6,  1), -- id: 8
---     (4,  2), -- id: 9
---     (3,  1), -- id: 10
---     (3,  2), -- id: 11
---     (5,  1), -- id: 12
---     (4,  3), -- id: 13
---     (3,  3), -- id: 14
---     (7,  1), -- id: 15
---     (8,  1), -- id: 16
---     (9,  1), -- id: 17
---     (10, 1), -- id: 18
---     (11, 1), -- id: 19
---     (12, 1); -- id: 20
+    (1, 1), -- used as source for PATCH column tests
+    (1, 2), -- used as target for PATCH column tests
+    (1, 1);
 
 -- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
@@ -126,18 +111,8 @@ VALUES
     (2, 'task 2', 1), -- gets deleted during DELETE board tests
     (3, 'task 3', 1), -- gets deleted during DELETE board tests
     (4, 'task 4', 1), -- gets deleted during DELETE board tests
-    (5, 'task 5', 1);
---     (10, 'task 5', 1),
---     (10, 'task 6', 2),
---     (8,  'task 7', 1),
---     (9,  'task 8', 1),
---     (11, 'task 9', 1),
---     (15, 'task 10', 1),
---     (16, 'task 11', 1),
---     (17, 'task 12', 1),
---     (18, 'task 13', 1),
---     (19, 'task 14', 1),
---     (20, 'task 15', 1);
+    (5, 'task 5', 1),
+    (7, 'task 6', 1); -- gets moved from column 5 to 6 during PATCH column test
 
 -- insert a subtask into each task for testing recursive board deletion
 -- INSERT INTO app.subtask(taskID, title, "order", isDone)
