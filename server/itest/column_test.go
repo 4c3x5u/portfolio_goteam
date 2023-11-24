@@ -5,16 +5,17 @@ package itest
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/kxplxn/goteam/server/api"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/kxplxn/goteam/server/api"
 	columnAPI "github.com/kxplxn/goteam/server/api/column"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -30,7 +31,8 @@ func TestColumnHandler(t *testing.T) {
 			http.MethodPatch: columnAPI.NewPATCHHandler(
 				columnAPI.NewIDValidator(),
 				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				boardTable.NewSelector(db),
+				userTable.NewSelector(db),
 				columnTable.NewUpdater(db),
 				log,
 			),
@@ -73,7 +75,7 @@ func TestColumnHandler(t *testing.T) {
 			})
 		}
 	})
-	t.Run(http.MethodPatch, func(t *testing.T) {
+	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
 			id         string
@@ -86,7 +88,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "IDEmpty",
 				id:         "",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID cannot be empty."),
 			},
@@ -94,7 +96,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "IDNotInt",
 				id:         "A",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID must be an integer."),
 			},
@@ -102,45 +104,45 @@ func TestColumnHandler(t *testing.T) {
 				name:       "ColumnNotFound",
 				id:         "1001",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column not found."),
+			},
+			{
+				name:       "NotAdmin",
+				id:         "5",
+				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				authFunc:   addBearerAuth(jwtTeam1Member),
+				statusCode: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr(
+					"Only board admins can move tasks.",
+				),
 			},
 			{
 				name:       "NoAccess",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob124),
+				authFunc:   addBearerAuth(jwtTeam2Admin),
 				statusCode: http.StatusUnauthorized,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
 			},
 			{
-				name:       "NotAdmin",
-				id:         "6",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob123),
-				statusCode: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Only board admins can move tasks."),
-			},
-			{
 				name:       "TaskNotFound",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtBob123),
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Task not found."),
 			},
 			{
 				name:       "Success",
-				id:         "7",
-				reqBody:    columnAPI.ReqBody{{ID: 5, Order: 2}},
-				authFunc:   addBearerAuth(jwtBob123),
+				id:         "1",
+				reqBody:    columnAPI.ReqBody{{ID: 1, Order: 2}},
+				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
-				assertFunc: func(
-					t *testing.T, _ *http.Response, _ string,
-				) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var columnID, order int
 					if err := db.QueryRow(
 						`SELECT columnID, "order" FROM app.task WHERE id = $1`,

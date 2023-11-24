@@ -9,34 +9,39 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the column route.
 type PATCHHandler struct {
-	idValidator       api.StringValidator
-	columnSelector    dbaccess.Selector[columnTable.Record]
-	userBoardSelector dbaccess.RelSelector[bool]
-	columnUpdater     dbaccess.Updater[[]columnTable.Task]
-	log               pkgLog.Errorer
+	idValidator    api.StringValidator
+	columnSelector dbaccess.Selector[columnTable.Record]
+	boardSelector  dbaccess.Selector[boardTable.Record]
+	userSelector   dbaccess.Selector[userTable.Record]
+	columnUpdater  dbaccess.Updater[[]columnTable.Task]
+	log            pkgLog.Errorer
 }
 
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
 ) PATCHHandler {
 	return PATCHHandler{
-		idValidator:       idValidator,
-		columnSelector:    columnSelector,
-		userBoardSelector: userBoardSelector,
-		columnUpdater:     columnUpdater,
-		log:               log,
+		idValidator:    idValidator,
+		columnSelector: columnSelector,
+		boardSelector:  boardSelector,
+		userSelector:   userSelector,
+		columnUpdater:  columnUpdater,
+		log:            log,
 	}
 }
 
@@ -61,7 +66,7 @@ func (h PATCHHandler) Handle(
 	// validate that the user has the right to edit it.
 	column, err := h.columnSelector.Select(columnID)
 	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
 			ResBody{Error: "Column not found."},
 		); err != nil {
@@ -76,26 +81,54 @@ func (h PATCHHandler) Handle(
 		return
 	}
 
-	// Check whether the user has the right to edit this column.
-	if isAdmin, err := h.userBoardSelector.Select(
-		username, strconv.Itoa(column.BoardID),
-	); errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
+	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "You do not have access to this board."},
+			ResBody{Error: "Board not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
-	} else if err != nil {
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
-	} else if !isAdmin {
+	}
+
+	// Check whether the user has the right to edit this column.
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Only board admins can move tasks."},
+			ResBody{Error: "Username is not recognised."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "Only team admins can move tasks."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

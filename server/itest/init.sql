@@ -99,7 +99,8 @@ VALUES
     (4,  1), -- gets deleted during DELETE board tests
     (4,  2), -- gets deleted during DELETE board tests
     (4,  3), -- gets deleted during DELETE board tests
-    (4,  4); -- gets deleted during DELETE board tests
+    (4,  4), -- gets deleted during DELETE board tests
+    (1,  1);
 --     (2,  1), -- id: 5
 --     (4,  1), -- id: 6
 --     (2,  2), -- id: 7

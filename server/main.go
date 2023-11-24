@@ -111,7 +111,7 @@ func main() {
 				boardIDValidator,
 				boardNameValidator,
 				boardSelector,
-				userBoardSelector,
+				userSelector,
 				boardTable.NewUpdater(db),
 				log,
 			),
@@ -125,7 +125,8 @@ func main() {
 			http.MethodPatch: columnAPI.NewPATCHHandler(
 				columnAPI.NewIDValidator(),
 				columnSelector,
-				userBoardSelector,
+				boardSelector,
+				userSelector,
 				columnTable.NewUpdater(db),
 				log,
 			),
