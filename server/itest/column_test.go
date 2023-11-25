@@ -29,10 +29,10 @@ func TestColumnHandler(t *testing.T) {
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(
+				userTable.NewSelector(db),
 				columnAPI.NewIDValidator(),
 				columnTable.NewSelector(db),
 				boardTable.NewSelector(db),
-				userTable.NewSelector(db),
 				columnTable.NewUpdater(db),
 				log,
 			),

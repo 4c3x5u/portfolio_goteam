@@ -121,10 +121,10 @@ func main() {
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(
+				userSelector,
 				columnAPI.NewIDValidator(),
 				columnSelector,
 				boardSelector,
-				userSelector,
 				columnTable.NewUpdater(db),
 				log,
 			),

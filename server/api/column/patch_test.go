@@ -22,123 +22,56 @@ import (
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly in all possible scenarios.
 func TestHandler(t *testing.T) {
+	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
 	boardSelector := &boardTable.FakeSelector{}
-	userSelector := &userTable.FakeSelector{}
 	columnUpdater := &columnTable.FakeUpdater{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
+		userSelector,
 		idValidator,
 		columnSelector,
 		boardSelector,
-		userSelector,
 		columnUpdater,
 		log,
 	)
 
 	for _, c := range []struct {
 		name            string
+		user            userTable.Record
+		selectUserErr   error
 		idValidatorErr  error
 		column          columnTable.Record
 		selectColumnErr error
 		board           boardTable.Record
 		selectBoardErr  error
-		user            userTable.Record
-		selectUserErr   error
 		updateColumnErr error
 		wantStatusCode  int
 		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:            "IDValidatorErr",
-			idValidatorErr:  errors.New("invalid id"),
-			column:          columnTable.Record{},
-			selectColumnErr: nil,
-			board:           boardTable.Record{},
-			selectBoardErr:  nil,
-			user:            userTable.Record{},
-			selectUserErr:   nil,
-			updateColumnErr: nil,
-			wantStatusCode:  http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("invalid id"),
-		},
-		{
-			name:            "ColumnNotFound",
-			idValidatorErr:  nil,
-			column:          columnTable.Record{},
-			selectColumnErr: sql.ErrNoRows,
-			board:           boardTable.Record{},
-			selectBoardErr:  nil,
-			user:            userTable.Record{},
-			selectUserErr:   nil,
-			updateColumnErr: nil,
-			wantStatusCode:  http.StatusNotFound,
-			assertFunc:      assert.OnResErr("Column not found."),
-		},
-		{
-			name:            "ColumnSelectorErr",
-			idValidatorErr:  nil,
-			column:          columnTable.Record{},
-			selectColumnErr: sql.ErrConnDone,
-			board:           boardTable.Record{},
-			selectBoardErr:  nil,
-			user:            userTable.Record{},
-			selectUserErr:   nil,
-			updateColumnErr: nil,
-			wantStatusCode:  http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:            "BoardNotFound",
-			idValidatorErr:  nil,
-			column:          columnTable.Record{},
-			selectColumnErr: nil,
-			board:           boardTable.Record{},
-			selectBoardErr:  sql.ErrNoRows,
+			name:            "UserNotRecognised",
 			user:            userTable.Record{},
 			selectUserErr:   sql.ErrNoRows,
-			updateColumnErr: nil,
-			wantStatusCode:  http.StatusNotFound,
-			assertFunc:      assert.OnResErr("Board not found."),
-		},
-		{
-			name:            "BoardSelectorErr",
-			idValidatorErr:  nil,
-			column:          columnTable.Record{},
-			selectColumnErr: nil,
-			board:           boardTable.Record{},
-			selectBoardErr:  sql.ErrConnDone,
-			user:            userTable.Record{},
-			selectUserErr:   sql.ErrNoRows,
-			updateColumnErr: nil,
-			wantStatusCode:  http.StatusInternalServerError,
-			assertFunc:      assert.OnLoggedErr(sql.ErrConnDone.Error()),
-		},
-		{
-			name:            "UserNotFound",
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{},
 			selectBoardErr:  nil,
-			user:            userTable.Record{},
-			selectUserErr:   sql.ErrNoRows,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusUnauthorized,
 			assertFunc:      assert.OnResErr("Username is not recognised."),
 		},
 		{
 			name:            "UserSelectorErr",
+			user:            userTable.Record{},
+			selectUserErr:   sql.ErrConnDone,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{},
 			selectBoardErr:  nil,
-			user:            userTable.Record{},
-			selectUserErr:   sql.ErrConnDone,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -147,13 +80,13 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "NotAdmin",
+			user:            userTable.Record{IsAdmin: false},
+			selectUserErr:   nil,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{},
 			selectBoardErr:  nil,
-			user:            userTable.Record{IsAdmin: false},
-			selectUserErr:   nil,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -161,14 +94,81 @@ func TestHandler(t *testing.T) {
 			),
 		},
 		{
-			name:            "BoardWrongTeam",
+			name:            "IDValidatorErr",
+			user:            userTable.Record{IsAdmin: true},
+			selectUserErr:   nil,
+			idValidatorErr:  errors.New("invalid id"),
+			column:          columnTable.Record{},
+			selectColumnErr: nil,
+			board:           boardTable.Record{},
+			selectBoardErr:  nil,
+			updateColumnErr: nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("invalid id"),
+		},
+		{
+			name:            "ColumnNotFound",
+			user:            userTable.Record{IsAdmin: true},
+			selectUserErr:   nil,
+			idValidatorErr:  nil,
+			column:          columnTable.Record{},
+			selectColumnErr: sql.ErrNoRows,
+			board:           boardTable.Record{},
+			selectBoardErr:  nil,
+			updateColumnErr: nil,
+			wantStatusCode:  http.StatusNotFound,
+			assertFunc:      assert.OnResErr("Column not found."),
+		},
+		{
+			name:            "ColumnSelectorErr",
+			user:            userTable.Record{IsAdmin: true},
+			selectUserErr:   nil,
+			idValidatorErr:  nil,
+			column:          columnTable.Record{},
+			selectColumnErr: sql.ErrConnDone,
+			board:           boardTable.Record{},
+			selectBoardErr:  nil,
+			updateColumnErr: nil,
+			wantStatusCode:  http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				sql.ErrConnDone.Error(),
+			),
+		},
+		{
+			name:            "BoardNotFound",
+			user:            userTable.Record{IsAdmin: true},
+			selectUserErr:   nil,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
-			board:           boardTable.Record{TeamID: 1},
-			selectBoardErr:  nil,
-			user:            userTable.Record{IsAdmin: true, TeamID: 2},
+			board:           boardTable.Record{},
+			selectBoardErr:  sql.ErrNoRows,
+			updateColumnErr: nil,
+			wantStatusCode:  http.StatusNotFound,
+			assertFunc:      assert.OnResErr("Board not found."),
+		},
+		{
+			name:            "BoardSelectorErr",
+			user:            userTable.Record{IsAdmin: true},
 			selectUserErr:   nil,
+			idValidatorErr:  nil,
+			column:          columnTable.Record{},
+			selectColumnErr: nil,
+			board:           boardTable.Record{},
+			selectBoardErr:  sql.ErrConnDone,
+			updateColumnErr: nil,
+			wantStatusCode:  http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrConnDone.Error()),
+		},
+		{
+			name:            "BoardWrongTeam",
+			user:            userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:   nil,
+			idValidatorErr:  nil,
+			column:          columnTable.Record{},
+			selectColumnErr: nil,
+			board:           boardTable.Record{TeamID: 2},
+			selectBoardErr:  nil,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -177,26 +177,26 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "TaskNotFound",
+			user:            userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:   nil,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{TeamID: 1},
 			selectBoardErr:  nil,
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
 			updateColumnErr: sql.ErrNoRows,
 			wantStatusCode:  http.StatusNotFound,
 			assertFunc:      assert.OnResErr("Task not found."),
 		},
 		{
 			name:            "ColumnUpdaterErr",
+			user:            userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:   nil,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{TeamID: 1},
 			selectBoardErr:  nil,
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
 			updateColumnErr: sql.ErrConnDone,
 			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -205,13 +205,13 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:            "OK",
+			user:            userTable.Record{IsAdmin: true, TeamID: 1},
+			selectUserErr:   nil,
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{TeamID: 1},
 			selectBoardErr:  nil,
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusOK,
 			assertFunc:      func(_ *testing.T, _ *http.Response, _ string) {},
@@ -219,13 +219,13 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
+			userSelector.User = c.user
+			userSelector.Err = c.selectUserErr
 			idValidator.Err = c.idValidatorErr
 			columnSelector.Column = c.column
 			columnSelector.Err = c.selectColumnErr
 			boardSelector.Board = c.board
 			boardSelector.Err = c.selectBoardErr
-			userSelector.User = c.user
-			userSelector.Err = c.selectUserErr
 			columnUpdater.Err = c.updateColumnErr
 
 			// Prepare request and response recorder.

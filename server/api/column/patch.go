@@ -18,28 +18,28 @@ import (
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the column route.
 type PATCHHandler struct {
+	userSelector   dbaccess.Selector[userTable.Record]
 	idValidator    api.StringValidator
 	columnSelector dbaccess.Selector[columnTable.Record]
 	boardSelector  dbaccess.Selector[boardTable.Record]
-	userSelector   dbaccess.Selector[userTable.Record]
 	columnUpdater  dbaccess.Updater[[]columnTable.Task]
 	log            pkgLog.Errorer
 }
 
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
+	userSelector dbaccess.Selector[userTable.Record],
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
 ) PATCHHandler {
 	return PATCHHandler{
+		userSelector:   userSelector,
 		idValidator:    idValidator,
 		columnSelector: columnSelector,
 		boardSelector:  boardSelector,
-		userSelector:   userSelector,
 		columnUpdater:  columnUpdater,
 		log:            log,
 	}
@@ -49,6 +49,34 @@ func NewPATCHHandler(
 func (h PATCHHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Validate that the user is a team admin.
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "Username is not recognised."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(
+			ResBody{Error: "Only team admins can move tasks."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
 	// Get and validate the column ID.
 	columnID := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(columnID); err != nil {
@@ -81,6 +109,8 @@ func (h PATCHHandler) Handle(
 		return
 	}
 
+	// Validate that the column's board belongs to the team that the user is the
+	// admin of.
 	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
@@ -97,35 +127,7 @@ func (h PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-
-	// Check whether the user has the right to edit this column.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
-		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Only team admins can move tasks."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if user.TeamID != board.TeamID {
+	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
 			ResBody{Error: "You do not have access to this board."},
