@@ -6,8 +6,15 @@ import "database/sql"
 // and data from each column that belong to that board, each task that belong
 // to those columns, and each subtask that belong to those tasks.
 type RecursiveBoard struct {
-	ID   int
-	Name string
+	ID      int
+	Name    string
+	TeamID  int
+	Columns []Column
+}
+
+type Column struct {
+	ID    int
+	Order int
 }
 
 // RecursiveSelector can be used to select a record from the board table, as well
@@ -26,9 +33,18 @@ func NewRecursiveSelector(db *sql.DB) RecursiveSelector {
 func (r RecursiveSelector) Select(id string) (RecursiveBoard, error) {
 	var res RecursiveBoard
 
+	// Select board.
 	err := r.db.QueryRow(
-		"SELECT id, name FROM app.board WHERE id = $1", id,
-	).Scan(&res.ID, &res.Name)
+		"SELECT id, name, teamID FROM app.board WHERE id = $1", id,
+	).Scan(&res.ID, &res.Name, &res.TeamID)
+	if err != nil {
+		return RecursiveBoard{}, err
+	}
+
+	// Select each column that belongs to the board.
+	_, err = r.db.Query(
+		`SELECT id, "order" FROM app.column WHERE boardID = $1`, res.ID,
+	)
 	if err != nil {
 		return RecursiveBoard{}, err
 	}
