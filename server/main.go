@@ -94,8 +94,9 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodGet: boardAPI.NewGETHandler(
 				userSelector,
-				teamSelector,
+				boardIDValidator,
 				boardTable.NewRecursiveSelector(db),
+				teamSelector,
 				log,
 			),
 			http.MethodPost: boardAPI.NewPOSTHandler(
