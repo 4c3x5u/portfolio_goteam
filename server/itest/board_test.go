@@ -14,6 +14,7 @@ import (
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
+	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
@@ -31,6 +32,13 @@ func TestBoardHandler(t *testing.T) {
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
+			http.MethodGet: boardAPI.NewGETHandler(
+				userSelector,
+				idValidator,
+				boardTable.NewRecursiveSelector(db),
+				teamTable.NewSelector(db),
+				log,
+			),
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				userSelector,
 				nameValidator,
@@ -141,7 +149,7 @@ func TestBoardHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				req, err := http.NewRequest(
-					http.MethodGet, "?boardID="+c.boardID, nil,
+					http.MethodGet, "?id="+c.boardID, nil,
 				)
 				if err != nil {
 					t.Fatal(err)
@@ -152,7 +160,9 @@ func TestBoardHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+				if err = assert.Equal(
+					c.wantStatusCode, res.StatusCode,
+				); err != nil {
 					t.Error(err)
 				}
 

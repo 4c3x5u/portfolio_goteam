@@ -604,7 +604,7 @@ func TestTaskHandler(t *testing.T) {
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var taskCount int
 					err := db.QueryRow(
-						"SELECT COUNT(*) FROM app.task WHERE id = 12",
+						"SELECT COUNT(*) FROM app.task WHERE id = 9",
 					).Scan(&taskCount)
 					if err = assert.Equal(0, taskCount); err != nil {
 						t.Error(err)

@@ -19,12 +19,12 @@ func (f *FakeSelector) Select(_ string) (Record, error) {
 
 // FakeRecursiveSelector is a test fake for Selector[RecursiveRecord].
 type FakeRecursiveSelector struct {
-	Err    error
-	Record RecursiveRecord
+	Err error
+	Rec RecursiveRecord
 }
 
 // Select implements the Selector[RecursiveRecord] interface on
 // FakeRecursiveSelector.
 func (f *FakeRecursiveSelector) Select(_ string) (RecursiveRecord, error) {
-	return f.Record, f.Err
+	return f.Rec, f.Err
 }
