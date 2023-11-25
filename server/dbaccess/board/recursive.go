@@ -23,7 +23,12 @@ type Column struct {
 }
 
 // Task encapsulates the data for each task in Column.
-type Task struct{}
+type Task struct {
+	ID          int
+	Title       string
+	Description string
+	Order       int
+}
 
 // RecursiveSelector can be used to select a record from the board table, as well
 // as all the columns that belong to the board, all the tasks that belong to
@@ -63,13 +68,37 @@ func (r RecursiveSelector) Select(id string) (RecursiveBoard, error) {
 		}
 
 		// Select each task for each column.
-		_, err = r.db.Query(
+		taskRows, err := r.db.Query(
 			`SELECT id, title, description, "order" FROM app.task `+
 				`WHERE columnID = $1`,
 			col.ID,
 		)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, sql.ErrNoRows) {
+			res.Columns = append(res.Columns, col)
+			continue
+		}
+		if err != nil {
 			return RecursiveBoard{}, err
+		}
+
+		for taskRows.Next() {
+			var task Task
+			if err = taskRows.Scan(
+				&task.ID, &task.Title, &task.Description, &task.Order,
+			); err != nil {
+				return RecursiveBoard{}, err
+			}
+
+			_, err = r.db.Query(
+				`SELECT id, title, "order", isDone FROM app.subtask `+
+					`WHERE taskID = $1`,
+				task.ID,
+			)
+			if err != nil {
+				return RecursiveBoard{}, err
+			}
+
+			col.Tasks = append(col.Tasks, task)
 		}
 
 		res.Columns = append(res.Columns, col)

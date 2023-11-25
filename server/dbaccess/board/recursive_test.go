@@ -22,6 +22,8 @@ func TestRecursiveSelector(t *testing.T) {
 		`WHERE boardID = \$1`
 	sqlSelectTask := `SELECT id, title, description, \"order\" FROM app.task ` +
 		`WHERE columnID = \$1`
+	sqlSelectSubtask := `SELECT id, title, \"order\", isDone ` +
+		`FROM app.subtask WHERE taskID = \$1`
 
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
 	defer func() {
@@ -79,6 +81,47 @@ func TestRecursiveSelector(t *testing.T) {
 			)
 		mock.ExpectQuery(sqlSelectTask).
 			WithArgs(2).
+			WillReturnError(wantErr)
+
+		_, err := sut.Select(boardID)
+
+		if err = assert.SameError(wantErr, err); err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("SelectSubtaskErr", func(t *testing.T) {
+		wantErr := errors.New("error selecting subtask")
+		mock.ExpectQuery(sqlSelectBoard).
+			WithArgs(boardID).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "name", "teamID"}).
+					AddRow(1, "board 1", 1),
+			)
+		mock.ExpectQuery(sqlSelectColumn).
+			WithArgs(1).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "order"}).
+					AddRow(2, 1).AddRow(3, 2).AddRow(4, 3).AddRow(5, 4),
+			)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(2).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(3).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(4).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(5).
+			WillReturnRows(
+				sqlmock.NewRows(
+					[]string{"id", "title", "description", "order"},
+				).AddRow(6, "task 1", "do things!", 1),
+			)
+		mock.ExpectQuery(sqlSelectSubtask).
+			WithArgs(6).
 			WillReturnError(wantErr)
 
 		_, err := sut.Select(boardID)
