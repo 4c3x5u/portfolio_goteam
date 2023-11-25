@@ -9,9 +9,11 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/server/dbaccess/subtask"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -28,13 +30,14 @@ type ResBody struct {
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the subtask route.
 type PATCHHandler struct {
-	idValidator       api.StringValidator
-	subtaskSelector   dbaccess.Selector[subtaskTable.Record]
-	taskSelector      dbaccess.Selector[taskTable.Record]
-	columnSelector    dbaccess.Selector[columnTable.Record]
-	userBoardSelector dbaccess.RelSelector[bool]
-	subtaskUpdater    dbaccess.Updater[subtaskTable.UpRecord]
-	log               pkgLog.Errorer
+	idValidator     api.StringValidator
+	subtaskSelector dbaccess.Selector[subtaskTable.Record]
+	taskSelector    dbaccess.Selector[taskTable.Record]
+	columnSelector  dbaccess.Selector[columnTable.Record]
+	boardSelector   dbaccess.Selector[boardTable.Record]
+	userSelector    dbaccess.Selector[userTable.Record]
+	subtaskUpdater  dbaccess.Updater[subtaskTable.UpRecord]
+	log             pkgLog.Errorer
 }
 
 // NewPATCHHandler creates and returns a new PATCHandler.
@@ -43,18 +46,20 @@ func NewPATCHHandler(
 	subtaskSelector dbaccess.Selector[subtaskTable.Record],
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	subtaskUpdater dbaccess.Updater[subtaskTable.UpRecord],
 	log pkgLog.Errorer,
 ) PATCHHandler {
 	return PATCHHandler{
-		idValidator:       idValidator,
-		subtaskSelector:   subtaskSelector,
-		taskSelector:      taskSelector,
-		columnSelector:    columnSelector,
-		userBoardSelector: userBoardSelector,
-		subtaskUpdater:    subtaskUpdater,
-		log:               log,
+		idValidator:     idValidator,
+		subtaskSelector: subtaskSelector,
+		taskSelector:    taskSelector,
+		columnSelector:  columnSelector,
+		boardSelector:   boardSelector,
+		userSelector:    userSelector,
+		subtaskUpdater:  subtaskUpdater,
+		log:             log,
 	}
 }
 
@@ -121,14 +126,20 @@ func (h PATCHHandler) Handle(
 		return
 	}
 
+	// Retrieve board to compare its TeamID to the user's TeamID.
+	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
 	// Authorize the user.
-	isAdmin, err := h.userBoardSelector.Select(
-		username, strconv.Itoa(column.BoardID),
-	)
+	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "You do not have access to this board."},
+			ResBody{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -140,11 +151,21 @@ func (h PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if !isAdmin {
+	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only board admins can edit subtasks."},
+			ResBody{Error: "Only team admins can edit subtasks."},
 		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}

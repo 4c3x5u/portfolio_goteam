@@ -110,14 +110,10 @@ VALUES
     (7, 'task 8', 1),
     (7, 'task 9', 1); 
 
--- insert a subtask into each task for testing recursive board deletion
--- INSERT INTO app.subtask(taskID, title, "order", isDone)
--- VALUES
---     (1,  'subtask 1', 1, false),
---     (2,  'subtask 2', 1, false),
---     (3,  'subtask 3', 1, false),
---     (4,  'subtask 4', 1, false),
---     (9,  'subtask 5', 1, false),
---     (13, 'subtask 6', 1, false),
---     (14, 'subtask 7', 1, false),
---     (15, 'subtask 8', 1, false);
+INSERT INTO app.subtask(taskID, title, "order", isDone)
+VALUES
+    (1, 'subtask 1', 1, false), -- gets deleted during DELETE board tests
+    (2, 'subtask 2', 1, false), -- gets deleted during DELETE board tests
+    (3, 'subtask 3', 1, false), -- gets deleted during DELETE board tests
+    (4, 'subtask 4', 1, false), -- gets deleted during DELETE board tests
+    (9, 'subtask 1', 1, false);

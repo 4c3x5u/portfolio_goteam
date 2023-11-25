@@ -20,7 +20,6 @@ import (
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
 	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 	"github.com/kxplxn/goteam/server/midware"
 	_ "github.com/lib/pq"
@@ -178,9 +177,10 @@ func main() {
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(
 				subtaskAPI.NewIDValidator(),
 				subtaskTable.NewSelector(db),
-				taskTable.NewSelector(db),
-				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				taskSelector,
+				columnSelector,
+				boardSelector,
+				userSelector,
 				subtaskTable.NewUpdater(db),
 				pkgLog.New(),
 			),

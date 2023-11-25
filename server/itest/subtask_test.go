@@ -13,10 +13,11 @@ import (
 	subtaskAPI "github.com/kxplxn/goteam/server/api/subtask"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/auth"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/server/dbaccess/subtask"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -32,94 +33,105 @@ func TestSubtaskHandler(t *testing.T) {
 				subtaskTable.NewSelector(db),
 				taskTable.NewSelector(db),
 				columnTable.NewSelector(db),
-				userboardTable.NewSelector(db),
+				boardTable.NewSelector(db),
+				userTable.NewSelector(db),
 				subtaskTable.NewUpdater(db),
 				pkgLog.New(),
 			),
 		},
 	)
 
-	for _, c := range []struct {
-		name           string
-		id             string
-		wantStatusCode int
-		assertFunc     func(*testing.T, *http.Response, string)
-	}{
-		{
-			name:           "IDEmpty",
-			id:             "",
-			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     assert.OnResErr("Subtask ID cannot be empty."),
-		},
-		{
-			name:           "IDNotInt",
-			id:             "A",
-			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     assert.OnResErr("Subtask ID must be an integer."),
-		},
-		{
-			name:           "SubtaskNotFound",
-			id:             "1001",
-			wantStatusCode: http.StatusNotFound,
-			assertFunc:     assert.OnResErr("Subtask not found."),
-		},
-		{
-			name:           "NoAccess",
-			id:             "6",
-			wantStatusCode: http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
-			),
-		},
-		{
-			name:           "NotAdmin",
-			id:             "7",
-			wantStatusCode: http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"Only board admins can edit subtasks.",
-			),
-		},
-		{
-			name:           "Success",
-			id:             "8",
-			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-				var isDone bool
-				if err := db.QueryRow(
-					"SELECT isDone FROM app.subtask WHERE id = 8",
-				).Scan(&isDone); err != nil {
+	t.Run("PATCH", func(t *testing.T) {
+		for _, c := range []struct {
+			name           string
+			id             string
+			authFunc       func(*http.Request)
+			wantStatusCode int
+			assertFunc     func(*testing.T, *http.Response, string)
+		}{
+			{
+				name:           "IDEmpty",
+				id:             "",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnResErr("Subtask ID cannot be empty."),
+			},
+			{
+				name:           "IDNotInt",
+				id:             "A",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnResErr("Subtask ID must be an integer."),
+			},
+			{
+				name:           "SubtaskNotFound",
+				id:             "1001",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
+				wantStatusCode: http.StatusNotFound,
+				assertFunc:     assert.OnResErr("Subtask not found."),
+			},
+			{
+				name:           "BoardWrongTeam",
+				id:             "4",
+				authFunc:       addBearerAuth(jwtTeam2Admin),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"You do not have access to this board.",
+				),
+			},
+			{
+				name:           "NotAdmin",
+				id:             "4",
+				authFunc:       addBearerAuth(jwtTeam1Member),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can edit subtasks.",
+				),
+			},
+			{
+				name:           "Success",
+				id:             "4",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+					var isDone bool
+					if err := db.QueryRow(
+						"SELECT isDone FROM app.subtask WHERE id = 8",
+					).Scan(&isDone); err != nil {
+						t.Fatal(err)
+					}
+					if err := assert.True(isDone); err != nil {
+						t.Error(err)
+					}
+				},
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				reqBody, err := json.Marshal(map[string]any{"done": true})
+				if err != nil {
 					t.Fatal(err)
 				}
-				if err := assert.True(isDone); err != nil {
+				r, err := http.NewRequest(
+					http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+				c.authFunc(r)
+				w := httptest.NewRecorder()
+
+				sut.ServeHTTP(w, r)
+				res := w.Result()
+
+				if err = assert.Equal(
+					c.wantStatusCode, res.StatusCode,
+				); err != nil {
 					t.Error(err)
 				}
-			},
-		},
-	} {
-		t.Run(c.name, func(t *testing.T) {
-			reqBody, err := json.Marshal(map[string]any{"done": true})
-			if err != nil {
-				t.Fatal(err)
-			}
-			r, err := http.NewRequest(
-				http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
-			addBearerAuth(jwtBob123)(r)
-			w := httptest.NewRecorder()
 
-			sut.ServeHTTP(w, r)
-			res := w.Result()
+				c.assertFunc(t, res, "")
+			})
+		}
 
-			if err = assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
-
-			c.assertFunc(t, res, "")
-		})
-	}
+	})
 }
