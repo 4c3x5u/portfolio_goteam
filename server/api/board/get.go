@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/kxplxn/goteam/server/dbaccess"
 	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
@@ -40,12 +41,19 @@ func NewGETHandler(
 func (h GETHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	_, err := h.userSelector.Select(username)
+	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		h.log.Error(err.Error())
 		return
 	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	_, err = h.teamSelector.Select(strconv.Itoa(user.TeamID))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
