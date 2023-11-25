@@ -18,10 +18,3 @@ type Counter interface{ Count(string) (int, error) }
 type Updater[T any] interface {
 	Update(string, T) error
 }
-
-// RelSelector describes a type that selects a record from a many-to-many
-// relationship table from the database. It uses the two IDs - one for each
-// entity that is subject to the relationship.
-type RelSelector[T any] interface {
-	Select(string, string) (T, error)
-}
