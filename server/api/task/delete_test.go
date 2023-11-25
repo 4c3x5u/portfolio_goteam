@@ -21,162 +21,71 @@ import (
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
+	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
 	columnSelector := &columnTable.FakeSelector{}
 	boardSelector := &boardTable.FakeSelector{}
-	userSelector := &userTable.FakeSelector{}
 	taskDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
+		userSelector,
 		idValidator,
 		taskSelector,
 		columnSelector,
 		boardSelector,
-		userSelector,
 		taskDeleter,
 		log,
 	)
 
 	for _, c := range []struct {
+		user              userTable.Record
+		userSelectorErr   error
 		name              string
 		idValidatorErr    error
 		taskSelectorErr   error
 		columnSelectorErr error
 		board             boardTable.Record
 		boardSelectorErr  error
-		user              userTable.Record
-		userSelectorErr   error
 		taskDeleterErr    error
 		wantStatusCode    int
 		assertFunc        func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:              "IDEmpty",
-			idValidatorErr:    api.ErrStrEmpty,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID cannot be empty."),
-		},
-		{
-			name:              "IDNotInt",
-			idValidatorErr:    api.ErrStrNotInt,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID must be an integer."),
-		},
-		{
-			name:              "IDUnexpectedErr",
-			idValidatorErr:    api.ErrStrTooLong,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(api.ErrStrTooLong.Error()),
-		},
-		{
-			name:              "TaskSelectorErr",
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrConnDone,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
-		},
-		{
-			name:              "TaskNotFound",
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrNoRows,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusNotFound,
-			assertFunc:        assert.OnResErr("Task not found."),
-		},
-		{
-			name:              "ColumnSelectorErr",
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: sql.ErrNoRows,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
-		},
-		{
-			name:              "BoardSelectorErr",
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  sql.ErrNoRows,
-			user:              userTable.Record{},
-			userSelectorErr:   nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
-		},
-		{
 			name:              "UserSelectorErr",
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
 			user:              userTable.Record{},
 			userSelectorErr:   sql.ErrConnDone,
+			idValidatorErr:    nil,
+			taskSelectorErr:   nil,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
 			taskDeleterErr:    nil,
 			wantStatusCode:    http.StatusInternalServerError,
 			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
 			name:              "UserNotRecognised",
+			user:              userTable.Record{},
+			userSelectorErr:   sql.ErrNoRows,
 			idValidatorErr:    nil,
 			taskSelectorErr:   nil,
 			columnSelectorErr: nil,
 			board:             boardTable.Record{},
 			boardSelectorErr:  nil,
-			user:              userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
 			taskDeleterErr:    nil,
 			wantStatusCode:    http.StatusUnauthorized,
 			assertFunc:        assert.OnResErr("Username is not recognised."),
 		},
 		{
 			name:              "NotAdmin",
+			user:              userTable.Record{IsAdmin: false},
+			userSelectorErr:   nil,
 			idValidatorErr:    nil,
 			taskSelectorErr:   nil,
 			columnSelectorErr: nil,
 			board:             boardTable.Record{},
 			boardSelectorErr:  nil,
-			user:              userTable.Record{IsAdmin: false},
-			userSelectorErr:   nil,
 			taskDeleterErr:    nil,
 			wantStatusCode:    http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -184,14 +93,105 @@ func TestDELETEHandler(t *testing.T) {
 			),
 		},
 		{
+			name:              "IDEmpty",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    api.ErrStrEmpty,
+			taskSelectorErr:   nil,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusBadRequest,
+			assertFunc:        assert.OnResErr("Task ID cannot be empty."),
+		},
+		{
+			name:              "IDNotInt",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    api.ErrStrNotInt,
+			taskSelectorErr:   nil,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusBadRequest,
+			assertFunc:        assert.OnResErr("Task ID must be an integer."),
+		},
+		{
+			name:              "IDUnexpectedErr",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    api.ErrStrTooLong,
+			taskSelectorErr:   nil,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr(api.ErrStrTooLong.Error()),
+		},
+		{
+			name:              "TaskSelectorErr",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    nil,
+			taskSelectorErr:   sql.ErrConnDone,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
+		},
+		{
+			name:              "TaskNotFound",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    nil,
+			taskSelectorErr:   sql.ErrNoRows,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusNotFound,
+			assertFunc:        assert.OnResErr("Task not found."),
+		},
+		{
+			name:              "ColumnSelectorErr",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    nil,
+			taskSelectorErr:   nil,
+			columnSelectorErr: sql.ErrNoRows,
+			board:             boardTable.Record{},
+			boardSelectorErr:  nil,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:              "BoardSelectorErr",
+			user:              userTable.Record{IsAdmin: true},
+			userSelectorErr:   nil,
+			idValidatorErr:    nil,
+			taskSelectorErr:   nil,
+			columnSelectorErr: nil,
+			board:             boardTable.Record{},
+			boardSelectorErr:  sql.ErrNoRows,
+			taskDeleterErr:    nil,
+			wantStatusCode:    http.StatusInternalServerError,
+			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
 			name:              "BoardWrongTeam",
+			user:              userTable.Record{IsAdmin: true, TeamID: 2},
+			userSelectorErr:   nil,
 			idValidatorErr:    nil,
 			taskSelectorErr:   nil,
 			columnSelectorErr: nil,
 			board:             boardTable.Record{TeamID: 1},
 			boardSelectorErr:  nil,
-			user:              userTable.Record{IsAdmin: true, TeamID: 2},
-			userSelectorErr:   nil,
 			taskDeleterErr:    nil,
 			wantStatusCode:    http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -200,39 +200,39 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:              "TaskDeleterErr",
+			user:              userTable.Record{IsAdmin: true, TeamID: 1},
+			userSelectorErr:   nil,
 			idValidatorErr:    nil,
 			taskSelectorErr:   nil,
 			columnSelectorErr: nil,
 			board:             boardTable.Record{TeamID: 1},
 			boardSelectorErr:  nil,
-			user:              userTable.Record{IsAdmin: true, TeamID: 1},
-			userSelectorErr:   nil,
 			taskDeleterErr:    sql.ErrNoRows,
 			wantStatusCode:    http.StatusInternalServerError,
 			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
 			name:              "Success",
+			user:              userTable.Record{IsAdmin: true, TeamID: 1},
+			userSelectorErr:   nil,
 			idValidatorErr:    nil,
 			taskSelectorErr:   nil,
 			columnSelectorErr: nil,
 			board:             boardTable.Record{TeamID: 1},
 			boardSelectorErr:  nil,
-			user:              userTable.Record{IsAdmin: true, TeamID: 1},
-			userSelectorErr:   nil,
 			taskDeleterErr:    nil,
 			wantStatusCode:    http.StatusOK,
 			assertFunc:        func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			userSelector.User = c.user
+			userSelector.Err = c.userSelectorErr
 			idValidator.Err = c.idValidatorErr
 			taskSelector.Err = c.taskSelectorErr
 			columnSelector.Err = c.columnSelectorErr
 			boardSelector.Board = c.board
 			boardSelector.Err = c.boardSelectorErr
-			userSelector.User = c.user
-			userSelector.Err = c.userSelectorErr
 			taskDeleter.Err = c.taskDeleterErr
 
 			r, err := http.NewRequest("", "", nil)

@@ -27,31 +27,31 @@ type POSTReqBody struct {
 // POSTHandler is an api.MethodHandler that can be used to handle POST requests
 // sent to the task route.
 type POSTHandler struct {
+	userSelector          dbaccess.Selector[userTable.Record]
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
 	columnSelector        dbaccess.Selector[columnTable.Record]
 	boardSelector         dbaccess.Selector[boardTable.Record]
-	userSelector          dbaccess.Selector[userTable.Record]
 	taskInserter          dbaccess.Inserter[taskTable.InRecord]
 	log                   pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
+	userSelector dbaccess.Selector[userTable.Record],
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
 	taskInserter dbaccess.Inserter[taskTable.InRecord],
 	log pkgLog.Errorer,
 ) *POSTHandler {
 	return &POSTHandler{
+		userSelector:          userSelector,
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
 		columnSelector:        columnSelector,
 		boardSelector:         boardSelector,
-		userSelector:          userSelector,
 		taskInserter:          taskInserter,
 		log:                   log,
 	}
@@ -61,6 +61,34 @@ func NewPOSTHandler(
 func (h *POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Check if the user is a team admin.
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "Username is not recognised.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "Only team admins can create tasks.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
 	var reqBody POSTReqBody
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -136,6 +164,7 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
+	// Check if the board belongs to the team that the user is the admin of.
 	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
 	if err != nil {
 		// Since boardID is used from a column retrieved from the database,
@@ -144,35 +173,7 @@ func (h *POSTHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-
-	// Check if the user is admin on the board the column is associated with.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
-			Error: "You do not have access to this board.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
-			Error: "Only team admins can create tasks.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if user.TeamID != board.TeamID {
+	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if encodeErr := json.NewEncoder(w).Encode(ResBody{
 			Error: "You do not have access to this board.",

@@ -30,37 +30,37 @@ type PATCHReqBody struct {
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the task route.
 type PATCHHandler struct {
+	userSelector          dbaccess.Selector[userTable.Record]
 	idValidator           api.StringValidator
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
 	taskSelector          dbaccess.Selector[taskTable.Record]
 	columnSelector        dbaccess.Selector[columnTable.Record]
 	boardSelector         dbaccess.Selector[boardTable.Record]
-	userSelector          dbaccess.Selector[userTable.Record]
 	taskUpdater           dbaccess.Updater[taskTable.UpRecord]
 	log                   pkgLog.Errorer
 }
 
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
+	userSelector dbaccess.Selector[userTable.Record],
 	idValidator api.StringValidator,
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
 	taskUpdater dbaccess.Updater[taskTable.UpRecord],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
+		userSelector:          userSelector,
 		idValidator:           idValidator,
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
 		taskSelector:          taskSelector,
 		columnSelector:        columnSelector,
 		boardSelector:         boardSelector,
-		userSelector:          userSelector,
 		taskUpdater:           taskUpdater,
 		log:                   log,
 	}
@@ -70,6 +70,34 @@ func NewPATCHHandler(
 func (h *PATCHHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Validate that the user is a team admin..
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "Username is not recognised.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "Only team admins can edit tasks.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); err != nil {
 		var errMsg string
@@ -183,6 +211,8 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
+	// Validate that the board belongs to the team that the user is the admin
+	// of.
 	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -190,36 +220,7 @@ func (h *PATCHHandler) Handle(
 		return
 
 	}
-
-	// Select the user column of the user-board relationship record from
-	// the database with the user's username and the column's board ID.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
-		if err := json.NewEncoder(w).Encode(ResBody{
-			Error: "Username is not recognised.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(ResBody{
-			Error: "Only team admins can edit tasks.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if user.TeamID != board.TeamID {
+	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(ResBody{
 			Error: "You do not have access to this board.",
@@ -231,7 +232,7 @@ func (h *PATCHHandler) Handle(
 	}
 
 	// Update the task and subtasks in the database.
-	if err := h.taskUpdater.Update(id, taskTable.NewUpRecord(
+	if err = h.taskUpdater.Update(id, taskTable.NewUpRecord(
 		reqBody.Title, reqBody.Description, subtaskRecords,
 	)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

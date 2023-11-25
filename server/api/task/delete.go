@@ -19,22 +19,22 @@ import (
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE
 // requests sent to the task route.
 type DELETEHandler struct {
+	userSelector   dbaccess.Selector[userTable.Record]
 	idValidator    api.StringValidator
 	taskSelector   dbaccess.Selector[taskTable.Record]
 	columnSelector dbaccess.Selector[columnTable.Record]
 	boardSelector  dbaccess.Selector[boardTable.Record]
-	userSelector   dbaccess.Selector[userTable.Record]
 	taskDeleter    dbaccess.Deleter
 	log            pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
+	userSelector dbaccess.Selector[userTable.Record],
 	idValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
 	taskDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
@@ -53,6 +53,34 @@ func NewDELETEHandler(
 func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Validate that the user is a team admin.
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err = json.NewEncoder(w).Encode(ResBody{
+			Error: "Username is not recognised.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(ResBody{
+			Error: "Only board admins can delete tasks.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	}
+
 	// Read and validate task ID.
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrStrEmpty) {
@@ -105,39 +133,13 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// Validate that the board belongs to the team that the user is the admin
+	// of.
 	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
-	}
-
-	// Authorize the user.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
-		if err = json.NewEncoder(w).Encode(ResBody{
-			Error: "Username is not recognised.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(ResBody{
-			Error: "Only board admins can delete tasks.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
 	}
 	if user.TeamID != board.TeamID {
 		w.WriteHeader(http.StatusForbidden)
