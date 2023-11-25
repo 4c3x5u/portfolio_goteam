@@ -7,7 +7,6 @@ import {
 } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
-import axios from 'axios';
 import cookies from 'js-cookie';
 
 import AppContext from './AppContext';
@@ -19,6 +18,7 @@ import Register from './components/Register/Register';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
 import Spinner from './components/Home/Spinner/Spinner';
+import boardAPI from "./api/BoardAPI";
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,13 +36,10 @@ const App = () => {
 
   const loadBoard = (boardId) => {
     if (cookies.get('auth-token')) {
-      const uri = `${
-        process.env.REACT_APP_BACKEND_URL
-      }/client-state/?boardId=${
-        boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
-      }`;
-      axios
-        .get(uri, { withCredentials: true })
+      boardAPI
+        .get(
+          boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
+        )
         .then((res) => {
           // Update app state one by one
           setUser(res.data.user);

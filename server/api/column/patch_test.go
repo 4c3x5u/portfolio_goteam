@@ -19,9 +19,9 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// TestHandler tests the ServeHTTP method of Handler to assert that it behaves
+// TestPATCHHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly in all possible scenarios.
-func TestHandler(t *testing.T) {
+func TestPATCHHandler(t *testing.T) {
 	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}

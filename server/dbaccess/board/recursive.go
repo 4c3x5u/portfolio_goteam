@@ -42,11 +42,29 @@ func (r RecursiveSelector) Select(id string) (RecursiveBoard, error) {
 	}
 
 	// Select each column that belongs to the board.
-	_, err = r.db.Query(
+	columnRows, err := r.db.Query(
 		`SELECT id, "order" FROM app.column WHERE boardID = $1`, res.ID,
 	)
 	if err != nil {
 		return RecursiveBoard{}, err
+	}
+	for columnRows.Next() {
+		var col Column
+		if err = columnRows.Scan(&col.ID, &col.Order); err != nil {
+			return RecursiveBoard{}, err
+		}
+
+		// Select each task for each column.
+		_, err = r.db.Query(
+			`SELECT id, title, description, "order" FROM app.task `+
+				`WHERE columnID = $1`,
+			col.ID,
+		)
+		if err != nil {
+			return RecursiveBoard{}, err
+		}
+
+		res.Columns = append(res.Columns, col)
 	}
 
 	return res, nil
