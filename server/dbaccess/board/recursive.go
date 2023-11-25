@@ -1,6 +1,9 @@
 package board
 
-import "database/sql"
+import (
+	"database/sql"
+	"errors"
+)
 
 // RecursiveBoard can be used for recursive board data, which means board data
 // and data from each column that belong to that board, each task that belong
@@ -12,10 +15,15 @@ type RecursiveBoard struct {
 	Columns []Column
 }
 
+// Column encapsulates the data for each column in RecursiveBoard.
 type Column struct {
 	ID    int
 	Order int
+	Tasks []Task
 }
+
+// Task encapsulates the data for each task in Column.
+type Task struct{}
 
 // RecursiveSelector can be used to select a record from the board table, as well
 // as all the columns that belong to the board, all the tasks that belong to
@@ -60,7 +68,7 @@ func (r RecursiveSelector) Select(id string) (RecursiveBoard, error) {
 				`WHERE columnID = $1`,
 			col.ID,
 		)
-		if err != nil {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return RecursiveBoard{}, err
 		}
 

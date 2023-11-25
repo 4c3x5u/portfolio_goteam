@@ -3,6 +3,7 @@
 package board
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -23,7 +24,10 @@ func TestRecursiveSelector(t *testing.T) {
 		`WHERE columnID = \$1`
 
 	db, mock, teardown := dbaccess.SetUpDBTest(t)
-	defer teardown()
+	defer func() {
+		mock.ExpectClose()
+		teardown()
+	}()
 
 	sut := NewRecursiveSelector(db)
 
@@ -81,6 +85,55 @@ func TestRecursiveSelector(t *testing.T) {
 
 		if err = assert.SameError(wantErr, err); err != nil {
 			t.Error(err)
+		}
+	})
+
+	t.Run("NoTasks", func(t *testing.T) {
+		mock.ExpectQuery(sqlSelectBoard).
+			WithArgs(boardID).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "name", "teamID"}).
+					AddRow(1, "board 1", 21),
+			)
+		mock.ExpectQuery(sqlSelectColumn).
+			WithArgs(1).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "order"}).
+					AddRow(2, 1).AddRow(3, 2).AddRow(4, 3).AddRow(5, 4),
+			)
+		for i := 0; i < 4; i++ {
+			mock.ExpectQuery(sqlSelectTask).
+				WithArgs(i + 2).
+				WillReturnError(sql.ErrNoRows)
+		}
+
+		res, err := sut.Select(boardID)
+
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(1, res.ID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("board 1", res.Name); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(21, res.TeamID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(4, len(res.Columns)); err != nil {
+			t.Error(err)
+		}
+		for i, col := range res.Columns {
+			if err = assert.Equal(i+2, col.ID); err != nil {
+				t.Error(err)
+			}
+			if err = assert.Equal(i+1, col.Order); err != nil {
+				t.Error(err)
+			}
+			if err = assert.Equal(0, len(col.Tasks)); err != nil {
+				t.Error(err)
+			}
 		}
 	})
 }
