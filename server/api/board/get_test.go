@@ -25,19 +25,37 @@ func TestGETHandler(t *testing.T) {
 
 	sut := NewGETHandler(userSelector, teamSelector, boardSelector, log)
 
-	t.Run("UserNotRecognised", func(t *testing.T) {
-		wantErr := sql.ErrNoRows
-		userSelector.Err = wantErr
-		wantStatusCode := http.StatusUnauthorized
+	for _, c := range []struct {
+		name            string
+		userSelectorErr error
+		wantStatusCode  int
+		assertFunc      func(*testing.T, *http.Response, string)
+	}{
+		{
+			name:            "UserIsNotRecognised",
+			userSelectorErr: sql.ErrNoRows,
+			wantStatusCode:  http.StatusUnauthorized,
+			assertFunc:      assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:            "UserSelectorErr",
+			userSelectorErr: sql.ErrConnDone,
+			wantStatusCode:  http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrConnDone.Error()),
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			userSelector.Err = c.userSelectorErr
 
-		w := httptest.NewRecorder()
-		sut.Handle(w, nil, "")
-		res := w.Result()
+			w := httptest.NewRecorder()
+			sut.Handle(w, nil, "")
+			res := w.Result()
 
-		if err := assert.Equal(wantStatusCode, res.StatusCode); err != nil {
-			t.Error(err)
-		}
+			if err := assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+				t.Error(err)
+			}
 
-		assert.OnLoggedErr(wantErr.Error())(t, res, log.InMessage)
-	})
+			c.assertFunc(t, res, log.InMessage)
+		})
+	}
 }

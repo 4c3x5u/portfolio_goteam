@@ -46,4 +46,9 @@ func (h GETHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
 }
