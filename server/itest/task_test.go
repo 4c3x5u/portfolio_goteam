@@ -17,7 +17,6 @@ import (
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -30,7 +29,6 @@ func TestTaskHandler(t *testing.T) {
 	columnSelector := columnTable.NewSelector(db)
 	boardSelector := boardTable.NewSelector(db)
 	userSelector := userTable.NewSelector(db)
-	userBoardSelector := userboardTable.NewSelector(db) // TODO: remove
 	log := pkgLog.New()
 
 	sut := api.NewHandler(
@@ -61,7 +59,8 @@ func TestTaskHandler(t *testing.T) {
 				idValidator,
 				taskSelector,
 				columnSelector,
-				userBoardSelector,
+				boardSelector,
+				userSelector,
 				taskTable.NewDeleter(db),
 				log,
 			),
@@ -554,30 +553,35 @@ func TestTaskHandler(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			id             string
+			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:           "IDEmpty",
 				id:             "",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
 			{
 				name:           "IDNotInt",
 				id:             "A",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
 			{
 				name:           "TaskNotFound",
 				id:             "1001",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Task not found."),
 			},
 			{
-				name:           "NoAccess",
-				id:             "10",
+				name:           "WrongTeam",
+				id:             "8",
+				authFunc:       addBearerAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -585,7 +589,8 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name:           "NotAdmin",
-				id:             "11",
+				id:             "8",
+				authFunc:       addBearerAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can delete tasks.",
@@ -593,7 +598,8 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name:           "Success",
-				id:             "12",
+				id:             "9",
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var count int
@@ -611,7 +617,7 @@ func TestTaskHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				addBearerAuth(jwtBob123)(r)
+				c.authFunc(r)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, r)

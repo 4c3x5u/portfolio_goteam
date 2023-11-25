@@ -59,7 +59,6 @@ func main() {
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
 	userSelector := userTable.NewSelector(db)
 	columnSelector := columnTable.NewSelector(db)
-	userBoardSelector := userboardTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -164,7 +163,8 @@ func main() {
 				taskIDValidator,
 				taskSelector,
 				columnSelector,
-				userBoardSelector,
+				boardSelector,
+				userSelector,
 				taskTable.NewDeleter(db),
 				log,
 			),

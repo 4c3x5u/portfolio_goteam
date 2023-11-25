@@ -9,20 +9,23 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE
 // requests sent to the task route.
 type DELETEHandler struct {
-	idValidator       api.StringValidator
-	taskSelector      dbaccess.Selector[taskTable.Record]
-	columnSelector    dbaccess.Selector[columnTable.Record]
-	userBoardSelector dbaccess.RelSelector[bool]
-	taskDeleter       dbaccess.Deleter
-	log               pkgLog.Errorer
+	idValidator    api.StringValidator
+	taskSelector   dbaccess.Selector[taskTable.Record]
+	columnSelector dbaccess.Selector[columnTable.Record]
+	boardSelector  dbaccess.Selector[boardTable.Record]
+	userSelector   dbaccess.Selector[userTable.Record]
+	taskDeleter    dbaccess.Deleter
+	log            pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
@@ -30,17 +33,19 @@ func NewDELETEHandler(
 	idValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	taskDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
-		idValidator:       idValidator,
-		taskSelector:      taskSelector,
-		columnSelector:    columnSelector,
-		userBoardSelector: userBoardSelector,
-		taskDeleter:       taskDeleter,
-		log:               log,
+		idValidator:    idValidator,
+		taskSelector:   taskSelector,
+		columnSelector: columnSelector,
+		boardSelector:  boardSelector,
+		userSelector:   userSelector,
+		taskDeleter:    taskDeleter,
+		log:            log,
 	}
 }
 
@@ -100,12 +105,19 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
 	// Authorize the user.
-	isAdmin, err := h.userBoardSelector.Select(username, strconv.Itoa(column.BoardID))
+	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(ResBody{
-			Error: "You do not have access to this board.",
+			Error: "Username is not recognised.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -117,7 +129,7 @@ func (h DELETEHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if !isAdmin {
+	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(ResBody{
 			Error: "Only board admins can delete tasks.",
@@ -126,6 +138,16 @@ func (h DELETEHandler) Handle(
 			h.log.Error(err.Error())
 			return
 		}
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
 	}
 
 	// Delete the record from task table that has the given ID.
