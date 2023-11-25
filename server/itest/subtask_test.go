@@ -29,12 +29,12 @@ func TestSubtaskHandler(t *testing.T) {
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(
+				userTable.NewSelector(db),
 				subtaskAPI.NewIDValidator(),
 				subtaskTable.NewSelector(db),
 				taskTable.NewSelector(db),
 				columnTable.NewSelector(db),
 				boardTable.NewSelector(db),
-				userTable.NewSelector(db),
 				subtaskTable.NewUpdater(db),
 				pkgLog.New(),
 			),

@@ -175,12 +175,12 @@ func main() {
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(
+				userSelector,
 				subtaskAPI.NewIDValidator(),
 				subtaskTable.NewSelector(db),
 				taskSelector,
 				columnSelector,
 				boardSelector,
-				userSelector,
 				subtaskTable.NewUpdater(db),
 				pkgLog.New(),
 			),
