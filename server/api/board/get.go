@@ -65,6 +65,17 @@ func (h GETHandler) Handle(
 		return
 	}
 
+	_, err = h.boardSelector.Select(boardID)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
 	// Select the team from the database that the user is the member/admin of.
 	_, err = h.teamSelector.Select(strconv.Itoa(user.TeamID))
 	if err != nil {
