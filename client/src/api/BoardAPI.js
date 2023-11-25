@@ -1,6 +1,11 @@
 import axios from 'axios';
 
 const BoardAPI = {
+  get: (boardId) => axios.get(
+    `${process.env.REACT_APP_SERVER_URL}/board?id=${boardId}`,
+    { withCredentials: true },
+  ),
+
   post: (boardData) => axios.post(
     `${process.env.REACT_APP_SERVER_URL}/board`,
     boardData,

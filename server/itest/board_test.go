@@ -67,7 +67,10 @@ func TestBoardHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				for _, method := range []string{
-					http.MethodPost, http.MethodDelete, http.MethodPatch,
+					http.MethodGet,
+					http.MethodPost,
+					http.MethodDelete,
+					http.MethodPatch,
 				} {
 					t.Run(method, func(t *testing.T) {
 						req, err := http.NewRequest(method, "", nil)
@@ -97,6 +100,67 @@ func TestBoardHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("GET", func(t *testing.T) {
+		for _, c := range []struct {
+			name           string
+			authFunc       func(*http.Request)
+			boardID        string
+			wantStatusCode int
+			assertFunc     func(*testing.T, *http.Response, string)
+		}{
+			{
+				name:           "InvalidID",
+				authFunc:       addBearerAuth(jwtTeam1Member),
+				boardID:        "foo",
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     func(*testing.T, *http.Response, string) {},
+			},
+			{
+				name:           "NotFound",
+				authFunc:       addBearerAuth(jwtTeam1Member),
+				boardID:        "1001",
+				wantStatusCode: http.StatusNotFound,
+				assertFunc:     func(*testing.T, *http.Response, string) {},
+			},
+			{
+				name:           "WrongTeam",
+				authFunc:       addBearerAuth(jwtTeam2Member),
+				boardID:        "2",
+				wantStatusCode: http.StatusForbidden,
+				assertFunc:     func(*testing.T, *http.Response, string) {},
+			},
+			{
+				name:           "OK",
+				authFunc:       addBearerAuth(jwtTeam1Member),
+				boardID:        "2",
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(*testing.T, *http.Response, string) {
+					// TODO: assert on response body
+				},
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				req, err := http.NewRequest(
+					http.MethodGet, "?boardID="+c.boardID, nil,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+				c.authFunc(req)
+				w := httptest.NewRecorder()
+
+				sut.ServeHTTP(w, req)
+				res := w.Result()
+
+				if err = assert.Equal(c.wantStatusCode, res.StatusCode); err != nil {
+					t.Error(err)
+				}
+
+				c.assertFunc(t, res, "")
+			})
+		}
+	})
+
 	t.Run("POST", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
@@ -105,6 +169,15 @@ func TestBoardHandler(t *testing.T) {
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
+			{
+				name:           "NotAdmin",
+				authFunc:       addBearerAuth(jwtTeam2Member),
+				boardName:      "Team 2 Board 2",
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can create boards.",
+				),
+			},
 			{
 				name:           "EmptyBoardName",
 				authFunc:       addBearerAuth(jwtTeam1Admin),
@@ -135,7 +208,7 @@ func TestBoardHandler(t *testing.T) {
 			{
 				name:           "Success",
 				authFunc:       addBearerAuth(jwtTeam2Admin),
-				boardName:      "Team 2 Board 1",
+				boardName:      "Team 2 Board 2",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// Assert that bob124 is assigned to the board as admin.
@@ -218,6 +291,13 @@ func TestBoardHandler(t *testing.T) {
 			assertFunc     func(*testing.T)
 		}{
 			{
+				name:           "NotAdmin",
+				id:             "1",
+				authFunc:       addBearerAuth(jwtTeam1Member),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc:     func(*testing.T) {},
+			},
+			{
 				name:           "EmptyID",
 				id:             "",
 				authFunc:       addBearerAuth(jwtTeam3Admin),
@@ -229,13 +309,6 @@ func TestBoardHandler(t *testing.T) {
 				id:             "qwerty",
 				authFunc:       addBearerAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     func(*testing.T) {},
-			},
-			{
-				name:           "NotAdmin",
-				id:             "1",
-				authFunc:       addBearerAuth(jwtTeam1Member),
-				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
@@ -352,6 +425,16 @@ func TestBoardHandler(t *testing.T) {
 			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
+				name:       "NotAdmin",
+				id:         "1",
+				boardName:  "New Board Name",
+				authFunc:   addBearerAuth(jwtTeam1Member),
+				statusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can edit the board.",
+				),
+			},
+			{
 				name:       "IDEmpty",
 				id:         "",
 				boardName:  "",
@@ -392,16 +475,6 @@ func TestBoardHandler(t *testing.T) {
 				authFunc:   addBearerAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Board not found."),
-			},
-			{
-				name:       "NotAdmin",
-				id:         "1",
-				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtTeam1Member),
-				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"Only team admins can edit the board.",
-				),
 			},
 			{
 				name:       "Success",
