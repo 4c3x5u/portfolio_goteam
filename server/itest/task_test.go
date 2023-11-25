@@ -28,8 +28,11 @@ func TestTaskHandler(t *testing.T) {
 	titleValidator := taskAPI.NewTitleValidator()
 	taskSelector := taskTable.NewSelector(db)
 	columnSelector := columnTable.NewSelector(db)
-	userBoardSelector := userboardTable.NewSelector(db)
+	boardSelector := boardTable.NewSelector(db)
+	userSelector := userTable.NewSelector(db)
+	userBoardSelector := userboardTable.NewSelector(db) // TODO: remove
 	log := pkgLog.New()
+
 	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
@@ -38,8 +41,8 @@ func TestTaskHandler(t *testing.T) {
 				titleValidator,
 				titleValidator,
 				columnSelector,
-				boardTable.NewSelector(db),
-				userTable.NewSelector(db),
+				boardSelector,
+				userSelector,
 				taskTable.NewInserter(db),
 				log,
 			),
@@ -49,7 +52,8 @@ func TestTaskHandler(t *testing.T) {
 				titleValidator,
 				taskSelector,
 				columnSelector,
-				userBoardSelector,
+				boardSelector,
+				userSelector,
 				taskTable.NewUpdater(db),
 				log,
 			),
@@ -298,6 +302,7 @@ func TestTaskHandler(t *testing.T) {
 			name           string
 			taskID         string
 			reqBody        map[string]any
+			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
@@ -309,6 +314,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
@@ -320,6 +326,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
@@ -331,6 +338,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
@@ -343,6 +351,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -358,6 +367,7 @@ func TestTaskHandler(t *testing.T) {
 						{"title": ""},
 					},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -374,6 +384,7 @@ func TestTaskHandler(t *testing.T) {
 							"sdqweasd",
 					}},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -387,11 +398,12 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{{"title": "Some Subtask"}},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Task not found."),
 			},
 			{
-				name:   "SourceNoAccess",
+				name:   "WrongTeam",
 				taskID: "7",
 				reqBody: map[string]any{
 					"title":       "Some Task",
@@ -400,13 +412,14 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
+				authFunc:       addBearerAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
 			},
 			{
-				name:   "SourceNotAdmin",
+				name:   "NotAdmin",
 				taskID: "8",
 				reqBody: map[string]any{
 					"title":       "Some Task",
@@ -415,14 +428,15 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
-					"Only board admins can edit tasks.",
+					"Only team admins can edit tasks.",
 				),
 			},
 			{
 				name:   "Success",
-				taskID: "9",
+				taskID: "8",
 				reqBody: map[string]any{
 					"title":       "Some Task",
 					"description": "Some Description",
@@ -439,6 +453,7 @@ func TestTaskHandler(t *testing.T) {
 						},
 					},
 				},
+				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var (
@@ -449,7 +464,7 @@ func TestTaskHandler(t *testing.T) {
 					)
 					if err := db.QueryRow(
 						`SELECT title, description, columnID, "order" `+
-							`FROM app.task WHERE id = 9`,
+							`FROM app.task WHERE id = 8`,
 					).Scan(&title, &description, &columnID, &order); err != nil {
 						t.Error(err)
 					}
@@ -464,7 +479,7 @@ func TestTaskHandler(t *testing.T) {
 					}
 
 					rows, err := db.Query(
-						`SELECT title, "order", isDone FROM app.subtask WHERE taskID = 9`,
+						`SELECT title, "order", isDone FROM app.subtask WHERE taskID = 8`,
 					)
 					if err != nil {
 						t.Fatal(err)
@@ -517,7 +532,7 @@ func TestTaskHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				addBearerAuth(jwtBob123)(req)
+				c.authFunc(req)
 
 				w := httptest.NewRecorder()
 

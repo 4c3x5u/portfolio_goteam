@@ -104,8 +104,10 @@ VALUES
     (2, 'task 2', 1), -- gets deleted during DELETE board tests
     (3, 'task 3', 1), -- gets deleted during DELETE board tests
     (4, 'task 4', 1), -- gets deleted during DELETE board tests
-    (5, 'task 5', 1),
-    (7, 'task 6', 1); -- gets moved from column 5 to 6 during PATCH column test
+    (5, 'task 5', 1), -- gets moved from column 5 to 6 during PATCH column test
+    (7, 'task 6', 1),
+    (7, 'task 7', 1),
+    (7, 'task 8', 1); 
 
 -- insert a subtask into each task for testing recursive board deletion
 -- INSERT INTO app.subtask(taskID, title, "order", isDone)

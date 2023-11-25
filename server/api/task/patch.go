@@ -9,8 +9,10 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/dbaccess"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -33,7 +35,8 @@ type PATCHHandler struct {
 	subtaskTitleValidator api.StringValidator
 	taskSelector          dbaccess.Selector[taskTable.Record]
 	columnSelector        dbaccess.Selector[columnTable.Record]
-	userBoardSelector     dbaccess.RelSelector[bool]
+	boardSelector         dbaccess.Selector[boardTable.Record]
+	userSelector          dbaccess.Selector[userTable.Record]
 	taskUpdater           dbaccess.Updater[taskTable.UpRecord]
 	log                   pkgLog.Errorer
 }
@@ -45,7 +48,8 @@ func NewPATCHHandler(
 	subtaskTitleValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
-	userBoardSelector dbaccess.RelSelector[bool],
+	boardSelector dbaccess.Selector[boardTable.Record],
+	userSelector dbaccess.Selector[userTable.Record],
 	taskUpdater dbaccess.Updater[taskTable.UpRecord],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
@@ -55,7 +59,8 @@ func NewPATCHHandler(
 		subtaskTitleValidator: subtaskTitleValidator,
 		taskSelector:          taskSelector,
 		columnSelector:        columnSelector,
-		userBoardSelector:     userBoardSelector,
+		boardSelector:         boardSelector,
+		userSelector:          userSelector,
 		taskUpdater:           taskUpdater,
 		log:                   log,
 	}
@@ -178,15 +183,21 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// Select the isAdmin column of the user-board relationship record from
+	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+
+	}
+
+	// Select the user column of the user-board relationship record from
 	// the database with the user's username and the column's board ID.
-	isAdmin, err := h.userBoardSelector.Select(
-		username, strconv.Itoa(column.BoardID),
-	)
+	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(ResBody{
-			Error: "You do not have access to this board.",
+			Error: "Username is not recognised.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -198,10 +209,20 @@ func (h *PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if !isAdmin {
+	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(ResBody{
-			Error: "Only board admins can edit tasks.",
+			Error: "Only team admins can edit tasks.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if user.TeamID != board.TeamID {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(ResBody{
+			Error: "You do not have access to this board.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

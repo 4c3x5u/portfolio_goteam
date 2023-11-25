@@ -12,9 +12,10 @@ import (
 
 	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/assert"
+	boardTable "github.com/kxplxn/goteam/server/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/server/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/server/dbaccess/task"
-	userboardTable "github.com/kxplxn/goteam/server/dbaccess/userboard"
+	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
@@ -26,7 +27,8 @@ func TestPATCHHandler(t *testing.T) {
 	subtaskTitleValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
 	columnSelector := &columnTable.FakeSelector{}
-	userBoardSelector := &userboardTable.FakeSelector{}
+	boardSelector := &boardTable.FakeSelector{}
+	userSelector := &userTable.FakeSelector{}
 	taskUpdater := &taskTable.FakeUpdater{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
@@ -35,7 +37,8 @@ func TestPATCHHandler(t *testing.T) {
 		subtaskTitleValidator,
 		taskSelector,
 		columnSelector,
-		userBoardSelector,
+		boardSelector,
+		userSelector,
 		taskUpdater,
 		log,
 	)
@@ -47,8 +50,10 @@ func TestPATCHHandler(t *testing.T) {
 		subtaskTitleValidatorErr error
 		taskSelectorErr          error
 		columnSelectorErr        error
-		userIsAdmin              bool
-		userBoardSelectorErr     error
+		board                    boardTable.Record
+		boardSelectorErr         error
+		user                     userTable.Record
+		userSelectorErr          error
 		taskUpdaterErr           error
 		wantStatusCode           int
 		assertFunc               func(*testing.T, *http.Response, string)
@@ -60,8 +65,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -75,8 +82,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -90,8 +99,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -105,8 +116,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -120,8 +133,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -135,8 +150,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -150,8 +167,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: api.ErrStrEmpty,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -165,8 +184,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: api.ErrStrTooLong,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -180,8 +201,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: api.ErrStrNotInt,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -195,8 +218,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          sql.ErrNoRows,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusNotFound,
 			assertFunc:               assert.OnResErr("Task not found."),
@@ -208,8 +233,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          sql.ErrConnDone,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -223,40 +250,61 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        sql.ErrNoRows,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "UserBoardSelectorErr",
+			name:                     "BoardSelectorErr",
 			taskIDValidatorErr:       nil,
 			taskTitleValidatorErr:    nil,
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     sql.ErrConnDone,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         sql.ErrNoRows,
+			user:                     userTable.Record{},
+			userSelectorErr:          nil,
+			taskUpdaterErr:           nil,
+			wantStatusCode:           http.StatusInternalServerError,
+			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+		},
+		{
+			name:                     "UserNotFound",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          sql.ErrNoRows,
+			taskUpdaterErr:           nil,
+			wantStatusCode:           http.StatusUnauthorized,
+			assertFunc: assert.OnResErr(
+				"Username is not recognised.",
+			),
+		},
+		{
+			name:                     "UserSelectorErr",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{},
+			userSelectorErr:          sql.ErrConnDone,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:                     "NoAccess",
-			taskIDValidatorErr:       nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			taskSelectorErr:          nil,
-			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     sql.ErrNoRows,
-			taskUpdaterErr:           nil,
-			wantStatusCode:           http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
 			),
 		},
 		{
@@ -266,12 +314,33 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              false,
-			userBoardSelectorErr:     nil,
+			board:                    boardTable.Record{},
+			boardSelectorErr:         nil,
+			user:                     userTable.Record{IsAdmin: false},
+			userSelectorErr:          nil,
 			taskUpdaterErr:           nil,
 			wantStatusCode:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
-				"Only board admins can edit tasks.",
+				"Only team admins can edit tasks.",
+			),
+		},
+		{
+			name:                     "NoAccess",
+			taskIDValidatorErr:       nil,
+			taskTitleValidatorErr:    nil,
+			subtaskTitleValidatorErr: nil,
+			taskSelectorErr:          nil,
+			columnSelectorErr:        nil,
+			board:                    boardTable.Record{TeamID: 1},
+			boardSelectorErr:         nil,
+			user: userTable.Record{
+				IsAdmin: true, TeamID: 2,
+			},
+			userSelectorErr: nil,
+			taskUpdaterErr:  nil,
+			wantStatusCode:  http.StatusForbidden,
+			assertFunc: assert.OnResErr(
+				"You do not have access to this board.",
 			),
 		},
 		{
@@ -281,10 +350,14 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              true,
-			userBoardSelectorErr:     nil,
-			taskUpdaterErr:           sql.ErrConnDone,
-			wantStatusCode:           http.StatusInternalServerError,
+			board:                    boardTable.Record{TeamID: 1},
+			boardSelectorErr:         nil,
+			user: userTable.Record{
+				IsAdmin: true, TeamID: 1,
+			},
+			userSelectorErr: nil,
+			taskUpdaterErr:  sql.ErrConnDone,
+			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
@@ -296,11 +369,15 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidatorErr: nil,
 			taskSelectorErr:          nil,
 			columnSelectorErr:        nil,
-			userIsAdmin:              true,
-			userBoardSelectorErr:     nil,
-			taskUpdaterErr:           nil,
-			wantStatusCode:           http.StatusOK,
-			assertFunc:               func(*testing.T, *http.Response, string) {},
+			board:                    boardTable.Record{TeamID: 1},
+			boardSelectorErr:         nil,
+			user: userTable.Record{
+				IsAdmin: true, TeamID: 1,
+			},
+			userSelectorErr: nil,
+			taskUpdaterErr:  nil,
+			wantStatusCode:  http.StatusOK,
+			assertFunc:      func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -309,8 +386,10 @@ func TestPATCHHandler(t *testing.T) {
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
 			taskSelector.Err = c.taskSelectorErr
 			columnSelector.Err = c.columnSelectorErr
-			userBoardSelector.IsAdmin = c.userIsAdmin
-			userBoardSelector.Err = c.userBoardSelectorErr
+			boardSelector.Board = c.board
+			boardSelector.Err = c.boardSelectorErr
+			userSelector.User = c.user
+			userSelector.Err = c.userSelectorErr
 			taskUpdater.Err = c.taskUpdaterErr
 
 			reqBody, err := json.Marshal(map[string]any{
