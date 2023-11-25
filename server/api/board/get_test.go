@@ -132,40 +132,44 @@ func TestGETHandler(t *testing.T) {
 			user:            userTable.Record{},
 			userSelectorErr: nil,
 			idValidatorErr:  nil,
-			board: boardTable.RecursiveRecord{
-				ID: 2, Name: "Active", Columns: []boardTable.Column{
-					{ID: 3, Order: 1, Tasks: []boardTable.Task{}},
-					{ID: 4, Order: 2, Tasks: []boardTable.Task{
-						{
-							ID:          5,
-							Title:       "task1title",
-							Description: "task1desc",
-							Order:       3,
-							Subtasks: []boardTable.Subtask{
-								{
-									ID:     5,
-									Title:  "subtask1",
-									Order:  4,
-									IsDone: true,
-								},
-								{
-									ID:     6,
-									Title:  "subtask2",
-									Order:  5,
-									IsDone: false,
+			board: func() boardTable.RecursiveRecord {
+				task1Desc := "task1Desc"
+				task2Desc := "task2Desc"
+				return boardTable.RecursiveRecord{
+					ID: 2, Name: "Active", Columns: []boardTable.Column{
+						{ID: 3, Order: 1, Tasks: []boardTable.Task{}},
+						{ID: 4, Order: 2, Tasks: []boardTable.Task{
+							{
+								ID:          5,
+								Title:       "task1title",
+								Description: &task1Desc,
+								Order:       3,
+								Subtasks: []boardTable.Subtask{
+									{
+										ID:     5,
+										Title:  "subtask1",
+										Order:  4,
+										IsDone: true,
+									},
+									{
+										ID:     6,
+										Title:  "subtask2",
+										Order:  5,
+										IsDone: false,
+									},
 								},
 							},
-						},
-						{
-							ID:          7,
-							Title:       "task2title",
-							Description: "task2desc",
-							Order:       6,
-							Subtasks:    []boardTable.Subtask{},
-						},
-					}},
-				},
-			},
+							{
+								ID:          7,
+								Title:       "task2title",
+								Description: &task2Desc,
+								Order:       6,
+								Subtasks:    []boardTable.Subtask{},
+							},
+						}},
+					},
+				}
+			}(),
 			boardSelectorErr: nil,
 			team:             teamTable.Record{ID: 1, InviteCode: "InvCode"},
 			teamSelectorErr:  nil,

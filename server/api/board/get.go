@@ -118,7 +118,11 @@ func (h GETHandler) Handle(
 		for j, task := range col.Tasks {
 			resp.ActiveBoard.Columns[i].Tasks[j].ID = task.ID
 			resp.ActiveBoard.Columns[i].Tasks[j].Title = task.Title
-			resp.ActiveBoard.Columns[i].Tasks[j].Description = task.Description
+			var desc string
+			if task.Description != nil {
+				desc = *task.Description
+			}
+			resp.ActiveBoard.Columns[i].Tasks[j].Description = desc
 			resp.ActiveBoard.Columns[i].Tasks[j].Order = task.Order
 			resp.ActiveBoard.Columns[i].Tasks[j].Subtasks = make(
 				[]Subtask, len(task.Subtasks),

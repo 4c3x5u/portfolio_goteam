@@ -28,7 +28,7 @@ func TestRegisterHandler(t *testing.T) {
 			registerAPI.NewPasswordValidator(),
 		),
 		registerAPI.NewInviteCodeValidator(),
-		teamTable.NewSelector(db),
+		teamTable.NewSelectorByInvCode(db),
 		userTable.NewSelector(db),
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),

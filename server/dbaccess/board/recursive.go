@@ -26,7 +26,7 @@ type Column struct {
 type Task struct {
 	ID          int
 	Title       string
-	Description string
+	Description *string
 	Order       int
 	Subtasks    []Subtask
 }
