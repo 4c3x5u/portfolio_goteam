@@ -92,24 +92,24 @@ func main() {
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
+				userSelector,
 				boardNameValidator,
-				userTable.NewSelector(db),
 				boardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardIDValidator,
 				userSelector,
+				boardIDValidator,
 				boardSelector,
 				boardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
+				userSelector,
 				boardIDValidator,
 				boardNameValidator,
 				boardSelector,
-				userSelector,
 				boardTable.NewUpdater(db),
 				log,
 			),

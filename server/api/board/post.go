@@ -18,8 +18,8 @@ import (
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type POSTHandler struct {
-	validator     api.StringValidator
 	userSelector  dbaccess.Selector[userTable.Record]
+	validator     api.StringValidator
 	teamSelector  dbaccess.Selector[teamTable.Record]
 	boardCounter  dbaccess.Counter
 	boardInserter dbaccess.Inserter[boardTable.InRecord]
@@ -28,15 +28,15 @@ type POSTHandler struct {
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	validator api.StringValidator,
 	userSelector dbaccess.Selector[userTable.Record],
+	validator api.StringValidator,
 	boardCounter dbaccess.Counter,
 	boardInserter dbaccess.Inserter[boardTable.InRecord],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{
-		validator:     validator,
 		userSelector:  userSelector,
+		validator:     validator,
 		boardCounter:  boardCounter,
 		boardInserter: boardInserter,
 		log:           log,
@@ -47,30 +47,9 @@ func NewPOSTHandler(
 func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Read and validate request body.
-	reqBody := ReqBody{}
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		h.log.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if err := h.validator.Validate(reqBody.Name); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(
-			ResBody{Error: err.Error()},
-		); encodeErr != nil {
-			h.log.Error(encodeErr.Error())
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		return
-	}
-
-	// Record user record matching username.
+	// Validate that the user is a team admin.
 	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
-		// If not found, most likely something went wrong since the username
-		// comes from JWT which was signed by us but just return 401 for now.
-		// TODO: revise
 		w.WriteHeader(http.StatusUnauthorized)
 		if encodeErr := json.NewEncoder(w).Encode(
 			ResBody{Error: "Username is not recognised."},
@@ -96,12 +75,28 @@ func (h POSTHandler) Handle(
 		return
 	}
 
+	// Read and validate request body.
+	reqBody := ReqBody{}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		h.log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if err := h.validator.Validate(reqBody.Name); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if encodeErr := json.NewEncoder(w).Encode(
+			ResBody{Error: err.Error()},
+		); encodeErr != nil {
+			h.log.Error(encodeErr.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		return
+	}
+
 	// Validate that the user has less than 3 boards. This is done to limit the
 	// resources used by this demo app.
 	boardCount, err := h.boardCounter.Count(strconv.Itoa(user.TeamID))
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		// sql.ErrNoRows is OK here. It just means the user hasn't created any
-		// boards yet.
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

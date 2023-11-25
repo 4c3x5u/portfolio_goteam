@@ -14,27 +14,27 @@ import (
 )
 
 type PATCHHandler struct {
+	userSelector  dbaccess.Selector[userTable.Record]
 	idValidator   api.StringValidator
 	nameValidator api.StringValidator
 	boardSelector dbaccess.Selector[boardTable.Record]
-	userSelector  dbaccess.Selector[userTable.Record]
 	boardUpdater  dbaccess.Updater[string]
 	log           pkgLog.Errorer
 }
 
 func NewPATCHHandler(
+	userSelector dbaccess.Selector[userTable.Record],
 	idValidator api.StringValidator,
 	nameValidator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
 	boardUpdater dbaccess.Updater[string],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{
+		userSelector:  userSelector,
 		idValidator:   idValidator,
 		nameValidator: nameValidator,
 		boardSelector: boardSelector,
-		userSelector:  userSelector,
 		boardUpdater:  boardUpdater,
 		log:           log,
 	}
@@ -43,6 +43,34 @@ func NewPATCHHandler(
 func (h *PATCHHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// Validate that the user is a team admin.
+	user, err := h.userSelector.Select(username)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "Username is not recognised."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	if !user.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err := json.NewEncoder(w).Encode(
+			ResBody{Error: "Only team admins can edit the board."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
 	// Retrieve and validate the board ID.
 	boardID := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(boardID); err != nil {
@@ -74,7 +102,8 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// Validate that the board exists in the database.
+	// Validate that the board exists in the database and that it belongs to the
+	// team that the user is the admin of.
 	board, err := h.boardSelector.Select(boardID)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
@@ -91,35 +120,7 @@ func (h *PATCHHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-
-	// Validate that the user is a board admin.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusUnauthorized)
-		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only board admins can edit the board."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if user.TeamID != board.TeamID {
+	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
 			ResBody{Error: "You do not have access to this board."},

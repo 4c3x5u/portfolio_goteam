@@ -15,8 +15,8 @@ import (
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	validator     api.StringValidator
 	userSelector  dbaccess.Selector[userTable.Record]
+	validator     api.StringValidator
 	boardSelector dbaccess.Selector[boardTable.Record]
 	boardDeleter  dbaccess.Deleter
 	log           pkgLog.Errorer
@@ -24,15 +24,15 @@ type DELETEHandler struct {
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
-	validator api.StringValidator,
 	userSelector dbaccess.Selector[userTable.Record],
+	validator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.Record],
 	boardDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
-		validator:     validator,
 		userSelector:  userSelector,
+		validator:     validator,
 		boardSelector: boardSelector,
 		boardDeleter:  boardDeleter,
 		log:           log,
@@ -43,20 +43,8 @@ func NewDELETEHandler(
 func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Get id query parameter. That's our board ID.
-	boardID := r.URL.Query().Get("id")
-
-	// Validate board ID.
-	if err := h.validator.Validate(boardID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Validate that the user making the request is the admin of the board to be
-	// deleted.
-	user, err := h.userSelector.Select(
-		username,
-	)
+	// Validate that the user is a team admin.
+	user, err := h.userSelector.Select(username)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -71,6 +59,17 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
+	// Get id query parameter. That's our board ID.
+	boardID := r.URL.Query().Get("id")
+
+	// Validate board ID.
+	if err := h.validator.Validate(boardID); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Select board to validate that it belongs to the team that the user is the
+	// admin of.
 	board, err := h.boardSelector.Select(boardID)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)

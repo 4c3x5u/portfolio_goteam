@@ -22,30 +22,34 @@ import (
 // that it behaves correctly during various execution paths.
 func TestBoardHandler(t *testing.T) {
 	// Create board API handler.
+	userSelector := userTable.NewSelector(db)
+	nameValidator := boardAPI.NewNameValidator()
+	idValidator := boardAPI.NewIDValidator()
+	boardSelector := boardTable.NewSelector(db)
 	log := pkgLog.New()
 	sut := api.NewHandler(
 		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPost: boardAPI.NewPOSTHandler(
-				boardAPI.NewNameValidator(),
-				userTable.NewSelector(db),
+				userSelector,
+				nameValidator,
 				boardTable.NewCounter(db),
 				boardTable.NewInserter(db),
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
-				boardAPI.NewIDValidator(),
-				userTable.NewSelector(db),
-				boardTable.NewSelector(db),
+				userSelector,
+				idValidator,
+				boardSelector,
 				boardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
-				boardAPI.NewIDValidator(),
-				boardAPI.NewNameValidator(),
-				boardTable.NewSelector(db),
-				userTable.NewSelector(db),
+				userSelector,
+				idValidator,
+				nameValidator,
+				boardSelector,
 				boardTable.NewUpdater(db),
 				log,
 			),
@@ -396,7 +400,7 @@ func TestBoardHandler(t *testing.T) {
 				authFunc:   addBearerAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
-					"Only board admins can edit the board.",
+					"Only team admins can edit the board.",
 				),
 			},
 			{

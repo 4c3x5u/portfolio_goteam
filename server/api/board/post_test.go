@@ -22,103 +22,101 @@ import (
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
-	validator := &api.FakeStringValidator{}
 	userSelector := &userTable.FakeSelector{}
-	userBoardCounter := &dbaccess.FakeCounter{}
+	validator := &api.FakeStringValidator{}
+	boardCounter := &dbaccess.FakeCounter{}
 	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(
-		validator, userSelector, userBoardCounter, boardInserter, log,
+		userSelector, validator, boardCounter, boardInserter, log,
 	)
 
 	t.Run(http.MethodPost, func(t *testing.T) {
 		for _, c := range []struct {
-			name                string
-			validatorErr        error
-			userRecord          userTable.Record
-			userSelectorErr     error
-			userBoardCount      int
-			userBoardCounterErr error
-			boardInserterErr    error
-			wantStatusCode      int
-			assertFunc          func(*testing.T, *http.Response, string)
+			name             string
+			user             userTable.Record
+			userSelectorErr  error
+			validatorErr     error
+			boardCount       int
+			boardCounterErr  error
+			boardInserterErr error
+			wantStatusCode   int
+			assertFunc       func(*testing.T, *http.Response, string)
 		}{
 			{
-				name: "InvalidRequest",
-				validatorErr: errors.New(
-					"Board name cannot be empty.",
-				),
-				userRecord:          userTable.Record{},
-				userSelectorErr:     nil,
-				userBoardCount:      0,
-				userBoardCounterErr: nil,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
-					"Board name cannot be empty.",
-				),
-			},
-			{
-				name:                "UserNotRecognised",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{},
-				userSelectorErr:     sql.ErrNoRows,
-				userBoardCount:      0,
-				userBoardCounterErr: nil,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusUnauthorized,
+				name:             "UserNotRecognised",
+				user:             userTable.Record{},
+				userSelectorErr:  sql.ErrNoRows,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  nil,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusUnauthorized,
 				assertFunc: assert.OnResErr(
 					"Username is not recognised.",
 				),
 			},
 			{
-				name:                "UserSelectorErr",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: false},
-				userSelectorErr:     sql.ErrConnDone,
-				userBoardCount:      0,
-				userBoardCounterErr: nil,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusInternalServerError,
+				name:             "UserSelectorErr",
+				user:             userTable.Record{IsAdmin: false},
+				userSelectorErr:  sql.ErrConnDone,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  nil,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusInternalServerError,
 				assertFunc: assert.OnLoggedErr(
 					sql.ErrConnDone.Error(),
 				),
 			},
 			{
-				name:                "UserNotAdmin",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: false},
-				userSelectorErr:     nil,
-				userBoardCount:      0,
-				userBoardCounterErr: sql.ErrConnDone,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusForbidden,
+				name:             "UserNotAdmin",
+				user:             userTable.Record{IsAdmin: false},
+				userSelectorErr:  nil,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  sql.ErrConnDone,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can create boards.",
 				),
 			},
 			{
-				name:                "UserBoardCounterErr",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: true},
-				userSelectorErr:     nil,
-				userBoardCount:      0,
-				userBoardCounterErr: sql.ErrConnDone,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusInternalServerError,
+				name:             "InvalidRequest",
+				user:             userTable.Record{IsAdmin: true},
+				userSelectorErr:  nil,
+				validatorErr:     errors.New("Board name cannot be empty."),
+				boardCount:       0,
+				boardCounterErr:  nil,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusBadRequest,
+				assertFunc: assert.OnResErr(
+					"Board name cannot be empty.",
+				),
+			},
+			{
+				name:             "BoardCounterErr",
+				user:             userTable.Record{IsAdmin: true},
+				userSelectorErr:  nil,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  sql.ErrConnDone,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusInternalServerError,
 				assertFunc: assert.OnLoggedErr(
 					sql.ErrConnDone.Error(),
 				),
 			},
 			{
-				name:                "MaxBoardsCreated",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: true},
-				userSelectorErr:     nil,
-				userBoardCount:      3,
-				userBoardCounterErr: nil,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusBadRequest,
+				name:             "MaxBoardsCreated",
+				user:             userTable.Record{IsAdmin: true},
+				userSelectorErr:  nil,
+				validatorErr:     nil,
+				boardCount:       3,
+				boardCounterErr:  nil,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per user. Please delete one of your boards " +
@@ -126,38 +124,38 @@ func TestPOSTHandler(t *testing.T) {
 				),
 			},
 			{
-				name:                "BoardInserterErr",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: true},
-				userSelectorErr:     nil,
-				userBoardCount:      0,
-				userBoardCounterErr: sql.ErrNoRows,
-				boardInserterErr:    errors.New("create board error"),
-				wantStatusCode:      http.StatusInternalServerError,
+				name:             "BoardInserterErr",
+				user:             userTable.Record{IsAdmin: true},
+				userSelectorErr:  nil,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  sql.ErrNoRows,
+				boardInserterErr: errors.New("create board error"),
+				wantStatusCode:   http.StatusInternalServerError,
 				assertFunc: assert.OnLoggedErr(
 					"create board error",
 				),
 			},
 			{
-				name:                "Success",
-				validatorErr:        nil,
-				userRecord:          userTable.Record{IsAdmin: true},
-				userSelectorErr:     nil,
-				userBoardCount:      0,
-				userBoardCounterErr: sql.ErrNoRows,
-				boardInserterErr:    nil,
-				wantStatusCode:      http.StatusOK,
+				name:             "Success",
+				user:             userTable.Record{IsAdmin: true},
+				userSelectorErr:  nil,
+				validatorErr:     nil,
+				boardCount:       0,
+				boardCounterErr:  sql.ErrNoRows,
+				boardInserterErr: nil,
+				wantStatusCode:   http.StatusOK,
 				assertFunc: func(*testing.T, *http.Response, string) {
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				// Set pre-determinate return values for sut's dependencies.
-				validator.Err = c.validatorErr
-				userSelector.User = c.userRecord
+				userSelector.User = c.user
 				userSelector.Err = c.userSelectorErr
-				userBoardCounter.BoardCount = c.userBoardCount
-				userBoardCounter.Err = c.userBoardCounterErr
+				validator.Err = c.validatorErr
+				boardCounter.BoardCount = c.boardCount
+				boardCounter.Err = c.boardCounterErr
 				boardInserter.Err = c.boardInserterErr
 
 				// Prepare request and response recorder.

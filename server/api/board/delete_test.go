@@ -26,7 +26,7 @@ func TestDELETEHandler(t *testing.T) {
 	userBoardDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
-		validator, userSelector, boardSelector, userBoardDeleter, log,
+		userSelector, validator, boardSelector, userBoardDeleter, log,
 	)
 
 	// Used on cases where no case-specific assertions are required.
@@ -34,9 +34,9 @@ func TestDELETEHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name           string
-		validatorErr   error
 		user           userTable.Record
 		selectUserErr  error
+		validatorErr   error
 		board          boardTable.Record
 		selectBoardErr error
 		deleteBoardErr error
@@ -44,21 +44,32 @@ func TestDELETEHandler(t *testing.T) {
 		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:           "ValidatorErr",
-			validatorErr:   errors.New("some validator err"),
+			name:           "UserNotFound",
 			user:           userTable.Record{},
-			selectUserErr:  nil,
+			selectUserErr:  sql.ErrNoRows,
+			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
-			wantStatusCode: http.StatusBadRequest,
+			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
-			name:           "ConnDone",
+			name:           "NotAdmin",
+			user:           userTable.Record{IsAdmin: false},
+			selectUserErr:  nil,
 			validatorErr:   nil,
+			board:          boardTable.Record{},
+			selectBoardErr: nil,
+			deleteBoardErr: nil,
+			wantStatusCode: http.StatusForbidden,
+			assertFunc:     emptyAssertFunc,
+		},
+		{
+			name:           "SelectUserErr",
 			user:           userTable.Record{},
 			selectUserErr:  sql.ErrConnDone,
+			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
@@ -68,32 +79,21 @@ func TestDELETEHandler(t *testing.T) {
 			),
 		},
 		{
-			name:           "UserNotFound",
-			validatorErr:   nil,
-			user:           userTable.Record{},
-			selectUserErr:  sql.ErrNoRows,
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
-			deleteBoardErr: nil,
-			wantStatusCode: http.StatusForbidden,
-			assertFunc:     emptyAssertFunc,
-		},
-		{
-			name:           "NotAdmin",
-			validatorErr:   nil,
-			user:           userTable.Record{IsAdmin: false},
+			name:           "ValidatorErr",
+			user:           userTable.Record{IsAdmin: true},
 			selectUserErr:  nil,
+			validatorErr:   errors.New("some validator err"),
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
-			wantStatusCode: http.StatusForbidden,
+			wantStatusCode: http.StatusBadRequest,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
 			name:           "BoardNotFound",
-			validatorErr:   nil,
 			user:           userTable.Record{IsAdmin: true},
 			selectUserErr:  nil,
+			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: sql.ErrNoRows,
 			deleteBoardErr: nil,
@@ -102,9 +102,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "SelectBoardErr",
-			validatorErr:   nil,
 			user:           userTable.Record{IsAdmin: true},
 			selectUserErr:  nil,
+			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: sql.ErrConnDone,
 			deleteBoardErr: nil,
@@ -113,9 +113,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "BoardWrongTeam",
-			validatorErr:   nil,
 			user:           userTable.Record{IsAdmin: true, TeamID: 1},
 			selectUserErr:  nil,
+			validatorErr:   nil,
 			board:          boardTable.Record{TeamID: 2},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
@@ -124,8 +124,8 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "DeleteErr",
-			validatorErr:   nil,
 			user:           userTable.Record{IsAdmin: true, TeamID: 1},
+			validatorErr:   nil,
 			selectUserErr:  nil,
 			board:          boardTable.Record{TeamID: 1},
 			selectBoardErr: nil,
@@ -137,9 +137,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "Success",
-			validatorErr:   nil,
 			user:           userTable.Record{IsAdmin: true, TeamID: 1},
 			selectUserErr:  nil,
+			validatorErr:   nil,
 			board:          boardTable.Record{TeamID: 1},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
@@ -149,11 +149,11 @@ func TestDELETEHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
+			userSelector.User = c.user
+			userSelector.Err = c.selectUserErr
 			validator.Err = c.validatorErr
 			boardSelector.Board = c.board
 			boardSelector.Err = c.selectBoardErr
-			userSelector.User = c.user
-			userSelector.Err = c.selectUserErr
 			userBoardDeleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
