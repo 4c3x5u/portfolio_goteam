@@ -62,13 +62,14 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
+	teamSelector := teamTable.NewSelector(db)
 	mux.Handle("/register", registerAPI.NewHandler(
 		registerAPI.NewUserValidator(
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
 		registerAPI.NewInviteCodeValidator(),
-		teamTable.NewSelector(db),
+		teamSelector,
 		userSelector,
 		registerAPI.NewPasswordHasher(),
 		userTable.NewInserter(db),
@@ -91,6 +92,12 @@ func main() {
 		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
+			http.MethodGet: boardAPI.NewGETHandler(
+				userSelector,
+				teamSelector,
+				boardTable.NewRecursiveSelector(db),
+				log,
+			),
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				userSelector,
 				boardNameValidator,
