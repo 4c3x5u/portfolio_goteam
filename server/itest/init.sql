@@ -77,8 +77,6 @@ VALUES
         true
     );
 
--- DO NOT insert a board for team 2 because POST board assertions rely on total
--- board count
 INSERT INTO app.board(name, teamID)
 VALUES
     ('Team 1 Board 1',  1), -- used to verify max boards case for POST board
@@ -86,7 +84,6 @@ VALUES
     ('Team 1 Board 3',  1), -- used to verify max boards case for POST board
     ('Team 3 Board 1',  3); -- gets deleted during DELETE board tests
 
--- insert columns into the second board for testing recursive board deletion
 INSERT INTO app."column"(boardID, "order")
 VALUES
     (4, 1), -- gets deleted during DELETE board tests
@@ -97,7 +94,6 @@ VALUES
     (1, 2), -- used as target for PATCH column tests
     (1, 1);
 
--- insert a task into each column for testing recursive board deletion
 INSERT INTO app.task(columnID, title, "order")
 VALUES
     (1, 'task 1', 1), -- gets deleted during DELETE board tests
@@ -108,7 +104,7 @@ VALUES
     (7, 'task 6', 1),
     (7, 'task 7', 1),
     (7, 'task 8', 1),
-    (7, 'task 9', 1); 
+    (7, 'task 9', 1); -- gets deleted during DELETE task tests
 
 INSERT INTO app.subtask(taskID, title, "order", isDone)
 VALUES
@@ -116,4 +112,6 @@ VALUES
     (2, 'subtask 2', 1, false), -- gets deleted during DELETE board tests
     (3, 'subtask 3', 1, false), -- gets deleted during DELETE board tests
     (4, 'subtask 4', 1, false), -- gets deleted during DELETE board tests
-    (9, 'subtask 1', 1, false);
+    (8, 'subtask 5', 1, false), -- gets deleted during DELETE subtask tests
+    (9, 'subtask 6', 1, false), -- gets deleted during DELETE task tests
+    (9, 'subtask 7', 1, false); -- gets deleted during DELETE task tests

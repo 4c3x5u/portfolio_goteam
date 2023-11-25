@@ -597,16 +597,23 @@ func TestTaskHandler(t *testing.T) {
 				),
 			},
 			{
-				name:           "Success",
+				name:           "OK",
 				id:             "9",
 				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					var count int
+					var taskCount int
 					err := db.QueryRow(
 						"SELECT COUNT(*) FROM app.task WHERE id = 12",
-					).Scan(&count)
-					if err = assert.Equal(0, count); err != nil {
+					).Scan(&taskCount)
+					if err = assert.Equal(0, taskCount); err != nil {
+						t.Error(err)
+					}
+					var subtaskCount int
+					err = db.QueryRow(
+						"SELECT COUNT(*) FROM app.subtask WHERE taskID = 9",
+					).Scan(&taskCount)
+					if err = assert.Equal(0, subtaskCount); err != nil {
 						t.Error(err)
 					}
 				},

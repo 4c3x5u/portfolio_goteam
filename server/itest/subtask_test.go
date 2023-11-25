@@ -72,7 +72,7 @@ func TestSubtaskHandler(t *testing.T) {
 			},
 			{
 				name:           "BoardWrongTeam",
-				id:             "4",
+				id:             "5",
 				authFunc:       addBearerAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -81,7 +81,7 @@ func TestSubtaskHandler(t *testing.T) {
 			},
 			{
 				name:           "NotAdmin",
-				id:             "4",
+				id:             "5",
 				authFunc:       addBearerAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -90,13 +90,13 @@ func TestSubtaskHandler(t *testing.T) {
 			},
 			{
 				name:           "Success",
-				id:             "4",
+				id:             "5",
 				authFunc:       addBearerAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var isDone bool
 					if err := db.QueryRow(
-						"SELECT isDone FROM app.subtask WHERE id = 8",
+						"SELECT isDone FROM app.subtask WHERE id = 5",
 					).Scan(&isDone); err != nil {
 						t.Fatal(err)
 					}
