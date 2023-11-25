@@ -28,6 +28,15 @@ type Task struct {
 	Title       string
 	Description string
 	Order       int
+	Subtasks    []Subtask
+}
+
+// Subtask encapsulates the data for each subtask in Task.
+type Subtask struct {
+	ID     int
+	Title  string
+	Order  int
+	IsDone bool
 }
 
 // RecursiveSelector can be used to select a record from the board table, as well
@@ -89,13 +98,31 @@ func (r RecursiveSelector) Select(id string) (RecursiveBoard, error) {
 				return RecursiveBoard{}, err
 			}
 
-			_, err = r.db.Query(
+			subtaskRows, err := r.db.Query(
 				`SELECT id, title, "order", isDone FROM app.subtask `+
 					`WHERE taskID = $1`,
 				task.ID,
 			)
+			if errors.Is(err, sql.ErrNoRows) {
+				col.Tasks = append(col.Tasks, task)
+				continue
+			}
 			if err != nil {
 				return RecursiveBoard{}, err
+			}
+
+			for subtaskRows.Next() {
+				var subtask Subtask
+				if err = subtaskRows.Scan(
+					&subtask.ID,
+					&subtask.Title,
+					&subtask.Order,
+					&subtask.IsDone,
+				); err != nil {
+					return RecursiveBoard{}, err
+				}
+
+				task.Subtasks = append(task.Subtasks, subtask)
 			}
 
 			col.Tasks = append(col.Tasks, task)

@@ -131,7 +131,7 @@ func TestRecursiveSelector(t *testing.T) {
 		}
 	})
 
-	t.Run("NoTasks", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		mock.ExpectQuery(sqlSelectBoard).
 			WithArgs(boardID).
 			WillReturnRows(
@@ -144,11 +144,36 @@ func TestRecursiveSelector(t *testing.T) {
 				sqlmock.NewRows([]string{"id", "order"}).
 					AddRow(2, 1).AddRow(3, 2).AddRow(4, 3).AddRow(5, 4),
 			)
-		for i := 0; i < 4; i++ {
-			mock.ExpectQuery(sqlSelectTask).
-				WithArgs(i + 2).
-				WillReturnError(sql.ErrNoRows)
-		}
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(2).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(3).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(4).
+			WillReturnRows(
+				sqlmock.NewRows(
+					[]string{"id", "title", "description", "order"},
+				).AddRow(6, "task 1", "do things!", 1),
+			)
+		mock.ExpectQuery(sqlSelectSubtask).
+			WithArgs(6).
+			WillReturnError(sql.ErrNoRows)
+		mock.ExpectQuery(sqlSelectTask).
+			WithArgs(5).
+			WillReturnRows(
+				sqlmock.NewRows(
+					[]string{"id", "title", "description", "order"},
+				).AddRow(7, "task 2", "do things!", 2),
+			)
+		mock.ExpectQuery(sqlSelectSubtask).
+			WithArgs(7).
+			WillReturnRows(
+				sqlmock.NewRows([]string{"id", "title", "order", "isDone"}).
+					AddRow(8, "subtask 1", 1, false).
+					AddRow(9, "subtask 2", 2, true),
+			)
 
 		res, err := sut.Select(boardID)
 
@@ -164,19 +189,93 @@ func TestRecursiveSelector(t *testing.T) {
 		if err = assert.Equal(21, res.TeamID); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(4, len(res.Columns)); err != nil {
+
+		columns := res.Columns
+		if err = assert.Equal(4, len(columns)); err != nil {
 			t.Error(err)
 		}
-		for i, col := range res.Columns {
-			if err = assert.Equal(i+2, col.ID); err != nil {
+		for i := 0; i < 2; i++ {
+			if err = assert.Equal(i+2, columns[i].ID); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(i+1, col.Order); err != nil {
+			if err = assert.Equal(i+1, columns[i].Order); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(0, len(col.Tasks)); err != nil {
+			if err = assert.Equal(0, len(columns[i].Tasks)); err != nil {
 				t.Error(err)
 			}
 		}
+
+		column3 := res.Columns[2]
+		if err = assert.Equal(1, len(column3.Tasks)); err != nil {
+			t.Error(err)
+		}
+
+		task1 := column3.Tasks[0]
+		if err = assert.Equal(6, task1.ID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("task 1", task1.Title); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("do things!", task1.Description); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(1, task1.Order); err != nil {
+			t.Error(err)
+		}
+
+		column4 := res.Columns[3]
+		if err = assert.Equal(1, len(column4.Tasks)); err != nil {
+			t.Error(err)
+		}
+
+		task2 := column4.Tasks[0]
+		if err = assert.Equal(7, task2.ID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("task 2", task2.Title); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("do things!", task2.Description); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(2, task2.Order); err != nil {
+			t.Error(err)
+		}
+
+		subtasks := task2.Subtasks
+		if err = assert.Equal(2, len(subtasks)); err != nil {
+			t.Error(err)
+		}
+
+		subtask1 := subtasks[0]
+		if err = assert.Equal(8, subtask1.ID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("subtask 1", subtask1.Title); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(1, subtask1.Order); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(false, subtask1.IsDone); err != nil {
+			t.Error(err)
+		}
+
+		subtask2 := subtasks[1]
+		if err = assert.Equal(9, subtask2.ID); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal("subtask 2", subtask2.Title); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(2, subtask2.Order); err != nil {
+			t.Error(err)
+		}
+		if err = assert.Equal(true, subtask2.IsDone); err != nil {
+			t.Error(err)
+		}
+
 	})
 }
