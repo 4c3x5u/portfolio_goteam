@@ -18,11 +18,12 @@ import (
 // GETHandler is an api.MethodHandler that can be used to handle GET board
 // requests.
 type GETHandler struct {
-	userSelector  dbaccess.Selector[userTable.Record]
-	idValidator   api.StringValidator
-	boardSelector dbaccess.Selector[boardTable.RecursiveRecord]
-	teamSelector  dbaccess.Selector[teamTable.Record]
-	log           pkgLog.Errorer
+	userSelector         dbaccess.Selector[userTable.Record]
+	idValidator          api.StringValidator
+	boardSelector        dbaccess.Selector[boardTable.RecursiveRecord]
+	teamSelector         dbaccess.Selector[teamTable.Record]
+	userSelectorByTeamID dbaccess.Selector[[]userTable.Record]
+	log                  pkgLog.Errorer
 }
 
 // NewGETHandler creates and returns a new GETHandler.
@@ -31,14 +32,16 @@ func NewGETHandler(
 	idValidator api.StringValidator,
 	boardSelector dbaccess.Selector[boardTable.RecursiveRecord],
 	teamSelector dbaccess.Selector[teamTable.Record],
+	userSelectorByTeamID dbaccess.Selector[[]userTable.Record],
 	log pkgLog.Errorer,
 ) GETHandler {
 	return GETHandler{
-		userSelector:  userSelector,
-		idValidator:   idValidator,
-		boardSelector: boardSelector,
-		teamSelector:  teamSelector,
-		log:           log,
+		userSelector:         userSelector,
+		idValidator:          idValidator,
+		boardSelector:        boardSelector,
+		teamSelector:         teamSelector,
+		userSelectorByTeamID: userSelectorByTeamID,
+		log:                  log,
 	}
 }
 
@@ -93,6 +96,13 @@ func (h GETHandler) Handle(
 		return
 	}
 
+	members, err := h.userSelectorByTeamID.Select(strconv.Itoa(user.TeamID))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
 	// Build response from data retrieved from the database.
 	resp := GETResp{
 		Username: username,
@@ -100,8 +110,7 @@ func (h GETHandler) Handle(
 			ID:         team.ID,
 			InviteCode: team.InviteCode,
 		},
-		// TODO: get all team members
-		TeamMembers: []TeamMember{},
+		TeamMembers: make([]TeamMember, len(members)),
 		// TODO: get all boards
 		Boards: []Board{},
 		ActiveBoard: ActiveBoard{
@@ -110,6 +119,13 @@ func (h GETHandler) Handle(
 			Columns: make([]Column, len(activeBoard.Columns)),
 		},
 	}
+	for i, member := range members {
+		resp.TeamMembers[i] = TeamMember{
+			Username: member.Username,
+			IsAdmin:  member.IsAdmin,
+		}
+	}
+
 	for i, col := range activeBoard.Columns {
 		resp.ActiveBoard.Columns[i].ID = col.ID
 		resp.ActiveBoard.Columns[i].Order = col.Order
@@ -168,7 +184,7 @@ type Team struct {
 // TeamMember defines an item in the team members data returned in GETResp.
 type TeamMember struct {
 	Username string `json:"username"`
-	IsAdmin  string `json:"isAdmin"`
+	IsAdmin  bool   `json:"isAdmin"`
 	// TODO: figure out what isActive from client is and decide what to do
 }
 

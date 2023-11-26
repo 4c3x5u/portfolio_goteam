@@ -373,7 +373,7 @@ func TestHandler(t *testing.T) {
 			userValidator.validationErrs = c.validationErrs
 			inviteCodeValidator.Err = c.inviteCodeErr
 			teamSelector.Err = c.teamSelectorErr
-			userSelector.User = c.userRecord
+			userSelector.Rec = c.userRecord
 			userSelector.Err = c.userSelectorErr
 			hasher.hash = c.hashedPwd
 			hasher.err = c.hasherErr

@@ -197,7 +197,7 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
-			userSelector.User = c.userRecord
+			userSelector.Rec = c.userRecord
 			userSelector.Err = c.userSelectorErr
 			passwordComparer.err = c.hashComparerErr
 			authTokenGenerator.AuthToken = c.authToken

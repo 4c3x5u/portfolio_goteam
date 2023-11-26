@@ -257,7 +257,7 @@ func TestPATCHHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.User = c.user
+			userSelector.Rec = c.user
 			userSelector.Err = c.userSelectorErr
 			idValidator.Err = c.idValidatorErr
 			subtaskSelector.Err = c.subtaskSelectorErr

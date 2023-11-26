@@ -266,7 +266,7 @@ func TestPOSTHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.User = c.user
+			userSelector.Rec = c.user
 			userSelector.Err = c.userSelectorErr
 			taskTitleValidator.Err = c.taskTitleValidatorErr
 			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr

@@ -97,6 +97,7 @@ func main() {
 				boardIDValidator,
 				boardTable.NewRecursiveSelector(db),
 				teamTable.NewSelector(db),
+				userTable.NewSelectorByTeamID(db),
 				log,
 			),
 			http.MethodPost: boardAPI.NewPOSTHandler(

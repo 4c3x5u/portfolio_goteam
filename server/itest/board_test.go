@@ -37,6 +37,7 @@ func TestBoardHandler(t *testing.T) {
 				idValidator,
 				boardTable.NewRecursiveSelector(db),
 				teamTable.NewSelector(db),
+				userTable.NewSelectorByTeamID(db),
 				log,
 			),
 			http.MethodPost: boardAPI.NewPOSTHandler(

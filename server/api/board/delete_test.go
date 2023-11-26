@@ -149,7 +149,7 @@ func TestDELETEHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			userSelector.User = c.user
+			userSelector.Rec = c.user
 			userSelector.Err = c.selectUserErr
 			validator.Err = c.validatorErr
 			boardSelector.Board = c.board
