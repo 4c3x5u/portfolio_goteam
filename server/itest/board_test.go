@@ -144,8 +144,186 @@ func TestBoardHandler(t *testing.T) {
 				authFunc:       addBearerAuth(jwtTeam1Member),
 				boardID:        "2",
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(*testing.T, *http.Response, string) {
-					// TODO: assert on response body
+				assertFunc: func(t *testing.T, r *http.Response, _ string) {
+					var resp boardAPI.GETResp
+					if err := json.NewDecoder(r.Body).Decode(
+						&resp,
+					); err != nil {
+						t.Fatal(err)
+					}
+
+					if err := assert.Equal(
+						"team1Member", resp.Username,
+					); err != nil {
+						t.Error(err)
+					}
+
+					if err := assert.Equal(1, resp.Team.ID); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+						resp.Team.InviteCode,
+					); err != nil {
+						t.Error(err)
+					}
+
+					for i, wantMember := range []boardAPI.TeamMember{
+						{Username: "team1Admin", IsAdmin: true},
+						{Username: "team1Member", IsAdmin: false},
+					} {
+						member := resp.TeamMembers[i]
+						if err := assert.Equal(
+							wantMember.Username,
+							member.Username,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							wantMember.IsAdmin,
+							member.IsAdmin,
+						); err != nil {
+							t.Error(err)
+						}
+					}
+
+					for i, wantBoard := range []boardAPI.Board{
+						{ID: 1, Name: "Team 1 Board 1"},
+						{ID: 2, Name: "Team 1 Board 2"},
+						{ID: 3, Name: "Team 1 Board 3"},
+					} {
+						board := resp.Boards[i]
+						if err := assert.Equal(
+							wantBoard.ID,
+							board.ID,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							wantBoard.Name,
+							board.Name,
+						); err != nil {
+							t.Error(err)
+						}
+					}
+
+					if err := assert.Equal(2, resp.ActiveBoard.ID); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"Team 1 Board 2",
+						resp.ActiveBoard.Name,
+					); err != nil {
+						t.Error(err)
+					}
+
+					for i, wantColumn := range []boardAPI.Column{
+						{ID: 8, Order: 1, Tasks: []boardAPI.Task{
+							{
+								ID:          10,
+								Title:       "task 10",
+								Description: "desc",
+								Order:       1,
+								Subtasks: []boardAPI.Subtask{
+									{
+										ID:     8,
+										Title:  "subtask 8",
+										Order:  1,
+										IsDone: false,
+									},
+									{
+										ID:     9,
+										Title:  "subtask 9",
+										Order:  2,
+										IsDone: true,
+									},
+								},
+							},
+						}},
+						{ID: 9, Order: 2, Tasks: []boardAPI.Task{}},
+						{ID: 10, Order: 3, Tasks: []boardAPI.Task{
+							{
+								ID:          11,
+								Title:       "task 11",
+								Description: "",
+								Order:       1,
+							},
+						}},
+						{ID: 11, Order: 4, Tasks: []boardAPI.Task{}},
+					} {
+						column := resp.ActiveBoard.Columns[i]
+
+						if err := assert.Equal(
+							wantColumn.ID,
+							column.ID,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							wantColumn.Order,
+							column.Order,
+						); err != nil {
+							t.Error(err)
+						}
+
+						for j, wantTask := range wantColumn.Tasks {
+							task := column.Tasks[j]
+
+							if err := assert.Equal(
+								wantTask.ID,
+								task.ID,
+							); err != nil {
+								t.Error(err)
+							}
+							if err := assert.Equal(
+								wantTask.Title,
+								task.Title,
+							); err != nil {
+								t.Error(err)
+							}
+							if err := assert.Equal(
+								wantTask.Description,
+								task.Description,
+							); err != nil {
+								t.Error(err)
+							}
+							if err := assert.Equal(
+								wantTask.Order,
+								task.Order,
+							); err != nil {
+								t.Error(err)
+							}
+
+							for k, wantSubtask := range wantTask.Subtasks {
+								subtask := task.Subtasks[k]
+
+								if err := assert.Equal(
+									wantSubtask.ID,
+									subtask.ID,
+								); err != nil {
+									t.Error(err)
+								}
+								if err := assert.Equal(
+									wantSubtask.Title,
+									subtask.Title,
+								); err != nil {
+									t.Error(err)
+								}
+								if err := assert.Equal(
+									wantSubtask.Order,
+									subtask.Order,
+								); err != nil {
+									t.Error(err)
+								}
+								if err := assert.Equal(
+									wantSubtask.IsDone,
+									subtask.IsDone,
+								); err != nil {
+									t.Error(err)
+								}
+							}
+						}
+					}
 				},
 			},
 		} {

@@ -80,28 +80,28 @@ VALUES
     (2, 3), -- used in GET board tests
     (2, 4); -- used in GET board tests
 
-INSERT INTO app.task(columnID, title, "order")
+INSERT INTO app.task(columnID, title, description, "order")
 VALUES
-    (1,  'task 1',  1), -- gets deleted during DELETE board tests
-    (2,  'task 2',  1), -- gets deleted during DELETE board tests
-    (3,  'task 3',  1), -- gets deleted during DELETE board tests
-    (4,  'task 4',  1), -- gets deleted during DELETE board tests
-    (5,  'task 5',  1), -- gets moved from column 5 to 6 during PATCH column test
-    (7,  'task 6',  1),
-    (7,  'task 7',  1),
-    (7,  'task 8',  1),
-    (7,  'task 9',  1), -- gets deleted during DELETE task tests
-    (8,  'task 10', 1), -- used in GET board tests
-    (10, 'task 11', 1); -- used in GET board tests
+    (1,  'task 1',  null,   1), -- gets deleted during DELETE board tests
+    (2,  'task 2',  null,   1), -- gets deleted during DELETE board tests
+    (3,  'task 3',  null,   1), -- gets deleted during DELETE board tests
+    (4,  'task 4',  null,   1), -- gets deleted during DELETE board tests
+    (5,  'task 5',  null,   1), -- gets moved from column 5 to 6 during PATCH column test
+    (7,  'task 6',  null,   1),
+    (7,  'task 7',  null,   1),
+    (7,  'task 8',  null,   1),
+    (7,  'task 9',  null,   1), -- gets deleted during DELETE task tests
+    (8,  'task 10', 'desc', 1), -- used in GET board tests
+    (10, 'task 11', null,   1); -- used in GET board tests
 
 INSERT INTO app.subtask(taskID, title, "order", isDone)
 VALUES
-    (1, 'subtask 1', 1, false), -- gets deleted during DELETE board tests
-    (2, 'subtask 2', 1, false), -- gets deleted during DELETE board tests
-    (3, 'subtask 3', 1, false), -- gets deleted during DELETE board tests
-    (4, 'subtask 4', 1, false), -- gets deleted during DELETE board tests
-    (8, 'subtask 5', 1, false), -- gets deleted during DELETE subtask tests
-    (9, 'subtask 6', 1, false), -- gets deleted during DELETE task tests
-    (9, 'subtask 7', 1, false), -- gets deleted during DELETE task tests
-    (10, 'subtask 6', 1, false), -- used in GET board tests
-    (10, 'subtask 6', 1, true); -- used in GET board tests
+    (1,  'subtask 1', 1, false), -- gets deleted during DELETE board tests
+    (2,  'subtask 2', 1, false), -- gets deleted during DELETE board tests
+    (3,  'subtask 3', 1, false), -- gets deleted during DELETE board tests
+    (4,  'subtask 4', 1, false), -- gets deleted during DELETE board tests
+    (8,  'subtask 5', 1, false), -- gets deleted during DELETE subtask tests
+    (9,  'subtask 6', 1, false), -- gets deleted during DELETE task tests
+    (9,  'subtask 7', 1, false), -- gets deleted during DELETE task tests
+    (10, 'subtask 8', 1, false), -- used in GET board tests
+    (10, 'subtask 9', 2, true); -- used in GET board tests
