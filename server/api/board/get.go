@@ -18,12 +18,13 @@ import (
 // GETHandler is an api.MethodHandler that can be used to handle GET board
 // requests.
 type GETHandler struct {
-	userSelector         dbaccess.Selector[userTable.Record]
-	idValidator          api.StringValidator
-	boardSelector        dbaccess.Selector[boardTable.RecursiveRecord]
-	teamSelector         dbaccess.Selector[teamTable.Record]
-	userSelectorByTeamID dbaccess.Selector[[]userTable.Record]
-	log                  pkgLog.Errorer
+	userSelector          dbaccess.Selector[userTable.Record]
+	idValidator           api.StringValidator
+	boardSelector         dbaccess.Selector[boardTable.RecursiveRecord]
+	teamSelector          dbaccess.Selector[teamTable.Record]
+	userSelectorByTeamID  dbaccess.Selector[[]userTable.Record]
+	boardSelectorByTeamID dbaccess.Selector[[]boardTable.Record]
+	log                   pkgLog.Errorer
 }
 
 // NewGETHandler creates and returns a new GETHandler.
@@ -33,15 +34,17 @@ func NewGETHandler(
 	boardSelector dbaccess.Selector[boardTable.RecursiveRecord],
 	teamSelector dbaccess.Selector[teamTable.Record],
 	userSelectorByTeamID dbaccess.Selector[[]userTable.Record],
+	boardSelectorByTeamID dbaccess.Selector[[]boardTable.Record],
 	log pkgLog.Errorer,
 ) GETHandler {
 	return GETHandler{
-		userSelector:         userSelector,
-		idValidator:          idValidator,
-		boardSelector:        boardSelector,
-		teamSelector:         teamSelector,
-		userSelectorByTeamID: userSelectorByTeamID,
-		log:                  log,
+		userSelector:          userSelector,
+		idValidator:           idValidator,
+		boardSelector:         boardSelector,
+		teamSelector:          teamSelector,
+		userSelectorByTeamID:  userSelectorByTeamID,
+		boardSelectorByTeamID: boardSelectorByTeamID,
+		log:                   log,
 	}
 }
 
@@ -88,15 +91,26 @@ func (h GETHandler) Handle(
 		return
 	}
 
+	teamIDStr := strconv.Itoa(user.TeamID)
+
 	// Select the team from the database that the user is the member/admin of.
-	team, err := h.teamSelector.Select(strconv.Itoa(user.TeamID))
+	team, err := h.teamSelector.Select(teamIDStr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	members, err := h.userSelectorByTeamID.Select(strconv.Itoa(user.TeamID))
+	// Get all members of the user's team.
+	members, err := h.userSelectorByTeamID.Select(teamIDStr)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// Get all boards that belong to the user's team.
+	boards, err := h.boardSelectorByTeamID.Select(teamIDStr)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
@@ -111,19 +125,23 @@ func (h GETHandler) Handle(
 			InviteCode: team.InviteCode,
 		},
 		TeamMembers: make([]TeamMember, len(members)),
-		// TODO: get all boards
-		Boards: []Board{},
+		Boards:      make([]Board, len(boards)),
 		ActiveBoard: ActiveBoard{
 			ID:      activeBoard.ID,
 			Name:    activeBoard.Name,
 			Columns: make([]Column, len(activeBoard.Columns)),
 		},
 	}
+
 	for i, member := range members {
 		resp.TeamMembers[i] = TeamMember{
 			Username: member.Username,
 			IsAdmin:  member.IsAdmin,
 		}
+	}
+
+	for i, board := range boards {
+		resp.Boards[i] = Board{ID: board.ID, Name: board.Name}
 	}
 
 	for i, col := range activeBoard.Columns {

@@ -28,3 +28,14 @@ type FakeRecursiveSelector struct {
 func (f *FakeRecursiveSelector) Select(_ string) (RecursiveRecord, error) {
 	return f.Rec, f.Err
 }
+
+// FakeSelectorByTeamID is a test fake for dbaccess.Selector[[]Record].
+type FakeSelectorByTeamID struct {
+	Recs []Record
+	Err  error
+}
+
+// Select implements the dbaccess.Selector[[]Record] interface on FakeSelector.
+func (f *FakeSelectorByTeamID) Select(_ string) ([]Record, error) {
+	return f.Recs, f.Err
+}

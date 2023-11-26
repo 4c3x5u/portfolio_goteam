@@ -17,13 +17,13 @@ func (f *FakeSelector) Select(_ string) (Record, error) {
 	return f.Rec, f.Err
 }
 
-// FakeSelector is a test fake for dbaccess.Selector[Record].
+// FakeSelectorByTeamID is a test fake for dbaccess.Selector[[]Record].
 type FakeSelectorByTeamID struct {
 	Recs []Record
 	Err  error
 }
 
-// Select implements the dbaccess.Selector[Record] interface on FakeSelector.
+// Select implements the dbaccess.Selector[[]Record] interface on FakeSelector.
 func (f *FakeSelectorByTeamID) Select(_ string) ([]Record, error) {
 	return f.Recs, f.Err
 }
