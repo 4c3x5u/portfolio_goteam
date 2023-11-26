@@ -12,10 +12,22 @@ func NewSelectorByTeamID(db *sql.DB) SelectorByTeamID {
 }
 
 // Select selects a record from the board table that matches the given team ID.
-func (s SelectorByTeamID) Select(teamID string) (rec Record, err error) {
-	_, err = s.db.Query(
+func (s SelectorByTeamID) Select(teamID string) (recs []Record, err error) {
+	rows, err := s.db.Query(
 		"SELECT id, name FROM app.board WHERE teamID = $1",
 		teamID,
 	)
+	if err != nil {
+		return
+	}
+
+	for rows.Next() {
+		var rec Record
+		if err = rows.Scan(&rec.ID, &rec.Name); err != nil {
+			return
+		}
+		recs = append(recs, rec)
+	}
+
 	return
 }

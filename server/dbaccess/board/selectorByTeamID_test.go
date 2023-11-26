@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/kxplxn/goteam/server/assert"
 	"github.com/kxplxn/goteam/server/dbaccess"
 )
@@ -27,6 +28,33 @@ func TestSelectorByTeamID(t *testing.T) {
 
 		if err = assert.SameError(wantErr, err); err != nil {
 			t.Error(err)
+		}
+	})
+
+	t.Run("OK", func(t *testing.T) {
+		wantRecs := []Record{
+			{ID: 1, Name: "Board 1"},
+			{ID: 2, Name: "Board 2"},
+		}
+		rows := sqlmock.NewRows([]string{"id", "name"})
+		for _, rec := range wantRecs {
+			rows.AddRow(rec.ID, rec.Name)
+		}
+
+		mock.ExpectQuery(sqlSelect).WithArgs(teamID).WillReturnRows(rows)
+
+		recs, err := sut.Select(teamID)
+		if err = assert.Nil(err); err != nil {
+			t.Error(err)
+		}
+
+		for i, wantRec := range wantRecs {
+			if err = assert.Equal(wantRec.ID, recs[i].ID); err != nil {
+				t.Error(err)
+			}
+			if err = assert.Equal(wantRec.Name, recs[i].Name); err != nil {
+				t.Error(err)
+			}
 		}
 	})
 }

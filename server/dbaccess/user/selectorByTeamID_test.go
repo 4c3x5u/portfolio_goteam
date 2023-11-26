@@ -33,27 +33,27 @@ func TestSelectorByTeamID(t *testing.T) {
 	})
 
 	t.Run("OK", func(t *testing.T) {
-		wantUsers := []Record{
+		wantRecs := []Record{
 			{Username: "foo", IsAdmin: true},
 			{Username: "bar", IsAdmin: false},
 			{Username: "baz", IsAdmin: false},
 		}
 		rows := sqlmock.NewRows([]string{"username", "isAdmin"})
-		for _, user := range wantUsers {
+		for _, user := range wantRecs {
 			rows.AddRow(user.Username, user.IsAdmin)
 		}
 		mock.ExpectQuery(sqlSelect).WithArgs(teamID).WillReturnRows(rows)
 
-		res, err := sut.Select(teamID)
+		recs, err := sut.Select(teamID)
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
 
-		for i, user := range wantUsers {
-			if err = assert.Equal(res[i].Username, user.Username); err != nil {
+		for i, user := range wantRecs {
+			if err = assert.Equal(user.Username, recs[i].Username); err != nil {
 				t.Error(err)
 			}
-			if err = assert.Equal(res[i].IsAdmin, user.IsAdmin); err != nil {
+			if err = assert.Equal(user.IsAdmin, recs[i].IsAdmin); err != nil {
 				t.Error(err)
 			}
 		}
