@@ -12,14 +12,22 @@ func NewSelectorByTeamID(db *sql.DB) SelectorByTeamID {
 }
 
 // Select selects all records from the user table that matches the team ID.
-func (s SelectorByTeamID) Select(teamID string) ([]Record, error) {
-	_, err := s.db.Query(
+func (s SelectorByTeamID) Select(teamID string) (records []Record, err error) {
+	rows, err := s.db.Query(
 		`SELECT username, isAdmin FROM app."user" WHERE teamID = $1`,
 		teamID,
 	)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return nil, nil
+	for rows.Next() {
+		var rec Record
+		if err = rows.Scan(&rec.Username, &rec.IsAdmin); err != nil {
+			return
+		}
+		records = append(records, rec)
+	}
+
+	return
 }

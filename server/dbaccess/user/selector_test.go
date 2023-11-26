@@ -21,7 +21,7 @@ func TestSelector(t *testing.T) {
 	)
 
 	t.Run("Error", func(t *testing.T) {
-		wantErr := errors.New("user inserter error")
+		wantErr := errors.New("error selecting user")
 
 		db, mock, teardown := dbaccess.SetUpDBTest(t)
 		defer teardown()
