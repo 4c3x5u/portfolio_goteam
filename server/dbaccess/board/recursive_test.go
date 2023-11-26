@@ -218,7 +218,7 @@ func TestRecursiveSelector(t *testing.T) {
 		if err = assert.Equal("task 1", task1.Title); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal("do things!", task1.Description); err != nil {
+		if err = assert.Equal("do things!", *task1.Description); err != nil {
 			t.Error(err)
 		}
 		if err = assert.Equal(1, task1.Order); err != nil {
@@ -237,7 +237,7 @@ func TestRecursiveSelector(t *testing.T) {
 		if err = assert.Equal("task 2", task2.Title); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal("do things!", task2.Description); err != nil {
+		if err = assert.Equal("do things!", *task2.Description); err != nil {
 			t.Error(err)
 		}
 		if err = assert.Equal(2, task2.Order); err != nil {

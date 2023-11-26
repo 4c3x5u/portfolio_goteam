@@ -245,7 +245,7 @@ func TestGETHandler(t *testing.T) {
 							t.Error(err)
 						}
 						if err := assert.Equal(
-							wantTask.Description,
+							*wantTask.Description,
 							task.Description,
 						); err != nil {
 							t.Error(err)
