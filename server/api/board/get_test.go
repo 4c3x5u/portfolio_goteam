@@ -265,8 +265,12 @@ func TestGETHandler(t *testing.T) {
 				{Username: "foo", IsAdmin: true},
 				{Username: "bob123", IsAdmin: false},
 			},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
+			userSelectorByTeamIDErr: nil,
+			boards: []boardTable.Record{
+				{ID: 1, Name: "board 1", TeamID: 1},
+				{ID: 2, Name: "board 2", TeamID: 1},
+				{ID: 3, Name: "board 3", TeamID: 1},
+			},
 			boardSelectorByTeamIDErr: nil,
 			wantStatusCode:           http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
@@ -287,26 +291,42 @@ func TestGETHandler(t *testing.T) {
 					t.Error(err)
 				}
 
-				wantMembers := []userTable.Record{
+				for i, wantMember := range []TeamMember{
 					{Username: "foo", IsAdmin: true},
 					{Username: "bob123", IsAdmin: false},
-				}
-				for i, want := range wantMembers {
+				} {
+					member := resp.TeamMembers[i]
+
 					if err := assert.Equal(
-						want.Username, resp.TeamMembers[i].Username,
+						wantMember.Username, member.Username,
 					); err != nil {
 						t.Error(err)
 					}
 					if err := assert.Equal(
-						want.IsAdmin, resp.TeamMembers[i].IsAdmin,
+						wantMember.IsAdmin, member.IsAdmin,
 					); err != nil {
 						t.Error(err)
 					}
 				}
 
-				// TODO: assert on all boards
-				if err := assert.Equal(0, len(resp.Boards)); err != nil {
-					t.Error(err)
+				for i, wantBoard := range []Board{
+					{ID: 1, Name: "board 1"},
+					{ID: 2, Name: "board 2"},
+					{ID: 3, Name: "board 3"},
+				} {
+					board := resp.Boards[i]
+
+					if err := assert.Equal(
+						wantBoard.ID, board.ID,
+					); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						wantBoard.Name, board.Name,
+					); err != nil {
+						t.Error(err)
+					}
+
 				}
 
 				if err := assert.Equal(2, resp.ActiveBoard.ID); err != nil {
@@ -322,8 +342,9 @@ func TestGETHandler(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
-				for i, col := range resp.ActiveBoard.Columns {
-					wantCol := boardSelector.Rec.Columns[i]
+				for i, wantCol := range boardSelector.Rec.Columns {
+					col := resp.ActiveBoard.Columns[i]
+
 					if err := assert.Equal(wantCol.ID, col.ID); err != nil {
 						t.Error(err)
 					}
@@ -337,8 +358,9 @@ func TestGETHandler(t *testing.T) {
 					); err != nil {
 						t.Error(err)
 					}
-					for j, task := range col.Tasks {
-						wantTask := wantCol.Tasks[j]
+					for j, wantTask := range wantCol.Tasks {
+						task := col.Tasks[j]
+
 						if err := assert.Equal(
 							wantTask.ID,
 							task.ID,
@@ -364,8 +386,9 @@ func TestGETHandler(t *testing.T) {
 						); err != nil {
 							t.Error(err)
 						}
-						for k, subtask := range task.Subtasks {
-							wantSubtask := wantTask.Subtasks[k]
+						for k, wantSubtask := range wantTask.Subtasks {
+							subtask := task.Subtasks[k]
+
 							if err := assert.Equal(
 								wantSubtask.ID,
 								subtask.ID,
