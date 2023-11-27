@@ -44,7 +44,7 @@ const Register = () => {
     } else {
       setIsLoading(true);
       AuthAPI
-        .register(username, password, inviteCode)
+        .register(username, password, inviteCode ?? '')
         .then(() => loadBoard())
         .catch((err) => {
           const validationErrors = err?.response?.data?.validationErrors;
@@ -53,7 +53,7 @@ const Register = () => {
           } else {
             notify(
               'Unable to register.',
-              `${err?.response?.data?.error || 'Server Error'}.`,
+              err?.response?.data?.error || 'Server Error',
             );
           }
 

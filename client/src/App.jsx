@@ -18,7 +18,7 @@ import Register from './components/Register/Register';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
 import Spinner from './components/Home/Spinner/Spinner';
-import boardAPI from "./api/BoardAPI";
+import boardAPI from './api/BoardAPI';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,7 @@ const App = () => {
     if (cookies.get('auth-token')) {
       boardAPI
         .get(
-          boardId || sessionStorage.getItem('board-id') || activeBoard.id || ''
+          boardId || sessionStorage.getItem('board-id') || activeBoard.id || '',
         )
         .then((res) => {
           // Update app state one by one
@@ -51,8 +51,8 @@ const App = () => {
         .catch((err) => {
           setUser({ ...user, isAuthenticated: false });
 
-          // remove username and auth token if verify-token failed
-          if (err?.config?.url?.includes('verify-token')) {
+          // remove username if unauthorised
+          if (err?.response?.status === 401) {
             cookies.remove('auth-token');
             setIsLoading(false);
             return;
@@ -60,7 +60,6 @@ const App = () => {
 
           let errMsg;
 
-          // eslint-disable-next-line camelcase
           if (err?.response?.data?.board) {
             notify(
               'Inactive Credentials',

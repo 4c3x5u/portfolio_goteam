@@ -42,10 +42,11 @@ const Login = () => {
           if (serverErrors.username || serverErrors.password) {
             setErrors(serverErrors);
           } else {
-            notify(
-              'Unable to log in.',
-              `${err?.message || 'Server Error'}.`,
-            );
+            let message = 'Server Error';
+            if (err?.response?.status === 400) {
+              message = 'Incorrect username or password.';
+            }
+            notify('Unable to log in.', message);
           }
 
           setIsLoading(false);

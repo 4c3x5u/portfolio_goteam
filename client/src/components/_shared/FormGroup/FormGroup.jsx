@@ -35,12 +35,18 @@ const FormGroup = ({
       />
     )}
 
-    {error && (
-      <FormControl.Feedback type="invalid">
-        {error}
-      </FormControl.Feedback>
-    )}
-  </Form.Group>
+    {error && (Array.isArray(error)
+      ? error.map((err) => (
+        <FormControl.Feedback className="Error" type="invalid">
+          {err}
+        </FormControl.Feedback>
+      ))
+      : (
+        <FormControl.Feedback className="Error" type="invalid">
+          {error}
+        </FormControl.Feedback>
+      ))}
+  </Form.Group >
 );
 
 FormGroup.propTypes = {
@@ -48,7 +54,7 @@ FormGroup.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
   setValue: PropTypes.func,
-  error: PropTypes.string,
+  error: PropTypes.array || PropTypes.string,
   disabled: PropTypes.bool,
 };
 

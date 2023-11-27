@@ -1,8 +1,3 @@
-/* eslint-disable
-react/jsx-props-no-spreading,
-jsx-a11y/click-events-have-key-events,
-jsx-a11y/no-static-element-interactions */
-
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {

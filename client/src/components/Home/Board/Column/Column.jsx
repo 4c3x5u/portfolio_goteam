@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Droppable } from 'react-beautiful-dnd';
@@ -100,7 +99,7 @@ Column.propTypes = {
 };
 
 Column.defaultProps = {
-  handleActivate: () => {},
+  handleActivate: () => { },
 };
 
 export default Column;

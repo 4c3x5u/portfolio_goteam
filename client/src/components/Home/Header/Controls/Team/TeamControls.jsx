@@ -35,7 +35,6 @@ TeamControls.propTypes = {
   handleActivate: PropTypes.func.isRequired,
   handleCreate: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   icon: PropTypes.object.isRequired,
 };
 
