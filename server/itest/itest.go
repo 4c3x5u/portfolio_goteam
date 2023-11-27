@@ -32,10 +32,10 @@ const (
 		"kbWluIn0.QHFI2okGYug7GNwMwwpwYyTtZkx53I-R-uNjlodCwTU"
 )
 
-// addBearerAuth is used in various test cases to authenticate the request
+// addCookieAuth is used in various test cases to authenticate the request
 // being sent to a handler.
-func addBearerAuth(token string) func(*http.Request) {
+func addCookieAuth(token string) func(*http.Request) {
 	return func(req *http.Request) {
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.AddCookie(&http.Cookie{Name: "auth-token", Value: token})
 	}
 }

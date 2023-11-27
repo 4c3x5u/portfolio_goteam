@@ -74,7 +74,7 @@ func TestTaskHandler(t *testing.T) {
 		}{
 			// Auth Cases
 			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
-			{name: "HeaderInvalid", authFunc: addBearerAuth("asdfasldfkjasd")},
+			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				for _, httpMethod := range []string{
@@ -125,7 +125,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
@@ -138,7 +138,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -152,7 +152,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      0,
 					"subtasks":    []string{""},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -168,7 +168,7 @@ func TestTaskHandler(t *testing.T) {
 						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -182,7 +182,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      1001,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Column not found."),
 			},
@@ -194,7 +194,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      5,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtTeam2Admin),
+				authFunc:       addCookieAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -208,7 +208,7 @@ func TestTaskHandler(t *testing.T) {
 					"column":      5,
 					"subtasks":    []string{"Some Subtask"},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can create tasks.",
@@ -224,7 +224,7 @@ func TestTaskHandler(t *testing.T) {
 						"Some Subtask", "Some Other Subtask",
 					},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// A task with the order of 1 and 2 already exists in the given
@@ -313,7 +313,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
@@ -325,7 +325,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
@@ -337,7 +337,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
@@ -350,7 +350,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -366,7 +366,7 @@ func TestTaskHandler(t *testing.T) {
 						{"title": ""},
 					},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -383,7 +383,7 @@ func TestTaskHandler(t *testing.T) {
 							"sdqweasd",
 					}},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -397,7 +397,7 @@ func TestTaskHandler(t *testing.T) {
 					"description": "",
 					"subtasks":    []map[string]any{{"title": "Some Subtask"}},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Task not found."),
 			},
@@ -411,7 +411,7 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
-				authFunc:       addBearerAuth(jwtTeam2Admin),
+				authFunc:       addCookieAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -427,7 +427,7 @@ func TestTaskHandler(t *testing.T) {
 						"title": "Some Subtask",
 					}},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can edit tasks.",
@@ -452,7 +452,7 @@ func TestTaskHandler(t *testing.T) {
 						},
 					},
 				},
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var (
@@ -560,28 +560,28 @@ func TestTaskHandler(t *testing.T) {
 			{
 				name:           "IDEmpty",
 				id:             "",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
 			},
 			{
 				name:           "IDNotInt",
 				id:             "A",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task ID must be an integer."),
 			},
 			{
 				name:           "TaskNotFound",
 				id:             "1001",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Task not found."),
 			},
 			{
 				name:           "WrongTeam",
 				id:             "8",
-				authFunc:       addBearerAuth(jwtTeam2Admin),
+				authFunc:       addCookieAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -590,7 +590,7 @@ func TestTaskHandler(t *testing.T) {
 			{
 				name:           "NotAdmin",
 				id:             "8",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can delete tasks.",
@@ -599,7 +599,7 @@ func TestTaskHandler(t *testing.T) {
 			{
 				name:           "OK",
 				id:             "9",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var taskCount int

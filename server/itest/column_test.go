@@ -46,7 +46,7 @@ func TestColumnHandler(t *testing.T) {
 		}{
 			// Auth Cases
 			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
-			{name: "HeaderInvalid", authFunc: addBearerAuth("asdfasldfkjasd")},
+			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				t.Run(http.MethodPatch, func(t *testing.T) {
@@ -88,7 +88,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "IDEmpty",
 				id:         "",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID cannot be empty."),
 			},
@@ -96,7 +96,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "IDNotInt",
 				id:         "A",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID must be an integer."),
 			},
@@ -104,7 +104,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "ColumnNotFound",
 				id:         "1001",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Column not found."),
 			},
@@ -112,7 +112,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "NotAdmin",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam1Member),
+				authFunc:   addCookieAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr("Only team admins can move tasks."),
 			},
@@ -120,7 +120,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "NoAccess",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam2Admin),
+				authFunc:   addCookieAuth(jwtTeam2Admin),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -130,7 +130,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "TaskNotFound",
 				id:         "5",
 				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Task not found."),
 			},
@@ -138,7 +138,7 @@ func TestColumnHandler(t *testing.T) {
 				name:       "Success",
 				id:         "6",
 				reqBody:    columnAPI.ReqBody{{ID: 5, Order: 2}},
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var columnID, order int

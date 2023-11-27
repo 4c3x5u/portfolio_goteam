@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/kxplxn/goteam/server/auth"
@@ -64,10 +65,18 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.Method == method {
 			// Get auth token from Authorization header, validate it, and get
 			// the subject of the token.
-			authToken := h.authHeaderReader.Read(
-				r.Header.Get(auth.AuthorizationHeader),
-			)
-			sub := h.authTokenValidator.Validate(authToken)
+			ck, err := r.Cookie(auth.CookieName)
+			if errors.Is(err, http.ErrNoCookie) {
+				w.Header().Set(auth.WWWAuthenticate())
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			sub := h.authTokenValidator.Validate(ck.Value)
 			if sub == "" {
 				w.Header().Set(auth.WWWAuthenticate())
 				w.WriteHeader(http.StatusUnauthorized)

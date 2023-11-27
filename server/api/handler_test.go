@@ -108,6 +108,7 @@ func TestHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
+				req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: ""})
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.

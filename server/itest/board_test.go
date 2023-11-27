@@ -73,7 +73,7 @@ func TestBoardHandler(t *testing.T) {
 		}{
 			// Auth Cases
 			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
-			{name: "HeaderInvalid", authFunc: addBearerAuth("asdfasldfkjasd")},
+			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				for _, method := range []string{
@@ -120,28 +120,37 @@ func TestBoardHandler(t *testing.T) {
 		}{
 			{
 				name:           "InvalidID",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				boardID:        "foo",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T, *http.Response, string) {},
 			},
 			{
 				name:           "NotFound",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				boardID:        "1001",
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     func(*testing.T, *http.Response, string) {},
 			},
 			{
 				name:           "WrongTeam",
-				authFunc:       addBearerAuth(jwtTeam2Member),
+				authFunc:       addCookieAuth(jwtTeam2Member),
+				boardID:        "2",
+				wantStatusCode: http.StatusForbidden,
+				assertFunc:     func(*testing.T, *http.Response, string) {},
+			},
+			// TODO: make sure a new board is created and result is returned
+			// accordingly on empty ID.
+			{
+				name:           "OKEmptyID",
+				authFunc:       addCookieAuth(jwtTeam2Member),
 				boardID:        "2",
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T, *http.Response, string) {},
 			},
 			{
 				name:           "OK",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				boardID:        "2",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, r *http.Response, _ string) {
@@ -361,7 +370,7 @@ func TestBoardHandler(t *testing.T) {
 		}{
 			{
 				name:           "NotAdmin",
-				authFunc:       addBearerAuth(jwtTeam2Member),
+				authFunc:       addCookieAuth(jwtTeam2Member),
 				boardName:      "Team 2 Board 2",
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -370,14 +379,14 @@ func TestBoardHandler(t *testing.T) {
 			},
 			{
 				name:           "EmptyBoardName",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				boardName:      "",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Board name cannot be empty."),
 			},
 			{
 				name:           "TooLongBoardName",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				boardName:      "A Board Whose Name Is Just Too Long!",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -386,7 +395,7 @@ func TestBoardHandler(t *testing.T) {
 			},
 			{
 				name:           "TooManyBoards",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				boardName:      "bob123's new board",
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -397,7 +406,7 @@ func TestBoardHandler(t *testing.T) {
 			},
 			{
 				name:           "Success",
-				authFunc:       addBearerAuth(jwtTeam2Admin),
+				authFunc:       addCookieAuth(jwtTeam2Admin),
 				boardName:      "Team 2 Board 2",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
@@ -483,28 +492,28 @@ func TestBoardHandler(t *testing.T) {
 			{
 				name:           "NotAdmin",
 				id:             "1",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "EmptyID",
 				id:             "",
-				authFunc:       addBearerAuth(jwtTeam3Admin),
+				authFunc:       addCookieAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "NonIntID",
 				id:             "qwerty",
-				authFunc:       addBearerAuth(jwtTeam3Admin),
+				authFunc:       addCookieAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "Success",
 				id:             "4",
-				authFunc:       addBearerAuth(jwtTeam3Admin),
+				authFunc:       addCookieAuth(jwtTeam3Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
 					// Assert that all user_board records with this board ID are
@@ -618,7 +627,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "NotAdmin",
 				id:         "1",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtTeam1Member),
+				authFunc:   addCookieAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can edit the board.",
@@ -628,7 +637,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "IDEmpty",
 				id:         "",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID cannot be empty."),
 			},
@@ -636,7 +645,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "IDNotInt",
 				id:         "A",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID must be an integer."),
 			},
@@ -644,7 +653,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNameEmpty",
 				id:         "2",
 				boardName:  "",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board name cannot be empty."),
 			},
@@ -652,7 +661,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNameTooLong",
 				id:         "2",
 				boardName:  "A Board Whose Name Is Just Too Long!",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
@@ -662,7 +671,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "BoardNotFound",
 				id:         "1001",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Board not found."),
 			},
@@ -670,7 +679,7 @@ func TestBoardHandler(t *testing.T) {
 				name:       "Success",
 				id:         "2",
 				boardName:  "New Board Name",
-				authFunc:   addBearerAuth(jwtTeam1Admin),
+				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var boardName string

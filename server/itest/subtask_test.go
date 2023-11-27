@@ -52,28 +52,28 @@ func TestSubtaskHandler(t *testing.T) {
 			{
 				name:           "IDEmpty",
 				id:             "",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Subtask ID cannot be empty."),
 			},
 			{
 				name:           "IDNotInt",
 				id:             "A",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Subtask ID must be an integer."),
 			},
 			{
 				name:           "SubtaskNotFound",
 				id:             "1001",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusNotFound,
 				assertFunc:     assert.OnResErr("Subtask not found."),
 			},
 			{
 				name:           "BoardWrongTeam",
 				id:             "5",
-				authFunc:       addBearerAuth(jwtTeam2Admin),
+				authFunc:       addCookieAuth(jwtTeam2Admin),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
@@ -82,7 +82,7 @@ func TestSubtaskHandler(t *testing.T) {
 			{
 				name:           "NotAdmin",
 				id:             "5",
-				authFunc:       addBearerAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(jwtTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can edit subtasks.",
@@ -91,7 +91,7 @@ func TestSubtaskHandler(t *testing.T) {
 			{
 				name:           "Success",
 				id:             "5",
-				authFunc:       addBearerAuth(jwtTeam1Admin),
+				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					var isDone bool
