@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+
 	"github.com/kxplxn/goteam/server/api"
 	boardAPI "github.com/kxplxn/goteam/server/api/board"
 	columnAPI "github.com/kxplxn/goteam/server/api/column"
@@ -22,7 +24,6 @@ import (
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
 	"github.com/kxplxn/goteam/server/midware"
-	_ "github.com/lib/pq"
 )
 
 func main() {

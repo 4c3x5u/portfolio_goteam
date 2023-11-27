@@ -23,7 +23,7 @@ import (
 func TestGETHandler(t *testing.T) {
 	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
-	boardSelector := &boardTable.FakeRecursiveSelector{}
+	boardSelectorRecursive := &boardTable.FakeSelectorRecursive{}
 	teamSelector := &teamTable.FakeSelector{}
 	userSelectorByTeamID := &userTable.FakeSelectorByTeamID{}
 	boardSelectorByTeamID := &boardTable.FakeSelectorByTeamID{}
@@ -32,7 +32,7 @@ func TestGETHandler(t *testing.T) {
 	sut := NewGETHandler(
 		userSelector,
 		idValidator,
-		boardSelector,
+		boardSelectorRecursive,
 		teamSelector,
 		userSelectorByTeamID,
 		boardSelectorByTeamID,
@@ -40,186 +40,211 @@ func TestGETHandler(t *testing.T) {
 	)
 
 	for _, c := range []struct {
-		name                     string
-		user                     userTable.Record
-		userSelectorErr          error
-		idValidatorErr           error
-		activeBoard              boardTable.RecursiveRecord
-		boardSelectorErr         error
-		team                     teamTable.Record
-		teamSelectorErr          error
-		members                  []userTable.Record
-		userSelectorByTeamIDErr  error
-		boards                   []boardTable.Record
-		boardSelectorByTeamIDErr error
-		wantStatusCode           int
-		assertFunc               func(*testing.T, *http.Response, string)
+		name                      string
+		boardID                   string
+		user                      userTable.Record
+		userSelectorErr           error
+		idValidatorErr            error
+		team                      teamTable.Record
+		teamSelectorErr           error
+		members                   []userTable.Record
+		userSelectorByTeamIDErr   error
+		boards                    []boardTable.Record
+		boardSelectorByTeamIDErr  error
+		activeBoard               boardTable.RecursiveRecord
+		boardSelectorRecursiveErr error
+		wantStatusCode            int
+		assertFunc                func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                     "UserIsNotRecognised",
-			user:                     userTable.Record{},
-			userSelectorErr:          sql.ErrNoRows,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusUnauthorized,
-			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:                      "UserIsNotRecognised",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           sql.ErrNoRows,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusUnauthorized,
+			assertFunc:                assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "UserSelectorErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          sql.ErrConnDone,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			name:                      "UserSelectorErr",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           sql.ErrConnDone,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
-			name:                     "InvalidID",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           errors.New("error invalid id"),
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc:               func(_ *testing.T, _ *http.Response, _ string) {},
+			name:                      "InvalidID",
+			boardID:                   "foo",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            errors.New("error invalid id"),
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusBadRequest,
+			assertFunc:                func(_ *testing.T, _ *http.Response, _ string) {},
 		},
 		{
-			name:                     "BoardNotFound",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         sql.ErrNoRows,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusNotFound,
-			assertFunc:               func(_ *testing.T, _ *http.Response, _ string) {},
+			name:                      "TeamSelectorErr",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           sql.ErrNoRows,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "BoardSelectorErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         sql.ErrConnDone,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			name:                      "UserSelectorByTeamIDErr",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   sql.ErrNoRows,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "BoardWrongTeam",
-			user:                     userTable.Record{TeamID: 1},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{TeamID: 2},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusForbidden,
-			assertFunc:               func(_ *testing.T, _ *http.Response, _ string) {},
+			name:                      "BoardSelectorByTeamIDErr",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  sql.ErrNoRows,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "TeamSelectorErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          sql.ErrNoRows,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:                      "NoBoards",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   sql.ErrNoRows,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                     "UserSelectorByTeamIDErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  sql.ErrNoRows,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:                      "RecursiveBoardNotFound",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: sql.ErrNoRows,
+			wantStatusCode:            http.StatusNotFound,
+			assertFunc:                func(_ *testing.T, _ *http.Response, _ string) {},
 		},
 		{
-			name:                     "BoardSelectorByTeamIDErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  nil,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: sql.ErrNoRows,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:                      "BoardSelectorErr",
+			boardID:                   "",
+			user:                      userTable.Record{},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: sql.ErrConnDone,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc:                assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
-			name:                     "NoBoards",
-			user:                     userTable.Record{},
-			userSelectorErr:          nil,
-			idValidatorErr:           nil,
-			activeBoard:              boardTable.RecursiveRecord{},
-			boardSelectorErr:         nil,
-			team:                     teamTable.Record{},
-			teamSelectorErr:          nil,
-			members:                  []userTable.Record{},
-			userSelectorByTeamIDErr:  sql.ErrNoRows,
-			boards:                   []boardTable.Record{},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc:               assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:                      "BoardWrongTeam",
+			boardID:                   "",
+			user:                      userTable.Record{TeamID: 1},
+			userSelectorErr:           nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{TeamID: 2},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusForbidden,
+			assertFunc:                func(_ *testing.T, _ *http.Response, _ string) {},
 		},
 		{
 			name:            "OK",
+			boardID:         "",
 			user:            userTable.Record{},
 			userSelectorErr: nil,
 			idValidatorErr:  nil,
+			team:            teamTable.Record{ID: 1, InviteCode: "InvCode"},
+			teamSelectorErr: nil,
+			members: []userTable.Record{
+				{Username: "foo", IsAdmin: true},
+				{Username: "bob123", IsAdmin: false},
+			},
+			userSelectorByTeamIDErr: nil,
+			boards: []boardTable.Record{
+				{ID: 1, Name: "board 1", TeamID: 1},
+				{ID: 2, Name: "board 2", TeamID: 1},
+				{ID: 3, Name: "board 3", TeamID: 1},
+			},
+			boardSelectorByTeamIDErr: nil,
 			activeBoard: func() boardTable.RecursiveRecord {
 				task1Desc := "task1Desc"
 				task2Desc := "task2Desc"
@@ -258,21 +283,8 @@ func TestGETHandler(t *testing.T) {
 					},
 				}
 			}(),
-			boardSelectorErr: nil,
-			team:             teamTable.Record{ID: 1, InviteCode: "InvCode"},
-			teamSelectorErr:  nil,
-			members: []userTable.Record{
-				{Username: "foo", IsAdmin: true},
-				{Username: "bob123", IsAdmin: false},
-			},
-			userSelectorByTeamIDErr: nil,
-			boards: []boardTable.Record{
-				{ID: 1, Name: "board 1", TeamID: 1},
-				{ID: 2, Name: "board 2", TeamID: 1},
-				{ID: 3, Name: "board 3", TeamID: 1},
-			},
-			boardSelectorByTeamIDErr: nil,
-			wantStatusCode:           http.StatusOK,
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				var resp GETResp
 				if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
@@ -342,7 +354,7 @@ func TestGETHandler(t *testing.T) {
 				); err != nil {
 					t.Error(err)
 				}
-				for i, wantCol := range boardSelector.Rec.Columns {
+				for i, wantCol := range boardSelectorRecursive.Rec.Columns {
 					col := resp.ActiveBoard.Columns[i]
 
 					if err := assert.Equal(wantCol.ID, col.ID); err != nil {
@@ -423,16 +435,16 @@ func TestGETHandler(t *testing.T) {
 			userSelector.Rec = c.user
 			userSelector.Err = c.userSelectorErr
 			idValidator.Err = c.idValidatorErr
-			boardSelector.Rec = c.activeBoard
-			boardSelector.Err = c.boardSelectorErr
 			teamSelector.Rec = c.team
 			teamSelector.Err = c.teamSelectorErr
 			userSelectorByTeamID.Recs = c.members
 			userSelectorByTeamID.Err = c.userSelectorByTeamIDErr
 			boardSelectorByTeamID.Recs = c.boards
 			boardSelectorByTeamID.Err = c.boardSelectorByTeamIDErr
+			boardSelectorRecursive.Rec = c.activeBoard
+			boardSelectorRecursive.Err = c.boardSelectorRecursiveErr
 
-			r, err := http.NewRequest(http.MethodGet, "?boardID=1", nil)
+			r, err := http.NewRequest(http.MethodGet, "?id="+c.boardID, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -18,33 +18,33 @@ import (
 // GETHandler is an api.MethodHandler that can be used to handle GET board
 // requests.
 type GETHandler struct {
-	userSelector          dbaccess.Selector[userTable.Record]
-	idValidator           api.StringValidator
-	boardSelector         dbaccess.Selector[boardTable.RecursiveRecord]
-	teamSelector          dbaccess.Selector[teamTable.Record]
-	userSelectorByTeamID  dbaccess.Selector[[]userTable.Record]
-	boardSelectorByTeamID dbaccess.Selector[[]boardTable.Record]
-	log                   pkgLog.Errorer
+	userSelector           dbaccess.Selector[userTable.Record]
+	idValidator            api.StringValidator
+	boardSelectorRecursive dbaccess.Selector[boardTable.RecursiveRecord]
+	teamSelector           dbaccess.Selector[teamTable.Record]
+	userSelectorByTeamID   dbaccess.Selector[[]userTable.Record]
+	boardSelectorByTeamID  dbaccess.Selector[[]boardTable.Record]
+	log                    pkgLog.Errorer
 }
 
 // NewGETHandler creates and returns a new GETHandler.
 func NewGETHandler(
 	userSelector dbaccess.Selector[userTable.Record],
 	idValidator api.StringValidator,
-	boardSelector dbaccess.Selector[boardTable.RecursiveRecord],
+	boardSelectorRecursive dbaccess.Selector[boardTable.RecursiveRecord],
 	teamSelector dbaccess.Selector[teamTable.Record],
 	userSelectorByTeamID dbaccess.Selector[[]userTable.Record],
 	boardSelectorByTeamID dbaccess.Selector[[]boardTable.Record],
 	log pkgLog.Errorer,
 ) GETHandler {
 	return GETHandler{
-		userSelector:          userSelector,
-		idValidator:           idValidator,
-		boardSelector:         boardSelector,
-		teamSelector:          teamSelector,
-		userSelectorByTeamID:  userSelectorByTeamID,
-		boardSelectorByTeamID: boardSelectorByTeamID,
-		log:                   log,
+		userSelector:           userSelector,
+		idValidator:            idValidator,
+		boardSelectorRecursive: boardSelectorRecursive,
+		teamSelector:           teamSelector,
+		userSelectorByTeamID:   userSelectorByTeamID,
+		boardSelectorByTeamID:  boardSelectorByTeamID,
+		log:                    log,
 	}
 }
 
@@ -65,32 +65,17 @@ func (h GETHandler) Handle(
 		return
 	}
 
-	// Validate board ID.
+	// Validate board ID. Empty board ID is valid here and in that case we try
+	// to set the active board to the first board in user's team.
 	boardID := r.URL.Query().Get("id")
-	if err = h.idValidator.Validate(boardID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+	if boardID != "" {
+		if err = h.idValidator.Validate(boardID); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 	}
 
-	// Select recursive board record from the database.
-	activeBoard, err := h.boardSelector.Select(boardID)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-
-	// Validate that the user is admin or member of the team that the board
-	// belongs to.
-	if activeBoard.TeamID != user.TeamID {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
+	// Format team ID as string to be used by repository methods.
 	teamIDStr := strconv.Itoa(user.TeamID)
 
 	// Select the team from the database that the user is the member/admin of.
@@ -114,6 +99,25 @@ func (h GETHandler) Handle(
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
+		return
+	}
+
+	// Select recursive board record from the database.
+	activeBoard, err := h.boardSelectorRecursive.Select(boardID)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// Validate that the user is admin or member of the team that the board
+	// belongs to.
+	if activeBoard.TeamID != user.TeamID {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
