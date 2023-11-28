@@ -222,6 +222,25 @@ func (h GETHandler) Handle(
 	}
 
 	// Build response from data retrieved from the database.
+	resp := newGETResp(user, team, members, activeBoard, boards)
+
+	// Return response body, or 500 if JSON encoding fails.
+	w.WriteHeader(http.StatusOK)
+	if err = json.NewEncoder(w).Encode(resp); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+}
+
+// newGETResp constructs a new GETResp from the given DB records and returns it.
+func newGETResp(
+	user userTable.Record,
+	team teamTable.Record,
+	members []userTable.Record,
+	activeBoard boardTable.RecursiveRecord,
+	boards []boardTable.Record,
+) GETResp {
 	resp := GETResp{
 		User: User{
 			Username: user.Username,
@@ -282,11 +301,5 @@ func (h GETHandler) Handle(
 		}
 	}
 
-	// Return response body, or 500 if JSON encoding fails.
-	w.WriteHeader(http.StatusOK)
-	if err = json.NewEncoder(w).Encode(resp); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
+	return resp
 }
