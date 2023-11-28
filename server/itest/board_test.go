@@ -239,6 +239,105 @@ func TestBoardHandler(t *testing.T) {
 					}
 				},
 			},
+			// FIXME: Depends on the previous test case's succes - bad.
+			{
+				name:           "OKIDEmptyMember",
+				authFunc:       addCookieAuth(jwtTeam2Member),
+				boardID:        "",
+				wantStatusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, r *http.Response, _ string) {
+					var resp boardAPI.GETResp
+					if err := json.NewDecoder(r.Body).Decode(
+						&resp,
+					); err != nil {
+						t.Fatal(err)
+					}
+
+					if err := assert.Equal(
+						"team2Member", resp.User.Username,
+					); err != nil {
+						t.Error(err)
+					}
+					if err := assert.True(!resp.User.IsAdmin); err != nil {
+						t.Error(err)
+					}
+
+					if err := assert.Equal(2, resp.Team.ID); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+						resp.Team.InviteCode,
+					); err != nil {
+						t.Error(err)
+					}
+
+					if err := assert.Equal(
+						2, len(resp.TeamMembers),
+					); err != nil {
+						t.Error(err)
+					}
+					member := resp.TeamMembers[0]
+					if err := assert.Equal(
+						member.Username, "team2Admin",
+					); err != nil {
+						t.Error(err)
+					}
+					if err := assert.True(member.IsAdmin); err != nil {
+						t.Error(err)
+					}
+
+					// When ID is empty, a new board will be created for user.
+					if err := assert.Equal(
+						1, len(resp.Boards),
+					); err != nil {
+						t.Error(err)
+					}
+					board := resp.Boards[0]
+					if err := assert.Equal(5, board.ID); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"New Board", board.Name,
+					); err != nil {
+						t.Error(err)
+					}
+
+					if err := assert.Equal(5, resp.ActiveBoard.ID); err != nil {
+						t.Error(err)
+					}
+					if err := assert.Equal(
+						"New Board", resp.ActiveBoard.Name,
+					); err != nil {
+						t.Error(err)
+					}
+
+					for i, wantColumn := range []boardAPI.Column{
+						{ID: 12, Order: 1},
+						{ID: 13, Order: 2},
+						{ID: 14, Order: 3},
+						{ID: 15, Order: 4},
+					} {
+						column := resp.ActiveBoard.Columns[i]
+
+						if err := assert.Equal(
+							0, len(column.Tasks),
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							wantColumn.ID, column.ID,
+						); err != nil {
+							t.Error(err)
+						}
+						if err := assert.Equal(
+							wantColumn.Order, column.Order,
+						); err != nil {
+							t.Error(err)
+						}
+					}
+				},
+			},
 			{
 				name:           "OK",
 				authFunc:       addCookieAuth(jwtTeam1Member),
