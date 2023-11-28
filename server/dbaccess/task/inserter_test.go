@@ -70,7 +70,7 @@ func TestInserter(t *testing.T) {
 					WithArgs(task.columnID).
 					WillReturnError(sql.ErrNoRows)
 				mock.ExpectQuery(sqlInsertTask).
-					WithArgs(task.columnID, task.title, task.description, 1).
+					WithArgs(task.columnID, task.title, task.description, 0).
 					WillReturnError(errA)
 			},
 			wantErrs: []error{errA},
@@ -99,7 +99,7 @@ func TestInserter(t *testing.T) {
 					WithArgs(task.columnID, task.title, task.description, 6).
 					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
 				mock.ExpectExec(sqlInsertSubtask).
-					WithArgs(int64(3), task.subtaskTitles[0], 1, false).
+					WithArgs(int64(3), task.subtaskTitles[0], 0, false).
 					WillReturnError(errA)
 				mock.ExpectRollback()
 			},
@@ -116,7 +116,7 @@ func TestInserter(t *testing.T) {
 					WithArgs(task.columnID, task.title, task.description, 6).
 					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
 				mock.ExpectExec(sqlInsertSubtask).
-					WithArgs(int64(3), task.subtaskTitles[0], 1, false).
+					WithArgs(int64(3), task.subtaskTitles[0], 0, false).
 					WillReturnError(errA)
 				mock.ExpectRollback().WillReturnError(errB)
 			},
@@ -134,8 +134,8 @@ func TestInserter(t *testing.T) {
 					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
 				for i, subtaskTitle := range task.subtaskTitles {
 					mock.ExpectExec(sqlInsertSubtask).
-						WithArgs(int64(3), subtaskTitle, i+1, false).
-						WillReturnResult(sqlmock.NewResult(int64(i+1), 1))
+						WithArgs(int64(3), subtaskTitle, i, false).
+						WillReturnResult(sqlmock.NewResult(int64(i), 1))
 				}
 				mock.ExpectCommit().WillReturnError(errA)
 			},
@@ -153,8 +153,8 @@ func TestInserter(t *testing.T) {
 					WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(3))
 				for i, subtaskTitle := range task.subtaskTitles {
 					mock.ExpectExec(sqlInsertSubtask).
-						WithArgs(int64(3), subtaskTitle, i+1, false).
-						WillReturnResult(sqlmock.NewResult(int64(i+1), 1))
+						WithArgs(int64(3), subtaskTitle, i, false).
+						WillReturnResult(sqlmock.NewResult(int64(i), 1))
 				}
 				mock.ExpectCommit()
 			},

@@ -43,6 +43,7 @@ func (i Inserter) Insert(task InRecord) error {
 
 	// Get the task with the highest order that is associated with the same
 	// column that the new task is.
+	var order int
 	var highestOrder int
 	if err = tx.QueryRowContext(
 		ctx,
@@ -50,9 +51,11 @@ func (i Inserter) Insert(task InRecord) error {
 			`ORDER BY "order" DESC LIMIT 1`,
 		task.columnID,
 	).Scan(&highestOrder); errors.Is(err, sql.ErrNoRows) {
-		highestOrder = 0
+		order = 0
 	} else if err != nil {
 		return err
+	} else {
+		order = highestOrder + 1
 	}
 
 	// Insert a record into task table with the given data and the order of 1
@@ -63,14 +66,14 @@ func (i Inserter) Insert(task InRecord) error {
 		ctx,
 		`INSERT INTO app.task(columnID, title, description, "order")`+
 			`VALUES ($1, $2, $3, $4) RETURNING id`,
-		task.columnID, task.title, task.description, highestOrder+1,
+		task.columnID, task.title, task.description, order,
 	).Scan(&taskID); err != nil {
 		return err
 	}
 
 	// Insert subtasks for the task into the database.
 	for j, subtaskTitle := range task.subtaskTitles {
-		order := j + 1
+		order := j
 		_, err = tx.ExecContext(
 			ctx,
 			`INSERT INTO app.subtask(taskID, title, "order", isDone) `+

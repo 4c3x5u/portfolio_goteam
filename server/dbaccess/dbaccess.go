@@ -15,6 +15,4 @@ type Counter interface{ Count(string) (int, error) }
 
 // Updater defines a type that updates a field of a record in the database with
 // a new value.
-type Updater[T any] interface {
-	Update(string, T) error
-}
+type Updater[T any] interface{ Update(string, T) error }
