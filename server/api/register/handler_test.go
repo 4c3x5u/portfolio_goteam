@@ -88,37 +88,6 @@ func TestHandler(t *testing.T) {
 		}
 	}
 
-	t.Run("MethodNotAllowed", func(t *testing.T) {
-		for _, httpMethod := range []string{
-			http.MethodConnect, http.MethodDelete, http.MethodGet,
-			http.MethodHead, http.MethodOptions, http.MethodPatch,
-			http.MethodPut, http.MethodTrace,
-		} {
-			t.Run(httpMethod, func(t *testing.T) {
-				req, err := http.NewRequest(httpMethod, "/register", nil)
-				if err != nil {
-					t.Fatal(err)
-				}
-				w := httptest.NewRecorder()
-
-				sut.Handle(w, req, "")
-
-				if err = assert.Equal(
-					http.StatusMethodNotAllowed, w.Result().StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
-
-				if err := assert.Equal(
-					http.MethodPost,
-					w.Result().Header.Get("Access-Control-Allow-Methods"),
-				); err != nil {
-					t.Error(err)
-				}
-			})
-		}
-	})
-
 	validReqBody := ReqBody{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
 		name              string

@@ -54,13 +54,6 @@ func NewPOSTHandler(
 func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, _ string,
 ) {
-	// Only accept POST.
-	if r.Method != http.MethodPost {
-		w.Header().Add(api.AllowedMethods([]string{http.MethodPost}))
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Read request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
