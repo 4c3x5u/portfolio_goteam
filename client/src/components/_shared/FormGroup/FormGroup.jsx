@@ -54,7 +54,9 @@ FormGroup.propTypes = {
   label: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
   setValue: PropTypes.func,
-  error: PropTypes.array || PropTypes.string,
+  error: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string),
+  ]),
   disabled: PropTypes.bool,
 };
 

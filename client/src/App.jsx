@@ -104,19 +104,19 @@ const App = () => {
           {isLoading && <Spinner />}
           <Switch>
             <Route exact path="/">
-              {user.isAuthenticated
+              {cookies.get('auth-token')
                 ? <Home />
                 : <Redirect to="/login" />}
             </Route>
 
             <Route path="/login">
-              {!user.isAuthenticated
+              {!cookies.get('auth-token')
                 ? <Login />
                 : <Redirect to="/" />}
             </Route>
 
             <Route path="/register/:inviteCode?">
-              {!user.isAuthenticated
+              {!cookies.get('auth-token')
                 ? <Register />
                 : <Redirect to="/" />}
             </Route>
