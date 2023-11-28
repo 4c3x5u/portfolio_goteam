@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/http"
+	"os"
 
 	"github.com/kxplxn/goteam/server/auth"
 )
@@ -53,14 +54,21 @@ func NewHandler(
 
 // ServeHTTP responds to HTTP requests.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Keep track of allowed methods to return them in
-	// "Access-Control-Allow-Methods" header on 405.
-	var allowedMethods []string
+	// CORS
+	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("CLIENTORIGIN"))
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Add("Access-Control-Allow-Credentials", "true")
+	allowedMethods := []string{"OPTIONS"}
+	for method := range h.methodHandlers {
+		allowedMethods = append(allowedMethods, method)
+	}
+	w.Header().Add(AllowedMethods(allowedMethods))
+	if r.Method == "OPTIONS" {
+		return
+	}
 
 	// Find the MethodHandler for the HTTP method of the received request.
 	for method, methodHandler := range h.methodHandlers {
-		allowedMethods = append(allowedMethods, method)
-
 		// If found, authenticate and handle with MethodHandler.
 		if r.Method == method {
 			// Get auth token from Authorization header, validate it, and get
@@ -90,6 +98,5 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	// This path of execution means no MethodHandler was found in
 	// h.methodHandlers for the HTTP method of the request.
-	w.Header().Add(AllowedMethods(allowedMethods))
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }

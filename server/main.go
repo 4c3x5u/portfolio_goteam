@@ -23,7 +23,6 @@ import (
 	teamTable "github.com/kxplxn/goteam/server/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/server/log"
-	"github.com/kxplxn/goteam/server/midware"
 )
 
 func main() {
@@ -200,12 +199,9 @@ func main() {
 		},
 	))
 
-	// Set up access control headers required by the endpoints.
-	handler := midware.NewAccessControl(mux, env.ClientOrigin)
-
 	// Serve the app using the ServeMux.
 	log.Info("running server at port " + env.Port)
-	if err := http.ListenAndServe(":"+env.Port, handler); err != nil {
+	if err := http.ListenAndServe(":"+env.Port, mux); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(5)
 	}

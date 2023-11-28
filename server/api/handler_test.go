@@ -32,8 +32,8 @@ func TestHandler(t *testing.T) {
 
 	t.Run("MethodNotAllowed", func(t *testing.T) {
 		for _, httpMethod := range []string{
-			http.MethodConnect, http.MethodGet, http.MethodHead,
-			http.MethodOptions, http.MethodPut, http.MethodTrace,
+			http.MethodConnect, http.MethodGet, http.MethodHead, http.MethodPut,
+			http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
 				req, err := http.NewRequest(httpMethod, "", nil)
