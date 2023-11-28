@@ -68,30 +68,6 @@ func (h GETHandler) Handle(
 		return
 	}
 
-	// Validate board ID. Empty board ID is valid here and in that case we try
-	// to set the active board to the first board in user's team.
-	boardID := r.URL.Query().Get("id")
-	if boardID == "" {
-		// If the board ID is empty, a new board will be created ONLY if the
-		// user is the team admin.
-		if !user.IsAdmin {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
-		if err = h.boardInserter.Insert(
-			boardTable.NewInRecord("New Board", user.TeamID),
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
-	} else {
-		if err = h.idValidator.Validate(boardID); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-	}
-
 	// Format team ID as string to be used by repository methods.
 	teamIDStr := strconv.Itoa(user.TeamID)
 
@@ -118,6 +94,46 @@ func (h GETHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+
+	boardID := r.URL.Query().Get("id")
+	if boardID == "" {
+		if len(boards) > 0 {
+			// If the board ID is empty but boards for the user's team were
+			// found, set the board ID to the first baord's.
+			boardID = strconv.Itoa(boards[0].ID)
+		} else if user.IsAdmin {
+			// If the board ID was empty and NO boards for the user's team were
+			// found, create a board only if the user is an admin.
+			if err = h.boardInserter.Insert(
+				boardTable.NewInRecord("New Board", user.TeamID),
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			}
+			// Refresh boards and set the board ID to the ID of the first (and
+			// only) retrieved.
+			boards, err = h.boardSelectorByTeamID.Select(teamIDStr)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			}
+			boardID = strconv.Itoa(boards[0].ID)
+		} else {
+			// If the board ID is empty, no boards for the user's team were
+			// found, and the user is not admin, return 403 Forbidden.
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+	} else {
+		// Validate board ID if not empty.
+		if err = h.idValidator.Validate(boardID); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	}
+
 	if boardID == "" {
 		boardID = strconv.Itoa(boards[0].ID)
 	}

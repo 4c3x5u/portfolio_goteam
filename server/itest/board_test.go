@@ -142,17 +142,7 @@ func TestBoardHandler(t *testing.T) {
 				assertFunc:     func(*testing.T, *http.Response, string) {},
 			},
 			{
-				name:           "IDEmptyErrForMember",
-				authFunc:       addCookieAuth(jwtTeam2Member),
-				boardID:        "",
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: func(t *testing.T, r *http.Response, _ string) {
-				},
-			},
-			// Empty ID is okay for admins and a new board will be created for
-			// them.
-			{
-				name:           "IDEmptyOKForAdmin",
+				name:           "OKIDEmptyAdmin",
 				authFunc:       addCookieAuth(jwtTeam2Admin),
 				boardID:        "",
 				wantStatusCode: http.StatusOK,

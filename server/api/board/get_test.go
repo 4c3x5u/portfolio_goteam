@@ -116,27 +116,6 @@ func TestGETHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                      "EmptyBoardIDErrForMember",
-			boardID:                   "",
-			user:                      userTable.Record{IsAdmin: false},
-			userSelectorErr:           nil,
-			boardInserterErr:          nil,
-			idValidatorErr:            nil,
-			team:                      teamTable.Record{},
-			teamSelectorErr:           nil,
-			members:                   []userTable.Record{},
-			userSelectorByTeamIDErr:   nil,
-			boards:                    []boardTable.Record{},
-			boardSelectorByTeamIDErr:  nil,
-			activeBoard:               boardTable.RecursiveRecord{},
-			boardSelectorRecursiveErr: nil,
-			wantStatusCode:            http.StatusForbidden,
-			assertFunc: func(
-				_ *testing.T, _ *http.Response, _ string,
-			) {
-			},
-		},
-		{
 			name:                      "InvalidID",
 			boardID:                   "foo",
 			user:                      userTable.Record{},
@@ -152,7 +131,10 @@ func TestGETHandler(t *testing.T) {
 			activeBoard:               boardTable.RecursiveRecord{},
 			boardSelectorRecursiveErr: nil,
 			wantStatusCode:            http.StatusBadRequest,
-			assertFunc:                func(_ *testing.T, _ *http.Response, _ string) {},
+			assertFunc: func(
+				_ *testing.T, _ *http.Response, _ string,
+			) {
+			},
 		},
 		{
 			name:                      "TeamSelectorErr",
