@@ -30,41 +30,9 @@ func TestHandler(t *testing.T) {
 		authTokenGenerator = &auth.FakeTokenGenerator{}
 		log                = &pkgLog.FakeErrorer{}
 	)
-	sut := NewHandler(
+	sut := NewPOSTHandler(
 		validator, userSelector, passwordComparer, authTokenGenerator, log,
 	)
-
-	t.Run("MethodNotAllowed", func(t *testing.T) {
-		for _, httpMethod := range []string{
-			http.MethodConnect, http.MethodDelete, http.MethodGet,
-			http.MethodHead, http.MethodOptions, http.MethodPatch,
-			http.MethodPut, http.MethodTrace,
-		} {
-			t.Run(httpMethod, func(t *testing.T) {
-				req, err := http.NewRequest(httpMethod, "", nil)
-				if err != nil {
-					t.Fatal(err)
-				}
-				w := httptest.NewRecorder()
-
-				sut.ServeHTTP(w, req)
-				res := w.Result()
-
-				if err = assert.Equal(
-					http.StatusMethodNotAllowed, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
-
-				if err := assert.Equal(
-					http.MethodPost,
-					res.Header.Get("Access-Control-Allow-Methods"),
-				); err != nil {
-					t.Error(err)
-				}
-			})
-		}
-	})
 
 	// Used on cases where no case-specific assertions are required.
 	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
@@ -217,7 +185,7 @@ func TestHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
-			sut.ServeHTTP(w, req)
+			sut.Handle(w, req, "")
 			res := w.Result()
 
 			// Assert on the status code.

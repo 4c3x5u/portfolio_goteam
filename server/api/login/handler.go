@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kxplxn/goteam/server/api"
 	"github.com/kxplxn/goteam/server/auth"
 	"github.com/kxplxn/goteam/server/dbaccess"
 	userTable "github.com/kxplxn/goteam/server/dbaccess/user"
@@ -16,8 +15,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Handler is a http.Handler that can be used to handle login requests.
-type Handler struct {
+// POSTHandler is a http.POSTHandler that can be used to handle login requests.
+type POSTHandler struct {
 	validator          ReqValidator
 	userSelector       dbaccess.Selector[userTable.Record]
 	passwordComparer   Comparator
@@ -25,15 +24,15 @@ type Handler struct {
 	log                pkgLog.Errorer
 }
 
-// NewHandler creates and returns a new Handler.
-func NewHandler(
+// NewPOSTHandler creates and returns a new Handler.
+func NewPOSTHandler(
 	validator ReqValidator,
 	userSelector dbaccess.Selector[userTable.Record],
 	hashComparer Comparator,
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
-) Handler {
-	return Handler{
+) POSTHandler {
+	return POSTHandler{
 		validator:          validator,
 		userSelector:       userSelector,
 		passwordComparer:   hashComparer,
@@ -43,14 +42,7 @@ func NewHandler(
 }
 
 // ServeHTTP responds to requests made to the login route.
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Only accept POST.
-	if r.Method != http.MethodPost {
-		w.Header().Add(api.AllowedMethods([]string{http.MethodPost}))
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Read and validate request body.
 	reqBody := ReqBody{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {

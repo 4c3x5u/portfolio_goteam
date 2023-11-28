@@ -74,11 +74,9 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var username string
 
 			// If it's NOT a register or login request, validate JWT.
-			url := r.URL.String()
-			srvOrigin := os.Getenv("SERVERORIGIN")
-			if url != srvOrigin+"/register" && url != srvOrigin+"/login" {
-				// Get auth token from Authorization header, validate it, and get
-				// the subject of the token.
+			if r.URL.Path != "/register" && r.URL.Path != "/login" {
+				// Get auth token from Authorization header, validate it, and
+				// get the subject of the token.
 				ck, err := r.Cookie(auth.CookieName)
 				if errors.Is(err, http.ErrNoCookie) {
 					w.Header().Set(auth.WWWAuthenticate())

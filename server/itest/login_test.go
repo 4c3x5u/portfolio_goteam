@@ -20,7 +20,7 @@ import (
 // TestLoginHandler tests the http.Handler for the login API route and asserts
 // that it behaves correctly during various execution paths.
 func TestLoginHandler(t *testing.T) {
-	sut := loginAPI.NewHandler(
+	sut := loginAPI.NewPOSTHandler(
 		loginAPI.NewValidator(),
 		userTable.NewSelector(db),
 		loginAPI.NewPasswordComparator(),
@@ -110,7 +110,7 @@ func TestLoginHandler(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			sut.ServeHTTP(w, req)
+			sut.Handle(w, req, "")
 
 			res := w.Result()
 

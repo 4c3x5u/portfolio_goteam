@@ -78,14 +78,19 @@ func main() {
 				jwtGenerator,
 				log,
 			),
-		}))
+		},
+	))
 
-	mux.Handle("/login", loginAPI.NewHandler(
-		loginAPI.NewValidator(),
-		userSelector,
-		loginAPI.NewPasswordComparator(),
-		jwtGenerator,
-		log,
+	mux.Handle("/login", api.NewHandler(nil, nil,
+		map[string]api.MethodHandler{
+			http.MethodPost: loginAPI.NewPOSTHandler(
+				loginAPI.NewValidator(),
+				userSelector,
+				loginAPI.NewPasswordComparator(),
+				jwtGenerator,
+				log,
+			),
+		},
 	))
 
 	boardIDValidator := boardAPI.NewIDValidator()
