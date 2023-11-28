@@ -15,6 +15,70 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// GETResp defines the response body for GET board requests.
+type GETResp struct {
+	User        User         `json:"user"`
+	Team        Team         `json:"team"`
+	TeamMembers []TeamMember `json:"members"`
+	Boards      []Board      `json:"boards"`
+	ActiveBoard ActiveBoard  `json:"activeBoard"`
+}
+
+// User defines the user data return in GetResp.
+type User struct {
+	Username string `json:"username"`
+	IsAdmin  bool   `json:"isAdmin"`
+}
+
+// Team defines the team data returned in GETResp.
+type Team struct {
+	ID         int    `json:"id"`
+	InviteCode string `json:"inviteCode"`
+}
+
+// TeamMember defines an item in the team members data returned in GETResp.
+type TeamMember struct {
+	Username string `json:"username"`
+	IsAdmin  bool   `json:"isAdmin"`
+}
+
+// Board defines an item in the boards data returned in GETResp.
+type Board struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+// ActiveBoard defines the active board data returned in GETResp.
+type ActiveBoard struct {
+	ID      int      `json:"id"`
+	Name    string   `json:"name"`
+	Columns []Column `json:"columns"`
+}
+
+// Column defines an item in the column data returned in ActiveBoard.
+type Column struct {
+	ID    int    `json:"id"`
+	Order int    `json:"order"`
+	Tasks []Task `json:"tasks"`
+}
+
+// Task defines an item in the task data returned in Column.
+type Task struct {
+	ID          int       `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Order       int       `json:"order"`
+	Subtasks    []Subtask `json:"subtasks"`
+}
+
+// Subtask defines an item in the subtask data returned in Task.
+type Subtask struct {
+	ID     int    `json:"id"`
+	Title  string `json:"title"`
+	Order  int    `json:"order"`
+	IsDone bool   `json:"isDone"`
+}
+
 // GETHandler is an api.MethodHandler that can be used to handle GET board
 // requests.
 type GETHandler struct {
@@ -225,69 +289,4 @@ func (h GETHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-}
-
-// GETResp defines the response body for GET board requests.
-type GETResp struct {
-	User        User         `json:"user"`
-	Team        Team         `json:"team"`
-	TeamMembers []TeamMember `json:"members"`
-	Boards      []Board      `json:"boards"`
-	ActiveBoard ActiveBoard  `json:"activeBoard"`
-}
-
-// User defines the user data return in GetResp.
-type User struct {
-	Username string `json:"username"`
-	IsAdmin  bool   `json:"isAdmin"`
-}
-
-// Team defines the team data returned in GETResp.
-type Team struct {
-	ID         int    `json:"id"`
-	InviteCode string `json:"inviteCode"`
-}
-
-// TeamMember defines an item in the team members data returned in GETResp.
-type TeamMember struct {
-	Username string `json:"username"`
-	IsAdmin  bool   `json:"isAdmin"`
-	// TODO: figure out what isActive from client is and decide what to do
-}
-
-// Board defines an item in the boards data returned in GETResp.
-type Board struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-// ActiveBoard defines the active board data returned in GETResp.
-type ActiveBoard struct {
-	ID      int      `json:"id"`
-	Name    string   `json:"name"`
-	Columns []Column `json:"columns"`
-}
-
-// Column defines an item in the column data returned in ActiveBoard.
-type Column struct {
-	ID    int    `json:"id"`
-	Order int    `json:"order"`
-	Tasks []Task `json:"tasks"`
-}
-
-// Task defines an item in the task data returned in Column.
-type Task struct {
-	ID          int       `json:"id"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Order       int       `json:"order"`
-	Subtasks    []Subtask `json:"subtasks"`
-}
-
-// Subtask defines an item in the subtask data returned in Task.
-type Subtask struct {
-	ID     int    `json:"id"`
-	Title  string `json:"title"`
-	Order  int    `json:"order"`
-	IsDone bool   `json:"isDone"`
 }
