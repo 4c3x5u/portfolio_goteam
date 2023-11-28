@@ -143,7 +143,10 @@ func (h GETHandler) Handle(
 
 	// Build response from data retrieved from the database.
 	resp := GETResp{
-		Username: username,
+		User: User{
+			Username: user.Username,
+			IsAdmin:  user.IsAdmin,
+		},
 		Team: Team{
 			ID:         team.ID,
 			InviteCode: team.InviteCode,
@@ -210,11 +213,17 @@ func (h GETHandler) Handle(
 
 // GETResp defines the response body for GET board requests.
 type GETResp struct {
-	Username    string       `json:"user"`
+	User        User         `json:"user"`
 	Team        Team         `json:"team"`
 	TeamMembers []TeamMember `json:"members"`
 	Boards      []Board      `json:"boards"`
 	ActiveBoard ActiveBoard  `json:"activeBoard"`
+}
+
+// User defines the user data return in GetResp.
+type User struct {
+	Username string `json:"username"`
+	IsAdmin  bool   `json:"isAdmin"`
 }
 
 // Team defines the team data returned in GETResp.

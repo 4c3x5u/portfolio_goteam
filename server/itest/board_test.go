@@ -165,8 +165,11 @@ func TestBoardHandler(t *testing.T) {
 					}
 
 					if err := assert.Equal(
-						"team2Admin", resp.Username,
+						"team2Admin", resp.User.Username,
 					); err != nil {
+						t.Error(err)
+					}
+					if err := assert.True(resp.User.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
@@ -260,8 +263,11 @@ func TestBoardHandler(t *testing.T) {
 					}
 
 					if err := assert.Equal(
-						"team1Member", resp.Username,
+						"team1Member", resp.User.Username,
 					); err != nil {
+						t.Error(err)
+					}
+					if err := assert.True(!resp.User.IsAdmin); err != nil {
 						t.Error(err)
 					}
 

@@ -285,7 +285,7 @@ func TestGETHandler(t *testing.T) {
 		{
 			name:             "OK",
 			boardID:          "",
-			user:             userTable.Record{IsAdmin: true},
+			user:             userTable.Record{Username: "bob", IsAdmin: true},
 			userSelectorErr:  nil,
 			boardInserterErr: nil,
 			idValidatorErr:   nil,
@@ -348,7 +348,10 @@ func TestGETHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if err := assert.Equal("bob123", resp.Username); err != nil {
+				if err := assert.Equal("bob", resp.User.Username); err != nil {
+					t.Error(err)
+				}
+				if err := assert.True(resp.User.IsAdmin); err != nil {
 					t.Error(err)
 				}
 				if err := assert.Equal(1, resp.Team.ID); err != nil {
