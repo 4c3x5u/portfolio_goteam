@@ -81,7 +81,7 @@ const EditTask = ({
           } else {
             notify(
               'Unable to edit task.',
-              `${err?.message || 'Server Error'}.`,
+              `${err?.response?.data?.error || 'Server Error'}.`,
             );
           }
           setActiveBoard(initialActiveBoard);

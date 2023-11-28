@@ -31,7 +31,7 @@ const DeleteMember = ({ username, toggleOff }) => {
       .catch((err) => {
         notify(
           'Unable to delete member.',
-          `${err?.message || 'Server Error'}.`,
+          `${err?.response?.data?.error || 'Server Error'}.`,
         );
         setMembers(initialMembers);
       });

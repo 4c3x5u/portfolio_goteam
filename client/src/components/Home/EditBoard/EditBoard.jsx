@@ -42,12 +42,13 @@ const EditBoard = ({ id, name, toggleOff }) => {
         .then(toggleOff)
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
+          const editBoardError = err.response.data.message;
           if (serverNameError) {
             setNameError(serverNameError);
-          } else if (err?.message) {
+          } else if (editBoardError) {
             notify(
               'Unable to edit board.',
-              `${err.message || 'Server Error'}.`,
+              `${editBoardError || 'Server Error'}.`,
             );
           }
           setBoards(initialBoards);

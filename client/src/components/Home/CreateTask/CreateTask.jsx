@@ -75,12 +75,13 @@ const CreateTask = ({ toggleOff }) => {
         })
         .catch((err) => {
           const serverTitleError = err?.response?.data?.title || '';
+          const createTaskError = err?.response?.data?.error;
           if (serverTitleError) {
             setTitleError(serverTitleError);
           } else {
             notify(
               'Unable to create task.',
-              `${err?.message || 'Server Error'}.`,
+              `${createTaskError || 'Server Error'}.`,
             );
           }
           setActiveBoard(initialActiveBoard);

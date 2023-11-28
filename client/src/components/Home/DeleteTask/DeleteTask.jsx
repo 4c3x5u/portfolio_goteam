@@ -42,7 +42,7 @@ const DeleteTask = ({
       .catch((err) => {
         notify(
           'Unable to delete task.',
-          `${err?.message || 'Server Error'}.`,
+          `${err?.response?.data?.error || 'Server Error'}.`,
         );
         setActiveBoard(initialActiveBoard);
       });

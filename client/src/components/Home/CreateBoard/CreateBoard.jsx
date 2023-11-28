@@ -43,12 +43,13 @@ const CreateBoard = ({ toggleOff }) => {
         })
         .catch((err) => {
           const serverNameError = err?.response?.data?.name;
+          const createBoardError = err?.response?.data?.error;
           if (serverNameError) {
             setNameError(serverNameError);
-          } else if (err?.message) {
+          } else if (createBoardError) {
             notify(
               'Unable to create board.',
-              `${err.message || 'Server Error'}.`,
+              `${createBoardError || 'Server Error'}.`,
             );
           }
           setBoards(initialBoards);
