@@ -33,7 +33,7 @@ func TestHandler(t *testing.T) {
 		tokenGenerator      = &auth.FakeTokenGenerator{}
 		log                 = &pkgLog.FakeErrorer{}
 	)
-	sut := NewHandler(
+	sut := NewPOSTHandler(
 		userValidator,
 		inviteCodeValidator,
 		teamSelector,
@@ -101,7 +101,7 @@ func TestHandler(t *testing.T) {
 				}
 				w := httptest.NewRecorder()
 
-				sut.ServeHTTP(w, req)
+				sut.Handle(w, req, "")
 
 				if err = assert.Equal(
 					http.StatusMethodNotAllowed, w.Result().StatusCode,
@@ -397,7 +397,7 @@ func TestHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
-			sut.ServeHTTP(w, req)
+			sut.Handle(w, req, "")
 			res := w.Result()
 
 			// Assert on the status code.

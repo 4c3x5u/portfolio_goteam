@@ -15,8 +15,8 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// Handler is a http.Handler that can be used to handle register requests.
-type Handler struct {
+// POSTHandler is a http.POSTHandler that can be used to handle register requests.
+type POSTHandler struct {
 	userValidator       ReqValidator
 	inviteCodeValidator api.StringValidator
 	teamSelector        dbaccess.Selector[teamTable.Record]
@@ -27,8 +27,8 @@ type Handler struct {
 	log                 pkgLog.Errorer
 }
 
-// NewHandler is the constructor for Handler.
-func NewHandler(
+// NewPOSTHandler is the constructor for Handler.
+func NewPOSTHandler(
 	userValidator ReqValidator,
 	inviteCodeValidator api.StringValidator,
 	teamSelector dbaccess.Selector[teamTable.Record],
@@ -37,8 +37,8 @@ func NewHandler(
 	userInserter dbaccess.Inserter[userTable.Record],
 	authTokenGenerator auth.TokenGenerator,
 	log pkgLog.Errorer,
-) Handler {
-	return Handler{
+) POSTHandler {
+	return POSTHandler{
 		userValidator:       userValidator,
 		inviteCodeValidator: inviteCodeValidator,
 		teamSelector:        teamSelector,
@@ -51,7 +51,9 @@ func NewHandler(
 }
 
 // ServeHTTP responds to requests made to the register route.
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h POSTHandler) Handle(
+	w http.ResponseWriter, r *http.Request, _ string,
+) {
 	// Only accept POST.
 	if r.Method != http.MethodPost {
 		w.Header().Add(api.AllowedMethods([]string{http.MethodPost}))

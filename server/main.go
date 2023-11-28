@@ -63,19 +63,22 @@ func main() {
 	mux := http.NewServeMux()
 
 	teamSelectorByInvCode := teamTable.NewSelectorByInvCode(db)
-	mux.Handle("/register", registerAPI.NewHandler(
-		registerAPI.NewUserValidator(
-			registerAPI.NewUsernameValidator(),
-			registerAPI.NewPasswordValidator(),
-		),
-		registerAPI.NewInviteCodeValidator(),
-		teamSelectorByInvCode,
-		userSelector,
-		registerAPI.NewPasswordHasher(),
-		userTable.NewInserter(db),
-		jwtGenerator,
-		log,
-	))
+	mux.Handle("/register", api.NewHandler(nil, nil,
+		map[string]api.MethodHandler{
+			http.MethodPost: registerAPI.NewPOSTHandler(
+				registerAPI.NewUserValidator(
+					registerAPI.NewUsernameValidator(),
+					registerAPI.NewPasswordValidator(),
+				),
+				registerAPI.NewInviteCodeValidator(),
+				teamSelectorByInvCode,
+				userSelector,
+				registerAPI.NewPasswordHasher(),
+				userTable.NewInserter(db),
+				jwtGenerator,
+				log,
+			),
+		}))
 
 	mux.Handle("/login", loginAPI.NewHandler(
 		loginAPI.NewValidator(),

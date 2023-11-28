@@ -34,19 +34,19 @@ func AllowedMethods(methods []string) (string, string) {
 
 // Handler is a http.Handler that can be used to handle requests.
 type Handler struct {
-	authHeaderReader   auth.HeaderReader
+	bearerTokenReader  auth.HeaderReader //TODO: remove
 	authTokenValidator auth.TokenValidator
 	methodHandlers     map[string]MethodHandler
 }
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
-	authHeaderReader auth.HeaderReader,
+	bearerTokenReader auth.HeaderReader, //TODO: remove
 	authTokenValidator auth.TokenValidator,
 	methodHandlers map[string]MethodHandler,
 ) Handler {
 	return Handler{
-		authHeaderReader:   authHeaderReader,
+		bearerTokenReader:  bearerTokenReader, //TODO: remove
 		authTokenValidator: authTokenValidator,
 		methodHandlers:     methodHandlers,
 	}
@@ -54,45 +54,52 @@ func NewHandler(
 
 // ServeHTTP responds to HTTP requests.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// CORS
+	// Add CORS headers.
 	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("CLIENTORIGIN"))
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Add("Access-Control-Allow-Credentials", "true")
-	allowedMethods := []string{"OPTIONS"}
+	allowedMethods := []string{http.MethodOptions}
 	for method := range h.methodHandlers {
 		allowedMethods = append(allowedMethods, method)
 	}
 	w.Header().Add(AllowedMethods(allowedMethods))
-	if r.Method == "OPTIONS" {
+	// If method OPTIONS, return with set headers.
+	if r.Method == http.MethodOptions {
 		return
 	}
 
 	// Find the MethodHandler for the HTTP method of the received request.
 	for method, methodHandler := range h.methodHandlers {
-		// If found, authenticate and handle with MethodHandler.
 		if r.Method == method {
-			// Get auth token from Authorization header, validate it, and get
-			// the subject of the token.
-			ck, err := r.Cookie(auth.CookieName)
-			if errors.Is(err, http.ErrNoCookie) {
-				w.Header().Set(auth.WWWAuthenticate())
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
+			var username string
 
-			sub := h.authTokenValidator.Validate(ck.Value)
-			if sub == "" {
-				w.Header().Set(auth.WWWAuthenticate())
-				w.WriteHeader(http.StatusUnauthorized)
-				return
+			// If it's NOT a register or login request, validate JWT.
+			url := r.URL.String()
+			srvOrigin := os.Getenv("SERVERORIGIN")
+			if url != srvOrigin+"/register" && url != srvOrigin+"/login" {
+				// Get auth token from Authorization header, validate it, and get
+				// the subject of the token.
+				ck, err := r.Cookie(auth.CookieName)
+				if errors.Is(err, http.ErrNoCookie) {
+					w.Header().Set(auth.WWWAuthenticate())
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				username = h.authTokenValidator.Validate(ck.Value)
+				if username == "" {
+					w.Header().Set(auth.WWWAuthenticate())
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
 			}
 
 			// Token sub is used as the username in methodHandler.Handle.
-			methodHandler.Handle(w, r, sub)
+			methodHandler.Handle(w, r, username)
 			return
 		}
 	}
