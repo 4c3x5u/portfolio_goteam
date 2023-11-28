@@ -30,6 +30,8 @@ const (
 		"1lbWJlciJ9.g4FxHf1WupHGzzlvvi-8my1shFhpNuaWZKfJSV-Edxs"
 	jwtTeam3Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtM0F" +
 		"kbWluIn0.QHFI2okGYug7GNwMwwpwYyTtZkx53I-R-uNjlodCwTU"
+	jwtTeam4Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtNEF" +
+		"kbWluIn0.BxguaMUSynY33m3CB3jsV-l4ZC0bTE8_8XJJ8VFNo3o"
 )
 
 // addCookieAuth is used in various test cases to authenticate the request

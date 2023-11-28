@@ -89,12 +89,14 @@ func main() {
 	boardIDValidator := boardAPI.NewIDValidator()
 	boardNameValidator := boardAPI.NewNameValidator()
 	boardSelector := boardTable.NewSelector(db)
+	boardInserter := boardTable.NewInserter(db)
 	mux.Handle("/board", api.NewHandler(
 		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodGet: boardAPI.NewGETHandler(
 				userSelector,
+				boardInserter,
 				boardIDValidator,
 				boardTable.NewRecursiveSelector(db),
 				teamTable.NewSelector(db),
@@ -106,7 +108,7 @@ func main() {
 				userSelector,
 				boardNameValidator,
 				boardTable.NewCounter(db),
-				boardTable.NewInserter(db),
+				boardInserter,
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(

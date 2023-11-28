@@ -24,6 +24,7 @@ import (
 func TestBoardHandler(t *testing.T) {
 	// Create board API handler.
 	userSelector := userTable.NewSelector(db)
+	boardInserter := boardTable.NewInserter(db)
 	nameValidator := boardAPI.NewNameValidator()
 	idValidator := boardAPI.NewIDValidator()
 	boardSelector := boardTable.NewSelector(db)
@@ -34,6 +35,7 @@ func TestBoardHandler(t *testing.T) {
 		map[string]api.MethodHandler{
 			http.MethodGet: boardAPI.NewGETHandler(
 				userSelector,
+				boardInserter,
 				idValidator,
 				boardTable.NewRecursiveSelector(db),
 				teamTable.NewSelector(db),
@@ -45,7 +47,7 @@ func TestBoardHandler(t *testing.T) {
 				userSelector,
 				nameValidator,
 				boardTable.NewCounter(db),
-				boardTable.NewInserter(db),
+				boardInserter,
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
@@ -139,6 +141,14 @@ func TestBoardHandler(t *testing.T) {
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T, *http.Response, string) {},
 			},
+			{
+				name:           "IDEmptyErrForMember",
+				authFunc:       addCookieAuth(jwtTeam2Member),
+				boardID:        "",
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: func(t *testing.T, r *http.Response, _ string) {
+				},
+			},
 			// Empty ID is okay for admins and a new board will be created for
 			// them.
 			{
@@ -171,14 +181,13 @@ func TestBoardHandler(t *testing.T) {
 					}
 
 					if err := assert.Equal(
-						1, len(resp.TeamMembers),
+						2, len(resp.TeamMembers),
 					); err != nil {
 						t.Error(err)
 					}
 					member := resp.TeamMembers[0]
 					if err := assert.Equal(
-						member.Username,
-						"team2Admin",
+						member.Username, "team2Admin",
 					); err != nil {
 						t.Error(err)
 					}
@@ -186,6 +195,7 @@ func TestBoardHandler(t *testing.T) {
 						t.Error(err)
 					}
 
+					// When ID is empty, a new board will be created for user.
 					if err := assert.Equal(
 						1, len(resp.Boards),
 					); err != nil {
@@ -205,7 +215,7 @@ func TestBoardHandler(t *testing.T) {
 						t.Error(err)
 					}
 					if err := assert.Equal(
-						"NewBoard", resp.ActiveBoard.Name,
+						"New Board", resp.ActiveBoard.Name,
 					); err != nil {
 						t.Error(err)
 					}
@@ -494,15 +504,15 @@ func TestBoardHandler(t *testing.T) {
 			},
 			{
 				name:           "Success",
-				authFunc:       addCookieAuth(jwtTeam2Admin),
-				boardName:      "Team 2 Board 2",
+				authFunc:       addCookieAuth(jwtTeam4Admin),
+				boardName:      "Team 4 Board 1",
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
 					// Assert that bob124 is assigned to the board as admin.
 					var count int
 					err := db.QueryRow(
 						"SELECT COUNT(*) boardID FROM app.board " +
-							"WHERE teamID = 2",
+							"WHERE teamID = 4",
 					).Scan(&count)
 					if err != nil {
 						t.Error(err)
@@ -513,7 +523,7 @@ func TestBoardHandler(t *testing.T) {
 
 					var boardID int
 					err = db.QueryRow(
-						"SELECT id FROM app.board WHERE teamID = 2",
+						"SELECT id FROM app.board WHERE teamID = 4",
 					).Scan(&boardID)
 					if err != nil {
 						t.Error(err)

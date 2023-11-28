@@ -19,6 +19,7 @@ import (
 // requests.
 type GETHandler struct {
 	userSelector           dbaccess.Selector[userTable.Record]
+	boardInserter          dbaccess.Inserter[boardTable.InRecord]
 	idValidator            api.StringValidator
 	boardSelectorRecursive dbaccess.Selector[boardTable.RecursiveRecord]
 	teamSelector           dbaccess.Selector[teamTable.Record]
@@ -30,6 +31,7 @@ type GETHandler struct {
 // NewGETHandler creates and returns a new GETHandler.
 func NewGETHandler(
 	userSelector dbaccess.Selector[userTable.Record],
+	boardInserter dbaccess.Inserter[boardTable.InRecord],
 	idValidator api.StringValidator,
 	boardSelectorRecursive dbaccess.Selector[boardTable.RecursiveRecord],
 	teamSelector dbaccess.Selector[teamTable.Record],
@@ -39,6 +41,7 @@ func NewGETHandler(
 ) GETHandler {
 	return GETHandler{
 		userSelector:           userSelector,
+		boardInserter:          boardInserter,
 		idValidator:            idValidator,
 		boardSelectorRecursive: boardSelectorRecursive,
 		teamSelector:           teamSelector,
@@ -68,7 +71,21 @@ func (h GETHandler) Handle(
 	// Validate board ID. Empty board ID is valid here and in that case we try
 	// to set the active board to the first board in user's team.
 	boardID := r.URL.Query().Get("id")
-	if boardID != "" {
+	if boardID == "" {
+		// If the board ID is empty, a new board will be created ONLY if the
+		// user is the team admin.
+		if !user.IsAdmin {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		if err = h.boardInserter.Insert(
+			boardTable.NewInRecord("New Board", user.TeamID),
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	} else {
 		if err = h.idValidator.Validate(boardID); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return
@@ -100,6 +117,9 @@ func (h GETHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
+	}
+	if boardID == "" {
+		boardID = strconv.Itoa(boards[0].ID)
 	}
 
 	// Select recursive board record from the database.

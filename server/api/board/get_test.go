@@ -22,6 +22,7 @@ import (
 // behaves correctly in all possible scenarios.
 func TestGETHandler(t *testing.T) {
 	userSelector := &userTable.FakeSelector{}
+	boardInserter := &boardTable.FakeInserter{}
 	idValidator := &api.FakeStringValidator{}
 	boardSelectorRecursive := &boardTable.FakeSelectorRecursive{}
 	teamSelector := &teamTable.FakeSelector{}
@@ -31,6 +32,7 @@ func TestGETHandler(t *testing.T) {
 
 	sut := NewGETHandler(
 		userSelector,
+		boardInserter,
 		idValidator,
 		boardSelectorRecursive,
 		teamSelector,
@@ -44,6 +46,7 @@ func TestGETHandler(t *testing.T) {
 		boardID                   string
 		user                      userTable.Record
 		userSelectorErr           error
+		boardInserterErr          error
 		idValidatorErr            error
 		team                      teamTable.Record
 		teamSelectorErr           error
@@ -61,6 +64,7 @@ func TestGETHandler(t *testing.T) {
 			boardID:                   "",
 			user:                      userTable.Record{},
 			userSelectorErr:           sql.ErrNoRows,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -78,6 +82,7 @@ func TestGETHandler(t *testing.T) {
 			boardID:                   "",
 			user:                      userTable.Record{},
 			userSelectorErr:           sql.ErrConnDone,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -91,10 +96,52 @@ func TestGETHandler(t *testing.T) {
 			assertFunc:                assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
+			name:                      "BoardInserterErr",
+			boardID:                   "",
+			user:                      userTable.Record{IsAdmin: true},
+			userSelectorErr:           nil,
+			boardInserterErr:          errors.New("error inserting board"),
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				"error inserting board",
+			),
+		},
+		{
+			name:                      "EmptyBoardIDErrForMember",
+			boardID:                   "",
+			user:                      userTable.Record{IsAdmin: false},
+			userSelectorErr:           nil,
+			boardInserterErr:          nil,
+			idValidatorErr:            nil,
+			team:                      teamTable.Record{},
+			teamSelectorErr:           nil,
+			members:                   []userTable.Record{},
+			userSelectorByTeamIDErr:   nil,
+			boards:                    []boardTable.Record{},
+			boardSelectorByTeamIDErr:  nil,
+			activeBoard:               boardTable.RecursiveRecord{},
+			boardSelectorRecursiveErr: nil,
+			wantStatusCode:            http.StatusForbidden,
+			assertFunc: func(
+				_ *testing.T, _ *http.Response, _ string,
+			) {
+			},
+		},
+		{
 			name:                      "InvalidID",
 			boardID:                   "foo",
 			user:                      userTable.Record{},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            errors.New("error invalid id"),
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -110,8 +157,9 @@ func TestGETHandler(t *testing.T) {
 		{
 			name:                      "TeamSelectorErr",
 			boardID:                   "",
-			user:                      userTable.Record{},
+			user:                      userTable.Record{IsAdmin: true},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           sql.ErrNoRows,
@@ -127,8 +175,9 @@ func TestGETHandler(t *testing.T) {
 		{
 			name:                      "UserSelectorByTeamIDErr",
 			boardID:                   "",
-			user:                      userTable.Record{},
+			user:                      userTable.Record{IsAdmin: true},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -144,8 +193,9 @@ func TestGETHandler(t *testing.T) {
 		{
 			name:                      "BoardSelectorByTeamIDErr",
 			boardID:                   "",
-			user:                      userTable.Record{},
+			user:                      userTable.Record{IsAdmin: true},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -161,8 +211,9 @@ func TestGETHandler(t *testing.T) {
 		{
 			name:                      "NoBoards",
 			boardID:                   "",
-			user:                      userTable.Record{},
+			user:                      userTable.Record{IsAdmin: true},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -177,9 +228,10 @@ func TestGETHandler(t *testing.T) {
 		},
 		{
 			name:                      "RecursiveBoardNotFound",
-			boardID:                   "",
-			user:                      userTable.Record{},
+			boardID:                   "1",
+			user:                      userTable.Record{IsAdmin: false},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -194,9 +246,10 @@ func TestGETHandler(t *testing.T) {
 		},
 		{
 			name:                      "BoardSelectorErr",
-			boardID:                   "",
-			user:                      userTable.Record{},
+			boardID:                   "1",
+			user:                      userTable.Record{IsAdmin: false},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -210,10 +263,13 @@ func TestGETHandler(t *testing.T) {
 			assertFunc:                assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
-			name:                      "BoardWrongTeam",
-			boardID:                   "",
-			user:                      userTable.Record{TeamID: 1},
+			name:    "BoardWrongTeam",
+			boardID: "1",
+			user: userTable.Record{
+				TeamID: 1, IsAdmin: false,
+			},
 			userSelectorErr:           nil,
+			boardInserterErr:          nil,
 			idValidatorErr:            nil,
 			team:                      teamTable.Record{},
 			teamSelectorErr:           nil,
@@ -227,13 +283,14 @@ func TestGETHandler(t *testing.T) {
 			assertFunc:                func(_ *testing.T, _ *http.Response, _ string) {},
 		},
 		{
-			name:            "OK",
-			boardID:         "",
-			user:            userTable.Record{},
-			userSelectorErr: nil,
-			idValidatorErr:  nil,
-			team:            teamTable.Record{ID: 1, InviteCode: "InvCode"},
-			teamSelectorErr: nil,
+			name:             "OK",
+			boardID:          "",
+			user:             userTable.Record{IsAdmin: true},
+			userSelectorErr:  nil,
+			boardInserterErr: nil,
+			idValidatorErr:   nil,
+			team:             teamTable.Record{ID: 1, InviteCode: "InvCode"},
+			teamSelectorErr:  nil,
 			members: []userTable.Record{
 				{Username: "foo", IsAdmin: true},
 				{Username: "bob123", IsAdmin: false},
@@ -374,27 +431,23 @@ func TestGETHandler(t *testing.T) {
 						task := col.Tasks[j]
 
 						if err := assert.Equal(
-							wantTask.ID,
-							task.ID,
+							wantTask.ID, task.ID,
 						); err != nil {
 							t.Error(err)
 						}
 						if err := assert.Equal(
-							wantTask.Title,
-							task.Title,
+							wantTask.Title, task.Title,
 						); err != nil {
 							t.Error(err)
 						}
 						if err := assert.Equal(
-							*wantTask.Description,
-							task.Description,
+							*wantTask.Description, task.Description,
 						); err != nil {
 							t.Error(err)
 						}
 
 						if err := assert.Equal(
-							len(wantTask.Subtasks),
-							len(task.Subtasks),
+							len(wantTask.Subtasks), len(task.Subtasks),
 						); err != nil {
 							t.Error(err)
 						}
@@ -402,26 +455,22 @@ func TestGETHandler(t *testing.T) {
 							subtask := task.Subtasks[k]
 
 							if err := assert.Equal(
-								wantSubtask.ID,
-								subtask.ID,
+								wantSubtask.ID, subtask.ID,
 							); err != nil {
 								t.Error(err)
 							}
 							if err := assert.Equal(
-								wantSubtask.Title,
-								subtask.Title,
+								wantSubtask.Title, subtask.Title,
 							); err != nil {
 								t.Error(err)
 							}
 							if err := assert.Equal(
-								wantSubtask.Order,
-								subtask.Order,
+								wantSubtask.Order, subtask.Order,
 							); err != nil {
 								t.Error(err)
 							}
 							if err := assert.Equal(
-								wantSubtask.IsDone,
-								subtask.IsDone,
+								wantSubtask.IsDone, subtask.IsDone,
 							); err != nil {
 								t.Error(err)
 							}
@@ -434,6 +483,7 @@ func TestGETHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			userSelector.Rec = c.user
 			userSelector.Err = c.userSelectorErr
+			boardInserter.Err = c.boardInserterErr
 			idValidator.Err = c.idValidatorErr
 			teamSelector.Rec = c.team
 			teamSelector.Err = c.teamSelectorErr

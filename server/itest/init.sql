@@ -48,7 +48,9 @@ INSERT INTO app.team(inviteCode)
 VALUES 
     ('afeadc4a-68b0-4c33-9e83-4648d20ff26a'),
     ('66ca0ddf-5f62-4713-bcc9-36cb0954eb7b'),
-    ('74c80ae5-64f3-4298-a8ff-48f8f920c7d4');
+    ('74c80ae5-64f3-4298-a8ff-48f8f920c7d4'),
+    ('3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc');
+
 
 INSERT INTO app."user"(username, password, teamID, isAdmin) 
 VALUES 
@@ -56,7 +58,8 @@ VALUES
     ('team1Member', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 1, false),
     ('team2Admin', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 2, true),
     ('team2Member', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 2, false),
-    ('team3Admin', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 3, true);
+    ('team3Admin', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 3, true),
+    ('team4Admin', '$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO', 4, true);
 
 INSERT INTO app.board(name, teamID)
 VALUES
