@@ -44,9 +44,7 @@ func TestSelectorByTeamID(t *testing.T) {
 		mock.ExpectQuery(sqlSelect).WithArgs(teamID).WillReturnRows(rows)
 
 		recs, err := sut.Select(teamID)
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Fatal, err)
 
 		for i, wantRec := range wantRecs {
 			assert.Equal(t.Error, recs[i].ID, wantRec.ID)

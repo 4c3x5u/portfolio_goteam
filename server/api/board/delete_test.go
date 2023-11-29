@@ -157,10 +157,7 @@ func TestDELETEHandler(t *testing.T) {
 			userBoardDeleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
-			req, err := http.NewRequest(http.MethodPost, "", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest(http.MethodPost, "/", nil)
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.

@@ -99,34 +99,11 @@ func TestEnv(t *testing.T) {
 	}
 
 	t.Run("Success", func(t *testing.T) {
-		if err := os.Setenv("PORT", "8000"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Setenv("DBCONNSTR", "connection.string"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Setenv("JWTKEY", "secretjwtsigningkey"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Setenv("CLIENTORIGIN", "client:origin"); err != nil {
-			t.Fatal(err)
-		}
+		assert.Nil(t.Fatal, os.Setenv("PORT", "8000"))
+		assert.Nil(t.Fatal, os.Setenv("DBCONNSTR", "connection.string"))
+		assert.Nil(t.Fatal, os.Setenv("JWTKEY", "secretjwtsigningkey"))
+		assert.Nil(t.Fatal, os.Setenv("CLIENTORIGIN", "client:origin"))
 
-		if err := assert.Nil(newEnv().validate()); err != nil {
-			t.Error(err)
-		}
-
-		if err := os.Unsetenv("PORT"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Unsetenv("DBCONNSTR"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Unsetenv("JWTKEY"); err != nil {
-			t.Fatal(err)
-		}
-		if err := os.Unsetenv("CLIENTORIGIN"); err != nil {
-			t.Fatal(err)
-		}
+		assert.Nil(t.Error, newEnv().validate())
 	})
 }

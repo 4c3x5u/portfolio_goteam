@@ -44,11 +44,10 @@ func AllEqual[T comparable](logErr func(...any), got, want []T) {
 }
 
 // Nil asserts that a given value is nil.
-func Nil(got any) error {
+func Nil(logErr func(...any), got any) {
 	if got != nil {
-		return newErr(got, "<nil>")
+		logErr(newErr(got, "<nil>"))
 	}
-	return nil
 }
 
 // True asserts that a given boolean value is true.

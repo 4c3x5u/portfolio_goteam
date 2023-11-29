@@ -77,9 +77,7 @@ func TestUpdater(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(21, 1))
 			},
 			assertOnErr: func(logFunc func(...any), err error) {
-				if err := assert.Nil(err); err != nil {
-					logFunc(err)
-				}
+				assert.Nil(t.Error, err)
 			},
 		},
 	} {

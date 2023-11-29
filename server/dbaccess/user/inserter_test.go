@@ -89,9 +89,7 @@ func TestInserter(t *testing.T) {
 
 		err := sut.Insert(rec)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -107,8 +105,6 @@ func TestInserter(t *testing.T) {
 
 		err := sut.Insert(rec)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 	})
 }

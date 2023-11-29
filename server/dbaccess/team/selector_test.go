@@ -50,9 +50,7 @@ func TestSelector(t *testing.T) {
 
 		team, err := sut.Select(id)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 		assert.Equal(t.Error, strconv.Itoa(team.ID), id)
 		assert.Equal(t.Error, team.InviteCode, wantInviteCode)
 	})

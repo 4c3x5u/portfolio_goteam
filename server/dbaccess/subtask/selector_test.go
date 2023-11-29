@@ -47,9 +47,7 @@ func TestSelector(t *testing.T) {
 			)
 
 		subtask, err := sut.Select(id)
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 		assert.Equal(t.Error, subtask.TaskID, wantColumnID)
 	})
 }

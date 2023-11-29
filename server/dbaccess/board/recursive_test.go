@@ -176,10 +176,8 @@ func TestRecursiveSelector(t *testing.T) {
 			)
 
 		res, err := sut.Select(boardID)
+		assert.Nil(t.Fatal, err)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
 		assert.Equal(t.Error, res.ID, 1)
 		assert.Equal(t.Error, res.Name, "board 1")
 		assert.Equal(t.Error, res.TeamID, 21)

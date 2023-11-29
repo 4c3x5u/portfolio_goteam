@@ -48,9 +48,7 @@ func TestInviteCodeValidator(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		inviteCode := "f45889dc-bfdc-4c4a-9a43-7865a8ada243"
 		err := sut.Validate(inviteCode)
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 	})
 }
 

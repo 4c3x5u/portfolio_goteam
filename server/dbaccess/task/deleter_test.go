@@ -119,8 +119,6 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Error, err)
 	})
 }

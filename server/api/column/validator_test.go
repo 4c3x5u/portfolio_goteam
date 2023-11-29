@@ -38,9 +38,7 @@ func TestIDValidator(t *testing.T) {
 			err := sut.Validate(c.columnID)
 
 			if c.wantErrMsg == "" {
-				if assertErr := assert.Nil(err); assertErr != nil {
-					t.Error(assertErr)
-				}
+				assert.Nil(t.Error, err)
 			} else {
 				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 			}

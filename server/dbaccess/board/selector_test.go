@@ -46,9 +46,8 @@ func TestSelector(t *testing.T) {
 	}
 
 	board, err = sut.Select(boardID)
-	if err = assert.Nil(err); err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t.Fatal, err)
+
 	assert.Equal(t.Error, strconv.Itoa(board.ID), boardID)
 	assert.Equal(t.Error, board.Name, existingBoardName)
 	assert.Equal(t.Error, board.TeamID, teamID)

@@ -47,9 +47,8 @@ func TestSelector(t *testing.T) {
 	}
 
 	column, err = sut.Select(columnID)
-	if err = assert.Nil(err); err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t.Fatal, err)
+
 	assert.Equal(t.Error, strconv.Itoa(column.ID), columnID)
 	assert.Equal(t.Error, column.BoardID, existingColumnBoardID)
 	assert.Equal(t.Error, column.Order, existingColumnOrder)

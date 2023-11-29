@@ -50,10 +50,8 @@ func TestSelectorByInvCode(t *testing.T) {
 			)
 
 		team, err := sut.Select(inviteCode)
+		assert.Nil(t.Fatal, err)
 
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
 		assert.Equal(t.Error, team.ID, id)
 		assert.Equal(t.Error, team.InviteCode, inviteCode)
 	})

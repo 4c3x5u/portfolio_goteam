@@ -37,10 +37,8 @@ func TestPasswordHasher(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			hash, err := sut.Hash(c.inPlaintext)
+			assert.Nil(t.Fatal, err)
 
-			if err = assert.Nil(err); err != nil {
-				t.Error(err)
-			}
 			err = bcrypt.CompareHashAndPassword(hash, []byte(c.matchPlaintext))
 			assert.Equal(t.Error, err, c.wantErr)
 		})

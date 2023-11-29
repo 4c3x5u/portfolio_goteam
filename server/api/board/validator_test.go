@@ -39,9 +39,7 @@ func TestNameValidator(t *testing.T) {
 		err := sut.Validate(c.boardName)
 
 		if c.wantErrMsg == "" {
-			if err = assert.Nil(err); err != nil {
-				t.Error(err)
-			}
+			assert.Nil(t.Error, err)
 		} else {
 			assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 		}
@@ -78,9 +76,7 @@ func TestIDValidator(t *testing.T) {
 			err := sut.Validate(c.boardID)
 
 			if c.wantErrMsg == "" {
-				if err = assert.Nil(err); err != nil {
-					t.Error(err)
-				}
+				assert.Nil(t.Error, err)
 			} else {
 				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 			}

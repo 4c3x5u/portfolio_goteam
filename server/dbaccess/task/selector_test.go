@@ -54,9 +54,8 @@ func TestSelector(t *testing.T) {
 	}
 
 	task, err = sut.Select(id)
-	if err = assert.Nil(err); err != nil {
-		t.Error(err)
-	}
+	assert.Nil(t.Fatal, err)
+
 	assert.Equal(t.Error, task.ID, wantID)
 	assert.Equal(t.Error, task.ColumnID, wantColumnID)
 	assert.Equal(t.Error, *task.Description, wantDescription)

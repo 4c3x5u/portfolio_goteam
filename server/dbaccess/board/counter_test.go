@@ -41,9 +41,8 @@ func TestCounter(t *testing.T) {
 		)
 
 		count, err := sut.Count(teamID)
-		if err = assert.Nil(err); err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t.Fatal, err)
+
 		assert.Equal(t.Error, count, wantCount)
 	})
 }
