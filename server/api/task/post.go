@@ -16,12 +16,17 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// POSTReqBody defines the request body for requests handled by POSTHandler.
-type POSTReqBody struct {
+// POSTReq defines the body of POST task requests.
+type POSTReq struct {
 	ColumnID      int      `json:"column"`
 	Title         string   `json:"title"`
 	Description   string   `json:"description"`
 	SubtaskTitles []string `json:"subtasks"`
+}
+
+// POSTResp defines the body of POST task responses.
+type POSTResp struct {
+	Error string `json:"error"`
 }
 
 // POSTHandler is an api.MethodHandler that can be used to handle POST requests
@@ -65,7 +70,7 @@ func (h *POSTHandler) Handle(
 	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
 			Error: "Username is not recognised.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -80,7 +85,7 @@ func (h *POSTHandler) Handle(
 	}
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
 			Error: "Only team admins can create tasks.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -89,7 +94,7 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
-	var reqBody POSTReqBody
+	var reqBody POSTReq
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
@@ -110,7 +115,7 @@ func (h *POSTHandler) Handle(
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(ResBody{
+		if err = json.NewEncoder(w).Encode(POSTResp{
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -134,7 +139,7 @@ func (h *POSTHandler) Handle(
 			}
 
 			w.WriteHeader(http.StatusBadRequest)
-			if err = json.NewEncoder(w).Encode(ResBody{
+			if err = json.NewEncoder(w).Encode(POSTResp{
 				Error: errMsg,
 			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -150,7 +155,7 @@ func (h *POSTHandler) Handle(
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
 			Error: "Column not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -175,7 +180,7 @@ func (h *POSTHandler) Handle(
 	}
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(ResBody{
+		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
 			Error: "You do not have access to this board.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)

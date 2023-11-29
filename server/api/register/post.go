@@ -27,7 +27,7 @@ type POSTResp struct {
 	ValidationErrs ValidationErrors `json:"validationErrors,omitempty"`
 }
 
-// ValidationErrors defines the validation errors returned in ResBody.
+// ValidationErrors defines the validation errors returned in POSTResp.
 type ValidationErrors struct {
 	Username []string `json:"username,omitempty"`
 	Password []string `json:"password,omitempty"`

@@ -16,8 +16,8 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// PATCHReqBody defines the request body for requests handled by PATCHHandler.
-type PATCHReqBody struct {
+// PATCHReq defines the body of PATCH task requests.
+type PATCHReq struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Subtasks    []struct {
@@ -25,6 +25,11 @@ type PATCHReqBody struct {
 		Order  int    `json:"order"`
 		IsDone bool   `json:"done"`
 	} `json:"subtasks"`
+}
+
+// PATCHResp defines the body of PATCH task responses.
+type PATCHResp struct {
+	Error string `json:"error"`
 }
 
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
@@ -74,7 +79,7 @@ func (h *PATCHHandler) Handle(
 	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: "Username is not recognised.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -89,7 +94,7 @@ func (h *PATCHHandler) Handle(
 	}
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: "Only team admins can edit tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -112,7 +117,7 @@ func (h *PATCHHandler) Handle(
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -121,7 +126,7 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	var reqBody PATCHReqBody
+	var reqBody PATCHReq
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
@@ -142,7 +147,7 @@ func (h *PATCHHandler) Handle(
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -167,7 +172,7 @@ func (h *PATCHHandler) Handle(
 			}
 
 			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(ResBody{
+			if err := json.NewEncoder(w).Encode(PATCHResp{
 				Error: errMsg,
 			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -185,7 +190,7 @@ func (h *PATCHHandler) Handle(
 	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: "Task not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -222,7 +227,7 @@ func (h *PATCHHandler) Handle(
 	}
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: "You do not have access to this board.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
