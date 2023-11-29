@@ -3,12 +3,11 @@
 package login
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ import (
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly.
-func TestHandler(t *testing.T) {
+func TestPOSTHandler(t *testing.T) {
 	var (
 		validator          = &fakeReqValidator{}
 		userSelector       = &userTable.FakeSelector{}
@@ -171,17 +170,7 @@ func TestHandler(t *testing.T) {
 			authTokenGenerator.AuthToken = c.authToken
 			authTokenGenerator.Err = c.tokenGeneratorErr
 
-			// Prepare request and response recorder.
-			reqBody, err := json.Marshal(ReqBody{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req, err := http.NewRequest(
-				http.MethodPost, "", bytes.NewReader(reqBody),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
@@ -189,7 +178,7 @@ func TestHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			if err = assert.Equal(
+			if err := assert.Equal(
 				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)

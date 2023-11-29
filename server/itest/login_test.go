@@ -102,12 +102,9 @@ func TestLoginHandler(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(
-				http.MethodPost, "", bytes.NewReader(reqBody),
+			req := httptest.NewRequest(
+				http.MethodPost, "/", bytes.NewReader(reqBody),
 			)
-			if err != nil {
-				t.Fatal(err)
-			}
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, req, "")

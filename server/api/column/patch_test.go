@@ -3,11 +3,11 @@
 package column
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kxplxn/goteam/server/api"
@@ -228,7 +228,7 @@ func TestPATCHHandler(t *testing.T) {
 			columnUpdater.Err = c.updateColumnErr
 
 			// Prepare request and response recorder.
-			req := httptest.NewRequest("", "/", bytes.NewReader([]byte("[]")))
+			req := httptest.NewRequest("", "/", strings.NewReader("[]"))
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.

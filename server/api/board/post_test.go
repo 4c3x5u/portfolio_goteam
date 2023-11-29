@@ -3,11 +3,11 @@
 package board
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kxplxn/goteam/server/api"
@@ -149,7 +149,6 @@ func TestPOSTHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				// Set pre-determinate return values for sut's dependencies.
 				userSelector.Rec = c.user
 				userSelector.Err = c.userSelectorErr
 				validator.Err = c.validatorErr
@@ -157,12 +156,9 @@ func TestPOSTHandler(t *testing.T) {
 				boardCounter.Err = c.boardCounterErr
 				boardInserter.Err = c.boardInserterErr
 
-				req := httptest.NewRequest(
-					"", "/", bytes.NewReader([]byte("{}")),
-				)
+				req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 				w := httptest.NewRecorder()
 
-				// Handle request with sut and get the result.
 				sut.Handle(w, req, "")
 				res := w.Result()
 

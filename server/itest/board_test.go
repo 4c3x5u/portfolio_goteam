@@ -85,23 +85,20 @@ func TestBoardHandler(t *testing.T) {
 					http.MethodPatch,
 				} {
 					t.Run(method, func(t *testing.T) {
-						req, err := http.NewRequest(method, "", nil)
-						if err != nil {
-							t.Fatal(err)
-						}
+						req := httptest.NewRequest(method, "/", nil)
 						c.authFunc(req)
 						w := httptest.NewRecorder()
 
 						sut.ServeHTTP(w, req)
 						res := w.Result()
 
-						if err = assert.Equal(
+						if err := assert.Equal(
 							http.StatusUnauthorized, res.StatusCode,
 						); err != nil {
 							t.Error(err)
 						}
 
-						if err = assert.Equal(
+						if err := assert.Equal(
 							"Bearer", res.Header.Values("WWW-Authenticate")[0],
 						); err != nil {
 							t.Error(err)
@@ -530,19 +527,16 @@ func TestBoardHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req, err := http.NewRequest(
-					http.MethodGet, "?id="+c.boardID, nil,
+				req := httptest.NewRequest(
+					http.MethodGet, "/?id="+c.boardID, nil,
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
+				if err := assert.Equal(
 					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
@@ -650,12 +644,9 @@ func TestBoardHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(reqBody),
+				req := httptest.NewRequest(
+					http.MethodPost, "/", bytes.NewReader(reqBody),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(req)
 				w := httptest.NewRecorder()
 
@@ -783,19 +774,16 @@ func TestBoardHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req, err := http.NewRequest(
-					http.MethodDelete, "?id="+c.id, nil,
+				req := httptest.NewRequest(
+					http.MethodDelete, "/?id="+c.id, nil,
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(req)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
+				if err := assert.Equal(
 					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)
@@ -895,12 +883,9 @@ func TestBoardHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				req, err := http.NewRequest(
-					http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
+				req := httptest.NewRequest(
+					http.MethodPatch, "/?id="+c.id, bytes.NewReader(reqBody),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(req)
 				w := httptest.NewRecorder()
 

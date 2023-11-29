@@ -3,11 +3,11 @@
 package board
 
 import (
-	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kxplxn/goteam/server/api"
@@ -193,7 +193,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelector.Err = c.boardSelectorErr
 			boardUpdater.Err = c.boardUpdaterErr
 
-			req := httptest.NewRequest("", "/", bytes.NewReader([]byte("{}")))
+			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, req, "")

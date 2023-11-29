@@ -50,23 +50,20 @@ func TestColumnHandler(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				t.Run(http.MethodPatch, func(t *testing.T) {
-					req, err := http.NewRequest(http.MethodPatch, "", nil)
-					if err != nil {
-						t.Fatal(err)
-					}
+					req := httptest.NewRequest(http.MethodPatch, "/", nil)
 					c.authFunc(req)
 					w := httptest.NewRecorder()
 
 					sut.ServeHTTP(w, req)
 					res := w.Result()
 
-					if err = assert.Equal(
+					if err := assert.Equal(
 						http.StatusUnauthorized, res.StatusCode,
 					); err != nil {
 						t.Error(err)
 					}
 
-					if err = assert.Equal(
+					if err := assert.Equal(
 						"Bearer", res.Header.Values("WWW-Authenticate")[0],
 					); err != nil {
 						t.Error(err)
@@ -162,12 +159,9 @@ func TestColumnHandler(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				req, err := http.NewRequest(
-					http.MethodPatch, "?id="+c.id, bytes.NewReader(tasks),
+				req := httptest.NewRequest(
+					http.MethodPatch, "/?id="+c.id, bytes.NewReader(tasks),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(req)
 				w := httptest.NewRecorder()
 

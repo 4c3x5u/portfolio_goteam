@@ -15,6 +15,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// POSTReq defines the request body for POST login requests.
+type POSTReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // POSTHandler is a http.POSTHandler that can be used to handle login requests.
 type POSTHandler struct {
 	validator          ReqValidator
@@ -44,20 +50,20 @@ func NewPOSTHandler(
 // ServeHTTP responds to requests made to the login route.
 func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Read and validate request body.
-	reqBody := ReqBody{}
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	req := POSTReq{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if ok := h.validator.Validate(reqBody); !ok {
+	if ok := h.validator.Validate(req); !ok {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userSelector.Select(reqBody.Username)
+	user, err := h.userSelector.Select(req.Username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -70,7 +76,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
 	if err = h.passwordComparer.Compare(
-		user.Password, reqBody.Password,
+		user.Password, req.Password,
 	); errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -84,7 +90,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Set-Cookie header.
 	expiry := time.Now().Add(auth.Duration).UTC()
 	if authToken, err := h.authTokenGenerator.Generate(
-		reqBody.Username, expiry,
+		req.Username, expiry,
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
