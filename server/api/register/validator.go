@@ -23,7 +23,7 @@ func (v InviteCodeValidator) Validate(inviteCode string) error {
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
 type ReqValidator interface {
-	Validate(ReqBody) ValidationErrors
+	Validate(POSTReq) ValidationErrors
 }
 
 // UserValidator is the ReqValidator for the register route.
@@ -46,7 +46,7 @@ func NewUserValidator(
 // sent the register route. It returns an errors object if any of the individual
 // validations fail. It implements the UserValidator interface on the
 // ReqValidator struct.
-func (v UserValidator) Validate(req ReqBody) ValidationErrors {
+func (v UserValidator) Validate(req POSTReq) ValidationErrors {
 	return ValidationErrors{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),

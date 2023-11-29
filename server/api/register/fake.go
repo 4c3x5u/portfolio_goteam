@@ -4,7 +4,7 @@ package register
 type fakeUserValidator struct{ validationErrs ValidationErrors }
 
 // Validate implements the UserValidator interface on fakeUserValidator.
-func (f *fakeUserValidator) Validate(_ ReqBody) ValidationErrors {
+func (f *fakeUserValidator) Validate(_ POSTReq) ValidationErrors {
 	return f.validationErrs
 }
 

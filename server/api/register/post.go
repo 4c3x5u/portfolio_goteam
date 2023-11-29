@@ -15,6 +15,29 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// POSTReq defines the request body POST register requests.
+type POSTReq struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// POSTResp defines the body of POST register responses.
+type POSTResp struct {
+	Err            string           `json:"error,omitempty"`
+	ValidationErrs ValidationErrors `json:"validationErrors,omitempty"`
+}
+
+// ValidationErrors defines the validation errors returned in ResBody.
+type ValidationErrors struct {
+	Username []string `json:"username,omitempty"`
+	Password []string `json:"password,omitempty"`
+}
+
+// Any checks whether there are any validation errors within the ValidationErrors.
+func (e ValidationErrors) Any() bool {
+	return len(e.Username) > 0 || len(e.Password) > 0
+}
+
 // POSTHandler is a http.POSTHandler that can be used to handle register requests.
 type POSTHandler struct {
 	userValidator       ReqValidator
@@ -55,7 +78,7 @@ func (h POSTHandler) Handle(
 	w http.ResponseWriter, r *http.Request, _ string,
 ) {
 	// Read request body.
-	reqBody := ReqBody{}
+	reqBody := POSTReq{}
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -68,7 +91,7 @@ func (h POSTHandler) Handle(
 	); validationErrs.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{ValidationErrs: validationErrs},
+			POSTResp{ValidationErrs: validationErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -85,7 +108,7 @@ func (h POSTHandler) Handle(
 		if err := h.inviteCodeValidator.Validate(inviteCode); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(
-				ResBody{Err: "Invalid invite code."},
+				POSTResp{Err: "Invalid invite code."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.log.Error(err.Error())
@@ -96,7 +119,7 @@ func (h POSTHandler) Handle(
 		if errors.Is(err, sql.ErrNoRows) {
 			w.WriteHeader(http.StatusNotFound)
 			if err := json.NewEncoder(w).Encode(
-				ResBody{Err: "Team not found."},
+				POSTResp{Err: "Team not found."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.log.Error(err.Error())
@@ -122,7 +145,7 @@ func (h POSTHandler) Handle(
 	if err == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if errEncode := json.NewEncoder(w).Encode(
-			ResBody{ValidationErrs: ValidationErrors{
+			POSTResp{ValidationErrs: ValidationErrors{
 				Username: []string{"Username is already taken."},
 			}},
 		); errEncode != nil {
@@ -160,7 +183,7 @@ func (h POSTHandler) Handle(
 	); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{
+			POSTResp{
 				Err: "You have been registered successfully but something " +
 					"went wrong. Please log in using the credentials you " +
 					"registered with.",

@@ -41,7 +41,7 @@ func TestRegisterHandler(t *testing.T) {
 		wantUsernameErrs, wantPasswordErrs []string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody registerAPI.ResBody
+			var resBody registerAPI.POSTResp
 			if err := json.NewDecoder(res.Body).Decode(
 				&resBody,
 			); err != nil {
@@ -66,7 +66,7 @@ func TestRegisterHandler(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody registerAPI.ResBody
+			var resBody registerAPI.POSTResp
 			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}

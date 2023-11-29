@@ -49,7 +49,7 @@ func TestHandler(t *testing.T) {
 		wantValidationErrs ValidationErrors,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, r *http.Response, _ string) {
-			resBody := &ResBody{}
+			resBody := &POSTResp{}
 			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}
@@ -74,7 +74,7 @@ func TestHandler(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody ResBody
+			var resBody POSTResp
 			if err := json.NewDecoder(
 				res.Body,
 			).Decode(&resBody); err != nil {
@@ -88,10 +88,10 @@ func TestHandler(t *testing.T) {
 		}
 	}
 
-	validReqBody := ReqBody{Username: "bob123", Password: "Myp4ssword!"}
+	validReqBody := POSTReq{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
 		name              string
-		reqBody           ReqBody
+		reqBody           POSTReq
 		validationErrs    ValidationErrors
 		inviteCode        string
 		inviteCodeErr     error
@@ -108,7 +108,7 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name:    "BasicValidatorErrs",
-			reqBody: ReqBody{},
+			reqBody: POSTReq{},
 			validationErrs: ValidationErrors{
 				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
 			},
@@ -132,7 +132,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:              "InvalidInviteCode",
-			reqBody:           ReqBody{},
+			reqBody:           POSTReq{},
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "someinvitecode",
 			inviteCodeErr:     errors.New("an error"),
@@ -149,7 +149,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:              "TeamNotFound",
-			reqBody:           ReqBody{},
+			reqBody:           POSTReq{},
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "someinvitecode",
 			inviteCodeErr:     nil,
@@ -166,7 +166,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:              "TeamSelectorErr",
-			reqBody:           ReqBody{},
+			reqBody:           POSTReq{},
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "someinvitecode",
 			inviteCodeErr:     nil,
@@ -183,7 +183,7 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name:              "UsernameTaken",
-			reqBody:           ReqBody{},
+			reqBody:           POSTReq{},
 			validationErrs:    ValidationErrors{},
 			inviteCode:        "",
 			inviteCodeErr:     nil,
