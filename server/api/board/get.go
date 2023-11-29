@@ -24,45 +24,45 @@ type GETResp struct {
 	ActiveBoard ActiveBoard  `json:"activeBoard"`
 }
 
-// User defines the user data return in GetResp.
+// User defines the user data in GETResp.
 type User struct {
 	Username string `json:"username"`
 	IsAdmin  bool   `json:"isAdmin"`
 }
 
-// Team defines the team data returned in GETResp.
+// Team defines the team data in GETResp.
 type Team struct {
 	ID         int    `json:"id"`
 	InviteCode string `json:"inviteCode"`
 }
 
-// TeamMember defines an item in the team members data returned in GETResp.
+// TeamMember defines an item in the team members data in GETResp.
 type TeamMember struct {
 	Username string `json:"username"`
 	IsAdmin  bool   `json:"isAdmin"`
 }
 
-// Board defines an item in the boards data returned in GETResp.
+// Board defines an item in the boards data in GETResp.
 type Board struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// ActiveBoard defines the active board data returned in GETResp.
+// ActiveBoard defines the active board data in GETResp.
 type ActiveBoard struct {
 	ID      int      `json:"id"`
 	Name    string   `json:"name"`
 	Columns []Column `json:"columns"`
 }
 
-// Column defines an item in the column data returned in ActiveBoard.
+// Column defines an item in the column data in ActiveBoard.
 type Column struct {
 	ID    int    `json:"id"`
 	Order int    `json:"order"`
 	Tasks []Task `json:"tasks"`
 }
 
-// Task defines an item in the task data returned in Column.
+// Task defines an item in the task data in Column.
 type Task struct {
 	ID          int       `json:"id"`
 	Title       string    `json:"title"`
@@ -71,7 +71,7 @@ type Task struct {
 	Subtasks    []Subtask `json:"subtasks"`
 }
 
-// Subtask defines an item in the subtask data returned in Task.
+// Subtask defines an item in the subtask data in Task.
 type Subtask struct {
 	ID     int    `json:"id"`
 	Title  string `json:"title"`

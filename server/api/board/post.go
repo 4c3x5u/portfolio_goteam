@@ -15,6 +15,16 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// POSTReq defines the request body for POST board requests.
+type POSTReq struct {
+	Name string `json:"name"`
+}
+
+// POSTResp defines the response body for POST board requests.
+type POSTResp struct {
+	Error string `json:"error,omitempty"`
+}
+
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type POSTHandler struct {
@@ -52,7 +62,7 @@ func (h POSTHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if encodeErr := json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
+			POSTResp{Error: "Username is not recognised."},
 		); encodeErr != nil {
 			h.log.Error(encodeErr.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -67,7 +77,7 @@ func (h POSTHandler) Handle(
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if encodeErr := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only team admins can create boards."},
+			POSTResp{Error: "Only team admins can create boards."},
 		); encodeErr != nil {
 			h.log.Error(encodeErr.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -76,16 +86,16 @@ func (h POSTHandler) Handle(
 	}
 
 	// Read and validate request body.
-	reqBody := ReqBody{}
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	var req POSTReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := h.validator.Validate(reqBody.Name); err != nil {
+	if err := h.validator.Validate(req.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if encodeErr := json.NewEncoder(w).Encode(
-			ResBody{Error: err.Error()},
+			POSTResp{Error: err.Error()},
 		); encodeErr != nil {
 			h.log.Error(encodeErr.Error())
 			w.WriteHeader(http.StatusInternalServerError)
@@ -104,7 +114,7 @@ func (h POSTHandler) Handle(
 	if boardCount >= 3 {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{
+			POSTResp{
 				Error: "You have already created the maximum amount of " +
 					"boards allowed per user. Please delete one of your " +
 					"boards to create a new one.",
@@ -118,7 +128,7 @@ func (h POSTHandler) Handle(
 
 	// Create a new board.
 	if err := h.boardInserter.Insert(
-		boardTable.NewInRecord(reqBody.Name, user.TeamID),
+		boardTable.NewInRecord(req.Name, user.TeamID),
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

@@ -17,43 +17,34 @@ func TestNameValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name       string
-		reqBody    ReqBody
+		boardName  string
 		wantErrMsg string
 	}{
 		{
-			name:       "NoName",
-			reqBody:    ReqBody{},
+			name:       "Empty",
+			boardName:  "",
 			wantErrMsg: msgEmpty,
 		},
 		{
-			name:       "NameEmpty",
-			reqBody:    ReqBody{Name: ""},
-			wantErrMsg: msgEmpty,
-		},
-		{
-			name: "NameTooLong",
-			reqBody: ReqBody{
-				Name: "boardyboardsyboardkyboardishboardxyz",
-			},
+			name:       "TooLong",
+			boardName:  "boardyboardsyboardkyboardishboardxyz",
 			wantErrMsg: "Board name cannot be longer than 35 characters.",
 		},
 		{
-			name:       "IsValid",
-			reqBody:    ReqBody{Name: "My Board"},
+			name:       "OK",
+			boardName:  "My Board",
 			wantErrMsg: "",
 		},
 	} {
-		err := sut.Validate(c.reqBody.Name)
+		err := sut.Validate(c.boardName)
 
 		if c.wantErrMsg == "" {
-			if assertErr := assert.Nil(err); assertErr != nil {
-				t.Error(assertErr)
+			if err = assert.Nil(err); err != nil {
+				t.Error(err)
 			}
 		} else {
-			if assertErr := assert.Equal(
-				c.wantErrMsg, err.Error(),
-			); assertErr != nil {
-				t.Error(assertErr)
+			if err = assert.Equal(c.wantErrMsg, err.Error()); err != nil {
+				t.Error(err)
 			}
 		}
 	}
@@ -89,14 +80,12 @@ func TestIDValidator(t *testing.T) {
 			err := sut.Validate(c.boardID)
 
 			if c.wantErrMsg == "" {
-				if assertErr := assert.Nil(err); assertErr != nil {
-					t.Error(assertErr)
+				if err = assert.Nil(err); err != nil {
+					t.Error(err)
 				}
 			} else {
-				if assertErr := assert.Equal(
-					c.wantErrMsg, err.Error(),
-				); assertErr != nil {
-					t.Error(assertErr)
+				if err = assert.Equal(c.wantErrMsg, err.Error()); err != nil {
+					t.Error(err)
 				}
 			}
 		})

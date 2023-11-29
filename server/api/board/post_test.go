@@ -5,7 +5,6 @@ package board
 import (
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -158,17 +157,9 @@ func TestPOSTHandler(t *testing.T) {
 				boardCounter.Err = c.boardCounterErr
 				boardInserter.Err = c.boardInserterErr
 
-				// Prepare request and response recorder.
-				reqBody, err := json.Marshal(ReqBody{})
-				if err != nil {
-					t.Fatal(err)
-				}
-				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(reqBody),
+				req := httptest.NewRequest(
+					"", "/", bytes.NewReader([]byte("{}")),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.
@@ -176,7 +167,7 @@ func TestPOSTHandler(t *testing.T) {
 				res := w.Result()
 
 				// Assert on the status code.
-				if err = assert.Equal(
+				if err := assert.Equal(
 					c.wantStatusCode, res.StatusCode,
 				); err != nil {
 					t.Error(err)

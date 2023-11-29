@@ -247,7 +247,7 @@ func TestTaskHandler(t *testing.T) {
 					for i, subtaskTitle := range []string{
 						"Some Subtask", "Some Other Subtask",
 					} {
-						wantOrder := i + 1
+						wantOrder := i
 						var subtaskOrder int
 						if err := db.QueryRow(
 							`SELECT "order" FROM app.subtask `+
@@ -434,7 +434,7 @@ func TestTaskHandler(t *testing.T) {
 				),
 			},
 			{
-				name:   "Success",
+				name:   "OK",
 				taskID: "8",
 				reqBody: map[string]any{
 					"title":       "Some Task",

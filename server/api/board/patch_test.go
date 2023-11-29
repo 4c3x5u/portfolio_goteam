@@ -5,7 +5,6 @@ package board
 import (
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -194,22 +193,13 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelector.Err = c.boardSelectorErr
 			boardUpdater.Err = c.boardUpdaterErr
 
-			reqBody, err := json.Marshal(ReqBody{})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req, err := http.NewRequest(
-				http.MethodPatch, "", bytes.NewReader(reqBody),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest("", "/", bytes.NewReader([]byte("{}")))
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, req, "")
 			res := w.Result()
 
-			if err = assert.Equal(
+			if err := assert.Equal(
 				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)

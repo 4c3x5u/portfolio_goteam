@@ -13,6 +13,16 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// PATCHReq defines the request body for PATCH board requests.
+type PATCHReq struct {
+	Name string `json:"name"`
+}
+
+// PATCHResp defines the response body for PATCH board requests.
+type PATCHResp struct {
+	Error string `json:"error,omitempty"`
+}
+
 type PATCHHandler struct {
 	userSelector  dbaccess.Selector[userTable.Record]
 	idValidator   api.StringValidator
@@ -48,7 +58,7 @@ func (h *PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
+			PATCHResp{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -63,7 +73,7 @@ func (h *PATCHHandler) Handle(
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only team admins can edit the board."},
+			PATCHResp{Error: "Only team admins can edit the board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -76,7 +86,7 @@ func (h *PATCHHandler) Handle(
 	if err := h.idValidator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: err.Error()},
+			PATCHResp{Error: err.Error()},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -85,16 +95,16 @@ func (h *PATCHHandler) Handle(
 	}
 
 	// Retrieve and validate the new board name.
-	var reqBody ReqBody
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	var req PATCHReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	if err := h.nameValidator.Validate(reqBody.Name); err != nil {
+	if err := h.nameValidator.Validate(req.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: err.Error()},
+			PATCHResp{Error: err.Error()},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -108,7 +118,7 @@ func (h *PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Board not found."},
+			PATCHResp{Error: "Board not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -123,7 +133,7 @@ func (h *PATCHHandler) Handle(
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "You do not have access to this board."},
+			PATCHResp{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -135,7 +145,7 @@ func (h *PATCHHandler) Handle(
 	// any error including sql.ErrNoRows. Because even in that case,
 	// something else must have gone wrong since we have already validated that
 	// a board with this ID exists.
-	if err := h.boardUpdater.Update(boardID, reqBody.Name); err != nil {
+	if err := h.boardUpdater.Update(boardID, req.Name); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
