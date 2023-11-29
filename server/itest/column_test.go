@@ -79,7 +79,7 @@ func TestColumnHandler(t *testing.T) {
 		for _, c := range []struct {
 			name       string
 			id         string
-			reqBody    columnAPI.ReqBody
+			reqBody    columnAPI.PATCHReq
 			authFunc   func(*http.Request)
 			statusCode int
 			assertFunc func(*testing.T, *http.Response, string)
@@ -87,7 +87,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "IDEmpty",
 				id:         "",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID cannot be empty."),
@@ -95,7 +95,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "IDNotInt",
 				id:         "A",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID must be an integer."),
@@ -103,7 +103,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "ColumnNotFound",
 				id:         "1001",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Column not found."),
@@ -111,7 +111,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "NotAdmin",
 				id:         "5",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr("Only team admins can move tasks."),
@@ -119,7 +119,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "NoAccess",
 				id:         "5",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam2Admin),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -129,7 +129,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "TaskNotFound",
 				id:         "5",
-				reqBody:    columnAPI.ReqBody{{ID: 0, Order: 0}},
+				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Task not found."),
@@ -137,7 +137,7 @@ func TestColumnHandler(t *testing.T) {
 			{
 				name:       "Success",
 				id:         "6",
-				reqBody:    columnAPI.ReqBody{{ID: 5, Order: 2}},
+				reqBody:    columnAPI.PATCHReq{{ID: 5, Order: 2}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {

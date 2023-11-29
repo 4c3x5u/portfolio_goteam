@@ -15,6 +15,20 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// PATCHReq defines the request body for PATCH column requests.
+type PATCHReq []Task
+
+// Task represents a task data item in PATCHReq.
+type Task struct {
+	ID    int `json:"id"`
+	Order int `json:"order"`
+}
+
+// PATCHResp defines the response body for PATCH column requests.
+type PATCHResp struct {
+	Error string `json:"error"`
+}
+
 // PATCHHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the column route.
 type PATCHHandler struct {
@@ -54,7 +68,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
+			PATCHResp{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -69,7 +83,7 @@ func (h PATCHHandler) Handle(
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Only team admins can move tasks."},
+			PATCHResp{Error: "Only team admins can move tasks."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -82,7 +96,7 @@ func (h PATCHHandler) Handle(
 	if err := h.idValidator.Validate(columnID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: err.Error()},
+			PATCHResp{Error: err.Error()},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -96,7 +110,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Column not found."},
+			PATCHResp{Error: "Column not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -115,7 +129,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Board not found."},
+			PATCHResp{Error: "Board not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -130,7 +144,7 @@ func (h PATCHHandler) Handle(
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "You do not have access to this board."},
+			PATCHResp{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -139,14 +153,14 @@ func (h PATCHHandler) Handle(
 	}
 
 	// Decode request body and map it into tasks.
-	var reqBody ReqBody
-	if err = json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	var req PATCHReq
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 	var tasks []columnTable.Task
-	for _, t := range reqBody {
+	for _, t := range req {
 		tasks = append(tasks, columnTable.Task{ID: t.ID, Order: t.Order})
 	}
 
@@ -156,7 +170,7 @@ func (h PATCHHandler) Handle(
 	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			ResBody{Error: "Task not found."},
+			PATCHResp{Error: "Task not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

@@ -5,7 +5,6 @@ package column
 import (
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -229,16 +228,7 @@ func TestPATCHHandler(t *testing.T) {
 			columnUpdater.Err = c.updateColumnErr
 
 			// Prepare request and response recorder.
-			tasks, err := json.Marshal([]map[string]int{{"id": 0, "order": 0}})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req, err := http.NewRequest(
-				http.MethodPatch, "", bytes.NewReader(tasks),
-			)
-			if err != nil {
-				t.Fatal(err)
-			}
+			req := httptest.NewRequest("", "/", bytes.NewReader([]byte("[]")))
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
@@ -246,7 +236,7 @@ func TestPATCHHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			if err = assert.Equal(
+			if err := assert.Equal(
 				c.wantStatusCode, res.StatusCode,
 			); err != nil {
 				t.Error(err)
