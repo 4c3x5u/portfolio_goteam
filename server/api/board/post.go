@@ -15,12 +15,12 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// POSTReq defines the request body for POST board requests.
+// POSTReq defines the body of POST board requests.
 type POSTReq struct {
 	Name string `json:"name"`
 }
 
-// POSTResp defines the response body for POST board requests.
+// POSTResp defines the body of POST board responses.
 type POSTResp struct {
 	Error string `json:"error,omitempty"`
 }

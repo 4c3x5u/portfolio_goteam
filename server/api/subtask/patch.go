@@ -17,13 +17,13 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// ReqBody defines the request body for requests handled by PATCHHandler.
-type ReqBody struct {
+// PATCHReq defines the body of PATCH subtask requests.
+type PATCHReq struct {
 	IsDone bool `json:"done"`
 }
 
-// ResBody defines the response body for requests handled by PATCHHandler.
-type ResBody struct {
+// PATCHResp defines the body of PATCH subtask response.
+type PATCHResp struct {
 	Error string `json:"error"`
 }
 
@@ -72,7 +72,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Username is not recognised."},
+			PATCHResp{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -87,7 +87,7 @@ func (h PATCHHandler) Handle(
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Only team admins can edit subtasks."},
+			PATCHResp{Error: "Only team admins can edit subtasks."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -100,7 +100,7 @@ func (h PATCHHandler) Handle(
 	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrStrEmpty) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Subtask ID cannot be empty."},
+			PATCHResp{Error: "Subtask ID cannot be empty."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -109,7 +109,7 @@ func (h PATCHHandler) Handle(
 	} else if errors.Is(err, api.ErrStrNotInt) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Subtask ID must be an integer."},
+			PATCHResp{Error: "Subtask ID must be an integer."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -126,7 +126,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(
-			ResBody{Error: "Subtask not found."},
+			PATCHResp{Error: "Subtask not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -163,7 +163,7 @@ func (h PATCHHandler) Handle(
 	}
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(ResBody{
+		if err := json.NewEncoder(w).Encode(PATCHResp{
 			Error: "You do not have access to this board.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -173,7 +173,7 @@ func (h PATCHHandler) Handle(
 	}
 
 	// Update subtask based on request body.
-	var reqBody ReqBody
+	var reqBody PATCHReq
 	if err = json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())

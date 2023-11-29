@@ -15,7 +15,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// GETResp defines the response body for GET board requests.
+// GETResp defines the body of GET board responses.
 type GETResp struct {
 	User        User         `json:"user"`
 	Team        Team         `json:"team"`

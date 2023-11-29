@@ -15,7 +15,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// POSTReq defines the request body POST register requests.
+// POSTReq defines the body of POST register requests.
 type POSTReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

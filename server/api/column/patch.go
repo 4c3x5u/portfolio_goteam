@@ -15,7 +15,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// PATCHReq defines the request body for PATCH column requests.
+// PATCHReq defines body of PATCH column requests.
 type PATCHReq []Task
 
 // Task represents a task data item in PATCHReq.
@@ -24,7 +24,7 @@ type Task struct {
 	Order int `json:"order"`
 }
 
-// PATCHResp defines the response body for PATCH column requests.
+// PATCHResp defines the body for PATCH column responses.
 type PATCHResp struct {
 	Error string `json:"error"`
 }

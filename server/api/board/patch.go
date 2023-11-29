@@ -13,12 +13,12 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
-// PATCHReq defines the request body for PATCH board requests.
+// PATCHReq defines the body of PATCH board requests.
 type PATCHReq struct {
 	Name string `json:"name"`
 }
 
-// PATCHResp defines the response body for PATCH board requests.
+// PATCHResp defines the body of PATCH board responses.
 type PATCHResp struct {
 	Error string `json:"error,omitempty"`
 }

@@ -16,6 +16,11 @@ import (
 	pkgLog "github.com/kxplxn/goteam/server/log"
 )
 
+// DELETEResp defines the body of DELETE task responses.
+type DELETEResp struct {
+	Error string `json:"error"`
+}
+
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE
 // requests sent to the task route.
 type DELETEHandler struct {

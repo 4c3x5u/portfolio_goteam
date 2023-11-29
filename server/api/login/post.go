@@ -15,7 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// POSTReq defines the request body for POST login requests.
+// POSTReq defines the body of POST login requests.
 type POSTReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
