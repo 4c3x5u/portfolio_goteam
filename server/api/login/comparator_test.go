@@ -48,9 +48,7 @@ func TestPasswordComparator(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			err := sut.Compare(c.inHash, c.inPlaintext)
 
-			if err = assert.Equal(c.wantErr, err); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, err, c.wantErr)
 		})
 	}
 }

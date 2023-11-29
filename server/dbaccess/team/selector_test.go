@@ -53,11 +53,7 @@ func TestSelector(t *testing.T) {
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(id, strconv.Itoa(team.ID)); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(wantInviteCode, team.InviteCode); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, strconv.Itoa(team.ID), id)
+		assert.Equal(t.Error, team.InviteCode, wantInviteCode)
 	})
 }

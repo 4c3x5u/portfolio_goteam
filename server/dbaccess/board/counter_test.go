@@ -44,8 +44,6 @@ func TestCounter(t *testing.T) {
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(wantCount, count); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, count, wantCount)
 	})
 }

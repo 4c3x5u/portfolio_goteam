@@ -91,19 +91,14 @@ func TestTaskHandler(t *testing.T) {
 						sut.ServeHTTP(w, req)
 						res := w.Result()
 
-						if err = assert.Equal(
-							http.StatusUnauthorized, res.StatusCode,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							res.StatusCode, http.StatusUnauthorized,
+						)
 
-						if err = assert.Equal(
-							"Bearer", res.Header.Values("WWW-Authenticate")[0],
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							res.Header.Values("WWW-Authenticate")[0], "Bearer",
+						)
 					})
-
 				}
 			})
 		}
@@ -238,9 +233,7 @@ func TestTaskHandler(t *testing.T) {
 					).Scan(&taskID, &taskOrder); err != nil {
 						t.Error(err)
 					}
-					if err := assert.Equal(2, taskOrder); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, taskOrder, 2)
 
 					// The order of the subtasks must be set respective to their
 					// sequential order.
@@ -257,11 +250,7 @@ func TestTaskHandler(t *testing.T) {
 						).Scan(&subtaskOrder); err != nil {
 							t.Error(err)
 						}
-						if err := assert.Equal(
-							wantOrder, subtaskOrder,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, subtaskOrder, wantOrder)
 					}
 				},
 			},
@@ -285,11 +274,7 @@ func TestTaskHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				c.assertFunc(t, res, "")
 			})
@@ -468,14 +453,8 @@ func TestTaskHandler(t *testing.T) {
 						t.Error(err)
 					}
 
-					if err := assert.Equal("Some Task", title); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"Some Description", *description,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, title, "Some Task")
+					assert.Equal(t.Error, *description, "Some Description")
 
 					rows, err := db.Query(
 						`SELECT title, "order", isDone FROM app.subtask WHERE taskID = 8`,
@@ -493,25 +472,15 @@ func TestTaskHandler(t *testing.T) {
 						}
 						subtasks = append(subtasks, subtask)
 					}
-					if err = assert.Equal(2, len(subtasks)); err != nil {
+					assert.Equal(t.Error, len(subtasks), 2)
+					assert.Equal(t.Error, subtasks[0].Title, "Some Subtask")
+					assert.Equal(t.Error, subtasks[0].Order, 1)
+					if err = assert.True(!subtasks[0].IsDone); err != nil {
 						t.Error(err)
 					}
-					if err = assert.Equal("Some Subtask", subtasks[0].Title); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal(1, subtasks[0].Order); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal(false, subtasks[0].IsDone); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal("Some Other Subtask", subtasks[1].Title); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal(2, subtasks[1].Order); err != nil {
-						t.Error(err)
-					}
-					if err = assert.Equal(true, subtasks[1].IsDone); err != nil {
+					assert.Equal(t.Error, "Some Other Subtask", subtasks[1].Title)
+					assert.Equal(t.Error, 2, subtasks[1].Order)
+					if err = assert.True(subtasks[1].IsDone); err != nil {
 						t.Error(err)
 					}
 				},
@@ -538,11 +507,7 @@ func TestTaskHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				c.assertFunc(t, res, "")
 			})
@@ -606,16 +571,15 @@ func TestTaskHandler(t *testing.T) {
 					err := db.QueryRow(
 						"SELECT COUNT(*) FROM app.task WHERE id = 9",
 					).Scan(&taskCount)
-					if err = assert.Equal(0, taskCount); err != nil {
-						t.Error(err)
+					if err != nil {
+						t.Fatal(err)
 					}
+					assert.Equal(t.Error, taskCount, 0)
 					var subtaskCount int
 					err = db.QueryRow(
 						"SELECT COUNT(*) FROM app.subtask WHERE taskID = 9",
 					).Scan(&taskCount)
-					if err = assert.Equal(0, subtaskCount); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, subtaskCount, 0)
 				},
 			},
 		} {
@@ -630,11 +594,7 @@ func TestTaskHandler(t *testing.T) {
 				sut.ServeHTTP(w, r)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				c.assertFunc(t, res, "")
 			})

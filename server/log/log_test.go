@@ -47,9 +47,7 @@ func TestLog(t *testing.T) {
 			// Take only the len(wantLog) amount of characters from the end of
 			// the actual log to ignore the date/time that is printed before it.
 			resEnd := res.String()[len(res.String())-len(c.wantLog):]
-			if err := assert.Equal(c.wantLog, resEnd); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, resEnd, c.wantLog)
 		})
 	}
 }

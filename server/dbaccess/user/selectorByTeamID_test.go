@@ -27,9 +27,7 @@ func TestSelectorByTeamID(t *testing.T) {
 
 		_, err := sut.Select(teamID)
 
-		if err := assert.Equal(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, wantErr, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -50,12 +48,8 @@ func TestSelectorByTeamID(t *testing.T) {
 		}
 
 		for i, user := range wantRecs {
-			if err = assert.Equal(user.Username, recs[i].Username); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(user.IsAdmin, recs[i].IsAdmin); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, recs[i].Username, user.Username)
+			assert.Equal(t.Error, recs[i].IsAdmin, user.IsAdmin)
 		}
 	})
 }

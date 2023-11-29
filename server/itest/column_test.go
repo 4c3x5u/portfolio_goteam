@@ -57,17 +57,13 @@ func TestColumnHandler(t *testing.T) {
 					sut.ServeHTTP(w, req)
 					res := w.Result()
 
-					if err := assert.Equal(
-						http.StatusUnauthorized, res.StatusCode,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error,
+						res.StatusCode, http.StatusUnauthorized,
+					)
 
-					if err := assert.Equal(
-						"Bearer", res.Header.Values("WWW-Authenticate")[0],
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error,
+						res.Header.Values("WWW-Authenticate")[0], "Bearer",
+					)
 				})
 			})
 		}
@@ -145,12 +141,8 @@ func TestColumnHandler(t *testing.T) {
 					).Scan(&columnID, &order); err != nil {
 						t.Fatal(err)
 					}
-					if err := assert.Equal(6, columnID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(2, order); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, columnID, 6)
+					assert.Equal(t.Error, order, 2)
 				},
 			},
 		} {
@@ -168,11 +160,7 @@ func TestColumnHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.statusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.statusCode)
 
 				c.assertFunc(t, res, "")
 			})

@@ -33,10 +33,6 @@ func TestJWTGenerator(t *testing.T) {
 	); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(username, claims.Subject); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(expiry.Unix(), claims.ExpiresAt.Unix()); err != nil {
-		t.Error(err)
-	}
+	assert.Equal(t.Error, claims.Subject, username)
+	assert.Equal(t.Error, claims.ExpiresAt.Unix(), expiry.Unix())
 }

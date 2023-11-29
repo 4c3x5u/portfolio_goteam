@@ -30,7 +30,7 @@ func TestUpdater(t *testing.T) {
 	for _, c := range []struct {
 		name        string
 		setUp       func(sqlmock.Sqlmock)
-		assertOnErr func(error) error
+		assertOnErr func(func(...any), error)
 	}{
 		{
 			name: "SqlErrNoRows",
@@ -39,8 +39,10 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnError(sql.ErrNoRows)
 			},
-			assertOnErr: func(err error) error {
-				return assert.SameError(err, sql.ErrNoRows)
+			assertOnErr: func(errFunc func(...any), err error) {
+				if err = assert.SameError(err, sql.ErrNoRows); err != nil {
+					errFunc(err)
+				}
 			},
 		},
 		{
@@ -50,8 +52,8 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 0))
 			},
-			assertOnErr: func(err error) error {
-				return assert.Equal(err.Error(), "no rows were affected")
+			assertOnErr: func(logFunc func(...any), err error) {
+				assert.Equal(logFunc, err.Error(), "no rows were affected")
 			},
 		},
 		{
@@ -61,8 +63,8 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 2))
 			},
-			assertOnErr: func(err error) error {
-				return assert.Equal(
+			assertOnErr: func(logFunc func(...any), err error) {
+				assert.Equal(logFunc,
 					err.Error(), "more than expected rows were affected",
 				)
 			},
@@ -74,15 +76,18 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(21, 1))
 			},
-			assertOnErr: func(err error) error { return assert.Nil(err) },
+			assertOnErr: func(logFunc func(...any), err error) {
+				if err := assert.Nil(err); err != nil {
+					logFunc(err)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			c.setUp(mock)
 			err := sut.Update(boardID, newBoardName)
-			if assertErr := c.assertOnErr(err); assertErr != nil {
-				t.Error(assertErr)
-			}
+
+			c.assertOnErr(t.Error, err)
 		})
 	}
 }

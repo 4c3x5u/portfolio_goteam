@@ -47,9 +47,7 @@ func TestJWTValidator(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			sub := sut.Validate(c.token)
 
-			if err := assert.Equal(c.wantSub, sub); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, c.wantSub, sub)
 		})
 	}
 }

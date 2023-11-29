@@ -49,12 +49,8 @@ func TestSelectorByTeamID(t *testing.T) {
 		}
 
 		for i, wantRec := range wantRecs {
-			if err = assert.Equal(wantRec.ID, recs[i].ID); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(wantRec.Name, recs[i].Name); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, recs[i].ID, wantRec.ID)
+			assert.Equal(t.Error, recs[i].Name, wantRec.Name)
 		}
 	})
 }

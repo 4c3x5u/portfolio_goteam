@@ -74,11 +74,7 @@ func TestLoginHandler(t *testing.T) {
 				if err := assert.True(cookie.Secure); err != nil {
 					t.Error(err)
 				}
-				if err := assert.Equal(
-					http.SameSiteNoneMode, cookie.SameSite,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, cookie.SameSite, http.SameSiteNoneMode)
 
 				claims := jwt.RegisteredClaims{}
 				if _, err := jwt.ParseWithClaims(
@@ -88,9 +84,7 @@ func TestLoginHandler(t *testing.T) {
 				); err != nil {
 					t.Fatal(err)
 				}
-				if err := assert.Equal("team1Member", claims.Subject); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, claims.Subject, "team1Member")
 			},
 		},
 	} {
@@ -111,11 +105,7 @@ func TestLoginHandler(t *testing.T) {
 
 			res := w.Result()
 
-			if err = assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 			// Run case-specific assertions.
 			c.assertFunc(t, res)

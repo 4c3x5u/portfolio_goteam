@@ -12,27 +12,27 @@ import (
 func TestEnv(t *testing.T) {
 	errPostfix := " environment variable was empty"
 	for _, c := range []struct {
-		Name       string
-		EnvVarName string
-		Setup      func() error
-		Cleanup    func() error
+		name       string
+		envVarName string
+		setup      func() error
+		teardown   func() error
 	}{
 		{
-			Name:       "PORTEmpty",
-			EnvVarName: "PORT",
-			Setup:      func() error { return nil },
-			Cleanup:    func() error { return nil },
+			name:       "PORTEmpty",
+			envVarName: "PORT",
+			setup:      func() error { return nil },
+			teardown:   func() error { return nil },
 		},
 		{
-			Name:       "DBCONNSTREmpty",
-			EnvVarName: "DBCONNSTR",
-			Setup:      func() error { return os.Setenv("PORT", "8000") },
-			Cleanup:    func() error { return os.Unsetenv("PORT") },
+			name:       "DBCONNSTREmpty",
+			envVarName: "DBCONNSTR",
+			setup:      func() error { return os.Setenv("PORT", "8000") },
+			teardown:   func() error { return os.Unsetenv("PORT") },
 		},
 		{
-			Name:       "JWTKEYEmpty",
-			EnvVarName: "JWTKEY",
-			Setup: func() error {
+			name:       "JWTKEYEmpty",
+			envVarName: "JWTKEY",
+			setup: func() error {
 				if err := os.Setenv("PORT", "8000"); err != nil {
 					return err
 				}
@@ -41,7 +41,7 @@ func TestEnv(t *testing.T) {
 				}
 				return nil
 			},
-			Cleanup: func() error {
+			teardown: func() error {
 				if err := os.Unsetenv("PORT"); err != nil {
 					return err
 				}
@@ -52,9 +52,9 @@ func TestEnv(t *testing.T) {
 			},
 		},
 		{
-			Name:       "CLIENTORIGINEmpty",
-			EnvVarName: "CLIENTORIGIN",
-			Setup: func() error {
+			name:       "CLIENTORIGINEmpty",
+			envVarName: "CLIENTORIGIN",
+			setup: func() error {
 				if err := os.Setenv("PORT", "8000"); err != nil {
 					return err
 				}
@@ -66,7 +66,7 @@ func TestEnv(t *testing.T) {
 				}
 				return nil
 			},
-			Cleanup: func() error {
+			teardown: func() error {
 				if err := os.Unsetenv("PORT"); err != nil {
 					return err
 				}
@@ -80,19 +80,19 @@ func TestEnv(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(c.Name, func(t *testing.T) {
-			wantErrMsg := c.EnvVarName + errPostfix
-			if err := c.Setup(); err != nil {
+		t.Run(c.name, func(t *testing.T) {
+			wantErrMsg := c.envVarName + errPostfix
+			if err := c.setup(); err != nil {
 				t.Fatal(err)
 			}
 
 			if err := newEnv().validate(); err == nil {
 				t.Error("validate() returned nil")
-			} else if err = assert.Equal(wantErrMsg, err.Error()); err != nil {
-				t.Error(err)
+			} else {
+				assert.Equal(t.Error, err.Error(), wantErrMsg)
 			}
 
-			if err := c.Cleanup(); err != nil {
+			if err := c.teardown(); err != nil {
 				t.Fatal(err)
 			}
 		})

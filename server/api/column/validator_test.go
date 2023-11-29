@@ -42,11 +42,7 @@ func TestIDValidator(t *testing.T) {
 					t.Error(assertErr)
 				}
 			} else {
-				if assertErr := assert.Equal(
-					c.wantErrMsg, err.Error(),
-				); assertErr != nil {
-					t.Error(assertErr)
-				}
+				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 			}
 		})
 	}

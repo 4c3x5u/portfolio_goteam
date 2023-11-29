@@ -27,9 +27,7 @@ func TestBearerTokenReader(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			token := sut.Read(c.authHeader)
 
-			if err := assert.Equal(c.wantToken, token); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, token, c.wantToken)
 		})
 	}
 }

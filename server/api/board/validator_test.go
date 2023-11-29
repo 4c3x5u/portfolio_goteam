@@ -43,9 +43,7 @@ func TestNameValidator(t *testing.T) {
 				t.Error(err)
 			}
 		} else {
-			if err = assert.Equal(c.wantErrMsg, err.Error()); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 		}
 	}
 }
@@ -84,9 +82,7 @@ func TestIDValidator(t *testing.T) {
 					t.Error(err)
 				}
 			} else {
-				if err = assert.Equal(c.wantErrMsg, err.Error()); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
 			}
 		})
 	}

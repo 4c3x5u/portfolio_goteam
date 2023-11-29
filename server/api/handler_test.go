@@ -45,11 +45,9 @@ func TestHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					http.StatusMethodNotAllowed, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error,
+					res.StatusCode, http.StatusMethodNotAllowed,
+				)
 
 				// Assert that all allowed methods were set in the correct
 				// header.
@@ -81,18 +79,12 @@ func TestHandler(t *testing.T) {
 		res := w.Result()
 
 		// Assert on the status code.
-		if err = assert.Equal(
-			http.StatusUnauthorized, res.StatusCode,
-		); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
 
 		// Assert the WWW-Authenticate header was set correctly
-		if err := assert.Equal(
-			"Bearer", w.Result().Header.Get("WWW-Authenticate"),
-		); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error,
+			w.Result().Header.Get("WWW-Authenticate"), "Bearer",
+		)
 	})
 
 	t.Run("Success", func(t *testing.T) {
@@ -116,30 +108,12 @@ func TestHandler(t *testing.T) {
 				res := w.Result()
 
 				// Assert on the status code.
-				if err = assert.Equal(
-					http.StatusOK, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, http.StatusOK)
 
 				fakeMethodHandler := methodHandler.(*FakeMethodHandler)
-
-				// Run case-specific assertions.
-				if err := assert.Equal(
-					w, fakeMethodHandler.InResponseWriter,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					req, fakeMethodHandler.InReq,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					wantSub, fakeMethodHandler.InSub,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, fakeMethodHandler.InResponseWriter, w)
+				assert.Equal(t.Error, fakeMethodHandler.InReq, req)
+				assert.Equal(t.Error, fakeMethodHandler.InSub, wantSub)
 			})
 		}
 	})

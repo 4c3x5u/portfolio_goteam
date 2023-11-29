@@ -199,11 +199,7 @@ func TestPATCHHandler(t *testing.T) {
 			sut.Handle(w, req, "")
 			res := w.Result()
 
-			if err := assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 			c.assertFunc(t, res, log.InMessage)
 		})

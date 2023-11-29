@@ -163,11 +163,7 @@ func TestPOSTHandler(t *testing.T) {
 				res := w.Result()
 
 				// Assert on the status code.
-				if err := assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				// Run case-specific assertions.
 				c.assertFunc(t, res, log.InMessage)

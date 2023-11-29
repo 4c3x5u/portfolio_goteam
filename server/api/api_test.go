@@ -15,10 +15,6 @@ import (
 func TestAllowedMethods(t *testing.T) {
 	methods := []string{http.MethodGet, http.MethodDelete, http.MethodPatch}
 	header, allowedMethods := AllowedMethods(methods)
-	if err := assert.Equal("Access-Control-Allow-Methods", header); err != nil {
-		t.Error(err)
-	}
-	if err := assert.Equal("GET, DELETE, PATCH", allowedMethods); err != nil {
-		t.Error(err)
-	}
+	assert.Equal(t.Error, header, "Access-Control-Allow-Methods")
+	assert.Equal(t.Error, allowedMethods, "GET, DELETE, PATCH")
 }

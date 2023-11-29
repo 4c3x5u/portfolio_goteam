@@ -180,100 +180,52 @@ func TestRecursiveSelector(t *testing.T) {
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(1, res.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("board 1", res.Name); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(21, res.TeamID); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, res.ID, 1)
+		assert.Equal(t.Error, res.Name, "board 1")
+		assert.Equal(t.Error, res.TeamID, 21)
 
 		columns := res.Columns
-		if err = assert.Equal(4, len(columns)); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, len(columns), 4)
 		for i := 0; i < 2; i++ {
-			if err = assert.Equal(i+2, columns[i].ID); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(i+1, columns[i].Order); err != nil {
-				t.Error(err)
-			}
-			if err = assert.Equal(0, len(columns[i].Tasks)); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, columns[i].ID, i+2)
+			assert.Equal(t.Error, columns[i].Order, i+1)
+			assert.Equal(t.Error, len(columns[i].Tasks), 0)
 		}
 
 		column3 := res.Columns[2]
-		if err = assert.Equal(1, len(column3.Tasks)); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, len(column3.Tasks), 1)
 
 		task1 := column3.Tasks[0]
-		if err = assert.Equal(6, task1.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("task 1", task1.Title); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("do things!", *task1.Description); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(1, task1.Order); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, task1.ID, 6)
+		assert.Equal(t.Error, task1.Title, "task 1")
+		assert.Equal(t.Error, *task1.Description, "do things!")
+		assert.Equal(t.Error, task1.Order, 1)
 
 		column4 := res.Columns[3]
-		if err = assert.Equal(1, len(column4.Tasks)); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, len(column4.Tasks), 1)
 
 		task2 := column4.Tasks[0]
-		if err = assert.Equal(7, task2.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("task 2", task2.Title); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("do things!", *task2.Description); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(2, task2.Order); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, task2.ID, 7)
+		assert.Equal(t.Error, task2.Title, "task 2")
+		assert.Equal(t.Error, *task2.Description, "do things!")
+		assert.Equal(t.Error, task2.Order, 2)
 
 		subtasks := task2.Subtasks
-		if err = assert.Equal(2, len(subtasks)); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, len(subtasks), 2)
 
 		subtask1 := subtasks[0]
-		if err = assert.Equal(8, subtask1.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("subtask 1", subtask1.Title); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(1, subtask1.Order); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(false, subtask1.IsDone); err != nil {
+		assert.Equal(t.Error, subtask1.ID, 8)
+		assert.Equal(t.Error, subtask1.Title, "subtask 1")
+		assert.Equal(t.Error, subtask1.Order, 1)
+		if err = assert.True(!subtask1.IsDone); err != nil {
 			t.Error(err)
 		}
 
 		subtask2 := subtasks[1]
-		if err = assert.Equal(9, subtask2.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal("subtask 2", subtask2.Title); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(2, subtask2.Order); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(true, subtask2.IsDone); err != nil {
+		assert.Equal(t.Error, subtask2.ID, 9)
+		assert.Equal(t.Error, subtask2.Title, "subtask 2")
+		assert.Equal(t.Error, subtask2.Order, 2)
+		if err := assert.True(subtask2.IsDone); err != nil {
 			t.Error(err)
 		}
 

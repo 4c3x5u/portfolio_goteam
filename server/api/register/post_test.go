@@ -80,11 +80,7 @@ func TestHandler(t *testing.T) {
 			).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}
-			if err := assert.Equal(
-				wantErrMsg, resBody.Err,
-			); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, resBody.Err, wantErrMsg)
 		}
 	}
 
@@ -311,11 +307,9 @@ func TestHandler(t *testing.T) {
 				for _, ck := range r.Cookies() {
 					if ck.Name == "auth-token" {
 						authTokenFound = true
-						if err := assert.Equal(
-							"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...", ck.Value,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							ck.Value, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+						)
 						if err := assert.True(
 							ck.Expires.Unix() > time.Now().Unix(),
 						); err != nil {
@@ -324,11 +318,9 @@ func TestHandler(t *testing.T) {
 						if err := assert.True(ck.Secure); err != nil {
 							t.Error(err)
 						}
-						if err := assert.Equal(
-							http.SameSiteNoneMode, ck.SameSite,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							ck.SameSite, http.SameSiteNoneMode,
+						)
 					}
 				}
 				if !authTokenFound {
@@ -370,11 +362,7 @@ func TestHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			if err = assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 			// Run case-specific assertions
 			c.assertFunc(t, res, log.InMessage)

@@ -14,17 +14,18 @@ import (
 )
 
 // newErr formats, creates, and returns an assertion error.
-func newErr(want, got any) error {
-	return fmt.Errorf("\nwant: %+v\ngot: %+v", want, got)
+func newErr(got, want any) error {
+	return fmt.Errorf("\ngot: %+v\nwant: %+v", got, want)
 }
 
 // Equal asserts that two given values are equal.
-func Equal(want, got any) error {
+func Equal(logFunc func(...any), got, want any) {
 	if want != got {
-		return newErr(want, got)
+		logFunc(newErr(got, want))
 	}
-	return nil
 }
+
+// TODO/FIXME: got/want order for the remaining funcs
 
 // EqualArr asserts that two given arrays are the same by comparing their
 // children.
@@ -33,11 +34,11 @@ func EqualArr[T comparable](want, got []T) error {
 		return nil
 	}
 	if len(want) != len(got) {
-		return newErr(want, got)
+		return newErr(got, want)
 	}
 	for i := 0; i < len(want); i++ {
 		if want[i] != got[i] {
-			return newErr(want, got)
+			return newErr(got, want)
 		}
 	}
 	return nil
@@ -46,7 +47,7 @@ func EqualArr[T comparable](want, got []T) error {
 // Nil asserts that a given value is nil.
 func Nil(got any) error {
 	if got != nil {
-		return newErr("<nil>", got)
+		return newErr(got, "<nil>")
 	}
 	return nil
 }
@@ -54,7 +55,7 @@ func Nil(got any) error {
 // True asserts that a given boolean value is true.
 func True(got bool) error {
 	if !got {
-		return newErr("true", got)
+		return newErr(got, "true")
 	}
 	return nil
 }
@@ -64,7 +65,7 @@ func SameError(errA, errB error) error {
 	// Order is reversed when passing to errors.Is since it is received as
 	// "want" first and "got" second, yet we assert on whether "got" is "want".
 	if !errors.Is(errB, errA) {
-		return newErr(errA, errB)
+		return newErr(errB, errA)
 	}
 	return nil
 }
@@ -87,9 +88,7 @@ func OnResErr(
 		if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 			t.Fatal(err)
 		}
-		if err := Equal(errMsg, resBody["error"]); err != nil {
-			t.Error(err)
-		}
+		Equal(t.Error, errMsg, resBody["error"])
 	}
 }
 
@@ -103,12 +102,8 @@ func OnResErr(
 //
 // This two-step function call is necessary to be able to use it effectively in
 // table-driven tests.
-func OnLoggedErr(
-	errMsg string,
-) func(*testing.T, *http.Response, string) {
+func OnLoggedErr(errMsg string) func(*testing.T, *http.Response, string) {
 	return func(t *testing.T, _ *http.Response, loggedErr string) {
-		if err := Equal(errMsg, loggedErr); err != nil {
-			t.Error(err)
-		}
+		Equal(t.Error, loggedErr, errMsg)
 	}
 }

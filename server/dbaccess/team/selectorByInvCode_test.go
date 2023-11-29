@@ -54,11 +54,7 @@ func TestSelectorByInvCode(t *testing.T) {
 		if err = assert.Nil(err); err != nil {
 			t.Error(err)
 		}
-		if err = assert.Equal(id, team.ID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(inviteCode, team.InviteCode); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, team.ID, id)
+		assert.Equal(t.Error, team.InviteCode, inviteCode)
 	})
 }

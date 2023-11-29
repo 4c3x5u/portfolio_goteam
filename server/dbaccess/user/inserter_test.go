@@ -71,9 +71,7 @@ func TestInserter(t *testing.T) {
 
 		err := sut.Insert(rec)
 
-		if err = assert.Equal(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, err, wantErr)
 	})
 
 	t.Run("OKWithTeam", func(t *testing.T) {

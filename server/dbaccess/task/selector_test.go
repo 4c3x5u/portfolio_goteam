@@ -57,16 +57,8 @@ func TestSelector(t *testing.T) {
 	if err = assert.Nil(err); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(wantID, task.ID); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(wantColumnID, task.ColumnID); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(wantDescription, *task.Description); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(wantOrder, task.Order); err != nil {
-		t.Error(err)
-	}
+	assert.Equal(t.Error, task.ID, wantID)
+	assert.Equal(t.Error, task.ColumnID, wantColumnID)
+	assert.Equal(t.Error, *task.Description, wantDescription)
+	assert.Equal(t.Error, task.Order, wantOrder)
 }

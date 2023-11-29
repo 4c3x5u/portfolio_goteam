@@ -92,17 +92,12 @@ func TestBoardHandler(t *testing.T) {
 						sut.ServeHTTP(w, req)
 						res := w.Result()
 
-						if err := assert.Equal(
-							http.StatusUnauthorized, res.StatusCode,
-						); err != nil {
-							t.Error(err)
-						}
-
-						if err := assert.Equal(
-							"Bearer", res.Header.Values("WWW-Authenticate")[0],
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							res.StatusCode, http.StatusUnauthorized,
+						)
+						assert.Equal(t.Error,
+							res.Header.Values("WWW-Authenticate")[0], "Bearer",
+						)
 					})
 				}
 			})
@@ -151,64 +146,32 @@ func TestBoardHandler(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					if err := assert.Equal(
-						"team2Admin", resp.User.Username,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, resp.User.Username, "team2Admin")
+
 					if err := assert.True(resp.User.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
-					if err := assert.Equal(2, resp.Team.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+					assert.Equal(t.Error, resp.Team.ID, 2)
+					assert.Equal(t.Error,
 						resp.Team.InviteCode,
-					); err != nil {
-						t.Error(err)
-					}
+						"66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+					)
+					assert.Equal(t.Error, len(resp.TeamMembers), 2)
 
-					if err := assert.Equal(
-						2, len(resp.TeamMembers),
-					); err != nil {
-						t.Error(err)
-					}
 					member := resp.TeamMembers[0]
-					if err := assert.Equal(
-						member.Username, "team2Admin",
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, member.Username, "team2Admin")
 					if err := assert.True(member.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
 					// When ID is empty, a new board will be created for user.
-					if err := assert.Equal(
-						1, len(resp.Boards),
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, len(resp.Boards), 1)
 					board := resp.Boards[0]
-					if err := assert.Equal(5, board.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"New Board", board.Name,
-					); err != nil {
-						t.Error(err)
-					}
-
-					if err := assert.Equal(5, resp.ActiveBoard.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"New Board", resp.ActiveBoard.Name,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, board.ID, 5)
+					assert.Equal(t.Error, board.Name, "New Board")
+					assert.Equal(t.Error, resp.ActiveBoard.ID, 5)
+					assert.Equal(t.Error, resp.ActiveBoard.Name, "New Board")
 
 					for i, wantColumn := range []boardAPI.Column{
 						{ID: 12, Order: 1},
@@ -218,21 +181,9 @@ func TestBoardHandler(t *testing.T) {
 					} {
 						column := resp.ActiveBoard.Columns[i]
 
-						if err := assert.Equal(
-							0, len(column.Tasks),
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantColumn.ID, column.ID,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantColumn.Order, column.Order,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, len(column.Tasks), 0)
+						assert.Equal(t.Error, column.ID, wantColumn.ID)
+						assert.Equal(t.Error, column.Order, wantColumn.Order)
 					}
 				},
 			},
@@ -250,64 +201,32 @@ func TestBoardHandler(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					if err := assert.Equal(
-						"team2Member", resp.User.Username,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, resp.User.Username, "team2Member")
 					if err := assert.True(!resp.User.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
-					if err := assert.Equal(2, resp.Team.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+					assert.Equal(t.Error, resp.Team.ID, 2)
+					assert.Equal(t.Error,
 						resp.Team.InviteCode,
-					); err != nil {
-						t.Error(err)
-					}
+						"66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+					)
 
-					if err := assert.Equal(
-						2, len(resp.TeamMembers),
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, len(resp.TeamMembers), 2)
+
 					member := resp.TeamMembers[0]
-					if err := assert.Equal(
-						member.Username, "team2Admin",
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, member.Username, "team2Admin")
 					if err := assert.True(member.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
 					// When ID is empty, a new board will be created for user.
-					if err := assert.Equal(
-						1, len(resp.Boards),
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, len(resp.Boards), 1)
 					board := resp.Boards[0]
-					if err := assert.Equal(5, board.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"New Board", board.Name,
-					); err != nil {
-						t.Error(err)
-					}
-
-					if err := assert.Equal(5, resp.ActiveBoard.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"New Board", resp.ActiveBoard.Name,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, board.ID, 5)
+					assert.Equal(t.Error, board.Name, "New Board")
+					assert.Equal(t.Error, resp.ActiveBoard.ID, 5)
+					assert.Equal(t.Error, resp.ActiveBoard.Name, "New Board")
 
 					for i, wantColumn := range []boardAPI.Column{
 						{ID: 12, Order: 1},
@@ -317,21 +236,9 @@ func TestBoardHandler(t *testing.T) {
 					} {
 						column := resp.ActiveBoard.Columns[i]
 
-						if err := assert.Equal(
-							0, len(column.Tasks),
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantColumn.ID, column.ID,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantColumn.Order, column.Order,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, len(column.Tasks), 0)
+						assert.Equal(t.Error, wantColumn.ID, column.ID)
+						assert.Equal(t.Error, column.Order, wantColumn.Order)
 					}
 				},
 			},
@@ -348,42 +255,28 @@ func TestBoardHandler(t *testing.T) {
 						t.Fatal(err)
 					}
 
-					if err := assert.Equal(
-						"team1Member", resp.User.Username,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, resp.User.Username, "team1Member")
 					if err := assert.True(!resp.User.IsAdmin); err != nil {
 						t.Error(err)
 					}
 
-					if err := assert.Equal(1, resp.Team.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+					assert.Equal(t.Error, resp.Team.ID, 1)
+					assert.Equal(t.Error,
 						resp.Team.InviteCode,
-					); err != nil {
-						t.Error(err)
-					}
+						"afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+					)
 
 					for i, wantMember := range []boardAPI.TeamMember{
 						{Username: "team1Admin", IsAdmin: true},
 						{Username: "team1Member", IsAdmin: false},
 					} {
 						member := resp.TeamMembers[i]
-						if err := assert.Equal(
-							wantMember.Username,
-							member.Username,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantMember.IsAdmin,
-							member.IsAdmin,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error,
+							member.Username, wantMember.Username,
+						)
+						assert.Equal(t.Error,
+							member.IsAdmin, wantMember.IsAdmin,
+						)
 					}
 
 					for i, wantBoard := range []boardAPI.Board{
@@ -392,29 +285,14 @@ func TestBoardHandler(t *testing.T) {
 						{ID: 3, Name: "Team 1 Board 3"},
 					} {
 						board := resp.Boards[i]
-						if err := assert.Equal(
-							wantBoard.ID,
-							board.ID,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantBoard.Name,
-							board.Name,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, board.ID, wantBoard.ID)
+						assert.Equal(t.Error, board.Name, wantBoard.Name)
 					}
 
-					if err := assert.Equal(2, resp.ActiveBoard.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						"Team 1 Board 2",
-						resp.ActiveBoard.Name,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, resp.ActiveBoard.ID, 2)
+					assert.Equal(t.Error,
+						resp.ActiveBoard.Name, "Team 1 Board 2",
+					)
 
 					for i, wantColumn := range []boardAPI.Column{
 						{ID: 8, Order: 1, Tasks: []boardAPI.Task{
@@ -452,74 +330,36 @@ func TestBoardHandler(t *testing.T) {
 					} {
 						column := resp.ActiveBoard.Columns[i]
 
-						if err := assert.Equal(
-							wantColumn.ID,
-							column.ID,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantColumn.Order,
-							column.Order,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, column.ID, wantColumn.ID)
+						assert.Equal(t.Error, column.Order, wantColumn.Order)
 
 						for j, wantTask := range wantColumn.Tasks {
 							task := column.Tasks[j]
 
-							if err := assert.Equal(
-								wantTask.ID,
-								task.ID,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantTask.Title,
-								task.Title,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantTask.Description,
-								task.Description,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantTask.Order,
-								task.Order,
-							); err != nil {
-								t.Error(err)
-							}
+							assert.Equal(t.Error, task.ID, wantTask.ID)
+							assert.Equal(t.Error, wantTask.Title, task.Title)
+							assert.Equal(t.Error,
+								task.Description, wantTask.Description,
+							)
+							assert.Equal(t.Error, task.Order, wantTask.Order)
 
 							for k, wantSubtask := range wantTask.Subtasks {
 								subtask := task.Subtasks[k]
 
-								if err := assert.Equal(
-									wantSubtask.ID,
-									subtask.ID,
-								); err != nil {
-									t.Error(err)
-								}
-								if err := assert.Equal(
-									wantSubtask.Title,
-									subtask.Title,
-								); err != nil {
-									t.Error(err)
-								}
-								if err := assert.Equal(
-									wantSubtask.Order,
+								assert.Equal(t.Error,
+									subtask.ID, wantSubtask.ID,
+								)
+								assert.Equal(t.Error,
+									subtask.Title, wantSubtask.Title,
+								)
+								assert.Equal(t.Error,
 									subtask.Order,
-								); err != nil {
-									t.Error(err)
-								}
-								if err := assert.Equal(
-									wantSubtask.IsDone,
+									wantSubtask.Order,
+								)
+								assert.Equal(t.Error,
 									subtask.IsDone,
-								); err != nil {
-									t.Error(err)
-								}
+									wantSubtask.IsDone,
+								)
 							}
 						}
 					}
@@ -536,11 +376,7 @@ func TestBoardHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err := assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				c.assertFunc(t, res, "")
 			})
@@ -606,9 +442,7 @@ func TestBoardHandler(t *testing.T) {
 					if err != nil {
 						t.Error(err)
 					}
-					if err = assert.Equal(1, count); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, count, 1)
 
 					var boardID int
 					err = db.QueryRow(
@@ -630,9 +464,7 @@ func TestBoardHandler(t *testing.T) {
 						if err != nil {
 							t.Error(err)
 						}
-						if err = assert.Equal(1, columnCount); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, columnCount, 1)
 					}
 				},
 			},
@@ -653,11 +485,7 @@ func TestBoardHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				// Run case-specific assertions.
 				c.assertFunc(t, res, "")
@@ -710,9 +538,7 @@ func TestBoardHandler(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					if err = assert.Equal(0, boardCount); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, boardCount, 0)
 
 					var count int
 					err = db.QueryRow(
@@ -721,9 +547,7 @@ func TestBoardHandler(t *testing.T) {
 					if err != nil {
 						t.Error(err)
 					}
-					if err = assert.Equal(0, count); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, count, 0)
 
 					// Assert that all column records with this board ID are
 					// deleted.
@@ -734,9 +558,7 @@ func TestBoardHandler(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					if err = assert.Equal(0, columnCount); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, columnCount, 0)
 
 					// Assert that all task records associated with each
 					// column record is deleted.
@@ -749,9 +571,7 @@ func TestBoardHandler(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						if err = assert.Equal(0, count); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, count, 0)
 					}
 
 					// Assert that all subtask records associated with each
@@ -766,9 +586,7 @@ func TestBoardHandler(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
-						if err = assert.Equal(0, count); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, count, 0)
 					}
 				},
 			},
@@ -783,11 +601,7 @@ func TestBoardHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err := assert.Equal(
-					c.wantStatusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				// Run case-specific assertions.
 				c.assertFunc(t)
@@ -892,11 +706,7 @@ func TestBoardHandler(t *testing.T) {
 				sut.ServeHTTP(w, req)
 				res := w.Result()
 
-				if err = assert.Equal(
-					c.statusCode, res.StatusCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, res.StatusCode, c.statusCode)
 
 				c.assertFunc(t, res, "")
 			})

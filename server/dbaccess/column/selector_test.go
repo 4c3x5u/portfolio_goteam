@@ -50,13 +50,7 @@ func TestSelector(t *testing.T) {
 	if err = assert.Nil(err); err != nil {
 		t.Error(err)
 	}
-	if err = assert.Equal(columnID, strconv.Itoa(column.ID)); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(existingColumnBoardID, column.BoardID); err != nil {
-		t.Error(err)
-	}
-	if err = assert.Equal(existingColumnOrder, column.Order); err != nil {
-		t.Error(err)
-	}
+	assert.Equal(t.Error, strconv.Itoa(column.ID), columnID)
+	assert.Equal(t.Error, column.BoardID, existingColumnBoardID)
+	assert.Equal(t.Error, column.Order, existingColumnOrder)
 }

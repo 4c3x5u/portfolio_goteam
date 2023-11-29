@@ -42,9 +42,7 @@ func TestValidator(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ok := sut.Validate(c.reqBody)
 
-			if err := assert.Equal(c.wantOK, ok); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, c.wantOK, ok)
 		})
 	}
 }

@@ -31,9 +31,7 @@ func TestSelector(t *testing.T) {
 		sut := NewSelector(db)
 
 		_, err := sut.Select(username)
-		if err = assert.Equal(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, wantErr, err)
 	})
 
 	t.Run("OK", func(t *testing.T) {
@@ -55,17 +53,9 @@ func TestSelector(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if err = assert.Equal(username, user.Username); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(wantPwd, string(user.Password)); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(wantTeamID, user.TeamID); err != nil {
-			t.Error(err)
-		}
-		if err = assert.Equal(wantIsAdmin, user.IsAdmin); err != nil {
-			t.Error(err)
-		}
+		assert.Equal(t.Error, user.Username, username)
+		assert.Equal(t.Error, string(user.Password), wantPwd)
+		assert.Equal(t.Error, user.TeamID, wantTeamID)
+		assert.Equal(t.Error, user.IsAdmin, wantIsAdmin)
 	})
 }

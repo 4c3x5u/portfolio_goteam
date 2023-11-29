@@ -330,20 +330,12 @@ func TestGETHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				if err := assert.Equal("bob", resp.User.Username); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, resp.User.Username, "bob")
 				if err := assert.True(resp.User.IsAdmin); err != nil {
 					t.Error(err)
 				}
-				if err := assert.Equal(1, resp.Team.ID); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					"InvCode", resp.Team.InviteCode,
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, resp.Team.ID, 1)
+				assert.Equal(t.Error, "InvCode", resp.Team.InviteCode)
 
 				for i, wantMember := range []TeamMember{
 					{Username: "foo", IsAdmin: true},
@@ -351,16 +343,8 @@ func TestGETHandler(t *testing.T) {
 				} {
 					member := resp.TeamMembers[i]
 
-					if err := assert.Equal(
-						wantMember.Username, member.Username,
-					); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						wantMember.IsAdmin, member.IsAdmin,
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, member.Username, wantMember.Username)
+					assert.Equal(t.Error, member.IsAdmin, wantMember.IsAdmin)
 				}
 
 				for i, wantBoard := range []Board{
@@ -370,95 +354,45 @@ func TestGETHandler(t *testing.T) {
 				} {
 					board := resp.Boards[i]
 
-					if err := assert.Equal(
-						wantBoard.ID, board.ID,
-					); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						wantBoard.Name, board.Name,
-					); err != nil {
-						t.Error(err)
-					}
-
+					assert.Equal(t.Error, board.ID, wantBoard.ID)
+					assert.Equal(t.Error, board.Name, wantBoard.Name)
 				}
 
-				if err := assert.Equal(2, resp.ActiveBoard.ID); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					"Active", resp.ActiveBoard.Name,
-				); err != nil {
-					t.Error(err)
-				}
-				if err := assert.Equal(
-					2, len(resp.ActiveBoard.Columns),
-				); err != nil {
-					t.Error(err)
-				}
+				assert.Equal(t.Error, resp.ActiveBoard.ID, 2)
+				assert.Equal(t.Error, resp.ActiveBoard.Name, "Active")
+				assert.Equal(t.Error, len(resp.ActiveBoard.Columns), 2)
 				for i, wantCol := range boardSelectorRecursive.Rec.Columns {
 					col := resp.ActiveBoard.Columns[i]
 
-					if err := assert.Equal(wantCol.ID, col.ID); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						wantCol.Order, col.Order,
-					); err != nil {
-						t.Error(err)
-					}
-					if err := assert.Equal(
-						len(wantCol.Tasks), len(col.Tasks),
-					); err != nil {
-						t.Error(err)
-					}
+					assert.Equal(t.Error, col.ID, wantCol.ID)
+					assert.Equal(t.Error, col.Order, wantCol.Order)
+					assert.Equal(t.Error, len(col.Tasks), len(wantCol.Tasks))
+
 					for j, wantTask := range wantCol.Tasks {
 						task := col.Tasks[j]
 
-						if err := assert.Equal(
-							wantTask.ID, task.ID,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							wantTask.Title, task.Title,
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.Equal(
-							*wantTask.Description, task.Description,
-						); err != nil {
-							t.Error(err)
-						}
+						assert.Equal(t.Error, task.ID, wantTask.ID)
+						assert.Equal(t.Error, task.Title, wantTask.Title)
+						assert.Equal(t.Error,
+							task.Description, *wantTask.Description,
+						)
+						assert.Equal(t.Error,
+							len(task.Subtasks), len(wantTask.Subtasks),
+						)
 
-						if err := assert.Equal(
-							len(wantTask.Subtasks), len(task.Subtasks),
-						); err != nil {
-							t.Error(err)
-						}
 						for k, wantSubtask := range wantTask.Subtasks {
 							subtask := task.Subtasks[k]
 
-							if err := assert.Equal(
-								wantSubtask.ID, subtask.ID,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantSubtask.Title, subtask.Title,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantSubtask.Order, subtask.Order,
-							); err != nil {
-								t.Error(err)
-							}
-							if err := assert.Equal(
-								wantSubtask.IsDone, subtask.IsDone,
-							); err != nil {
-								t.Error(err)
-							}
+							assert.Equal(t.Error, subtask.ID, wantSubtask.ID)
+							assert.Equal(t.Error,
+								subtask.Title, wantSubtask.Title,
+							)
+							assert.Equal(t.Error,
+								subtask.Order, wantSubtask.Order,
+							)
+							assert.Equal(t.Error,
+								subtask.IsDone, wantSubtask.IsDone,
+							)
 						}
 					}
 				}
@@ -488,11 +422,7 @@ func TestGETHandler(t *testing.T) {
 			sut.Handle(w, r, "bob123")
 
 			res := w.Result()
-			if err := assert.Equal(
-				c.wantStatusCode, res.StatusCode,
-			); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 			c.assertFunc(t, res, log.InMessage)
 		})
 	}

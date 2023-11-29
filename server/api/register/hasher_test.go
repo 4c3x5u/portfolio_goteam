@@ -42,9 +42,7 @@ func TestPasswordHasher(t *testing.T) {
 				t.Error(err)
 			}
 			err = bcrypt.CompareHashAndPassword(hash, []byte(c.matchPlaintext))
-			if err = assert.Equal(c.wantErr, err); err != nil {
-				t.Error(err)
-			}
+			assert.Equal(t.Error, err, c.wantErr)
 		})
 	}
 }
