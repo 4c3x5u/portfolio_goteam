@@ -93,12 +93,8 @@ func TestUserValidator(t *testing.T) {
 
 			res := sut.Validate(c.reqBody)
 
-			if err := assert.EqualArr(c.usernameErrs, res.Username); err != nil {
-				t.Error(err)
-			}
-			if err := assert.EqualArr(c.passwordErrs, res.Password); err != nil {
-				t.Error(err)
-			}
+			assert.AllEqual(t.Error, res.Username, c.usernameErrs)
+			assert.AllEqual(t.Error, res.Password, c.passwordErrs)
 		})
 	}
 }
@@ -172,11 +168,8 @@ func TestUsernameValidator(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			gotErrs := sut.Validate(c.username)
-
-			if err := assert.EqualArr(c.wantErrs, gotErrs); err != nil {
-				t.Error(err)
-			}
+			errs := sut.Validate(c.username)
+			assert.AllEqual(t.Error, errs, c.wantErrs)
 		})
 	}
 }
@@ -1382,9 +1375,7 @@ func TestValidatorPassword(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			gotErrs := sut.Validate(c.password)
 
-			if err := assert.EqualArr(c.wantErrs, gotErrs); err != nil {
-				t.Error(err)
-			}
+			assert.AllEqual(t.Error, c.wantErrs, gotErrs)
 		})
 	}
 }

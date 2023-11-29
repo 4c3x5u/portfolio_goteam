@@ -47,18 +47,14 @@ func TestRegisterHandler(t *testing.T) {
 			); err != nil {
 				t.Fatal(err)
 			}
-			if err := assert.EqualArr(
-				wantUsernameErrs,
+			assert.AllEqual(t.Error,
 				resBody.ValidationErrs.Username,
-			); err != nil {
-				t.Error(err)
-			}
-			if err := assert.EqualArr(
-				wantPasswordErrs,
+				wantUsernameErrs,
+			)
+			assert.AllEqual(t.Error,
 				resBody.ValidationErrs.Password,
-			); err != nil {
-				t.Error(err)
-			}
+				wantPasswordErrs,
+			)
 		}
 	}
 

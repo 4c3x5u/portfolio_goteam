@@ -19,29 +19,28 @@ func newErr(got, want any) error {
 }
 
 // Equal asserts that two given values are equal.
-func Equal(logFunc func(...any), got, want any) {
+func Equal(logErr func(...any), got, want any) {
 	if want != got {
-		logFunc(newErr(got, want))
+		logErr(newErr(got, want))
 	}
 }
 
-// TODO/FIXME: got/want order for the remaining funcs
-
-// EqualArr asserts that two given arrays are the same by comparing their
+// AllEqual asserts that two given arrays are the same by comparing their
 // children.
-func EqualArr[T comparable](want, got []T) error {
-	if want == nil && got == nil {
-		return nil
+func AllEqual[T comparable](logErr func(...any), got, want []T) {
+	if got == nil && want == nil {
+		return
 	}
-	if len(want) != len(got) {
-		return newErr(got, want)
+	if len(got) != len(want) {
+		logErr(newErr(got, want))
+		return
 	}
 	for i := 0; i < len(want); i++ {
-		if want[i] != got[i] {
-			return newErr(got, want)
+		if got[i] != want[i] {
+			logErr(newErr(got, want))
+			return
 		}
 	}
-	return nil
 }
 
 // Nil asserts that a given value is nil.
