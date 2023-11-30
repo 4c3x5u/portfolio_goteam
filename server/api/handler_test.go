@@ -53,11 +53,9 @@ func TestHandler(t *testing.T) {
 				// header.
 				allowedMethods := res.Header.Get("Access-Control-Allow-Methods")
 				for method := range sut.methodHandlers {
-					if err := assert.True(
+					assert.True(t.Error,
 						strings.Contains(allowedMethods, method),
-					); err != nil {
-						t.Error(err)
-					}
+					)
 				}
 			})
 		}

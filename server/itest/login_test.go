@@ -71,9 +71,7 @@ func TestLoginHandler(t *testing.T) {
 			assertFunc: func(t *testing.T, res *http.Response) {
 				cookie := res.Cookies()[0]
 
-				if err := assert.True(cookie.Secure); err != nil {
-					t.Error(err)
-				}
+				assert.True(t.Error, cookie.Secure)
 				assert.Equal(t.Error, cookie.SameSite, http.SameSiteNoneMode)
 
 				claims := jwt.RegisteredClaims{}

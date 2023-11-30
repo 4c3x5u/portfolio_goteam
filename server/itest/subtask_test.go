@@ -100,9 +100,7 @@ func TestSubtaskHandler(t *testing.T) {
 					).Scan(&isDone); err != nil {
 						t.Fatal(err)
 					}
-					if err := assert.True(isDone); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, isDone)
 				},
 			},
 		} {

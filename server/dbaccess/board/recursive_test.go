@@ -215,17 +215,12 @@ func TestRecursiveSelector(t *testing.T) {
 		assert.Equal(t.Error, subtask1.ID, 8)
 		assert.Equal(t.Error, subtask1.Title, "subtask 1")
 		assert.Equal(t.Error, subtask1.Order, 1)
-		if err = assert.True(!subtask1.IsDone); err != nil {
-			t.Error(err)
-		}
+		assert.True(t.Error, !subtask1.IsDone)
 
 		subtask2 := subtasks[1]
 		assert.Equal(t.Error, subtask2.ID, 9)
 		assert.Equal(t.Error, subtask2.Title, "subtask 2")
 		assert.Equal(t.Error, subtask2.Order, 2)
-		if err := assert.True(subtask2.IsDone); err != nil {
-			t.Error(err)
-		}
-
+		assert.True(t.Error, subtask2.IsDone)
 	})
 }

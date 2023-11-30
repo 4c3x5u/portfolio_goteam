@@ -148,9 +148,7 @@ func TestBoardHandler(t *testing.T) {
 
 					assert.Equal(t.Error, resp.User.Username, "team2Admin")
 
-					if err := assert.True(resp.User.IsAdmin); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, resp.User.IsAdmin)
 
 					assert.Equal(t.Error, resp.Team.ID, 2)
 					assert.Equal(t.Error,
@@ -161,9 +159,7 @@ func TestBoardHandler(t *testing.T) {
 
 					member := resp.TeamMembers[0]
 					assert.Equal(t.Error, member.Username, "team2Admin")
-					if err := assert.True(member.IsAdmin); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, member.IsAdmin)
 
 					// When ID is empty, a new board will be created for user.
 					assert.Equal(t.Error, len(resp.Boards), 1)
@@ -202,9 +198,7 @@ func TestBoardHandler(t *testing.T) {
 					}
 
 					assert.Equal(t.Error, resp.User.Username, "team2Member")
-					if err := assert.True(!resp.User.IsAdmin); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, !resp.User.IsAdmin)
 
 					assert.Equal(t.Error, resp.Team.ID, 2)
 					assert.Equal(t.Error,
@@ -216,9 +210,7 @@ func TestBoardHandler(t *testing.T) {
 
 					member := resp.TeamMembers[0]
 					assert.Equal(t.Error, member.Username, "team2Admin")
-					if err := assert.True(member.IsAdmin); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, member.IsAdmin)
 
 					// When ID is empty, a new board will be created for user.
 					assert.Equal(t.Error, len(resp.Boards), 1)
@@ -256,9 +248,7 @@ func TestBoardHandler(t *testing.T) {
 					}
 
 					assert.Equal(t.Error, resp.User.Username, "team1Member")
-					if err := assert.True(!resp.User.IsAdmin); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, !resp.User.IsAdmin)
 
 					assert.Equal(t.Error, resp.Team.ID, 1)
 					assert.Equal(t.Error,

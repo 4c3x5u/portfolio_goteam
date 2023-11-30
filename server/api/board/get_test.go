@@ -331,9 +331,7 @@ func TestGETHandler(t *testing.T) {
 				}
 
 				assert.Equal(t.Error, resp.User.Username, "bob")
-				if err := assert.True(resp.User.IsAdmin); err != nil {
-					t.Error(err)
-				}
+				assert.True(t.Error, resp.User.IsAdmin)
 				assert.Equal(t.Error, resp.Team.ID, 1)
 				assert.Equal(t.Error, "InvCode", resp.Team.InviteCode)
 

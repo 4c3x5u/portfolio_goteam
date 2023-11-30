@@ -475,14 +475,10 @@ func TestTaskHandler(t *testing.T) {
 					assert.Equal(t.Error, len(subtasks), 2)
 					assert.Equal(t.Error, subtasks[0].Title, "Some Subtask")
 					assert.Equal(t.Error, subtasks[0].Order, 1)
-					if err = assert.True(!subtasks[0].IsDone); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, !subtasks[0].IsDone)
 					assert.Equal(t.Error, "Some Other Subtask", subtasks[1].Title)
 					assert.Equal(t.Error, 2, subtasks[1].Order)
-					if err = assert.True(subtasks[1].IsDone); err != nil {
-						t.Error(err)
-					}
+					assert.True(t.Error, subtasks[1].IsDone)
 				},
 			},
 		} {

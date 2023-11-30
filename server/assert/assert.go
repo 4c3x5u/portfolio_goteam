@@ -51,11 +51,10 @@ func Nil(logErr func(...any), got any) {
 }
 
 // True asserts that a given boolean value is true.
-func True(got bool) error {
+func True(logErr func(...any), got bool) {
 	if !got {
-		return newErr(got, "true")
+		logErr(newErr(got, "true"))
 	}
-	return nil
 }
 
 // SameError asserts that the given two errors are the same.

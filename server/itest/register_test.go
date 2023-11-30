@@ -187,9 +187,7 @@ func TestRegisterHandler(t *testing.T) {
 				// assert that the returned JWT is valid and has the correct
 				// subject
 				cookie := res.Cookies()[0]
-				if err := assert.True(cookie.Secure); err != nil {
-					t.Error(err)
-				}
+				assert.True(t.Error, cookie.Secure)
 				assert.Equal(t.Error, cookie.SameSite, http.SameSiteNoneMode)
 				claims := jwt.RegisteredClaims{}
 				if _, err = jwt.ParseWithClaims(

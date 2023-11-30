@@ -306,14 +306,10 @@ func TestHandler(t *testing.T) {
 						assert.Equal(t.Error,
 							ck.Value, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 						)
-						if err := assert.True(
+						assert.True(t.Error,
 							ck.Expires.Unix() > time.Now().Unix(),
-						); err != nil {
-							t.Error(err)
-						}
-						if err := assert.True(ck.Secure); err != nil {
-							t.Error(err)
-						}
+						)
+						assert.True(t.Error, ck.Secure)
 						assert.Equal(t.Error,
 							ck.SameSite, http.SameSiteNoneMode,
 						)
