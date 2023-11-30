@@ -154,7 +154,7 @@ func TestInserter(t *testing.T) {
 			err := sut.Insert(board)
 
 			for _, wantErr := range c.wantErrs {
-				assert.SameError(t.Error, err, wantErr)
+				assert.ErrIs(t.Error, err, wantErr)
 			}
 		})
 	}

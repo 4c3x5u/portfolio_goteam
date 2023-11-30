@@ -49,7 +49,7 @@ func TestSelector(t *testing.T) {
 		)
 
 	task, err := sut.Select(id)
-	assert.SameError(t.Error, err, sql.ErrNoRows)
+	assert.ErrIs(t.Error, err, sql.ErrNoRows)
 
 	task, err = sut.Select(id)
 	assert.Nil(t.Fatal, err)

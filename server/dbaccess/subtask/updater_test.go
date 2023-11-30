@@ -35,7 +35,7 @@ func TestUpdater(t *testing.T) {
 
 		err := sut.Update(id, rec)
 
-		assert.SameError(t.Error, err, wantErr)
+		assert.ErrIs(t.Error, err, wantErr)
 	})
 
 	t.Run("Success", func(t *testing.T) {

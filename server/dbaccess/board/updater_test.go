@@ -40,7 +40,7 @@ func TestUpdater(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			assertOnErr: func(logErr func(...any), err error) {
-				assert.SameError(logErr, err, sql.ErrNoRows)
+				assert.ErrIs(logErr, err, sql.ErrNoRows)
 			},
 		},
 		{

@@ -441,7 +441,7 @@ func TestDeleter(t *testing.T) {
 			err := sut.Delete(boardID)
 
 			for _, wantErr := range c.wantErrs {
-				assert.SameError(t.Error, err, wantErr)
+				assert.ErrIs(t.Error, err, wantErr)
 			}
 		})
 	}

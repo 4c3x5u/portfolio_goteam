@@ -43,6 +43,13 @@ func AllEqual[T comparable](logErr func(...any), got, want []T) {
 	}
 }
 
+// ErrIs asserts that the given two errors are the same.
+func ErrIs(logErr func(...any), got, want error) {
+	if !errors.Is(got, want) {
+		logErr(newErr(got, want))
+	}
+}
+
 // Nil asserts that a given value is nil.
 func Nil(logErr func(...any), got any) {
 	if got != nil {
@@ -54,13 +61,6 @@ func Nil(logErr func(...any), got any) {
 func True(logErr func(...any), got bool) {
 	if !got {
 		logErr(newErr(got, "true"))
-	}
-}
-
-// SameError asserts that the given two errors are the same.
-func SameError(logErr func(...any), got, want error) {
-	if !errors.Is(got, want) {
-		logErr(newErr(got, want))
 	}
 }
 

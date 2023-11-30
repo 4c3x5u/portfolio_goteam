@@ -42,7 +42,7 @@ func TestSelector(t *testing.T) {
 		)
 
 	column, err := sut.Select(columnID)
-	assert.SameError(t.Error, err, sql.ErrNoRows)
+	assert.ErrIs(t.Error, err, sql.ErrNoRows)
 
 	column, err = sut.Select(columnID)
 	assert.Nil(t.Fatal, err)

@@ -41,7 +41,7 @@ func TestRecursiveSelector(t *testing.T) {
 
 		_, err := sut.Select(boardID)
 
-		assert.SameError(t.Error, err, wantErr)
+		assert.ErrIs(t.Error, err, wantErr)
 	})
 
 	t.Run("SelectColumnErr", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestRecursiveSelector(t *testing.T) {
 
 		_, err := sut.Select(boardID)
 
-		assert.SameError(t.Error, err, wantErr)
+		assert.ErrIs(t.Error, err, wantErr)
 	})
 
 	t.Run("SelectTaskErr", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestRecursiveSelector(t *testing.T) {
 
 		_, err := sut.Select(boardID)
 
-		assert.SameError(t.Error, err, wantErr)
+		assert.ErrIs(t.Error, err, wantErr)
 	})
 
 	t.Run("SelectSubtaskErr", func(t *testing.T) {
@@ -120,7 +120,7 @@ func TestRecursiveSelector(t *testing.T) {
 
 		_, err := sut.Select(boardID)
 
-		assert.SameError(t.Error, err, wantErr)
+		assert.ErrIs(t.Error, err, wantErr)
 	})
 
 	t.Run("OK", func(t *testing.T) {

@@ -29,7 +29,7 @@ func TestCounter(t *testing.T) {
 
 		_, err := sut.Count(teamID)
 
-		assert.SameError(t.Error, err, sql.ErrNoRows)
+		assert.ErrIs(t.Error, err, sql.ErrNoRows)
 	})
 
 	t.Run("OK", func(t *testing.T) {
