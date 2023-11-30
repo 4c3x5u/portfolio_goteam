@@ -41,9 +41,7 @@ func TestSelector(t *testing.T) {
 		)
 
 	board, err := sut.Select(boardID)
-	if err := assert.SameError(sql.ErrNoRows, err); err != nil {
-		t.Error(err)
-	}
+	assert.SameError(t.Error, err, sql.ErrNoRows)
 
 	board, err = sut.Select(boardID)
 	assert.Nil(t.Fatal, err)

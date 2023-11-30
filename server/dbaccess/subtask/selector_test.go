@@ -32,9 +32,7 @@ func TestSelector(t *testing.T) {
 		mock.ExpectQuery(sqlSelectTask).WithArgs(id).WillReturnError(wantErr)
 
 		_, err := sut.Select(id)
-		if err := assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("Success", func(t *testing.T) {

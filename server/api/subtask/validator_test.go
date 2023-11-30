@@ -37,9 +37,7 @@ func TestIDValidator(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			err := sut.Validate(c.id)
-			if assertErr := assert.SameError(c.wantErr, err); assertErr != nil {
-				t.Error(assertErr)
-			}
+			assert.SameError(t.Error, err, c.wantErr)
 		})
 	}
 }

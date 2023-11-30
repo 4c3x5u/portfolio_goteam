@@ -165,9 +165,7 @@ func TestInserter(t *testing.T) {
 			c.setUpMock(mock)
 			err := sut.Insert(task)
 			for _, wantErr := range c.wantErrs {
-				if assertErr := assert.SameError(wantErr, err); assertErr != nil {
-					t.Error(assertErr)
-				}
+				assert.SameError(t.Error, err, wantErr)
 			}
 		})
 	}

@@ -28,9 +28,7 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("DeleteSubtaskErr", func(t *testing.T) {
@@ -42,9 +40,7 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("DeleteTaskErr", func(t *testing.T) {
@@ -60,9 +56,7 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("RollbackErr", func(t *testing.T) {
@@ -79,14 +73,8 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if assertErr := assert.SameError(wantErr, err); assertErr != nil {
-			t.Error(assertErr)
-		}
-		if assertErr := assert.SameError(
-			wantRollbackErr, err,
-		); assertErr != nil {
-			t.Error(assertErr)
-		}
+		assert.SameError(t.Error, err, wantErr)
+		assert.SameError(t.Error, err, wantRollbackErr)
 	})
 
 	t.Run("CommitErr", func(t *testing.T) {
@@ -102,9 +90,7 @@ func TestDeleter(t *testing.T) {
 
 		err := sut.Delete(id)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("OK", func(t *testing.T) {

@@ -58,13 +58,10 @@ func True(logErr func(...any), got bool) {
 }
 
 // SameError asserts that the given two errors are the same.
-func SameError(errA, errB error) error {
-	// Order is reversed when passing to errors.Is since it is received as
-	// "want" first and "got" second, yet we assert on whether "got" is "want".
-	if !errors.Is(errB, errA) {
-		return newErr(errB, errA)
+func SameError(logErr func(...any), got, want error) {
+	if !errors.Is(got, want) {
+		logErr(newErr(got, want))
 	}
-	return nil
 }
 
 // OnResErr can be used in HTTP tests to assert that a given error message was

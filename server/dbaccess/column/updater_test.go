@@ -122,11 +122,7 @@ func TestUpdater(t *testing.T) {
 			c.mockFunc(mock)
 			err := sut.Update(columnID, tasks)
 			for _, wantErr := range c.wantErrs {
-				if assertErr := assert.SameError(
-					wantErr, err,
-				); assertErr != nil {
-					t.Error(assertErr)
-				}
+				assert.SameError(t.Error, err, wantErr)
 			}
 		})
 	}

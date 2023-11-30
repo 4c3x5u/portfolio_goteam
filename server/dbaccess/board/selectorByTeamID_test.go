@@ -26,9 +26,7 @@ func TestSelectorByTeamID(t *testing.T) {
 
 		_, err := sut.Select(teamID)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("OK", func(t *testing.T) {

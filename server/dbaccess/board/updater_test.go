@@ -39,10 +39,8 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnError(sql.ErrNoRows)
 			},
-			assertOnErr: func(errFunc func(...any), err error) {
-				if err = assert.SameError(err, sql.ErrNoRows); err != nil {
-					errFunc(err)
-				}
+			assertOnErr: func(logErr func(...any), err error) {
+				assert.SameError(logErr, err, sql.ErrNoRows)
 			},
 		},
 		{
@@ -52,8 +50,8 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 0))
 			},
-			assertOnErr: func(logFunc func(...any), err error) {
-				assert.Equal(logFunc, err.Error(), "no rows were affected")
+			assertOnErr: func(logErr func(...any), err error) {
+				assert.Equal(logErr, err.Error(), "no rows were affected")
 			},
 		},
 		{
@@ -63,8 +61,8 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(-1, 2))
 			},
-			assertOnErr: func(logFunc func(...any), err error) {
-				assert.Equal(logFunc,
+			assertOnErr: func(logErr func(...any), err error) {
+				assert.Equal(logErr,
 					err.Error(), "more than expected rows were affected",
 				)
 			},
@@ -76,7 +74,7 @@ func TestUpdater(t *testing.T) {
 					WithArgs(newBoardName, boardID).
 					WillReturnResult(sqlmock.NewResult(21, 1))
 			},
-			assertOnErr: func(logFunc func(...any), err error) {
+			assertOnErr: func(logErr func(...any), err error) {
 				assert.Nil(t.Error, err)
 			},
 		},
@@ -84,7 +82,6 @@ func TestUpdater(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			c.setUp(mock)
 			err := sut.Update(boardID, newBoardName)
-
 			c.assertOnErr(t.Error, err)
 		})
 	}

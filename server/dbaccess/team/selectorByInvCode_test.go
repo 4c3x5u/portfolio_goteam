@@ -34,9 +34,7 @@ func TestSelectorByInvCode(t *testing.T) {
 
 		_, err := sut.Select(inviteCode)
 
-		if err = assert.SameError(wantErr, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, wantErr)
 	})
 
 	t.Run("Success", func(t *testing.T) {

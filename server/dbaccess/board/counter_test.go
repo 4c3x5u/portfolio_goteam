@@ -23,14 +23,13 @@ func TestCounter(t *testing.T) {
 
 	t.Run("Error", func(t *testing.T) {
 		teamID := "2"
-		mock.ExpectQuery(cmdCount).WithArgs(teamID).
+		mock.ExpectQuery(cmdCount).
+			WithArgs(teamID).
 			WillReturnError(sql.ErrNoRows)
 
 		_, err := sut.Count(teamID)
 
-		if err = assert.SameError(sql.ErrNoRows, err); err != nil {
-			t.Error(err)
-		}
+		assert.SameError(t.Error, err, sql.ErrNoRows)
 	})
 
 	t.Run("OK", func(t *testing.T) {
