@@ -2,15 +2,11 @@ package user
 
 import (
 	"context"
-	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/kxplxn/goteam/pkg/db"
 )
-
-// ErrNotFound means that the no items matched the GetItem request.
-var ErrNotFound = errors.New("item not found")
 
 // Getter can be used to get an item from the user table.
 type Getter struct {
@@ -28,7 +24,7 @@ func (g Getter) Get(id string) (User, error) {
 		return User{}, err
 	}
 	if out == nil {
-		return User{}, ErrNotFound
+		return User{}, db.ErrNotFound
 	}
 
 	var user User

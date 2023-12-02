@@ -16,8 +16,8 @@ func TestPutter(t *testing.T) {
 	ip := &db.FakeDynamoDBItemPutter{}
 	sut := NewPutter(ip)
 
-	t.Run("ErrIDExistsWhenConditonalCheckFailed", func(t *testing.T) {
-		wantErr := ErrIDExists
+	t.Run("ErrDupKeyWhenConditonalCheckFailed", func(t *testing.T) {
+		wantErr := db.ErrDupKey
 		ip.Err = &smithy.OperationError{
 			Err: &types.ConditionalCheckFailedException{},
 		}

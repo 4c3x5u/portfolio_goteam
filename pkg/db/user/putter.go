@@ -13,10 +13,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// ErrIDExists means that the ID passed in the user data already exists in user
-// table.
-var ErrIDExists = errors.New("user ID already exists")
-
 // ItemPutter can be used to "put" an item into user table.
 type Putter struct {
 	ItemPutter db.DynamoDBItemPutter
@@ -43,7 +39,7 @@ func (p Putter) Put(user User) error {
 
 	var ex *types.ConditionalCheckFailedException
 	if errors.As(err, &ex) {
-		return ErrIDExists
+		return db.ErrDupKey
 	}
 
 	return err
