@@ -19,3 +19,10 @@ type DynamoDBItemPutter interface {
 	) (*dynamodb.PutItemOutput, error)
 }
 
+// DynamoDBItemPutter defines a type that can be used to get an item from
+// a DynamoDB table.
+type DynamoDBItemGetter interface {
+	GetItem(
+		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
+	) (*dynamodb.GetItemOutput, error)
+}
