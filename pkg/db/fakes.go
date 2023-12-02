@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-// FakeDynamoDBItemPutter is a test fake for ItemPutter.
+// FakeDynamoDBItemPutter is a test fake for DynamoDBItemPutter.
 type FakeDynamoDBItemPutter struct {
 	Out *dynamodb.PutItemOutput
 	Err error

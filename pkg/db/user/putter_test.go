@@ -11,10 +11,10 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestItemPutter(t *testing.T) {
+func TestPutter(t *testing.T) {
 	i := User{}
 	ip := &db.FakeDynamoDBItemPutter{}
-	sut := NewItemPutter(ip)
+	sut := NewPutter(ip)
 
 	t.Run("ErrIDExistsWhenConditonalCheckFailed", func(t *testing.T) {
 		wantErr := ErrIDExists
@@ -36,7 +36,7 @@ func TestItemPutter(t *testing.T) {
 		assert.ErrIs(t.Fatal, err, wantErr)
 	})
 
-	t.Run("ErrIsNilWhenOK", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		ip.Err = nil
 
 		err := sut.Put(i)

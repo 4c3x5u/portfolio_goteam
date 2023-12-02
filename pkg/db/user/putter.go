@@ -22,7 +22,7 @@ type Putter struct {
 	ItemPutter db.DynamoDBItemPutter
 }
 
-// NewPutter creates and returns a new ItemPutter.
+// NewPutter creates and returns a new Putter.
 func NewPutter(ip db.DynamoDBItemPutter) Putter {
 	return Putter{ItemPutter: ip}
 }
