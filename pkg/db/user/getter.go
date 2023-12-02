@@ -18,13 +18,14 @@ func NewGetter(ig db.DynamoDBItemGetter) Getter {
 	return Getter{ItemGetter: ig}
 }
 
+// Get gets an item from the user table.
 func (g Getter) Get(id string) (User, error) {
 	out, err := g.ItemGetter.GetItem(context.TODO(), &dynamodb.GetItemInput{})
 	if err != nil {
 		return User{}, err
 	}
 	if out == nil {
-		return User{}, db.ErrNotFound
+		return User{}, db.ErrNoItem
 	}
 
 	var user User

@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	// ErrNotFound means that no items were found.
-	ErrNotFound = errors.New("item not found")
+	// ErrNoItem means that no items were found.
+	ErrNoItem = errors.New("item not found")
 
 	// ErrDupKey means that operation does not allow an update on an existing
 	// item and the key passed in was not unique.

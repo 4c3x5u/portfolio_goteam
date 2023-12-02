@@ -5,12 +5,12 @@ import (
 	"errors"
 	"os"
 
+	"github.com/kxplxn/goteam/pkg/db"
+
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-
-	"github.com/kxplxn/goteam/pkg/db"
 )
 
 // ItemPutter can be used to "put" an item into user table.

@@ -17,7 +17,7 @@ func TestGetter(t *testing.T) {
 	ig := &db.FakeDynamoDBItemGetter{}
 	sut := NewGetter(ig)
 
-	t.Run("RDirectErrReturnWhenOtherErreturnErrWhenOccurs", func(t *testing.T) {
+	t.Run("Err", func(t *testing.T) {
 		wantErr := errors.New("failed to get item")
 		ig.Err = wantErr
 
@@ -26,13 +26,13 @@ func TestGetter(t *testing.T) {
 		assert.ErrIs(t.Fatal, err, wantErr)
 	})
 
-	t.Run("ErrNotFoundWhenNilOut", func(t *testing.T) {
+	t.Run("ErrNoItem", func(t *testing.T) {
 		ig.Out = nil
 		ig.Err = nil
 
 		_, err := sut.Get("")
 
-		assert.ErrIs(t.Fatal, err, db.ErrNotFound)
+		assert.ErrIs(t.Fatal, err, db.ErrNoItem)
 	})
 
 	t.Run("OK", func(t *testing.T) {
