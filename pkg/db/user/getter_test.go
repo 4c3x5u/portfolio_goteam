@@ -1,3 +1,5 @@
+//go:build utest
+
 package user
 
 import (
@@ -15,7 +17,7 @@ func TestGetter(t *testing.T) {
 	ig := &db.FakeDynamoDBItemGetter{}
 	sut := NewGetter(ig)
 
-	t.Run("ReturnErrWhenOccurs", func(t *testing.T) {
+	t.Run("RDirectErrReturnWhenOtherErreturnErrWhenOccurs", func(t *testing.T) {
 		wantErr := errors.New("failed to get item")
 		ig.Err = wantErr
 
