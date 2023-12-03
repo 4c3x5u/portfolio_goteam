@@ -26,7 +26,7 @@ type ItemPutter interface {
 
 // ItemGetter defines a type that can be used to get an item from a DynamoDB
 // table.
-type ItemGetteer interface {
+type ItemGetter interface {
 	GetItem(
 		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.GetItemOutput, error)

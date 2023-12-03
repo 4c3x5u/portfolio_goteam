@@ -14,7 +14,7 @@ import (
 )
 
 func TestGetter(t *testing.T) {
-	ig := &db.FakeDynamoDBItemGetter{}
+	ig := &db.FakeItemGetter{}
 	sut := NewGetter(ig)
 
 	t.Run("Err", func(t *testing.T) {
