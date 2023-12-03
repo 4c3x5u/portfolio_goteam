@@ -28,7 +28,7 @@ func (p Putter) Put(user User) error {
 	}
 
 	_, err = p.ItemPutter.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName:           aws.String(os.Getenv("DYNAMODB_TABLE_USER")),
+		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(ID)"),
 	})

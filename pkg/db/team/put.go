@@ -27,7 +27,7 @@ func (p Putter) Put(team Team) error {
 	_, err = p.ItemPutter.PutItem(
 		context.TODO(),
 		&dynamodb.PutItemInput{
-			TableName: aws.String(os.Getenv("DYNAMODB_TABLE_TEAM")),
+			TableName: aws.String(os.Getenv(tableName)),
 			Item:      item,
 		},
 	)

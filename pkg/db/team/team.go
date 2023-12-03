@@ -1,6 +1,10 @@
 // Package team contains code for working with the team DynamoDB table.
 package team
 
+// tableName is the name of the environment variable to retrieve the team
+// table's name from.
+const tableName = "DYNAMODB_TABLE_TEAM"
+
 // Team defines a team in the team table.
 type Team struct {
 	ID      string   //guid

@@ -1,5 +1,9 @@
 package task
 
+// tableName is the name of the environment variable to retrieve the task
+// table's name from.
+const tableName = "DYNAMODB_TABLE_TASK"
+
 // Task defines a task in the task table.
 type Task struct {
 	ID           string //guid

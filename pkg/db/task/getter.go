@@ -25,7 +25,7 @@ func (g Getter) Get(id string) (Task, error) {
 	out, err := g.ItemGetter.GetItem(
 		context.TODO(),
 		&dynamodb.GetItemInput{
-			TableName: aws.String(os.Getenv("DYNAMODB_TABLE_TASK")),
+			TableName: aws.String(os.Getenv(tableName)),
 			Key: map[string]types.AttributeValue{
 				"ID": &types.AttributeValueMemberS{Value: id},
 			},
