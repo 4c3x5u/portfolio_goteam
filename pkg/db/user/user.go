@@ -1,7 +1,7 @@
-// Package user contains code for accessing the user DynamoDB table.
+// Package user contains code for working with the user DynamoDB table.
 package user
 
-// User defines an item in the user table.
+// User defines user in the user table.
 type User struct {
 	ID       string
 	Password []byte

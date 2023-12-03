@@ -14,9 +14,7 @@ import (
 type Getter struct{ ItemGetter db.ItemGetteer }
 
 // NewGetter creates and returns a new Getter.
-func NewGetter(ig db.ItemGetteer) Getter {
-	return Getter{ItemGetter: ig}
-}
+func NewGetter(ig db.ItemGetteer) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets a team from the team table by ID.
 func (g Getter) Get(id string) (Team, error) {

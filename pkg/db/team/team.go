@@ -1,14 +1,14 @@
-// Package team contains code for accessing the team DynamoDB table.
+// Package team contains code for working with the team DynamoDB table.
 package team
 
-// Team defines an item in the team table.
+// Team defines a team in the team table.
 type Team struct {
 	ID      string   //guid
 	Members []string //usernames
 	Boards  []Board
 }
 
-// Board defines an item in a Team item's Boards.
+// Board defines a board in a team's boards.
 type Board struct {
 	ID   string //guid
 	Name string
