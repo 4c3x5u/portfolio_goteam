@@ -16,17 +16,17 @@ var (
 	ErrDupKey = errors.New("duplicate key")
 )
 
-// DynamoDBItemPutter defines a type that can be used to put an item into
-// a DynamoDB table.
-type DynamoDBItemPutter interface {
+// ItemPutter defines a type that can be used to put an item into a DynamoDB
+// table.
+type ItemPutter interface {
 	PutItem(
 		context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.PutItemOutput, error)
 }
 
-// DynamoDBItemPutter defines a type that can be used to get an item from
-// a DynamoDB table.
-type DynamoDBItemGetter interface {
+// ItemGetter defines a type that can be used to get an item from a DynamoDB
+// table.
+type ItemGetteer interface {
 	GetItem(
 		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.GetItemOutput, error)

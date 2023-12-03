@@ -5,22 +5,24 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// Getter can be used to get an item from the user table.
-type Getter struct {
-	ItemGetter db.DynamoDBItemGetter
-}
+// Getter can be used to get a user from the user table by ID.
+type Getter struct{ ItemGetter db.ItemGetteer }
 
 // NewGetter creates and returns a new Getter.
-func NewGetter(ig db.DynamoDBItemGetter) Getter {
-	return Getter{ItemGetter: ig}
-}
+func NewGetter(ig db.ItemGetteer) Getter { return Getter{ItemGetter: ig} }
 
-// Get gets an item from the user table.
+// Get gets user from the user table by ID.
 func (g Getter) Get(id string) (User, error) {
-	out, err := g.ItemGetter.GetItem(context.TODO(), &dynamodb.GetItemInput{})
+	out, err := g.ItemGetter.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"ID": &types.AttributeValueMemberS{Value: id},
+		},
+	})
 	if err != nil {
 		return User{}, err
 	}

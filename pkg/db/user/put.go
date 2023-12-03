@@ -5,26 +5,22 @@ import (
 	"errors"
 	"os"
 
-	"github.com/kxplxn/goteam/pkg/db"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
+	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// ItemPutter can be used to "put" an item into user table.
-type Putter struct {
-	ItemPutter db.DynamoDBItemPutter
-}
+// ItemPutter can be used to put a user into user table.
+type Putter struct{ ItemPutter db.ItemPutter }
 
 // NewPutter creates and returns a new Putter.
-func NewPutter(ip db.DynamoDBItemPutter) Putter {
-	return Putter{ItemPutter: ip}
-}
+func NewPutter(ip db.ItemPutter) Putter { return Putter{ItemPutter: ip} }
 
-// Put puts an item into the user table with the given user data. If an item
-// with the given ID already exists, it returns ErrIDExists instead.
+// Put puts a user into the user table only if a user with the same ID does not
+// already exist.
 func (p Putter) Put(user User) error {
 	item, err := attributevalue.MarshalMap(user)
 	if err != nil {

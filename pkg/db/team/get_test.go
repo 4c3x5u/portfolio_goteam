@@ -8,12 +8,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
 func TestGetter(t *testing.T) {
-	ig := &db.FakeDynamoDBItemGetter{}
+	ig := &db.FakeItemGetter{}
 	sut := NewGetter(ig)
 
 	t.Run("Err", func(t *testing.T) {
