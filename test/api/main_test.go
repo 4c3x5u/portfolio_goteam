@@ -5,6 +5,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -22,13 +23,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// used as a prefix to a uuid when creating test tables
 const (
 	userTablePrefix = "goteam-test-user-"
-	teamTablePrefix = "goteam-test-user-"
-	taskTablePrefix = "goteam-test-user-"
+	teamTablePrefix = "goteam-test-team-"
+	taskTablePrefix = "goteam-test-task-"
 )
 
-var userTableName string
+// set during DynamoDB setup to be used by tests
+var (
+	userTableName string
+	teamTableName string
+	taskTableName string
+)
 
 func TestMain(m *testing.M) {
 	tearDownDynamoDB, err := setUpDynamoDB()
@@ -98,21 +105,52 @@ func setUpDynamoDB() (func() error, error) {
 		return nil
 	}
 
-	// TODO: team table
+	// set up team table
+	teamTableName = teamTablePrefix + uuid.New().String()
+	_, err = svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
+		TableName: &teamTableName,
+		AttributeDefinitions: []types.AttributeDefinition{
+			{AttributeName: aws.String("ID"), AttributeType: "S"},
+		},
+		KeySchema: []types.KeySchemaElement{
+			{AttributeName: aws.String("ID"), KeyType: "HASH"},
+		},
+		BillingMode: types.BillingModeProvisioned,
+		ProvisionedThroughput: &types.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(25),
+			WriteCapacityUnits: aws.Int64(25),
+		},
+	})
+	if err != nil {
+		return tearDownUserTable, err
+	}
+
+	// create user table teardown function
+	tearDownTeamTable := func() error {
+		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+			TableName: &userTableName,
+		})
+		return nil
+	}
+
 	// TODO: task table
+	// TODO: wait until all tables are created
 
 	// return the teardown function for tables created
 	return func() error {
+		var errs error
 		if err = tearDownUserTable(); err != nil {
-			return err
+			errs = err
 		}
-		return nil
+		if err = tearDownTeamTable(); err != nil {
+			errs = errors.Join(errs, err)
+		}
+		return err
 	}, nil
 }
 
 // TODO: remove once fully migrated to DynamoDB
 func setUpPostgres() (func() error, error) {
-
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		return tearDownNothing, fmt.Errorf("Could not construct pool: %s", err)
