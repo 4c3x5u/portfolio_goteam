@@ -17,84 +17,100 @@ func TestGetter(t *testing.T) {
 	ig := &db.FakeItemGetter{}
 	sut := NewGetter(ig)
 
-	t.Run("Err", func(t *testing.T) {
-		wantErr := errors.New("failed to get team")
-		ig.Out = nil
-		ig.Err = wantErr
+	errA := errors.New("failed to get team")
+	teamA := Team{
+		ID:      "b8c1dd05-f5de-43ba-bb51-a88051099dba",
+		Members: []string{"bob123", "bob124"},
+		Boards: []Board{
+			{ID: "b8c1dd05-f5de-43ba-bb51-a88051099dba", Name: "Board A"},
+			{ID: "630ecf76-383b-42b1-be55-1bc8e3a96e98", Name: "Board B"},
+		},
+	}
 
-		_, err := sut.Get("")
-
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
-
-	t.Run("NoItem", func(t *testing.T) {
-		wantErr := db.ErrNoItem
-		ig.Out = nil
-		ig.Err = nil
-
-		_, err := sut.Get("")
-
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
-
-	t.Run("OK", func(t *testing.T) {
-		wantTeam := Team{
-			ID:      "b8c1dd05-f5de-43ba-bb51-a88051099dba",
-			Members: []string{"bob123", "bob124"},
-			Boards: []Board{
-				{ID: "b8c1dd05-f5de-43ba-bb51-a88051099dba", Name: "Board A"},
-				{ID: "630ecf76-383b-42b1-be55-1bc8e3a96e98", Name: "Board B"},
-			},
-		}
-		ig.Out = &dynamodb.GetItemOutput{
-			Item: map[string]types.AttributeValue{
-				"ID": &types.AttributeValueMemberS{Value: wantTeam.ID},
-				"Members": &types.AttributeValueMemberL{
-					Value: []types.AttributeValue{
-						&types.AttributeValueMemberS{
-							Value: wantTeam.Members[0],
-						},
-						&types.AttributeValueMemberS{
-							Value: wantTeam.Members[1],
-						},
-					},
-				},
-				"Boards": &types.AttributeValueMemberL{
-					Value: []types.AttributeValue{
-						&types.AttributeValueMemberM{
-							Value: map[string]types.AttributeValue{
-								"ID": &types.AttributeValueMemberS{
-									Value: wantTeam.Boards[0].ID,
-								},
-								"Name": &types.AttributeValueMemberS{
-									Value: wantTeam.Boards[0].Name,
-								},
+	for _, c := range []struct {
+		name     string
+		igOut    *dynamodb.GetItemOutput
+		igErr    error
+		wantTeam *Team
+		wantErr  error
+	}{
+		{
+			name:     "Err",
+			igOut:    nil,
+			igErr:    errA,
+			wantTeam: nil,
+			wantErr:  errA,
+		},
+		{
+			name:     "NoItem",
+			igOut:    nil,
+			igErr:    nil,
+			wantTeam: nil,
+			wantErr:  db.ErrNoItem,
+		},
+		{
+			name: "OK",
+			igOut: &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{
+					"ID": &types.AttributeValueMemberS{Value: teamA.ID},
+					"Members": &types.AttributeValueMemberL{
+						Value: []types.AttributeValue{
+							&types.AttributeValueMemberS{
+								Value: teamA.Members[0],
 							},
-						},
-						&types.AttributeValueMemberM{
-							Value: map[string]types.AttributeValue{
-								"ID": &types.AttributeValueMemberS{
-									Value: wantTeam.Boards[1].ID,
-								},
-								"Name": &types.AttributeValueMemberS{
-									Value: wantTeam.Boards[1].Name,
-								},
+							&types.AttributeValueMemberS{
+								Value: teamA.Members[1],
 							},
 						},
 					},
+					"Boards": &types.AttributeValueMemberL{
+						Value: []types.AttributeValue{
+							&types.AttributeValueMemberM{
+								Value: map[string]types.AttributeValue{
+									"ID": &types.AttributeValueMemberS{
+										Value: teamA.Boards[0].ID,
+									},
+									"Name": &types.AttributeValueMemberS{
+										Value: teamA.Boards[0].Name,
+									},
+								},
+							},
+							&types.AttributeValueMemberM{
+								Value: map[string]types.AttributeValue{
+									"ID": &types.AttributeValueMemberS{
+										Value: teamA.Boards[1].ID,
+									},
+									"Name": &types.AttributeValueMemberS{
+										Value: teamA.Boards[1].Name,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
-		}
-		ig.Err = nil
+			wantTeam: &teamA,
+			wantErr:  nil,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ig.Out = c.igOut
+			ig.Err = c.wantErr
 
-		team, err := sut.Get("")
+			team, err := sut.Get("")
 
-		assert.Nil(t.Fatal, err)
-		assert.Equal(t.Error, team.ID, wantTeam.ID)
-		assert.AllEqual(t.Error, team.Members, wantTeam.Members)
-		assert.Equal(t.Error, team.Boards[0].ID, wantTeam.Boards[0].ID)
-		assert.Equal(t.Error, team.Boards[0].Name, wantTeam.Boards[0].Name)
-		assert.Equal(t.Error, team.Boards[1].ID, wantTeam.Boards[1].ID)
-		assert.Equal(t.Error, team.Boards[1].Name, wantTeam.Boards[1].Name)
-	})
+			assert.ErrIs(t.Fatal, err, c.wantErr)
+
+			if c.wantTeam != nil {
+				t.Log(c.wantTeam.ID)
+
+				assert.Equal(t.Error, team.ID, c.wantTeam.ID)
+				assert.AllEqual(t.Error, team.Members, c.wantTeam.Members)
+				for i, wb := range c.wantTeam.Boards {
+					assert.Equal(t.Error, team.Boards[i].ID, wb.ID)
+					assert.Equal(t.Error, team.Boards[i].Name, wb.Name)
+				}
+			}
+		})
+	}
 }

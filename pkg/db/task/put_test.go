@@ -14,20 +14,22 @@ func TestPutter(t *testing.T) {
 	ip := &db.FakeItemPutter{}
 	sut := NewPutter(ip)
 
-	t.Run("Err", func(t *testing.T) {
-		wantErr := errors.New("failed to put item")
-		ip.Err = wantErr
+	errA := errors.New("failed to put item")
 
-		err := sut.Put(Task{})
+	for _, c := range []struct {
+		name    string
+		ipErr   error
+		wantErr error
+	}{
+		{name: "Err", ipErr: errA, wantErr: errA},
+		{name: "OK", ipErr: nil, wantErr: nil},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ip.Err = c.ipErr
 
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
+			err := sut.Put(Task{})
 
-	t.Run("OK", func(t *testing.T) {
-		ip.Err = nil
-
-		err := sut.Put(Task{})
-
-		assert.Nil(t.Fatal, err)
-	})
+			assert.ErrIs(t.Fatal, err, c.wantErr)
+		})
+	}
 }

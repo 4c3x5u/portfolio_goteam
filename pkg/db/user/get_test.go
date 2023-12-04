@@ -4,6 +4,7 @@ package user
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -17,43 +18,69 @@ func TestGetter(t *testing.T) {
 	ig := &db.FakeItemGetter{}
 	sut := NewGetter(ig)
 
-	t.Run("Err", func(t *testing.T) {
-		wantErr := errors.New("failed to get item")
-		ig.Err = wantErr
+	userA := User{
+		ID:       "bob123",
+		Password: []byte("p4ssw0rd"),
+		IsAdmin:  true,
+		TeamID:   21,
+	}
+	errA := errors.New("failed to get item")
 
-		_, err := sut.Get("")
-
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
-
-	t.Run("ErrNoItem", func(t *testing.T) {
-		ig.Out = nil
-		ig.Err = nil
-
-		_, err := sut.Get("")
-
-		assert.ErrIs(t.Fatal, err, db.ErrNoItem)
-	})
-
-	t.Run("OK", func(t *testing.T) {
-		ig.Out = &dynamodb.GetItemOutput{
-			Item: map[string]types.AttributeValue{
-				"ID": &types.AttributeValueMemberS{Value: "bob123"},
-				"Password": &types.AttributeValueMemberB{
-					Value: []byte("password"),
+	for _, c := range []struct {
+		name     string
+		igOut    *dynamodb.GetItemOutput
+		igErr    error
+		wantUser *User
+		wantErr  error
+	}{
+		{
+			name:     "Err",
+			igOut:    nil,
+			igErr:    errA,
+			wantUser: nil,
+			wantErr:  errA,
+		},
+		{
+			name:     "NoItem",
+			igOut:    nil,
+			igErr:    nil,
+			wantUser: nil,
+			wantErr:  db.ErrNoItem,
+		},
+		{
+			name: "OK",
+			igOut: &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{
+					"ID": &types.AttributeValueMemberS{Value: userA.ID},
+					"Password": &types.AttributeValueMemberB{
+						Value: userA.Password,
+					},
+					"IsAdmin": &types.AttributeValueMemberBOOL{
+						Value: userA.IsAdmin,
+					},
+					"TeamID": &types.AttributeValueMemberN{
+						Value: strconv.Itoa(userA.TeamID),
+					},
 				},
-				"IsAdmin": &types.AttributeValueMemberBOOL{Value: true},
-				"TeamID":  &types.AttributeValueMemberN{Value: "21"},
 			},
-		}
-		ig.Err = nil
+			igErr:    nil,
+			wantUser: &userA,
+			wantErr:  nil,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ig.Out = c.igOut
+			ig.Err = c.igErr
 
-		user, err := sut.Get("")
+			user, err := sut.Get("")
 
-		assert.Nil(t.Fatal, err)
-		assert.Equal(t.Error, user.ID, "bob123")
-		assert.Equal(t.Error, string(user.Password), "password")
-		assert.True(t.Error, user.IsAdmin)
-		assert.Equal(t.Error, user.TeamID, 21)
-	})
+			assert.Equal(t.Fatal, err, c.wantErr)
+			if c.wantUser != nil {
+				assert.Equal(t.Error, user.ID, c.wantUser.ID)
+				assert.AllEqual(t.Error, user.Password, c.wantUser.Password)
+				assert.True(t.Error, c.wantUser.IsAdmin)
+				assert.Equal(t.Error, user.TeamID, c.wantUser.TeamID)
+			}
+		})
+	}
 }

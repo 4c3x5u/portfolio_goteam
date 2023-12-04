@@ -1,3 +1,4 @@
+// Package db contains code to access and work with DynamoDB tables.
 package db
 
 import (

@@ -15,31 +15,37 @@ func TestPutter(t *testing.T) {
 	ip := &db.FakeItemPutter{}
 	sut := NewPutter(ip)
 
-	t.Run("DupKey", func(t *testing.T) {
-		wantErr := db.ErrDupKey
-		ip.Err = &smithy.OperationError{
-			Err: &types.ConditionalCheckFailedException{},
-		}
+	errA := errors.New("failed to put item")
 
-		err := sut.Put(User{})
+	for _, c := range []struct {
+		name    string
+		ipErr   error
+		wantErr error
+	}{
+		{
+			name: "DupKey",
+			ipErr: &smithy.OperationError{
+				Err: &types.ConditionalCheckFailedException{},
+			},
+			wantErr: db.ErrDupKey,
+		},
+		{
+			name:    "Err",
+			ipErr:   errA,
+			wantErr: errA,
+		},
+		{
+			name:    "OK",
+			ipErr:   nil,
+			wantErr: nil,
+		},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			ip.Err = c.ipErr
 
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
+			err := sut.Put(User{})
 
-	t.Run("Err", func(t *testing.T) {
-		wantErr := errors.New("failed to put item")
-		ip.Err = wantErr
-
-		err := sut.Put(User{})
-
-		assert.ErrIs(t.Fatal, err, wantErr)
-	})
-
-	t.Run("OK", func(t *testing.T) {
-		ip.Err = nil
-
-		err := sut.Put(User{})
-
-		assert.Nil(t.Fatal, err)
-	})
+			assert.ErrIs(t.Fatal, err, c.wantErr)
+		})
+	}
 }
