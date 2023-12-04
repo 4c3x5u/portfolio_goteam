@@ -31,11 +31,7 @@ const (
 )
 
 // set during DynamoDB setup to be used by tests
-var (
-	userTableName string
-	teamTableName string
-	taskTableName string
-)
+var userTableName, teamTableName, taskTableName string
 
 func TestMain(m *testing.M) {
 	tearDownDynamoDB, err := setUpDynamoDB()
@@ -65,9 +61,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// tearDownNothing is returned when there is nothing to tear down.
-func tearDownNothing() error { return nil }
-
 // setUpDynamoDB sets up the test tables on DynamoDB.
 func setUpDynamoDB() (func() error, error) {
 	// create dynamodb client
@@ -95,32 +88,30 @@ func setUpDynamoDB() (func() error, error) {
 	taskTableName = taskTablePrefix + uuid.New().String()
 	tearDownTaskTable, err := setUpTable(svc, &taskTableName)
 	if err != nil {
-		return func() error {
-			var errs error
-			if err = tearDownUserTable(); err != nil {
-				errs = err
-			}
-			if err = tearDownTeamTable(); err != nil {
-				return errors.Join(errs, err)
-			}
-			return nil
-		}, err
+		return joinTeardowns(tearDownUserTable, tearDownTeamTable), err
 	}
 
 	// return the teardown function for tables created
+	return joinTeardowns(
+		tearDownUserTable, tearDownTeamTable, tearDownTaskTable,
+	), nil
+}
+
+// tearDownNothing is returned when there is nothing to tear down.
+func tearDownNothing() error { return nil }
+
+// joinTeardowns joins multiple teardowns together into one teardown that
+// invokes each of the child teardowns and joins their errors.
+func joinTeardowns(tearDowns ...func() error) func() error {
 	return func() error {
-		var errs error
-		if err = tearDownUserTable(); err != nil {
-			errs = err
+		var jointErr error
+		for _, td := range tearDowns {
+			if err := td(); err != nil {
+				jointErr = errors.Join(jointErr, err)
+			}
 		}
-		if err = tearDownTeamTable(); err != nil {
-			errs = errors.Join(errs, err)
-		}
-		if err = tearDownTaskTable(); err != nil {
-			errs = errors.Join(errs, err)
-		}
-		return err
-	}, nil
+		return jointErr
+	}
 }
 
 // setUpTable sets up a DynamoDB table with the given name and a string
