@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,6 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 
@@ -21,6 +27,8 @@ const (
 	teamTablePrefix = "goteam-test-user-"
 	taskTablePrefix = "goteam-test-user-"
 )
+
+var userTableName string
 
 func TestMain(m *testing.M) {
 	tearDownDynamoDB, err := setUpDynamoDB()
@@ -50,21 +58,68 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// tearDownNothing is returned when there is nothing to tear down.
+func tearDownNothing() error { return nil }
+
+// setUpDynamoDB sets up the test tables on DynamoDB.
 func setUpDynamoDB() (func() error, error) {
-	return func() error { return nil }, nil
+	// create dynamodb client
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return tearDownNothing, err
+	}
+	svc := dynamodb.NewFromConfig(cfg)
+
+	// set up user table
+	userTableName = userTablePrefix + uuid.New().String()
+	_, err = svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
+		TableName: &userTableName,
+		AttributeDefinitions: []types.AttributeDefinition{
+			{AttributeName: aws.String("ID"), AttributeType: "S"},
+		},
+		KeySchema: []types.KeySchemaElement{
+			{AttributeName: aws.String("ID"), KeyType: "HASH"},
+		},
+		BillingMode: types.BillingModeProvisioned,
+		ProvisionedThroughput: &types.ProvisionedThroughput{
+			ReadCapacityUnits:  aws.Int64(25),
+			WriteCapacityUnits: aws.Int64(25),
+		},
+	})
+	if err != nil {
+		return tearDownNothing, err
+	}
+
+	// create user table teardown function
+	tearDownUserTable := func() error {
+		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+			TableName: &userTableName,
+		})
+		return nil
+	}
+
+	// TODO: team table
+	// TODO: task table
+
+	// return the teardown function for tables created
+	return func() error {
+		if err = tearDownUserTable(); err != nil {
+			return err
+		}
+		return nil
+	}, nil
 }
 
 // TODO: remove once fully migrated to DynamoDB
 func setUpPostgres() (func() error, error) {
-	emptyTeardown := func() error { return nil }
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return emptyTeardown, fmt.Errorf("Could not construct pool: %s", err)
+		return tearDownNothing, fmt.Errorf("Could not construct pool: %s", err)
 	}
 	err = pool.Client.Ping()
 	if err != nil {
-		return emptyTeardown, fmt.Errorf("Could not connect to Docker: %s", err)
+		return tearDownNothing, fmt.Errorf("Could not connect to Docker: %s", err)
 	}
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
@@ -80,10 +135,10 @@ func setUpPostgres() (func() error, error) {
 		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	})
 	if err != nil {
-		return emptyTeardown, fmt.Errorf("Could not start resource: %s", err)
+		return tearDownNothing, fmt.Errorf("Could not start resource: %s", err)
 	}
 	if err := resource.Expire(180); err != nil {
-		return emptyTeardown, fmt.Errorf("expire error: %s", err)
+		return tearDownNothing, fmt.Errorf("expire error: %s", err)
 	}
 
 	// Get the connection string to the database.
@@ -102,7 +157,7 @@ func setUpPostgres() (func() error, error) {
 		}
 		return db.Ping()
 	}); err != nil {
-		return emptyTeardown, fmt.Errorf("Could not connect to docker: %s", err)
+		return tearDownNothing, fmt.Errorf("Could not connect to docker: %s", err)
 	}
 
 	// Initialise the database with schema and tables.
