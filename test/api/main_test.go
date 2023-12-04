@@ -14,6 +14,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
@@ -21,6 +22,8 @@ import (
 	"github.com/ory/dockertest/docker"
 
 	_ "github.com/lib/pq"
+
+	dbUser "github.com/kxplxn/goteam/pkg/db/user"
 )
 
 // used as a prefix to a uuid when creating test tables
@@ -63,6 +66,8 @@ func TestMain(m *testing.M) {
 
 // setUpDynamoDB sets up the test tables on DynamoDB.
 func setUpDynamoDB() (func() error, error) {
+	var tearDown func() error
+
 	// create dynamodb client
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -76,42 +81,62 @@ func setUpDynamoDB() (func() error, error) {
 	if err != nil {
 		return tearDownNothing, err
 	}
+	tearDown = tearDownUserTable
 
 	// set up team table
 	teamTableName = teamTablePrefix + uuid.New().String()
 	tearDownTeamTable, err := setUpTable(svc, &teamTableName)
 	if err != nil {
-		return tearDownUserTable, err
+		return tearDown, err
 	}
+	tearDown = joinTeardowns(tearDown, tearDownTeamTable)
 
 	// set up team table
 	taskTableName = taskTablePrefix + uuid.New().String()
 	tearDownTaskTable, err := setUpTable(svc, &taskTableName)
 	if err != nil {
-		return joinTeardowns(tearDownUserTable, tearDownTeamTable), err
+		return tearDown, err
+	}
+	tearDown = joinTeardowns(tearDown, tearDownTaskTable)
+
+	// ensure all test tables are created before populating them
+	if err := allTablesExist(svc); err != nil {
+		return tearDown, err
 	}
 
 	// return the teardown function for tables created
-	return joinTeardowns(
-		tearDownUserTable, tearDownTeamTable, tearDownTaskTable,
-	), nil
+	return tearDown, nil
 }
 
-// tearDownNothing is returned when there is nothing to tear down.
-func tearDownNothing() error { return nil }
+func allTablesExist(svc *dynamodb.Client) error {
+	// check whether all tables are created every 200 milliseconds until all is
+	// found
+	for {
+		time.Sleep(200 * time.Millisecond)
 
-// joinTeardowns joins multiple teardowns together into one teardown that
-// invokes each of the child teardowns and joins their errors.
-func joinTeardowns(tearDowns ...func() error) func() error {
-	return func() error {
-		var jointErr error
-		for _, td := range tearDowns {
-			if err := td(); err != nil {
-				jointErr = errors.Join(jointErr, err)
+		resp, err := svc.ListTables(context.TODO(), &dynamodb.ListTablesInput{})
+		if err != nil {
+			return err
+		}
+
+		var userTableFound, teamTableFound, taskTableFound bool
+		for _, tn := range resp.TableNames {
+			switch tn {
+			case userTableName:
+				userTableFound = true
+			case teamTableName:
+				teamTableFound = true
+			case taskTableName:
+				taskTableFound = true
 			}
 		}
-		return jointErr
+
+		if userTableFound && teamTableFound && taskTableFound {
+			break
+		}
 	}
+	return nil
+}
 }
 
 // setUpTable sets up a DynamoDB table with the given name and a string
@@ -142,6 +167,23 @@ func setUpTable(svc *dynamodb.Client, name *string) (func() error, error) {
 		})
 		return nil
 	}, nil
+}
+
+// tearDownNothing is returned when there is nothing to tear down.
+func tearDownNothing() error { return nil }
+
+// joinTeardowns joins multiple teardowns together into one teardown that
+// invokes each of the child teardowns and joins their errors.
+func joinTeardowns(tearDowns ...func() error) func() error {
+	return func() error {
+		var jointErr error
+		for _, td := range tearDowns {
+			if err := td(); err != nil {
+				jointErr = errors.Join(jointErr, err)
+			}
+		}
+		return jointErr
+	}
 }
 
 // TODO: remove once fully migrated to DynamoDB
