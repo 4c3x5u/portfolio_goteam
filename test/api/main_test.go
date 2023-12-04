@@ -79,8 +79,36 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up user table
 	userTableName = userTablePrefix + uuid.New().String()
-	_, err = svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
-		TableName: &userTableName,
+	tearDownUserTable, err := setUpTable(svc, &userTableName)
+	if err != nil {
+		return tearDownNothing, err
+	}
+
+	// set up team table
+	teamTableName = teamTablePrefix + uuid.New().String()
+	tearDownTeamTable, err := setUpTable(svc, &teamTableName)
+	if err != nil {
+		return tearDownUserTable, err
+	}
+
+	// return the teardown function for tables created
+	return func() error {
+		var errs error
+		if err = tearDownUserTable(); err != nil {
+			errs = err
+		}
+		if err = tearDownTeamTable(); err != nil {
+			errs = errors.Join(errs, err)
+		}
+		return err
+	}, nil
+}
+
+// setUpTable sets up a DynamoDB table with the given name and a string
+// partition key named ID.
+func setUpTable(svc *dynamodb.Client, name *string) (func() error, error) {
+	_, err := svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
+		TableName: name,
 		AttributeDefinitions: []types.AttributeDefinition{
 			{AttributeName: aws.String("ID"), AttributeType: "S"},
 		},
@@ -98,54 +126,11 @@ func setUpDynamoDB() (func() error, error) {
 	}
 
 	// create user table teardown function
-	tearDownUserTable := func() error {
-		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
-			TableName: &userTableName,
-		})
-		return nil
-	}
-
-	// set up team table
-	teamTableName = teamTablePrefix + uuid.New().String()
-	_, err = svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
-		TableName: &teamTableName,
-		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: aws.String("ID"), AttributeType: "S"},
-		},
-		KeySchema: []types.KeySchemaElement{
-			{AttributeName: aws.String("ID"), KeyType: "HASH"},
-		},
-		BillingMode: types.BillingModeProvisioned,
-		ProvisionedThroughput: &types.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(25),
-			WriteCapacityUnits: aws.Int64(25),
-		},
-	})
-	if err != nil {
-		return tearDownUserTable, err
-	}
-
-	// create user table teardown function
-	tearDownTeamTable := func() error {
-		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
-			TableName: &userTableName,
-		})
-		return nil
-	}
-
-	// TODO: task table
-	// TODO: wait until all tables are created
-
-	// return the teardown function for tables created
 	return func() error {
-		var errs error
-		if err = tearDownUserTable(); err != nil {
-			errs = err
-		}
-		if err = tearDownTeamTable(); err != nil {
-			errs = errors.Join(errs, err)
-		}
-		return err
+		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+			TableName: name,
+		})
+		return nil
 	}, nil
 }
 
