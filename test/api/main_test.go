@@ -104,6 +104,21 @@ func setUpDynamoDB() (func() error, error) {
 		return tearDown, err
 	}
 
+	userReqs, err := writeUserReqs()
+	if err != nil {
+		return tearDown, err
+	}
+
+	// populate tables
+	_, err = svc.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			userTableName: userReqs,
+		},
+	})
+	if err != nil {
+		return tearDown, err
+	}
+
 	// return the teardown function for tables created
 	return tearDown, nil
 }
@@ -137,6 +152,68 @@ func allTablesExist(svc *dynamodb.Client) error {
 	}
 	return nil
 }
+
+// userWriteRequests returns table write requests for populating the user table.
+func writeUserReqs() ([]types.WriteRequest, error) {
+	var reqs []types.WriteRequest
+	for _, user := range []dbUser.User{
+		{
+			ID: "team1Admin",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+			IsAdmin: true,
+		},
+		{
+			ID: "team1Member",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+			IsAdmin: false,
+		},
+		{
+			ID: "team2Admin",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+			IsAdmin: true,
+		},
+		{
+			ID: "team2Member",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+			IsAdmin: false,
+		},
+		{
+			ID: "team3Admin",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+			IsAdmin: true,
+		},
+		{
+			ID: "team4Admin",
+			Password: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+			TeamID:  "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+			IsAdmin: true,
+		},
+	} {
+		item, err := attributevalue.MarshalMap(user)
+		if err != nil {
+			return []types.WriteRequest{}, err
+		}
+		req := types.WriteRequest{PutRequest: &types.PutRequest{Item: item}}
+		reqs = append(reqs, req)
+	}
+	return reqs, nil
 }
 
 // setUpTable sets up a DynamoDB table with the given name and a string

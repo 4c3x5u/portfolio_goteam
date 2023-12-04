@@ -10,5 +10,5 @@ type User struct {
 	ID       string
 	Password []byte
 	IsAdmin  bool
-	TeamID   int
+	TeamID   string
 }

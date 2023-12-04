@@ -4,7 +4,6 @@ package user
 
 import (
 	"errors"
-	"strconv"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -22,7 +21,7 @@ func TestGetter(t *testing.T) {
 		ID:       "bob123",
 		Password: []byte("p4ssw0rd"),
 		IsAdmin:  true,
-		TeamID:   21,
+		TeamID:   "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
 	}
 	errA := errors.New("failed to get item")
 
@@ -58,8 +57,8 @@ func TestGetter(t *testing.T) {
 					"IsAdmin": &types.AttributeValueMemberBOOL{
 						Value: userA.IsAdmin,
 					},
-					"TeamID": &types.AttributeValueMemberN{
-						Value: strconv.Itoa(userA.TeamID),
+					"TeamID": &types.AttributeValueMemberS{
+						Value: userA.TeamID,
 					},
 				},
 			},
