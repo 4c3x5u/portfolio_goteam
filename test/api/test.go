@@ -11,6 +11,7 @@ import (
 
 // db is the database connection pool used during integration testing.
 // It is set in main_test.go/TestMain.
+// TODO: remove once fully migrated to DynamoDB
 var db *sql.DB
 
 const (

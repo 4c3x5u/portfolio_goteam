@@ -16,7 +16,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	userTablePrefix = "goteam-test-user-"
+	teamTablePrefix = "goteam-test-user-"
+	taskTablePrefix = "goteam-test-user-"
+)
+
 func TestMain(m *testing.M) {
+	tearDownDynamoDB, err := setUpDynamoDB()
+	if err != nil {
+		log.Fatalf("dynamodb setup failed: %s", err)
+	}
+
 	// Create and run the docker container for itest database.
 	tearDownPostgres, err := setUpPostgres()
 	if err != nil {
@@ -26,11 +37,21 @@ func TestMain(m *testing.M) {
 	// Run integration tests.
 	code := m.Run()
 
+	if err := tearDownDynamoDB(); err != nil {
+		log.Fatalf("dynamodb teardown failed: %s", err)
+	}
+
 	// Tear down the database container.
-	tearDownPostgres()
+	if err := tearDownPostgres(); err != nil {
+		log.Fatalf("postgres teardown failed: %s", err)
+	}
 
 	// Done.
 	os.Exit(code)
+}
+
+func setUpDynamoDB() (func() error, error) {
+	return func() error { return nil }, nil
 }
 
 // TODO: remove once fully migrated to DynamoDB
