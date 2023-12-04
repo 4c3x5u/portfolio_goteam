@@ -91,6 +91,22 @@ func setUpDynamoDB() (func() error, error) {
 		return tearDownUserTable, err
 	}
 
+	// set up team table
+	taskTableName = taskTablePrefix + uuid.New().String()
+	tearDownTaskTable, err := setUpTable(svc, &taskTableName)
+	if err != nil {
+		return func() error {
+			var errs error
+			if err = tearDownUserTable(); err != nil {
+				errs = err
+			}
+			if err = tearDownTeamTable(); err != nil {
+				return errors.Join(errs, err)
+			}
+			return nil
+		}, err
+	}
+
 	// return the teardown function for tables created
 	return func() error {
 		var errs error
@@ -98,6 +114,9 @@ func setUpDynamoDB() (func() error, error) {
 			errs = err
 		}
 		if err = tearDownTeamTable(); err != nil {
+			errs = errors.Join(errs, err)
+		}
+		if err = tearDownTaskTable(); err != nil {
 			errs = errors.Join(errs, err)
 		}
 		return err
