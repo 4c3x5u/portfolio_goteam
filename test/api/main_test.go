@@ -4,6 +4,7 @@ package api
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -17,13 +18,32 @@ import (
 
 func TestMain(m *testing.M) {
 	// Create and run the docker container for itest database.
+	tearDownPostgres, err := setUpPostgres()
+	if err != nil {
+		log.Fatalf("postgres setup failed: %s", err)
+	}
+
+	// Run integration tests.
+	code := m.Run()
+
+	// Tear down the database container.
+	tearDownPostgres()
+
+	// Done.
+	os.Exit(code)
+}
+
+// TODO: remove once fully migrated to DynamoDB
+func setUpPostgres() (func() error, error) {
+	emptyTeardown := func() error { return nil }
+
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not construct pool: %s", err)
+		return emptyTeardown, fmt.Errorf("Could not construct pool: %s", err)
 	}
 	err = pool.Client.Ping()
 	if err != nil {
-		log.Fatalf("Could not connect to Docker: %s", err)
+		return emptyTeardown, fmt.Errorf("Could not connect to Docker: %s", err)
 	}
 	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "postgres",
@@ -39,10 +59,10 @@ func TestMain(m *testing.M) {
 		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
 	})
 	if err != nil {
-		log.Fatalf("Could not start resource: %s", err)
+		return emptyTeardown, fmt.Errorf("Could not start resource: %s", err)
 	}
 	if err := resource.Expire(180); err != nil {
-		log.Fatalf("expire error: %s", err)
+		return emptyTeardown, fmt.Errorf("expire error: %s", err)
 	}
 
 	// Get the connection string to the database.
@@ -61,7 +81,7 @@ func TestMain(m *testing.M) {
 		}
 		return db.Ping()
 	}); err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		return emptyTeardown, fmt.Errorf("Could not connect to docker: %s", err)
 	}
 
 	// Initialise the database with schema and tables.
@@ -73,14 +93,5 @@ func TestMain(m *testing.M) {
 		log.Fatal("+++", err)
 	}
 
-	// Run integration tests.
-	code := m.Run()
-
-	// Tear down the database container.
-	if err = pool.Purge(resource); err != nil {
-		log.Fatalf("Could not purge resource: %s", err)
-	}
-
-	// Done.
-	os.Exit(code)
+	return func() error { return pool.Purge(resource) }, nil
 }
