@@ -104,15 +104,14 @@ func setUpDynamoDB() (func() error, error) {
 		return tearDown, err
 	}
 
-	userReqs, err := writeUserReqs()
+	// populate tables
+	reqsUser, err := reqsWriteUser()
 	if err != nil {
 		return tearDown, err
 	}
-
-	// populate tables
 	_, err = svc.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
-			userTableName: userReqs,
+			userTableName: reqsUser,
 		},
 	})
 	if err != nil {
@@ -123,9 +122,9 @@ func setUpDynamoDB() (func() error, error) {
 	return tearDown, nil
 }
 
+// allTablesExist checks whether all tables are created every 200 milliseconds
+// until all are created.
 func allTablesExist(svc *dynamodb.Client) error {
-	// check whether all tables are created every 200 milliseconds until all is
-	// found
 	for {
 		time.Sleep(200 * time.Millisecond)
 
@@ -154,7 +153,7 @@ func allTablesExist(svc *dynamodb.Client) error {
 }
 
 // userWriteRequests returns table write requests for populating the user table.
-func writeUserReqs() ([]types.WriteRequest, error) {
+func reqsWriteUser() ([]types.WriteRequest, error) {
 	var reqs []types.WriteRequest
 	for _, user := range []dbUser.User{
 		{
