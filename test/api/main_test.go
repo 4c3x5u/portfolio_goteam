@@ -125,6 +125,7 @@ func setUpDynamoDB() (func() error, error) {
 // allTablesExist checks whether all tables are created every 200 milliseconds
 // until all are created.
 func allTablesExist(svc *dynamodb.Client) error {
+	var foundUserTable, foundTeamTable, foundTaskTable bool
 	for {
 		time.Sleep(200 * time.Millisecond)
 
@@ -133,19 +134,18 @@ func allTablesExist(svc *dynamodb.Client) error {
 			return err
 		}
 
-		var userTableFound, teamTableFound, taskTableFound bool
 		for _, tn := range resp.TableNames {
 			switch tn {
 			case userTableName:
-				userTableFound = true
+				foundUserTable = true
 			case teamTableName:
-				teamTableFound = true
+				foundTeamTable = true
 			case taskTableName:
-				taskTableFound = true
+				foundTaskTable = true
 			}
 		}
 
-		if userTableFound && teamTableFound && taskTableFound {
+		if foundUserTable && foundTeamTable && foundTaskTable {
 			break
 		}
 	}
