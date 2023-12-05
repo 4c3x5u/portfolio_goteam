@@ -3,6 +3,7 @@
 package team
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -97,7 +98,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.wantErr
 
-			team, err := sut.Get("")
+			team, err := sut.Get(context.Background(), "")
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 

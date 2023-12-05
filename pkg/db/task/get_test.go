@@ -3,6 +3,7 @@
 package task
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"testing"
@@ -105,7 +106,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.igErr
 
-			task, err := sut.Get("")
+			task, err := sut.Get(context.Background(), "")
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 			if c.wantTask != nil {

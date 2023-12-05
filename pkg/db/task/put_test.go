@@ -3,6 +3,7 @@
 package task
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestPutter(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Put(Task{})
+			err := sut.Put(context.Background(), Task{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})

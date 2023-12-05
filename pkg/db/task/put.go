@@ -18,19 +18,16 @@ type Putter struct{ ItemPutter db.ItemPutter }
 func NewPutter(ip db.ItemPutter) Putter { return Putter{ItemPutter: ip} }
 
 // Put puts a task into the task table.
-func (p Putter) Put(task Task) error {
+func (p Putter) Put(ctx context.Context, task Task) error {
 	item, err := attributevalue.MarshalMap(task)
 	if err != nil {
 		return err
 	}
 
-	_, err = p.ItemPutter.PutItem(
-		context.TODO(),
-		&dynamodb.PutItemInput{
-			TableName: aws.String(os.Getenv(tableName)),
-			Item:      item,
-		},
-	)
+	_, err = p.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
+		TableName: aws.String(os.Getenv(tableName)),
+		Item:      item,
+	})
 
 	return err
 }

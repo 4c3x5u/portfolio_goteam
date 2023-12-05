@@ -21,16 +21,13 @@ type Getter struct {
 func NewGetter(ig db.ItemGetter) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets a task from the task table.
-func (g Getter) Get(id string) (Task, error) {
-	out, err := g.ItemGetter.GetItem(
-		context.TODO(),
-		&dynamodb.GetItemInput{
-			TableName: aws.String(os.Getenv(tableName)),
-			Key: map[string]types.AttributeValue{
-				"ID": &types.AttributeValueMemberS{Value: id},
-			},
+func (g Getter) Get(ctx context.Context, id string) (Task, error) {
+	out, err := g.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
+		TableName: aws.String(os.Getenv(tableName)),
+		Key: map[string]types.AttributeValue{
+			"ID": &types.AttributeValueMemberS{Value: id},
 		},
-	)
+	})
 	if err != nil {
 		return Task{}, err
 	}

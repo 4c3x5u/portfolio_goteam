@@ -19,8 +19,8 @@ type Getter struct{ ItemGetter db.ItemGetter }
 func NewGetter(ig db.ItemGetter) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets a team from the team table by ID.
-func (g Getter) Get(id string) (Team, error) {
-	out, err := g.ItemGetter.GetItem(context.TODO(), &dynamodb.GetItemInput{
+func (g Getter) Get(ctx context.Context, id string) (Team, error) {
+	out, err := g.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: id},

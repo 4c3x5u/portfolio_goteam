@@ -3,6 +3,7 @@
 package team
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestPutter(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Put(Team{})
+			err := sut.Put(context.Background(), Team{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})
