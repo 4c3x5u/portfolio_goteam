@@ -14,7 +14,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
@@ -22,8 +21,6 @@ import (
 	"github.com/ory/dockertest/docker"
 
 	_ "github.com/lib/pq"
-
-	dbUser "github.com/kxplxn/goteam/pkg/db/user"
 )
 
 // used as a prefix to a uuid when creating test tables
@@ -37,31 +34,24 @@ const (
 var userTableName, teamTableName, taskTableName string
 
 func TestMain(m *testing.M) {
+	fmt.Println("setting up dynamodb test tables")
 	tearDownDynamoDB, err := setUpDynamoDB()
 	if err != nil {
+		// must tear down here too as some tables might be created while others
+		// have failed
+		tearDownDynamoDB()
 		log.Fatalf("dynamodb setup failed: %s", err)
 	}
+	defer tearDownDynamoDB()
 
-	// Create and run the docker container for itest database.
+	fmt.Println("setting up postgres test tables")
 	tearDownPostgres, err := setUpPostgres()
+	defer tearDownPostgres()
 	if err != nil {
 		log.Fatalf("postgres setup failed: %s", err)
 	}
 
-	// Run integration tests.
-	code := m.Run()
-
-	if err := tearDownDynamoDB(); err != nil {
-		log.Fatalf("dynamodb teardown failed: %s", err)
-	}
-
-	// Tear down the database container.
-	if err := tearDownPostgres(); err != nil {
-		log.Fatalf("postgres teardown failed: %s", err)
-	}
-
-	// Done.
-	os.Exit(code)
+	m.Run()
 }
 
 // setUpDynamoDB sets up the test tables on DynamoDB.
@@ -99,19 +89,15 @@ func setUpDynamoDB() (func() error, error) {
 	}
 	tearDown = joinTeardowns(tearDown, tearDownTaskTable)
 
-	// ensure all test tables are created before populating them
-	if err := allTablesExist(svc); err != nil {
+	// ensure all test tables are created
+	if err := allTablesActive(svc); err != nil {
 		return tearDown, err
 	}
 
 	// populate tables
-	reqsUser, err := reqsWriteUser()
-	if err != nil {
-		return tearDown, err
-	}
 	_, err = svc.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
-			userTableName: reqsUser,
+			userTableName: reqsWriteUser,
 		},
 	})
 	if err != nil {
@@ -122,97 +108,150 @@ func setUpDynamoDB() (func() error, error) {
 	return tearDown, nil
 }
 
-// allTablesExist checks whether all tables are created every 200 milliseconds
-// until all are created.
-func allTablesExist(svc *dynamodb.Client) error {
-	var foundUserTable, foundTeamTable, foundTaskTable bool
+// allTablesActive checks whether all tables are created and their status are
+// "ACTIVE" every 500 milliseconds until all pass.
+func allTablesActive(svc *dynamodb.Client) error {
+	fmt.Println("ensuring all test tables are active")
+	var userTableActive, teamTableActive, taskTableActive bool
 	for {
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 
-		resp, err := svc.ListTables(context.TODO(), &dynamodb.ListTablesInput{})
-		if err != nil {
-			return err
-		}
-
-		for _, tn := range resp.TableNames {
-			switch tn {
-			case userTableName:
-				foundUserTable = true
-			case teamTableName:
-				foundTeamTable = true
-			case taskTableName:
-				foundTaskTable = true
+		if !userTableActive {
+			resp, err := svc.DescribeTable(
+				context.TODO(), &dynamodb.DescribeTableInput{
+					TableName: &userTableName,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			if resp.Table.TableStatus == types.TableStatusActive {
+				userTableActive = true
 			}
 		}
 
-		if foundUserTable && foundTeamTable && foundTaskTable {
+		if !teamTableActive {
+			resp, err := svc.DescribeTable(
+				context.TODO(), &dynamodb.DescribeTableInput{
+					TableName: &teamTableName,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			if resp.Table.TableStatus == types.TableStatusActive {
+				teamTableActive = true
+			}
+		}
+
+		if !taskTableActive {
+			resp, err := svc.DescribeTable(
+				context.TODO(), &dynamodb.DescribeTableInput{
+					TableName: &taskTableName,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			if resp.Table.TableStatus == types.TableStatusActive {
+				taskTableActive = true
+			}
+		}
+
+		if userTableActive && teamTableActive && taskTableActive {
 			break
 		}
 	}
 	return nil
 }
 
-// userWriteRequests returns table write requests for populating the user table.
-func reqsWriteUser() ([]types.WriteRequest, error) {
-	var reqs []types.WriteRequest
-	for _, user := range []dbUser.User{
-		{
-			ID: "team1Admin",
-			Password: []byte(
+// reqsWriteUser are the requests sent to the user table to initialise it for
+// test use
+var reqsWriteUser = []types.WriteRequest{
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team1Admin"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
-			IsAdmin: true,
 		},
-		{
-			ID: "team1Member",
-			Password: []byte(
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: true,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team1Member"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
-			IsAdmin: false,
 		},
-		{
-			ID: "team2Admin",
-			Password: []byte(
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: false,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team2Admin"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
-			IsAdmin: true,
 		},
-		{
-			ID: "team2Member",
-			Password: []byte(
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: true,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team2Member"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
-			IsAdmin: false,
 		},
-		{
-			ID: "team3Admin",
-			Password: []byte(
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: false,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team3Admin"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
-			IsAdmin: true,
 		},
-		{
-			ID: "team4Admin",
-			Password: []byte(
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: true,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{Value: "team4Admin"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
 			),
-			TeamID:  "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-			IsAdmin: true,
 		},
-	} {
-		item, err := attributevalue.MarshalMap(user)
-		if err != nil {
-			return []types.WriteRequest{}, err
-		}
-		req := types.WriteRequest{PutRequest: &types.PutRequest{Item: item}}
-		reqs = append(reqs, req)
-	}
-	return reqs, nil
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: true,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+		},
+	}}},
 }
 
 // setUpTable sets up a DynamoDB table with the given name and a string
