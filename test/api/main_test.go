@@ -98,6 +98,7 @@ func setUpDynamoDB() (func() error, error) {
 	_, err = svc.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			userTableName: reqsWriteUser,
+			teamTableName: reqsWriteTeam,
 		},
 	})
 	if err != nil {
@@ -166,7 +167,7 @@ func allTablesActive(svc *dynamodb.Client) error {
 }
 
 // reqsWriteUser are the requests sent to the user table to initialise it for
-// test use
+// test use.
 var reqsWriteUser = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{Value: "team1Admin"},
@@ -251,6 +252,103 @@ var reqsWriteUser = []types.WriteRequest{
 		"TeamID": &types.AttributeValueMemberS{
 			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
 		},
+	}}},
+}
+
+// reqsWriteTeam are the requests sent to the team table to initialise it for
+// test use.
+var reqsWriteTeam = []types.WriteRequest{
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
+		"Members": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberS{Value: "team1Admin"},
+				&types.AttributeValueMemberS{Value: "team1Member"},
+			},
+		},
+		"Boards": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"ID": &types.AttributeValueMemberS{
+							Value: "91536664-9749-4dbb-a470-6e52aa353ae4",
+						},
+						"Name": &types.AttributeValueMemberS{
+							Value: "Team 1 Board 1",
+						},
+					},
+				},
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"ID": &types.AttributeValueMemberS{
+							Value: "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+						},
+						"Name": &types.AttributeValueMemberS{
+							Value: "Team 1 Board 2",
+						},
+					},
+				},
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"ID": &types.AttributeValueMemberS{
+							Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
+						},
+						"Name": &types.AttributeValueMemberS{
+							Value: "Team 1 Board 3",
+						},
+					},
+				},
+			},
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{
+			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
+		},
+		"Members": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberS{Value: "team2Admin"},
+				&types.AttributeValueMemberS{Value: "team2Member"},
+			},
+		},
+		"Boards": &types.AttributeValueMemberL{Value: []types.AttributeValue{}},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
+		"Members": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberS{Value: "team3Admin"},
+			},
+		},
+		"Boards": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"ID": &types.AttributeValueMemberS{
+							Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+						},
+						"Name": &types.AttributeValueMemberS{
+							Value: "Team 3 Board 1",
+						},
+					},
+				},
+			},
+		},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"ID": &types.AttributeValueMemberS{
+			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+		},
+		"Members": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberS{Value: "team4Admin"},
+			},
+		},
+		"Boards": &types.AttributeValueMemberL{Value: []types.AttributeValue{}},
 	}}},
 }
 
