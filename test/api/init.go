@@ -298,7 +298,7 @@ var reqsWriteTask = []types.WriteRequest{
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
-			Value: "c684a6a0-404d-46fa-9fa5-1497f9874567",
+			Value: "8fb040a2-910c-47af-a4ab-9dee49f16d1d",
 		},
 		"Title": &types.AttributeValueMemberS{Value: "task 6"},
 		"Order": &types.AttributeValueMemberN{Value: "1"},
