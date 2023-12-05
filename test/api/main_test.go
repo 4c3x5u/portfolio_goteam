@@ -99,6 +99,7 @@ func setUpDynamoDB() (func() error, error) {
 		RequestItems: map[string][]types.WriteRequest{
 			userTableName: reqsWriteUser,
 			teamTableName: reqsWriteTeam,
+			taskTableName: reqsWriteTask,
 		},
 	})
 	if err != nil {
