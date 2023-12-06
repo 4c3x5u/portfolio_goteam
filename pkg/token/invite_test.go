@@ -18,7 +18,7 @@ func TestInvite(t *testing.T) {
 	t.Run("Encode", func(t *testing.T) {
 		expiry := time.Now().Add(1 * time.Hour)
 
-		token, err := EncodeInvite(expiry, Invite{TeamID: teamID})
+		token, err := EncodeInvite(expiry, NewInvite(teamID))
 		if err != nil {
 			t.Fatal(err)
 		}

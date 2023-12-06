@@ -41,7 +41,5 @@ func DecodeInvite(raw string) (Invite, error) {
 		return Invite{}, err
 	}
 
-	return Invite{
-		TeamID: claims["teamID"].(string),
-	}, nil
+	return NewInvite(claims["teamID"].(string)), nil
 }
