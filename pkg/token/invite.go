@@ -9,25 +9,27 @@ import (
 // NameInvite is the name of the invite token.
 const NameInvite = "invite"
 
-// Invite defines the body of an invite token.
+// Invite defines the body of an Invite token.
 type Invite struct{ TeamID string }
 
 // NewInvite creates and returns a new Invite.
-func NewInvite() *Invite { return &Invite{} }
+func NewInvite(teamID string) Invite {
+	return Invite{TeamID: teamID}
+}
 
 // Encode encodes the Invite into a JWT string
-func (i *Invite) Encode(exp time.Time) (string, error) {
+func EncodeInvite(exp time.Time, inv Invite) (string, error) {
 	tk, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"teamID": i.TeamID,
+		"teamID": inv.TeamID,
 		"exp":    exp.Unix(),
 	}).SignedString([]byte(signKey))
 	return tk, err
 }
 
 // Decode validates and decodes a raw JWT string into the Invite.
-func (i *Invite) Decode(raw string) error {
+func DecodeInvite(raw string) (Invite, error) {
 	if raw == "" {
-		return ErrInvalid
+		return Invite{}, ErrInvalid
 	}
 
 	claims := jwt.MapClaims{}
@@ -36,10 +38,10 @@ func (i *Invite) Decode(raw string) error {
 			return signKey, nil
 		},
 	); err != nil {
-		return err
+		return Invite{}, err
 	}
 
-	i.TeamID = claims["teamID"].(string)
-
-	return nil
+	return Invite{
+		TeamID: claims["teamID"].(string),
+	}, nil
 }

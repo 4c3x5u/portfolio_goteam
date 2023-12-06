@@ -14,13 +14,11 @@ import (
 func TestInvite(t *testing.T) {
 	signKey = []byte("signkey")
 	teamID := "teamid"
-	sut := NewInvite()
 
 	t.Run("Encode", func(t *testing.T) {
-		sut.TeamID = teamID
 		expiry := time.Now().Add(1 * time.Hour)
 
-		token, err := sut.Encode(expiry)
+		token, err := EncodeInvite(expiry, Invite{TeamID: teamID})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -78,10 +76,10 @@ func TestInvite(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				err := sut.Decode(c.token)
+				inv, err := DecodeInvite(c.token)
 
 				assert.ErrIs(t.Error, err, c.wantErr)
-				assert.Equal(t.Error, sut.TeamID, c.wantTeamID)
+				assert.Equal(t.Error, inv.TeamID, c.wantTeamID)
 			})
 		}
 
