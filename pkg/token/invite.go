@@ -12,6 +12,9 @@ const NameInvite = "invite"
 // Invite defines the body of an invite token.
 type Invite struct{ TeamID string }
 
+// NewInvite creates and returns a new Invite.
+func NewInvite() *Invite { return &Invite{} }
+
 // Encode encodes the Invite into a JWT string
 func (i *Invite) Encode(exp time.Time) (string, error) {
 	tk, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
