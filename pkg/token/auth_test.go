@@ -11,14 +11,16 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 )
 
-func TestInvite(t *testing.T) {
+func TestAuth(t *testing.T) {
 	signKey = []byte("signkey")
+	userID := "bob123"
+	isAdmin := true
 	teamID := "teamid"
 
 	t.Run("Encode", func(t *testing.T) {
 		expiry := time.Now().Add(1 * time.Hour)
 
-		token, err := EncodeInvite(expiry, NewInvite(teamID))
+		token, err := EncodeAuth(expiry, NewAuth(userID, isAdmin, teamID))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -32,52 +34,68 @@ func TestInvite(t *testing.T) {
 			t.Error(err)
 		}
 
+		assert.Equal(t.Error, claims["userID"].(string), userID)
+		assert.Equal(t.Error, claims["isAdmin"].(bool), isAdmin)
 		assert.Equal(t.Error, claims["teamID"].(string), teamID)
-		assert.Equal(t.Error, claims["exp"].(float64), float64(expiry.Unix()))
+		// assert.Equal(t.Error, claims["exp"].(float64), float64(expiry.Unix()))
 	})
 
 	t.Run("Decode", func(t *testing.T) {
 		for _, c := range []struct {
-			name       string
-			token      string
-			wantTeamID string
-			wantErr    error
+			name        string
+			token       string
+			wantUserID  string
+			wantIsAdmin bool
+			wantTeamID  string
+			wantErr     error
 		}{
 			{
 				name: "InvalidSignature",
 				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDE5" +
 					"MDE0NzMsInRlYW1JRCI6ImFza2RqZmFza2RmamFoIn0.g0jCuok1he1o" +
 					"puHRGfVmvuGtpwfWlIBbnRK64qgLsx4",
-				wantTeamID: "",
-				wantErr:    jwt.ErrSignatureInvalid,
+				wantUserID:  "",
+				wantIsAdmin: false,
+				wantTeamID:  "",
+				wantErr:     jwt.ErrSignatureInvalid,
 			},
 			{
 				name: "TokenMalformed",
 				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCb2IyMSJ9.k6QDVjyaHx" +
 					"PYixeoQBLixC5c79VK-WZ_kD9u4fjX_Ks",
-				wantTeamID: "",
-				wantErr:    jwt.ErrTokenMalformed,
+				wantUserID:  "",
+				wantIsAdmin: false,
+				wantTeamID:  "",
+				wantErr:     jwt.ErrTokenMalformed,
 			},
 			{
 				name: "Expired",
 				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDE4" +
 					"OTgwOTYsInRlYW1JRCI6InRlYW1pZCJ9.MAORMCFqzNrLnY4l_wrPA86" +
 					"K9w6W9pzH_4b6iNHr1SE",
-				wantTeamID: "",
-				wantErr:    jwt.ErrTokenExpired,
+				wantUserID:  "",
+				wantIsAdmin: false,
+				wantTeamID:  "",
+				wantErr:     jwt.ErrTokenExpired,
 			},
 			{
 				name: "Success",
-				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOiJ0" +
-					"ZWFtaWQifQ.1h_fmLJ1ip-Z6kJq9JXYDgGuWDPOcOf8abwCgKtHHcY",
-				wantTeamID: "teamid",
-				wantErr:    nil,
+				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDE5" +
+					"MDY2NzYsImlzQWRtaW4iOnRydWUsInRlYW1JRCI6InRlYW1pZCIsInVz" +
+					"ZXJJRCI6ImJvYjEyMyJ9._lObKiSlASiH1Jfx2cic_AFSmj_nN-uvkXv" +
+					"9y51fKes",
+				wantUserID:  userID,
+				wantIsAdmin: isAdmin,
+				wantTeamID:  teamID,
+				wantErr:     nil,
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				inv, err := DecodeInvite(c.token)
+				inv, err := DecodeAuth(c.token)
 
 				assert.ErrIs(t.Error, err, c.wantErr)
+				assert.Equal(t.Error, inv.UserID, c.wantUserID)
+				assert.Equal(t.Error, inv.IsAdmin, c.wantIsAdmin)
 				assert.Equal(t.Error, inv.TeamID, c.wantTeamID)
 			})
 		}

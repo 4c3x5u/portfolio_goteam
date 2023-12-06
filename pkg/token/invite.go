@@ -17,7 +17,7 @@ func NewInvite(teamID string) Invite {
 	return Invite{TeamID: teamID}
 }
 
-// Encode encodes the Invite into a JWT string
+// Encode encodes an Invite into a JWT string.
 func EncodeInvite(exp time.Time, inv Invite) (string, error) {
 	tk, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"teamID": inv.TeamID,
@@ -26,7 +26,7 @@ func EncodeInvite(exp time.Time, inv Invite) (string, error) {
 	return tk, err
 }
 
-// Decode validates and decodes a raw JWT string into the Invite.
+// Decode validates and decodes a raw JWT string into an Invite.
 func DecodeInvite(raw string) (Invite, error) {
 	if raw == "" {
 		return Invite{}, ErrInvalid
