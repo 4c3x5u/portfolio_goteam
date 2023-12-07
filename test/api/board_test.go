@@ -30,7 +30,6 @@ func TestBoardHandler(t *testing.T) {
 	boardSelector := boardTable.NewSelector(db)
 	log := pkgLog.New()
 	sut := api.NewHandler(
-		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodGet: boardAPI.NewGETHandler(

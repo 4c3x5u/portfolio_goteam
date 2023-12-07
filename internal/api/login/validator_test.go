@@ -20,22 +20,22 @@ func TestValidator(t *testing.T) {
 	}{
 		{
 			name:    "UsernameEmpty",
-			reqBody: POSTReq{Username: "", Password: "asdqwe123"},
+			reqBody: POSTReq{ID: "", Password: "asdqwe123"},
 			wantOK:  false,
 		},
 		{
 			name:    "PasswordEmpty",
-			reqBody: POSTReq{Username: "bob123", Password: ""},
+			reqBody: POSTReq{ID: "bob123", Password: ""},
 			wantOK:  false,
 		},
 		{
 			name:    "UsernameAndPasswordEmpty",
-			reqBody: POSTReq{Username: "", Password: ""},
+			reqBody: POSTReq{ID: "", Password: ""},
 			wantOK:  false,
 		},
 		{
 			name:    "IsValid",
-			reqBody: POSTReq{Username: "bob123", Password: "asdqwe123"},
+			reqBody: POSTReq{ID: "bob123", Password: "asdqwe123"},
 			wantOK:  true,
 		},
 	} {

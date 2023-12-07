@@ -5,14 +5,14 @@ package team
 // table's name from.
 const tableName = "DYNAMODB_TABLE_TEAM"
 
-// Team defines a team in the team table.
+// Team defines the team entity - the primary entity of team domain.
 type Team struct {
 	ID      string   //guid
 	Members []string //usernames
 	Boards  []Board
 }
 
-// Board defines a board in a team's boards.
+// Board defines the board entity which a team may own one/many of.
 type Board struct {
 	ID   string //guid
 	Name string

@@ -1,97 +1,77 @@
 package register
 
 import (
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/google/uuid"
 	"github.com/kxplxn/goteam/pkg/auth"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// POSTReq defines the body of POST register requests.
-type POSTReq struct {
-	Username string `json:"username"`
+// PostReq defines the body of POST register requests.
+type PostReq struct {
+	ID       string `json:"id"`
 	Password string `json:"password"`
+	TeamID   string `json:"teamID"`
 }
 
-// POSTResp defines the body of POST register responses.
-type POSTResp struct {
-	Err            string           `json:"error,omitempty"`
-	ValidationErrs ValidationErrors `json:"validationErrors,omitempty"`
+// PostResp defines the body of POST register responses.
+type PostResp struct {
+	Err          string       `json:"err,omitempty"`
+	ErrsValidate ErrsValidate `json:"errsValidate,omitempty"`
 }
 
-// ValidationErrors defines the validation errors returned in POSTResp.
-type ValidationErrors struct {
-	Username []string `json:"username,omitempty"`
-	Password []string `json:"password,omitempty"`
+// PostHandler is a api.MethodHandler that can be used to handle POST register
+// requests.
+type PostHandler struct {
+	reqValidator      ReqValidator
+	hasher            Hasher
+	decodeInviteToken token.DecodeFunc[token.Invite]
+	userPutter        db.Putter[userTable.User]
+	encodeAuthToken   token.EncodeFunc[token.Auth]
+	log               pkgLog.Errorer
 }
 
-// Any checks whether there are any validation errors within the ValidationErrors.
-func (e ValidationErrors) Any() bool {
-	return len(e.Username) > 0 || len(e.Password) > 0
-}
-
-// POSTHandler is a http.POSTHandler that can be used to handle register requests.
-type POSTHandler struct {
-	userValidator       ReqValidator
-	inviteCodeValidator api.StringValidator
-	teamSelector        dbaccess.Selector[teamTable.Record]
-	userSelector        dbaccess.Selector[userTable.Record]
-	hasher              Hasher
-	userInserter        dbaccess.Inserter[userTable.Record]
-	authTokenGenerator  auth.TokenGenerator
-	log                 pkgLog.Errorer
-}
-
-// NewPOSTHandler is the constructor for Handler.
-func NewPOSTHandler(
+// NewPostHandler creates and returns a new HandlerPost.
+func NewPostHandler(
 	userValidator ReqValidator,
-	inviteCodeValidator api.StringValidator,
-	teamSelector dbaccess.Selector[teamTable.Record],
-	userSelector dbaccess.Selector[userTable.Record],
+	decodeInviteToken token.DecodeFunc[token.Invite],
 	hasher Hasher,
-	userInserter dbaccess.Inserter[userTable.Record],
-	authTokenGenerator auth.TokenGenerator,
+	userPutter db.Putter[userTable.User],
+	encodeAuthToken token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
-) POSTHandler {
-	return POSTHandler{
-		userValidator:       userValidator,
-		inviteCodeValidator: inviteCodeValidator,
-		teamSelector:        teamSelector,
-		userSelector:        userSelector,
-		hasher:              hasher,
-		userInserter:        userInserter,
-		authTokenGenerator:  authTokenGenerator,
-		log:                 log,
+) PostHandler {
+	return PostHandler{
+		reqValidator:      userValidator,
+		hasher:            hasher,
+		decodeInviteToken: decodeInviteToken,
+		userPutter:        userPutter,
+		encodeAuthToken:   encodeAuthToken,
+		log:               log,
 	}
 }
 
 // ServeHTTP responds to requests made to the register route.
-func (h POSTHandler) Handle(
-	w http.ResponseWriter, r *http.Request, _ string,
-) {
-	// Read request body.
-	reqBody := POSTReq{}
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
+	// decode request
+	req := PostReq{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Validate request body, write errors if any occur.
-	if validationErrs := h.userValidator.Validate(
-		reqBody,
-	); validationErrs.Any() {
+	// validate request
+	errsValidate := h.reqValidator.Validate(req)
+	if errsValidate.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			POSTResp{ValidationErrs: validationErrs},
+			PostResp{ErrsValidate: errsValidate},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -99,69 +79,41 @@ func (h POSTHandler) Handle(
 		return
 	}
 
-	// Define a user record to progressively populate the fields of.
-	var user userTable.Record
-
-	// Validate invite code if found.
-	inviteCode := r.URL.Query().Get("inviteCode")
-	if inviteCode != "" {
-		if err := h.inviteCodeValidator.Validate(inviteCode); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(
-				POSTResp{Err: "Invalid invite code."},
-			); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
-			}
-			return
-		}
-		team, err := h.teamSelector.Select(inviteCode)
-		if errors.Is(err, sql.ErrNoRows) {
-			w.WriteHeader(http.StatusNotFound)
-			if err := json.NewEncoder(w).Encode(
-				POSTResp{Err: "Team not found."},
-			); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
-			}
-			return
-		}
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
-		user.TeamID = team.ID
-		user.IsAdmin = false
-	} else {
-		// This indicates that the user is non-invited and a new team will be
-		// created for them, which they will be the admin of.
-		user.TeamID = -1
-		user.IsAdmin = true
+	// create user
+	user := userTable.User{
+		ID:       req.ID,
+		Password: []byte{},
+		IsAdmin:  false,
+		TeamID:   "",
 	}
 
-	// Check whether the username is taken.
-	_, err := h.userSelector.Select(reqBody.Username)
-	if err == nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if errEncode := json.NewEncoder(w).Encode(
-			POSTResp{ValidationErrs: ValidationErrors{
-				Username: []string{"Username is already taken."},
-			}},
-		); errEncode != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(errEncode.Error())
-		}
-		return
-	} else if !errors.Is(err, sql.ErrNoRows) {
+	// set user's TeamID and IsAdmin based on invite token.
+	ck, err := r.Cookie(token.NameInvite)
+	if err == http.ErrNoCookie {
+		user.TeamID = uuid.NewString()
+		user.IsAdmin = true
+	} else if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	} else {
+		invite, err := h.decodeInviteToken(ck.Value)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(
+				PostResp{Err: "Invalid invite token."},
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+		user.TeamID = invite.TeamID
+		user.IsAdmin = false
 	}
-	user.Username = reqBody.Username
 
-	// Hash password and create user.
-	pwdHash, err := h.hasher.Hash(reqBody.Password)
+	// hash password
+	pwdHash, err := h.hasher.Hash(req.Password)
 	if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -169,21 +121,31 @@ func (h POSTHandler) Handle(
 	}
 	user.Password = pwdHash
 
-	if err = h.userInserter.Insert(user); err != nil {
+	// put user into the user table
+	if err = h.userPutter.Put(r.Context(), user); err == db.ErrDupKey {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			PostResp{ErrsValidate: ErrsValidate{
+				ID: []string{"Username is already taken."},
+			}},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	} else if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Generate an authentication token for the user that is valid for an hour
-	// and return it within a Set-Cookie header.
-	expiry := time.Now().Add(auth.Duration).UTC()
-	if authToken, err := h.authTokenGenerator.Generate(
-		reqBody.Username, expiry,
-	); err != nil {
+	// generate an auth token
+	exp := time.Now().Add(auth.Duration).UTC()
+	tkAuth, err := h.encodeAuthToken(exp, token.NewAuth("", false, ""))
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
-			POSTResp{
+			PostResp{
 				Err: "You have been registered successfully but something " +
 					"went wrong. Please log in using the credentials you " +
 					"registered with.",
@@ -191,14 +153,16 @@ func (h POSTHandler) Handle(
 		); err != nil {
 			h.log.Error(err.Error())
 		}
-	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:     auth.CookieName,
-			Value:    authToken,
-			Expires:  expiry,
-			SameSite: http.SameSiteNoneMode,
-			Secure:   true,
-		})
-		w.WriteHeader(http.StatusOK)
+		return
 	}
+
+	// set auth cookie and respond OK
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.NameAuth,
+		Value:    tkAuth,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
+	w.WriteHeader(http.StatusOK)
 }

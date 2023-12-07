@@ -17,6 +17,11 @@ var (
 	ErrDupKey = errors.New("duplicate key")
 )
 
+// Putter defines a type that streamlines putting an item into a DynamoDB table.
+type Putter[T any] interface {
+	Put(context.Context, T) error
+}
+
 // ItemPutter defines a type that can be used to put an item into a DynamoDB
 // table.
 type ItemPutter interface {

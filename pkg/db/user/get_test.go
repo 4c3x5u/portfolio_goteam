@@ -3,6 +3,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -71,7 +72,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.igErr
 
-			user, err := sut.Get("")
+			user, err := sut.Get(context.Background(), "")
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 			if c.wantUser != nil {

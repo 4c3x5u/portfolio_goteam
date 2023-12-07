@@ -34,19 +34,16 @@ func AllowedMethods(methods []string) (string, string) {
 
 // Handler is a http.Handler that can be used to handle requests.
 type Handler struct {
-	bearerTokenReader  auth.HeaderReader //TODO: remove
 	authTokenValidator auth.TokenValidator
 	methodHandlers     map[string]MethodHandler
 }
 
 // NewHandler creates and returns a new Handler.
 func NewHandler(
-	bearerTokenReader auth.HeaderReader, //TODO: remove
 	authTokenValidator auth.TokenValidator,
 	methodHandlers map[string]MethodHandler,
 ) Handler {
 	return Handler{
-		bearerTokenReader:  bearerTokenReader, //TODO: remove
 		authTokenValidator: authTokenValidator,
 		methodHandlers:     methodHandlers,
 	}

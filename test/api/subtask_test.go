@@ -25,7 +25,6 @@ import (
 // asserts that it behaves correctly during various execution paths.
 func TestSubtaskHandler(t *testing.T) {
 	sut := api.NewHandler(
-		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(

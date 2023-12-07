@@ -25,7 +25,6 @@ func TestColumnHandler(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
 	sut := api.NewHandler(
-		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(

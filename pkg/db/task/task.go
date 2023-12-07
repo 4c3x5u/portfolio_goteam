@@ -4,7 +4,7 @@ package task
 // table's name from.
 const tableName = "DYNAMODB_TABLE_TASK"
 
-// Task defines a task in the task table.
+// Task defines the task entity - the primary entity of task domain.
 type Task struct {
 	ID           string //guid
 	Title        string
@@ -15,7 +15,7 @@ type Task struct {
 	ColumnNumber int
 }
 
-// Subtask defines a subtask in a task's subtasks.
+// Subtask defines the subtask entity which a task may own one/many of.
 type Subtask struct {
 	Title  string
 	IsDone bool

@@ -96,7 +96,7 @@ func TestGetter(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			ig.Out = c.igOut
-			ig.Err = c.wantErr
+			ig.Err = c.igErr
 
 			team, err := sut.Get(context.Background(), "")
 

@@ -17,7 +17,7 @@ import (
 
 // POSTReq defines the body of POST login requests.
 type POSTReq struct {
-	Username string `json:"username"`
+	ID       string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -63,7 +63,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userSelector.Select(req.Username)
+	user, err := h.userSelector.Select(req.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -90,7 +90,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Set-Cookie header.
 	expiry := time.Now().Add(auth.Duration).UTC()
 	if authToken, err := h.authTokenGenerator.Generate(
-		req.Username, expiry,
+		req.ID, expiry,
 	); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

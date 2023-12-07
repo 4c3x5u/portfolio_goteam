@@ -1,6 +1,9 @@
+//go:build utest
+
 package user
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -43,7 +46,7 @@ func TestPutter(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Put(User{})
+			err := sut.Put(context.Background(), User{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})

@@ -32,7 +32,6 @@ func TestTaskHandler(t *testing.T) {
 	log := pkgLog.New()
 
 	sut := api.NewHandler(
-		auth.NewBearerTokenReader(),
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(

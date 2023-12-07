@@ -15,8 +15,8 @@ func init() { signKey = []byte(os.Getenv("JWTKEY")) }
 // ErrInvalid means that the given token is invalid.
 var ErrInvalid = errors.New("invalid token")
 
-// Encoder defines a type that can be used to encode a token.
-type EncodeFunc[T any] func(T, time.Time) (string, error)
+// EncodeFunc defines a type that can be used to encode a token.
+type EncodeFunc[T any] func(time.Time, T) (string, error)
 
-// Decoder defines a type that can be used to decode a JWT.
-type Decoder[T any] func(string) (T, error)
+// DecodeFunc defines a type that can be used to decode a JWT.
+type DecodeFunc[T any] func(string) (T, error)

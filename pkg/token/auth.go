@@ -7,7 +7,7 @@ import (
 )
 
 // NameAuth is the name of the auth token.
-const NameAuth = "auth"
+const NameAuth = "auth-token"
 
 // Auth defines the body of an Auth token.
 type Auth struct {

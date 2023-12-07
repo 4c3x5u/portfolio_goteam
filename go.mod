@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/aws/aws-sdk-go-v2 v1.23.5
+	github.com/aws/aws-sdk-go-v2/config v1.25.11
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.12.9
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.26.3
 	github.com/aws/smithy-go v1.18.1
@@ -14,7 +15,6 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/ory/dockertest v3.3.5+incompatible
 	golang.org/x/crypto v0.7.0
-	github.com/aws/aws-sdk-go-v2/config v1.25.11
 )
 
 require (

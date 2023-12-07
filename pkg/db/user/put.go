@@ -21,13 +21,13 @@ func NewPutter(ip db.ItemPutter) Putter { return Putter{ItemPutter: ip} }
 
 // Put puts a user into the user table only if a user with the same ID does not
 // already exist.
-func (p Putter) Put(user User) error {
+func (p Putter) Put(ctx context.Context, user User) error {
 	item, err := attributevalue.MarshalMap(user)
 	if err != nil {
 		return err
 	}
 
-	_, err = p.ItemPutter.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = p.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(ID)"),

@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
@@ -16,6 +19,7 @@ import (
 	subtaskAPI "github.com/kxplxn/goteam/internal/api/subtask"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	"github.com/kxplxn/goteam/pkg/auth"
+	userTableDynamoDB "github.com/kxplxn/goteam/pkg/db/user"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/pkg/dbaccess/subtask"
@@ -23,6 +27,7 @@ import (
 	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func main() {
@@ -43,6 +48,14 @@ func main() {
 		os.Exit(2)
 	}
 
+	cfgDynamoDB, err := config.LoadDefaultConfig(
+		context.Background(), config.WithRegion(os.Getenv("AWS_REGION")),
+	)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	svcDynamoDB := dynamodb.NewFromConfig(cfgDynamoDB)
+
 	// Create dependencies that are used by multiple handlers.
 	db, err := sql.Open("postgres", env.DBConnStr)
 	if err != nil {
@@ -54,7 +67,6 @@ func main() {
 		os.Exit(4)
 	}
 	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
-	bearerTokenReader := auth.NewBearerTokenReader()
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
 	userSelector := userTable.NewSelector(db)
 	columnSelector := columnTable.NewSelector(db)
@@ -62,26 +74,23 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	teamSelectorByInvCode := teamTable.NewSelectorByInvCode(db)
-	mux.Handle("/register", api.NewHandler(nil, nil,
+	mux.Handle("/register", api.NewHandler(nil,
 		map[string]api.MethodHandler{
-			http.MethodPost: registerAPI.NewPOSTHandler(
+			http.MethodPost: registerAPI.NewPostHandler(
 				registerAPI.NewUserValidator(
-					registerAPI.NewUsernameValidator(),
+					registerAPI.NewIDValidator(),
 					registerAPI.NewPasswordValidator(),
 				),
-				registerAPI.NewInviteCodeValidator(),
-				teamSelectorByInvCode,
-				userSelector,
+				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				userTable.NewInserter(db),
-				jwtGenerator,
+				userTableDynamoDB.NewPutter(svcDynamoDB),
+				token.EncodeAuth,
 				log,
 			),
 		},
 	))
 
-	mux.Handle("/login", api.NewHandler(nil, nil,
+	mux.Handle("/login", api.NewHandler(nil,
 		map[string]api.MethodHandler{
 			http.MethodPost: loginAPI.NewPOSTHandler(
 				loginAPI.NewValidator(),
@@ -98,7 +107,6 @@ func main() {
 	boardSelector := boardTable.NewSelector(db)
 	boardInserter := boardTable.NewInserter(db)
 	mux.Handle("/board", api.NewHandler(
-		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodGet: boardAPI.NewGETHandler(
@@ -137,7 +145,6 @@ func main() {
 	))
 
 	mux.Handle("/column", api.NewHandler(
-		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(
@@ -155,7 +162,6 @@ func main() {
 	taskTitleValidator := taskAPI.NewTitleValidator()
 	taskSelector := taskTable.NewSelector(db)
 	mux.Handle("/task", api.NewHandler(
-		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPOSTHandler(
@@ -191,7 +197,6 @@ func main() {
 	))
 
 	mux.Handle("/subtask", api.NewHandler(
-		bearerTokenReader,
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: subtaskAPI.NewPATCHHandler(

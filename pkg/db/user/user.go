@@ -3,9 +3,9 @@ package user
 
 // tableName is the name of the environment variable to retrieve the user
 // table's name from.
-const tableName = "DYNAMODB_TABLE_TEAM"
+const tableName = "DYNAMODB_TABLE_USER"
 
-// User defines user in the user table.
+// User defines the user entity - the primary and only entity of user domain.
 type User struct {
 	ID       string
 	Password []byte

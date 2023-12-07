@@ -12,9 +12,9 @@ import (
 // used in validators so that the corresponding assertions fail when the strings
 // used are accidentally edited.
 const (
-	usnEmpty       = "Username cannot be empty."
-	usnTooShort    = "Username cannot be shorter than 5 characters."
-	usnTooLong     = "Username cannot be longer than 15 characters."
+	idEmpty        = "Username cannot be empty."
+	idTooShort     = "Username cannot be shorter than 5 characters."
+	idTooLong      = "Username cannot be longer than 15 characters."
 	usnInvalidChar = "Username can contain only letters (a-z/A-Z) and digits (0-9)."
 	usnDigitStart  = "Username can start only with a letter (a-z/A-Z)."
 
@@ -32,66 +32,46 @@ const (
 		"! \" # $ % & ' ( ) * + , - . / : ; < = > ? [ \\ ] ^ _ ` { | } ~."
 )
 
-// TestInviteCodeValidator tests the InviteCodeValidator to assert that it
-// returns a non-nil error for invalid UUIDs.
-func TestInviteCodeValidator(t *testing.T) {
-	sut := NewInviteCodeValidator()
-
-	t.Run("Error", func(t *testing.T) {
-		inviteCode := "asdfkajsdf"
-		err := sut.Validate(inviteCode)
-		if err == nil {
-			t.Error("no error returned for invalid invite code")
-		}
-	})
-
-	t.Run("Success", func(t *testing.T) {
-		inviteCode := "f45889dc-bfdc-4c4a-9a43-7865a8ada243"
-		err := sut.Validate(inviteCode)
-		assert.Nil(t.Error, err)
-	})
-}
-
 // TestUserValidator tests the UserValidator's Validate method to ensure that it returns
 // whatever error is returned to it by UsernameValidator and PasswordValidator.
 func TestUserValidator(t *testing.T) {
-	fakeValidatorUsername := &fakeStringValidator{}
-	fakeValidatorPassword := &fakeStringValidator{}
+	fakeIDValidator := &fakeStringValidator{}
+	fakePasswordValidator := &fakeStringValidator{}
 
-	sut := NewUserValidator(fakeValidatorUsername, fakeValidatorPassword)
+	sut := NewUserValidator(fakeIDValidator, fakePasswordValidator)
 
 	for _, c := range []struct {
 		name         string
-		reqBody      POSTReq
+		reqBody      PostReq
 		usernameErrs []string
 		passwordErrs []string
 	}{
 		{
 			name:         "UsnEmpty,PwdEmpty",
-			reqBody:      POSTReq{Username: "", Password: ""},
-			usernameErrs: []string{usnEmpty},
+			reqBody:      PostReq{ID: "", Password: ""},
+			usernameErrs: []string{idEmpty},
 			passwordErrs: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort,UsnInvalidChar,PwdEmpty",
-			reqBody:      POSTReq{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
-			usernameErrs: []string{usnTooShort, usnInvalidChar},
+			reqBody:      PostReq{ID: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+			usernameErrs: []string{idTooShort, usnInvalidChar},
 			passwordErrs: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart,PwdTooLong,PwdNoDigit",
-			reqBody:      POSTReq{Username: "1bobob", Password: "MyPass!"},
+			reqBody:      PostReq{ID: "1bobob", Password: "MyPass!"},
 			usernameErrs: []string{usnDigitStart},
 			passwordErrs: []string{pwdTooShort, pwdNoDigit},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			fakeValidatorUsername.errs = c.usernameErrs
-			fakeValidatorPassword.errs = c.passwordErrs
+			fakeIDValidator.errs = c.usernameErrs
+			fakePasswordValidator.errs = c.passwordErrs
 
 			res := sut.Validate(c.reqBody)
 
-			assert.AllEqual(t.Error, res.Username, c.usernameErrs)
+			assert.AllEqual(t.Error, res.ID, c.usernameErrs)
 			assert.AllEqual(t.Error, res.Password, c.passwordErrs)
 		})
 	}
@@ -100,7 +80,7 @@ func TestUserValidator(t *testing.T) {
 // TestUsernameValidator tests the UsernameValidator to assert that it returns
 // the correct error strings based on the username passed to it.
 func TestUsernameValidator(t *testing.T) {
-	sut := NewUsernameValidator()
+	sut := NewIDValidator()
 
 	for _, c := range []struct {
 		name     string
@@ -108,12 +88,12 @@ func TestUsernameValidator(t *testing.T) {
 		wantErrs []string
 	}{
 		// 1-error cases
-		{name: "Empty", username: "", wantErrs: []string{usnEmpty}},
-		{name: "TooShort", username: "bob1", wantErrs: []string{usnTooShort}},
+		{name: "Empty", username: "", wantErrs: []string{idEmpty}},
+		{name: "TooShort", username: "bob1", wantErrs: []string{idTooShort}},
 		{
 			name:     "TooLong",
 			username: "bobobobobobobobob",
-			wantErrs: []string{usnTooLong},
+			wantErrs: []string{idTooLong},
 		},
 		{
 			name:     "InvalidCharacter",
@@ -130,22 +110,22 @@ func TestUsernameValidator(t *testing.T) {
 		{
 			name:     "TooShort,InvalidCharacter",
 			username: "bob!",
-			wantErrs: []string{usnTooShort, usnInvalidChar},
+			wantErrs: []string{idTooShort, usnInvalidChar},
 		},
 		{
 			name:     "TooShort,DigitStart",
 			username: "1bob",
-			wantErrs: []string{usnTooShort, usnDigitStart},
+			wantErrs: []string{idTooShort, usnDigitStart},
 		},
 		{
 			name:     "TooLong,InvalidCharacter",
 			username: "bobobobobobobobo!",
-			wantErrs: []string{usnTooLong, usnInvalidChar},
+			wantErrs: []string{idTooLong, usnInvalidChar},
 		},
 		{
 			name:     "TooLong,DigitStart",
 			username: "1bobobobobobobobo",
-			wantErrs: []string{usnTooLong, usnDigitStart},
+			wantErrs: []string{idTooLong, usnDigitStart},
 		},
 		{
 			name:     "InvalidCharacter,DigitStart",
@@ -157,12 +137,12 @@ func TestUsernameValidator(t *testing.T) {
 		{
 			name:     "TooShort,InvalidCharacter,DigitStart",
 			username: "1bo!",
-			wantErrs: []string{usnTooShort, usnInvalidChar, usnDigitStart},
+			wantErrs: []string{idTooShort, usnInvalidChar, usnDigitStart},
 		},
 		{
 			name:     "TooLong,InvalidCharacter,DigitStart",
 			username: "1bobobobobobobob!",
-			wantErrs: []string{usnTooLong, usnInvalidChar, usnDigitStart},
+			wantErrs: []string{idTooLong, usnInvalidChar, usnDigitStart},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

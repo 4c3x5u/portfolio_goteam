@@ -4,7 +4,6 @@ package register
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -12,56 +11,49 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
-	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it
 // behaves correctly.
 func TestHandler(t *testing.T) {
 	var (
-		userValidator       = &fakeUserValidator{}
-		inviteCodeValidator = &api.FakeStringValidator{}
-		teamSelector        = &teamTable.FakeSelector{}
-		userSelector        = &userTable.FakeSelector{}
-		hasher              = &fakeHasher{}
-		userInserter        = &userTable.FakeInserter{}
-		tokenGenerator      = &auth.FakeTokenGenerator{}
-		log                 = &pkgLog.FakeErrorer{}
+		userValidator = &fakeReqValidator{}
+		hasher        = &fakeHasher{}
+		decodeInvite  = &token.FakeDecodeInvite{}
+		userPutter    = &userTable.FakePutter{}
+		encodeAuth    = &token.FakeEncodeAuth{}
+		log           = &pkgLog.FakeErrorer{}
 	)
-	sut := NewPOSTHandler(
+	sut := NewPostHandler(
 		userValidator,
-		inviteCodeValidator,
-		teamSelector,
-		userSelector,
+		decodeInvite.Func,
 		hasher,
-		userInserter,
-		tokenGenerator,
+		userPutter,
+		encodeAuth.Func,
 		log,
 	)
 
 	// Used in status 400 cases to assert on validation errors.
-	assertOnValidationErrs := func(
-		wantValidationErrs ValidationErrors,
+	assertOnErrsValidate := func(
+		wantErrsValidate ErrsValidate,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, r *http.Response, _ string) {
-			resBody := &POSTResp{}
+			resBody := &PostResp{}
 			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
 			}
 
 			assert.AllEqual(t.Error,
-				wantValidationErrs.Username,
-				resBody.ValidationErrs.Username,
+				resBody.ErrsValidate.ID, wantErrsValidate.ID,
 			)
 
 			assert.AllEqual(t.Error,
-				wantValidationErrs.Password,
-				resBody.ValidationErrs.Password,
+				resBody.ErrsValidate.Password, wantErrsValidate.Password,
 			)
 		}
 	}
@@ -70,7 +62,7 @@ func TestHandler(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody POSTResp
+			var resBody PostResp
 			if err := json.NewDecoder(
 				res.Body,
 			).Decode(&resBody); err != nil {
@@ -80,203 +72,136 @@ func TestHandler(t *testing.T) {
 		}
 	}
 
-	validReqBody := POSTReq{Username: "bob123", Password: "Myp4ssword!"}
+	validReqBody := PostReq{ID: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
-		name              string
-		reqBody           POSTReq
-		validationErrs    ValidationErrors
-		inviteCode        string
-		inviteCodeErr     error
-		teamSelectorErr   error
-		userRecord        userTable.Record
-		userSelectorErr   error
-		hashedPwd         []byte
-		hasherErr         error
-		userInserterErr   error
-		authToken         string
-		tokenGeneratorErr error
-		wantStatusCode    int
-		assertFunc        func(*testing.T, *http.Response, string)
+		name            string
+		req             PostReq
+		errValidate     ErrsValidate
+		inviteToken     string
+		inviteDecoded   token.Invite
+		errDecodeInvite error
+		pwdHash         []byte
+		errHash         error
+		errPutUser      error
+		authToken       string
+		errEncodeAuth   error
+		wantStatus      int
+		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:    "BasicValidatorErrs",
-			reqBody: POSTReq{},
-			validationErrs: ValidationErrors{
-				Username: []string{usnTooLong}, Password: []string{pwdNoDigit},
+			name: "ErrsValidate",
+			req:  PostReq{},
+			errValidate: ErrsValidate{
+				ID: []string{idTooLong}, Password: []string{pwdNoDigit},
 			},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc: assertOnValidationErrs(
-				ValidationErrors{
-					Username: []string{usnTooLong},
+			inviteToken:     "",
+			inviteDecoded:   token.Invite{},
+			errDecodeInvite: nil,
+			pwdHash:         nil,
+			errHash:         nil,
+			errPutUser:      nil,
+			authToken:       "",
+			errEncodeAuth:   nil,
+			wantStatus:      http.StatusBadRequest,
+			assertFunc: assertOnErrsValidate(
+				ErrsValidate{
+					ID:       []string{idTooLong},
 					Password: []string{pwdNoDigit},
 				},
 			),
 		},
 		{
-			name:              "InvalidInviteCode",
-			reqBody:           POSTReq{},
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "someinvitecode",
-			inviteCodeErr:     errors.New("an error"),
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assertOnResErr("Invalid invite code."),
+			name:            "ErrDecodeInvite",
+			req:             PostReq{},
+			errValidate:     ErrsValidate{},
+			inviteToken:     "someinvitetoken",
+			inviteDecoded:   token.Invite{},
+			errDecodeInvite: errors.New("an error"),
+			pwdHash:         nil,
+			errHash:         nil,
+			errPutUser:      nil,
+			authToken:       "",
+			errEncodeAuth:   nil,
+			wantStatus:      http.StatusBadRequest,
+			assertFunc:      assertOnResErr("Invalid invite token."),
 		},
 		{
-			name:              "TeamNotFound",
-			reqBody:           POSTReq{},
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "someinvitecode",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   sql.ErrNoRows,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusNotFound,
-			assertFunc:        assertOnResErr("Team not found."),
-		},
-		{
-			name:              "TeamSelectorErr",
-			reqBody:           POSTReq{},
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "someinvitecode",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   sql.ErrConnDone,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
-		},
-		{
-			name:              "UsernameTaken",
-			reqBody:           POSTReq{},
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc: assertOnValidationErrs(
-				ValidationErrors{
-					Username: []string{"Username is already taken."},
+			name:            "ErrUsnTaken",
+			req:             PostReq{},
+			errValidate:     ErrsValidate{},
+			inviteToken:     "",
+			inviteDecoded:   token.Invite{},
+			errDecodeInvite: nil,
+			pwdHash:         nil,
+			errHash:         nil,
+			errPutUser:      db.ErrDupKey,
+			authToken:       "",
+			errEncodeAuth:   nil,
+			wantStatus:      http.StatusBadRequest,
+			assertFunc: assertOnErrsValidate(
+				ErrsValidate{
+					ID: []string{"Username is already taken."},
 				},
 			),
 		},
 		{
-			name:              "UserSelectorError",
-			reqBody:           validReqBody,
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   errors.New("user selector error"),
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("user selector error"),
+			name:          "ErrHash",
+			req:           validReqBody,
+			errValidate:   ErrsValidate{},
+			inviteToken:   "",
+			inviteDecoded: token.Invite{},
+			pwdHash:       nil,
+			errHash:       errors.New("hasher error"),
+			errPutUser:    nil,
+			authToken:     "",
+			errEncodeAuth: nil,
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("hasher error"),
 		},
 		{
-			name:              "CreateTeamError",
-			reqBody:           validReqBody,
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashedPwd:         nil,
-			hasherErr:         errors.New("hasher error"),
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("hasher error"),
+			name:          "ErrUsnTaken",
+			req:           PostReq{},
+			errValidate:   ErrsValidate{},
+			inviteToken:   "",
+			inviteDecoded: token.Invite{},
+			pwdHash:       nil,
+			errHash:       nil,
+			errPutUser:    db.ErrDupKey,
+			authToken:     "",
+			errEncodeAuth: nil,
+			wantStatus:    http.StatusBadRequest,
+			assertFunc: assertOnErrsValidate(
+				ErrsValidate{
+					ID: []string{"Username is already taken."},
+				},
+			),
 		},
 		{
-			name:              "HasherError",
-			reqBody:           validReqBody,
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashedPwd:         nil,
-			hasherErr:         errors.New("hasher error"),
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("hasher error"),
+			name:          "ErrPutUser",
+			req:           validReqBody,
+			errValidate:   ErrsValidate{},
+			inviteToken:   "",
+			inviteDecoded: token.Invite{},
+			errPutUser:    errors.New("failed to put user"),
+			pwdHash:       nil,
+			errHash:       nil,
+			authToken:     "",
+			errEncodeAuth: nil,
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("failed to put user"),
 		},
 		{
-			name:              "UserInserterError",
-			reqBody:           validReqBody,
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   errors.New("inserter error"),
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("inserter error"),
-		},
-		{
-			name:              "TokenGeneratorError",
-			reqBody:           validReqBody,
-			validationErrs:    ValidationErrors{},
-			inviteCode:        "",
-			inviteCodeErr:     nil,
-			teamSelectorErr:   nil,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: errors.New("token generator error"),
-			wantStatusCode:    http.StatusInternalServerError,
+			name:          "ErrEncodeAuth",
+			req:           validReqBody,
+			errValidate:   ErrsValidate{},
+			inviteToken:   "",
+			inviteDecoded: token.Invite{},
+			pwdHash:       nil,
+			errHash:       nil,
+			errPutUser:    nil,
+			authToken:     "",
+			errEncodeAuth: errors.New("error encoding auth token"),
+			wantStatus:    http.StatusInternalServerError,
 			assertFunc: assertOnResErr(
 				"You have been registered successfully but something went " +
 					"wrong. Please log in using the credentials you " +
@@ -284,18 +209,17 @@ func TestHandler(t *testing.T) {
 			),
 		},
 		{
-			name:              "Success",
-			reqBody:           validReqBody,
-			inviteCode:        "",
-			validationErrs:    ValidationErrors{},
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashedPwd:         nil,
-			hasherErr:         nil,
-			userInserterErr:   nil,
-			authToken:         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusOK,
+			name: "Success",
+			req:  validReqBody,
+			inviteToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOi" +
+				"J0ZWFtaWQifQ.1h_fmLJ1ip-Z6kJq9JXYDgGuWDPOcOf8abwCgKtHHcY",
+			errValidate:   ErrsValidate{},
+			errPutUser:    nil,
+			pwdHash:       nil,
+			errHash:       nil,
+			authToken:     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			errEncodeAuth: nil,
+			wantStatus:    http.StatusOK,
 			assertFunc: func(
 				t *testing.T, r *http.Response, _ string,
 			) {
@@ -323,29 +247,32 @@ func TestHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			userValidator.validationErrs = c.validationErrs
-			inviteCodeValidator.Err = c.inviteCodeErr
-			teamSelector.Err = c.teamSelectorErr
-			userSelector.Rec = c.userRecord
-			userSelector.Err = c.userSelectorErr
-			hasher.hash = c.hashedPwd
-			hasher.err = c.hasherErr
-			userInserter.Err = c.userInserterErr
-			tokenGenerator.AuthToken = c.authToken
-			tokenGenerator.Err = c.tokenGeneratorErr
+			userValidator.validationErrs = c.errValidate
+			decodeInvite.Decoded = c.inviteDecoded
+			decodeInvite.Err = c.errDecodeInvite
+			hasher.hash = c.pwdHash
+			hasher.err = c.errHash
+			userPutter.Err = c.errPutUser
+			encodeAuth.Encoded = c.authToken
+			encodeAuth.Err = c.errEncodeAuth
 
 			// Prepare request and response recorder.
-			reqBody, err := json.Marshal(c.reqBody)
+			reqBody, err := json.Marshal(c.req)
 			if err != nil {
 				t.Fatal(err)
 			}
-			req, err := http.NewRequest(
+			req := httptest.NewRequest(
 				http.MethodPost,
-				"?inviteCode="+c.inviteCode,
+				"/",
 				bytes.NewReader(reqBody),
 			)
-			if err != nil {
-				t.Fatal(err)
+			if c.inviteToken != "" {
+				req.AddCookie(&http.Cookie{
+					Name:     token.NameInvite,
+					Value:    c.inviteToken,
+					SameSite: http.SameSiteNoneMode,
+					Secure:   true,
+				})
 			}
 			w := httptest.NewRecorder()
 
@@ -354,7 +281,7 @@ func TestHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions
 			c.assertFunc(t, res, log.InMessage)

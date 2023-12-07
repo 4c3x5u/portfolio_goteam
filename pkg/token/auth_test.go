@@ -80,10 +80,9 @@ func TestAuth(t *testing.T) {
 			},
 			{
 				name: "Success",
-				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDE5" +
-					"MDY2NzYsImlzQWRtaW4iOnRydWUsInRlYW1JRCI6InRlYW1pZCIsInVz" +
-					"ZXJJRCI6ImJvYjEyMyJ9._lObKiSlASiH1Jfx2cic_AFSmj_nN-uvkXv" +
-					"9y51fKes",
+				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0" +
+					"cnVlLCJ0ZWFtSUQiOiJ0ZWFtaWQiLCJ1c2VySUQiOiJib2IxMjMifQ.2" +
+					"t-9rw9zedhyPylrTAxnjz8mlYN5b1nNpqAhKJbrZMY",
 				wantUserID:  userID,
 				wantIsAdmin: isAdmin,
 				wantTeamID:  teamID,

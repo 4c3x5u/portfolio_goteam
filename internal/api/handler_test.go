@@ -15,13 +15,11 @@ import (
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly in all possible scenarios.
 func TestHandler(t *testing.T) {
-	authHeaderReader := &auth.FakeHeaderReader{}
 	authTokenValidator := &auth.FakeTokenValidator{}
 	postHandler := &FakeMethodHandler{}
 	deleteHandler := &FakeMethodHandler{}
 	patchHandler := &FakeMethodHandler{}
 	sut := NewHandler(
-		authHeaderReader,
 		authTokenValidator,
 		map[string]MethodHandler{
 			http.MethodPost:   postHandler,

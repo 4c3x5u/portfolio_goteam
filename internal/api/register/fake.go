@@ -1,10 +1,10 @@
 package register
 
-// fakeUserValidator is a test fake for UserValidator.
-type fakeUserValidator struct{ validationErrs ValidationErrors }
+// fakeReqValidator is a test fake for UserValidator.
+type fakeReqValidator struct{ validationErrs ErrsValidate }
 
 // Validate implements the UserValidator interface on fakeUserValidator.
-func (f *fakeUserValidator) Validate(_ POSTReq) ValidationErrors {
+func (f *fakeReqValidator) Validate(_ PostReq) ErrsValidate {
 	return f.validationErrs
 }
 

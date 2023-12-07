@@ -7,7 +7,7 @@ import (
 )
 
 // NameInvite is the name of the invite token.
-const NameInvite = "invite"
+const NameInvite = "invite-token"
 
 // Invite defines the body of an Invite token.
 type Invite struct{ TeamID string }

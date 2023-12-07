@@ -12,7 +12,7 @@ func NewValidator() Validator { return Validator{} }
 
 // Validate validates the request body sent to the login route.
 func (v Validator) Validate(reqBody POSTReq) bool {
-	if reqBody.Username == "" || reqBody.Password == "" {
+	if reqBody.ID == "" || reqBody.Password == "" {
 		return false
 	}
 	return true
