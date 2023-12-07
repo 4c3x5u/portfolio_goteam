@@ -2,34 +2,34 @@ package register
 
 import "regexp"
 
-// ErrsValidate defines the validation errors returned in POSTResp.
-type ErrsValidate struct {
-	ID       []string `json:"id,omitempty"`
+// ValidationErrs defines the validation errors returned in POSTResp.
+type ValidationErrs struct {
+	Username []string `json:"username,omitempty"`
 	Password []string `json:"password,omitempty"`
 	TeamID   string   `json:"teamID,omitEmpty"`
 }
 
 // Any checks whether there are any validation errors within the ValidationErrors.
-func (e ErrsValidate) Any() bool {
-	return len(e.ID) > 0 || len(e.Password) > 0
+func (e ValidationErrs) Any() bool {
+	return len(e.Username) > 0 || len(e.Password) > 0
 }
 
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
-type ReqValidator interface{ Validate(PostReq) ErrsValidate }
+type ReqValidator interface{ Validate(PostReq) ValidationErrs }
 
 // UserValidator is the ReqValidator for the register route.
 type UserValidator struct {
-	IDValidator       StrValidator
+	UsernameValidator StrValidator
 	PasswordValidator StrValidator
 	TeamIDValidator   StrValidator
 }
 
 // NewUserValidator creates and returns a new UserValidator.
-func NewUserValidator(idValidator, pwdValidator StrValidator) UserValidator {
+func NewUserValidator(usnVdtor, pwdVdtor StrValidator) UserValidator {
 	return UserValidator{
-		IDValidator:       idValidator,
-		PasswordValidator: pwdValidator,
+		UsernameValidator: usnVdtor,
+		PasswordValidator: pwdVdtor,
 	}
 }
 
@@ -37,9 +37,9 @@ func NewUserValidator(idValidator, pwdValidator StrValidator) UserValidator {
 // sent the register route. It returns an errors object if any of the individual
 // validations fail. It implements the UserValidator interface on the
 // ReqValidator struct.
-func (v UserValidator) Validate(req PostReq) ErrsValidate {
-	errs := ErrsValidate{
-		ID:       v.IDValidator.Validate(req.ID),
+func (v UserValidator) Validate(req PostReq) ValidationErrs {
+	errs := ValidationErrs{
+		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
 	}
 	// team ID can be empty
@@ -59,8 +59,8 @@ type StrValidator interface{ Validate(string) (errs []string) }
 // IDValidator is the ID field validator for POST register requests.
 type IDValidator struct{}
 
-// NewIDValidator creates and returns a new username validator.
-func NewIDValidator() IDValidator { return IDValidator{} }
+// NewUsernameValidator creates and returns a new username validator.
+func NewUsernameValidator() IDValidator { return IDValidator{} }
 
 // Validate applies user ID validation rules to the ID string and returns the
 // error message if any fails.

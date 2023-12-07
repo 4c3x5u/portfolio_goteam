@@ -3,14 +3,12 @@ package token
 
 import (
 	"errors"
-	"os"
 	"time"
 )
 
-// signKey can be used to sign and parse JWTs.
-var signKey []byte
-
-func init() { signKey = []byte(os.Getenv("JWTKEY")) }
+// keyName is the name of the environment variable to retrieve the JWT signing
+// key from.
+const keyName = "JWTKEY"
 
 // ErrInvalid means that the given token is invalid.
 var ErrInvalid = errors.New("invalid token")

@@ -30,7 +30,7 @@ func (p Putter) Put(ctx context.Context, user User) error {
 	_, err = p.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
-		ConditionExpression: aws.String("attribute_not_exists(ID)"),
+		ConditionExpression: aws.String("attribute_not_exists(Username)"),
 	})
 
 	var ex *types.ConditionalCheckFailedException

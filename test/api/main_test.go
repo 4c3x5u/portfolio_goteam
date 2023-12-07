@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,6 +23,9 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+// db is the DynamoDB client used by tests.
+var svcDynamo *dynamodb.Client
 
 // used as a prefix to a uuid when creating test tables
 const (
@@ -51,6 +55,8 @@ func TestMain(m *testing.M) {
 		log.Fatalf("postgres setup failed: %s", err)
 	}
 
+	// used in auth-related code to sign JWTs
+	os.Setenv("JWTKEY", jwtKey)
 	m.Run()
 }
 
@@ -63,39 +69,60 @@ func setUpDynamoDB() (func() error, error) {
 	if err != nil {
 		return tearDownNothing, err
 	}
-	svc := dynamodb.NewFromConfig(cfg)
+	svcDynamo = dynamodb.NewFromConfig(cfg)
 
 	// set up user table
 	userTableName = userTablePrefix + uuid.New().String()
-	tearDownUserTable, err := createTable(svc, &userTableName)
+	tearDownUserTable, err := createTable(svcDynamo, &userTableName)
 	if err != nil {
 		return tearDownNothing, err
 	}
 	tearDown = tearDownUserTable
 
+	// set environvar for user putter & getter to read the table name from
+	if err := os.Setenv("DYNAMODB_TABLE_USER", userTableName); err != nil {
+		if err != nil {
+			return tearDown, err
+		}
+	}
+
 	// set up team table
 	teamTableName = teamTablePrefix + uuid.New().String()
-	tearDownTeamTable, err := createTable(svc, &teamTableName)
+	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName)
 	if err != nil {
 		return tearDown, err
 	}
 	tearDown = joinTeardowns(tearDown, tearDownTeamTable)
 
+	// set environvar for team putter & getter to read the table name from
+	if err := os.Setenv("DYNAMODB_TABLE_TEAM", teamTableName); err != nil {
+		if err != nil {
+			return tearDown, err
+		}
+	}
+
 	// set up team table
 	taskTableName = taskTablePrefix + uuid.New().String()
-	tearDownTaskTable, err := createTable(svc, &taskTableName)
+	tearDownTaskTable, err := createTable(svcDynamo, &taskTableName)
 	if err != nil {
 		return tearDown, err
 	}
 	tearDown = joinTeardowns(tearDown, tearDownTaskTable)
 
+	// set environvar for task putter & getter to read the table name from
+	if err := os.Setenv("DYNAMODB_TABLE_TASK", taskTableName); err != nil {
+		if err != nil {
+			return tearDown, err
+		}
+	}
+
 	// ensure all test tables are created
-	if err := allTablesActive(svc); err != nil {
+	if err := allTablesActive(svcDynamo); err != nil {
 		return tearDown, err
 	}
 
 	// populate tables
-	_, err = svc.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+	_, err = svcDynamo.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			userTableName: reqsWriteUser,
 			teamTableName: reqsWriteTeam,
@@ -170,13 +197,18 @@ func allTablesActive(svc *dynamodb.Client) error {
 // createTable creates a DynamoDB table with the given name and a string
 // partition key named ID.
 func createTable(svc *dynamodb.Client, name *string) (func() error, error) {
+	keyName := "ID"
+	if strings.Contains(*name, "user") {
+		keyName = "Username"
+	}
+
 	_, err := svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
 		TableName: name,
 		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: aws.String("ID"), AttributeType: "S"},
+			{AttributeName: &keyName, AttributeType: "S"},
 		},
 		KeySchema: []types.KeySchemaElement{
-			{AttributeName: aws.String("ID"), KeyType: "HASH"},
+			{AttributeName: &keyName, KeyType: "HASH"},
 		},
 		BillingMode: types.BillingModeProvisioned,
 		ProvisionedThroughput: &types.ProvisionedThroughput{
@@ -266,8 +298,13 @@ func setUpPostgres() (func() error, error) {
 	// Initialise the database with schema and tables.
 	qInitBytes, err := os.ReadFile("init.sql")
 	if err != nil {
-		log.Fatal("+++", err)
+		// when ran with dlv, init file path differs so check
+		qInitBytes, err = os.ReadFile("test/api/init.sql")
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
 	if _, err = db.Exec(string(qInitBytes)); err != nil {
 		log.Fatal("+++", err)
 	}

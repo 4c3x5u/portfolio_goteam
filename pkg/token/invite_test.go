@@ -12,7 +12,7 @@ import (
 )
 
 func TestInvite(t *testing.T) {
-	signKey = []byte("signkey")
+	signKey := []byte("signkey")
 	teamID := "teamid"
 
 	t.Run("Encode", func(t *testing.T) {
@@ -27,7 +27,7 @@ func TestInvite(t *testing.T) {
 		if _, err = jwt.ParseWithClaims(
 			token,
 			&claims,
-			func(token *jwt.Token) (any, error) { return signKey, nil },
+			func(token *jwt.Token) (any, error) { return []byte(signKey), nil },
 		); err != nil {
 			t.Error(err)
 		}

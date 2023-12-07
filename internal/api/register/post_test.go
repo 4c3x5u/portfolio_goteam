@@ -40,7 +40,7 @@ func TestHandler(t *testing.T) {
 
 	// Used in status 400 cases to assert on validation errors.
 	assertOnErrsValidate := func(
-		wantErrsValidate ErrsValidate,
+		wantErrsValidate ValidationErrs,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, r *http.Response, _ string) {
 			resBody := &PostResp{}
@@ -49,11 +49,11 @@ func TestHandler(t *testing.T) {
 			}
 
 			assert.AllEqual(t.Error,
-				resBody.ErrsValidate.ID, wantErrsValidate.ID,
+				resBody.ValidationErrs.Username, wantErrsValidate.Username,
 			)
 
 			assert.AllEqual(t.Error,
-				resBody.ErrsValidate.Password, wantErrsValidate.Password,
+				resBody.ValidationErrs.Password, wantErrsValidate.Password,
 			)
 		}
 	}
@@ -72,11 +72,11 @@ func TestHandler(t *testing.T) {
 		}
 	}
 
-	validReqBody := PostReq{ID: "bob123", Password: "Myp4ssword!"}
+	validReqBody := PostReq{Username: "bob123", Password: "Myp4ssword!"}
 	for _, c := range []struct {
 		name            string
 		req             PostReq
-		errValidate     ErrsValidate
+		errValidate     ValidationErrs
 		inviteToken     string
 		inviteDecoded   token.Invite
 		errDecodeInvite error
@@ -91,8 +91,8 @@ func TestHandler(t *testing.T) {
 		{
 			name: "ErrsValidate",
 			req:  PostReq{},
-			errValidate: ErrsValidate{
-				ID: []string{idTooLong}, Password: []string{pwdNoDigit},
+			errValidate: ValidationErrs{
+				Username: []string{idTooLong}, Password: []string{pwdNoDigit},
 			},
 			inviteToken:     "",
 			inviteDecoded:   token.Invite{},
@@ -104,8 +104,8 @@ func TestHandler(t *testing.T) {
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
-				ErrsValidate{
-					ID:       []string{idTooLong},
+				ValidationErrs{
+					Username: []string{idTooLong},
 					Password: []string{pwdNoDigit},
 				},
 			),
@@ -113,7 +113,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:            "ErrDecodeInvite",
 			req:             PostReq{},
-			errValidate:     ErrsValidate{},
+			errValidate:     ValidationErrs{},
 			inviteToken:     "someinvitetoken",
 			inviteDecoded:   token.Invite{},
 			errDecodeInvite: errors.New("an error"),
@@ -128,7 +128,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:            "ErrUsnTaken",
 			req:             PostReq{},
-			errValidate:     ErrsValidate{},
+			errValidate:     ValidationErrs{},
 			inviteToken:     "",
 			inviteDecoded:   token.Invite{},
 			errDecodeInvite: nil,
@@ -139,15 +139,15 @@ func TestHandler(t *testing.T) {
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
-				ErrsValidate{
-					ID: []string{"Username is already taken."},
+				ValidationErrs{
+					Username: []string{"Username is already taken."},
 				},
 			),
 		},
 		{
 			name:          "ErrHash",
 			req:           validReqBody,
-			errValidate:   ErrsValidate{},
+			errValidate:   ValidationErrs{},
 			inviteToken:   "",
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
@@ -161,7 +161,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:          "ErrUsnTaken",
 			req:           PostReq{},
-			errValidate:   ErrsValidate{},
+			errValidate:   ValidationErrs{},
 			inviteToken:   "",
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
@@ -171,15 +171,15 @@ func TestHandler(t *testing.T) {
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
-				ErrsValidate{
-					ID: []string{"Username is already taken."},
+				ValidationErrs{
+					Username: []string{"Username is already taken."},
 				},
 			),
 		},
 		{
 			name:          "ErrPutUser",
 			req:           validReqBody,
-			errValidate:   ErrsValidate{},
+			errValidate:   ValidationErrs{},
 			inviteToken:   "",
 			inviteDecoded: token.Invite{},
 			errPutUser:    errors.New("failed to put user"),
@@ -193,7 +193,7 @@ func TestHandler(t *testing.T) {
 		{
 			name:          "ErrEncodeAuth",
 			req:           validReqBody,
-			errValidate:   ErrsValidate{},
+			errValidate:   ValidationErrs{},
 			inviteToken:   "",
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
@@ -213,7 +213,7 @@ func TestHandler(t *testing.T) {
 			req:  validReqBody,
 			inviteToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOi" +
 				"J0ZWFtaWQifQ.1h_fmLJ1ip-Z6kJq9JXYDgGuWDPOcOf8abwCgKtHHcY",
-			errValidate:   ErrsValidate{},
+			errValidate:   ValidationErrs{},
 			errPutUser:    nil,
 			pwdHash:       nil,
 			errHash:       nil,

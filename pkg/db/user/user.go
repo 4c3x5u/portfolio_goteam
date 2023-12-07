@@ -7,7 +7,7 @@ const tableName = "DYNAMODB_TABLE_USER"
 
 // User defines the user entity - the primary and only entity of user domain.
 type User struct {
-	ID       string
+	Username string
 	Password []byte
 	IsAdmin  bool
 	TeamID   string

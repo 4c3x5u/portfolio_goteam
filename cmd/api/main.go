@@ -78,7 +78,7 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: registerAPI.NewPostHandler(
 				registerAPI.NewUserValidator(
-					registerAPI.NewIDValidator(),
+					registerAPI.NewUsernameValidator(),
 					registerAPI.NewPasswordValidator(),
 				),
 				token.DecodeInvite,

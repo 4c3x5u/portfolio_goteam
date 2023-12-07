@@ -1,6 +1,7 @@
 package token
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -28,7 +29,7 @@ func EncodeAuth(exp time.Time, auth Auth) (string, error) {
 		"isAdmin": auth.IsAdmin,
 		"teamID":  auth.TeamID,
 		"exp":     exp.Unix(),
-	}).SignedString([]byte(signKey))
+	}).SignedString([]byte(os.Getenv(keyName)))
 	return tk, err
 }
 
@@ -41,7 +42,7 @@ func DecodeAuth(raw string) (Auth, error) {
 	claims := jwt.MapClaims{}
 	if _, err := jwt.ParseWithClaims(
 		raw, &claims, func(token *jwt.Token) (any, error) {
-			return signKey, nil
+			return []byte(os.Getenv(keyName)), nil
 		},
 	); err != nil {
 		return Auth{}, err

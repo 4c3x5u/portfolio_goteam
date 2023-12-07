@@ -1,6 +1,7 @@
 package token
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -22,7 +23,7 @@ func EncodeInvite(exp time.Time, inv Invite) (string, error) {
 	tk, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"teamID": inv.TeamID,
 		"exp":    exp.Unix(),
-	}).SignedString([]byte(signKey))
+	}).SignedString([]byte(os.Getenv("JWTKEY")))
 	return tk, err
 }
 
@@ -35,7 +36,7 @@ func DecodeInvite(raw string) (Invite, error) {
 	claims := jwt.MapClaims{}
 	if _, err := jwt.ParseWithClaims(
 		raw, &claims, func(token *jwt.Token) (any, error) {
-			return signKey, nil
+			return []byte(os.Getenv("JWTKEY")), nil
 		},
 	); err != nil {
 		return Invite{}, err

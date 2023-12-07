@@ -19,7 +19,7 @@ func TestGetter(t *testing.T) {
 	sut := NewGetter(ig)
 
 	userA := User{
-		ID:       "bob123",
+		Username: "bob123",
 		Password: []byte("p4ssw0rd"),
 		IsAdmin:  true,
 		TeamID:   "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
@@ -51,7 +51,7 @@ func TestGetter(t *testing.T) {
 			name: "OK",
 			igOut: &dynamodb.GetItemOutput{
 				Item: map[string]types.AttributeValue{
-					"ID": &types.AttributeValueMemberS{Value: userA.ID},
+					"Username": &types.AttributeValueMemberS{Value: userA.Username},
 					"Password": &types.AttributeValueMemberB{
 						Value: userA.Password,
 					},
@@ -76,7 +76,7 @@ func TestGetter(t *testing.T) {
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 			if c.wantUser != nil {
-				assert.Equal(t.Error, user.ID, c.wantUser.ID)
+				assert.Equal(t.Error, user.Username, c.wantUser.Username)
 				assert.AllEqual(t.Error, user.Password, c.wantUser.Password)
 				assert.True(t.Error, c.wantUser.IsAdmin)
 				assert.Equal(t.Error, user.TeamID, c.wantUser.TeamID)

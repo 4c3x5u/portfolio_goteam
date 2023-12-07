@@ -3,6 +3,7 @@
 package token
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -12,7 +13,9 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	signKey = []byte("signkey")
+	if err := os.Setenv(keyName, "signkey"); err != nil {
+		t.Fatal("failed to set key env var", err)
+	}
 	userID := "bob123"
 	isAdmin := true
 	teamID := "teamid"
@@ -29,7 +32,9 @@ func TestAuth(t *testing.T) {
 		if _, err = jwt.ParseWithClaims(
 			token,
 			&claims,
-			func(token *jwt.Token) (any, error) { return signKey, nil },
+			func(token *jwt.Token) (any, error) {
+				return []byte(os.Getenv(keyName)), nil
+			},
 		); err != nil {
 			t.Error(err)
 		}

@@ -15,15 +15,15 @@ import (
 
 // PostReq defines the body of POST register requests.
 type PostReq struct {
-	ID       string `json:"id"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 	TeamID   string `json:"teamID"`
 }
 
 // PostResp defines the body of POST register responses.
 type PostResp struct {
-	Err          string       `json:"err,omitempty"`
-	ErrsValidate ErrsValidate `json:"errsValidate,omitempty"`
+	Err            string         `json:"error,omitempty"`
+	ValidationErrs ValidationErrs `json:"validationErrors,omitempty"`
 }
 
 // PostHandler is a api.MethodHandler that can be used to handle POST register
@@ -71,7 +71,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	if errsValidate.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			PostResp{ErrsValidate: errsValidate},
+			PostResp{ValidationErrs: errsValidate},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -81,7 +81,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// create user
 	user := userTable.User{
-		ID:       req.ID,
+		Username: req.Username,
 		Password: []byte{},
 		IsAdmin:  false,
 		TeamID:   "",
@@ -125,8 +125,8 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	if err = h.userPutter.Put(r.Context(), user); err == db.ErrDupKey {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			PostResp{ErrsValidate: ErrsValidate{
-				ID: []string{"Username is already taken."},
+			PostResp{ValidationErrs: ValidationErrs{
+				Username: []string{"Username is already taken."},
 			}},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -141,7 +141,9 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// generate an auth token
 	exp := time.Now().Add(auth.Duration).UTC()
-	tkAuth, err := h.encodeAuthToken(exp, token.NewAuth("", false, ""))
+	tkAuth, err := h.encodeAuthToken(exp, token.NewAuth(
+		user.Username, user.IsAdmin, user.TeamID,
+	))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(

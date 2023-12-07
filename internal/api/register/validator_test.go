@@ -48,19 +48,19 @@ func TestUserValidator(t *testing.T) {
 	}{
 		{
 			name:         "UsnEmpty,PwdEmpty",
-			reqBody:      PostReq{ID: "", Password: ""},
+			reqBody:      PostReq{Username: "", Password: ""},
 			usernameErrs: []string{idEmpty},
 			passwordErrs: []string{pwdEmpty},
 		},
 		{
 			name:         "UsnTooShort,UsnInvalidChar,PwdEmpty",
-			reqBody:      PostReq{ID: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
+			reqBody:      PostReq{Username: "bob!", Password: "myNØNÅSCÎÎp4ssword!"},
 			usernameErrs: []string{idTooShort, usnInvalidChar},
 			passwordErrs: []string{pwdNonASCII},
 		},
 		{
 			name:         "UsnDigitStart,PwdTooLong,PwdNoDigit",
-			reqBody:      PostReq{ID: "1bobob", Password: "MyPass!"},
+			reqBody:      PostReq{Username: "1bobob", Password: "MyPass!"},
 			usernameErrs: []string{usnDigitStart},
 			passwordErrs: []string{pwdTooShort, pwdNoDigit},
 		},
@@ -71,7 +71,7 @@ func TestUserValidator(t *testing.T) {
 
 			res := sut.Validate(c.reqBody)
 
-			assert.AllEqual(t.Error, res.ID, c.usernameErrs)
+			assert.AllEqual(t.Error, res.Username, c.usernameErrs)
 			assert.AllEqual(t.Error, res.Password, c.passwordErrs)
 		})
 	}
@@ -80,7 +80,7 @@ func TestUserValidator(t *testing.T) {
 // TestUsernameValidator tests the UsernameValidator to assert that it returns
 // the correct error strings based on the username passed to it.
 func TestUsernameValidator(t *testing.T) {
-	sut := NewIDValidator()
+	sut := NewUsernameValidator()
 
 	for _, c := range []struct {
 		name     string

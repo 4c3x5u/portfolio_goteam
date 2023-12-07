@@ -19,11 +19,11 @@ type Getter struct{ ItemGetter db.ItemGetter }
 func NewGetter(ig db.ItemGetter) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets user from the user table by ID.
-func (g Getter) Get(ctx context.Context, id string) (User, error) {
+func (g Getter) Get(ctx context.Context, username string) (User, error) {
 	out, err := g.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
-			"ID": &types.AttributeValueMemberS{Value: id},
+			"Username": &types.AttributeValueMemberS{Value: username},
 		},
 	})
 	if err != nil {

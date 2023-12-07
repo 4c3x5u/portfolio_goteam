@@ -8,7 +8,7 @@ import "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 // test use.
 var reqsWriteUser = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team1Admin"},
+		"Username": &types.AttributeValueMemberS{Value: "team1Admin"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
@@ -22,7 +22,7 @@ var reqsWriteUser = []types.WriteRequest{
 		},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team1Member"},
+		"Username": &types.AttributeValueMemberS{Value: "team1Member"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
@@ -36,7 +36,7 @@ var reqsWriteUser = []types.WriteRequest{
 		},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team2Admin"},
+		"Username": &types.AttributeValueMemberS{Value: "team2Admin"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
@@ -50,7 +50,7 @@ var reqsWriteUser = []types.WriteRequest{
 		},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team2Member"},
+		"Username": &types.AttributeValueMemberS{Value: "team2Member"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
@@ -64,7 +64,7 @@ var reqsWriteUser = []types.WriteRequest{
 		},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team3Admin"},
+		"Username": &types.AttributeValueMemberS{Value: "team3Admin"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
@@ -78,7 +78,7 @@ var reqsWriteUser = []types.WriteRequest{
 		},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{Value: "team4Admin"},
+		"Username": &types.AttributeValueMemberS{Value: "team4Admin"},
 		"Password": &types.AttributeValueMemberB{
 			Value: []byte(
 				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
