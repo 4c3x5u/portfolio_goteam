@@ -2,7 +2,7 @@ package login
 
 // ReqValidator describes a type that can be used to validate requests sent
 // to the login route.
-type ReqValidator interface{ Validate(POSTReq) bool }
+type ReqValidator interface{ Validate(PostReq) bool }
 
 // Validator is the ReqValidator for the login route.
 type Validator struct{}
@@ -11,8 +11,8 @@ type Validator struct{}
 func NewValidator() Validator { return Validator{} }
 
 // Validate validates the request body sent to the login route.
-func (v Validator) Validate(reqBody POSTReq) bool {
-	if reqBody.ID == "" || reqBody.Password == "" {
+func (v Validator) Validate(reqBody PostReq) bool {
+	if reqBody.Username == "" || reqBody.Password == "" {
 		return false
 	}
 	return true

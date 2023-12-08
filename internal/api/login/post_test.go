@@ -29,7 +29,7 @@ func TestPOSTHandler(t *testing.T) {
 		encodeAuthToken  = &token.FakeEncodeAuth{}
 		log              = &pkgLog.FakeErrorer{}
 	)
-	sut := NewPOSTHandler(
+	sut := NewPostHandler(
 		validator, userGetter, passwordComparer, encodeAuthToken.Func, log,
 	)
 

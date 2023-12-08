@@ -4,7 +4,7 @@ package login
 type fakeReqValidator struct{ isValid bool }
 
 // Validate implements the ReqValidator interface on fakeReqValidator.
-func (f *fakeReqValidator) Validate(_ POSTReq) bool { return f.isValid }
+func (f *fakeReqValidator) Validate(_ PostReq) bool { return f.isValid }
 
 // fakeHashComparer is a test fake for Comparator.
 type fakeHashComparer struct{ err error }

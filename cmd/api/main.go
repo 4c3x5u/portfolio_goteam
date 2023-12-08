@@ -91,7 +91,7 @@ func main() {
 
 	mux.Handle("/login", api.NewHandler(nil,
 		map[string]api.MethodHandler{
-			http.MethodPost: loginAPI.NewPOSTHandler(
+			http.MethodPost: loginAPI.NewPostHandler(
 				loginAPI.NewValidator(),
 				userTableDynamoDB.NewGetter(svcDynamo),
 				loginAPI.NewPasswordComparator(),

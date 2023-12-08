@@ -2,18 +2,6 @@ package register
 
 import "regexp"
 
-// ValidationErrs defines the validation errors returned in POSTResp.
-type ValidationErrs struct {
-	Username []string `json:"username,omitempty"`
-	Password []string `json:"password,omitempty"`
-	TeamID   string   `json:"teamID,omitEmpty"`
-}
-
-// Any checks whether there are any validation errors within the ValidationErrors.
-func (e ValidationErrs) Any() bool {
-	return len(e.Username) > 0 || len(e.Password) > 0
-}
-
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
 type ReqValidator interface{ Validate(PostReq) ValidationErrs }
@@ -41,13 +29,6 @@ func (v UserValidator) Validate(req PostReq) ValidationErrs {
 	errs := ValidationErrs{
 		Username: v.UsernameValidator.Validate(req.Username),
 		Password: v.PasswordValidator.Validate(req.Password),
-	}
-	// team ID can be empty
-	if req.TeamID != "" {
-		errsTID := v.TeamIDValidator.Validate(req.TeamID)
-		if len(errsTID) > 0 {
-			errs.TeamID = errsTID[0]
-		}
 	}
 	return errs
 }

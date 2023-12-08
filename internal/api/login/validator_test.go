@@ -15,27 +15,27 @@ func TestValidator(t *testing.T) {
 
 	for _, c := range []struct {
 		name    string
-		reqBody POSTReq
+		reqBody PostReq
 		wantOK  bool
 	}{
 		{
 			name:    "UsernameEmpty",
-			reqBody: POSTReq{ID: "", Password: "asdqwe123"},
+			reqBody: PostReq{Username: "", Password: "asdqwe123"},
 			wantOK:  false,
 		},
 		{
 			name:    "PasswordEmpty",
-			reqBody: POSTReq{ID: "bob123", Password: ""},
+			reqBody: PostReq{Username: "bob123", Password: ""},
 			wantOK:  false,
 		},
 		{
 			name:    "UsernameAndPasswordEmpty",
-			reqBody: POSTReq{ID: "", Password: ""},
+			reqBody: PostReq{Username: "", Password: ""},
 			wantOK:  false,
 		},
 		{
 			name:    "IsValid",
-			reqBody: POSTReq{ID: "bob123", Password: "asdqwe123"},
+			reqBody: PostReq{Username: "bob123", Password: "asdqwe123"},
 			wantOK:  true,
 		},
 	} {

@@ -14,42 +14,42 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// POSTReq defines the body of POST login requests.
-type POSTReq struct {
-	ID       string `json:"username"`
+// PostReq defines the body of POST login requests.
+type PostReq struct {
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-// POSTHandler is a http.POSTHandler that can be used to handle login requests.
-type POSTHandler struct {
-	validator        ReqValidator
-	userGetter       db.Getter[userTable.User]
-	passwordComparer Comparator
-	encodeAuthToken  token.EncodeFunc[token.Auth]
-	log              pkgLog.Errorer
+// PostHandler is a http.PostHandler that can be used to handle login requests.
+type PostHandler struct {
+	validator     ReqValidator
+	userGetter    db.Getter[userTable.User]
+	pwdComparator Comparator
+	encodeAuth    token.EncodeFunc[token.Auth]
+	log           pkgLog.Errorer
 }
 
-// NewPOSTHandler creates and returns a new Handler.
-func NewPOSTHandler(
+// NewPostHandler creates and returns a new Handler.
+func NewPostHandler(
 	validator ReqValidator,
 	userGetter db.Getter[userTable.User],
-	hashComparer Comparator,
-	encodeAuthToken token.EncodeFunc[token.Auth],
+	pwdComparator Comparator,
+	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
-) POSTHandler {
-	return POSTHandler{
-		validator:        validator,
-		userGetter:       userGetter,
-		passwordComparer: hashComparer,
-		encodeAuthToken:  encodeAuthToken,
-		log:              log,
+) PostHandler {
+	return PostHandler{
+		validator:     validator,
+		userGetter:    userGetter,
+		pwdComparator: pwdComparator,
+		encodeAuth:    encodeAuth,
+		log:           log,
 	}
 }
 
 // ServeHTTP responds to requests made to the login route.
-func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
+func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Read and validate request body.
-	req := POSTReq{}
+	req := PostReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -62,7 +62,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userGetter.Get(r.Context(), req.ID)
+	user, err := h.userGetter.Get(r.Context(), req.Username)
 	if errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -74,7 +74,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Compare the password passed in via the request with the hashed password
 	// of the user from the database.
-	if err = h.passwordComparer.Compare(
+	if err = h.pwdComparator.Compare(
 		user.Password, req.Password,
 	); errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -88,7 +88,7 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Generate an authentication cookie for the user and return it within a
 	// Set-Cookie header.
 	exp := time.Now().Add(token.AuthDurationDefault).UTC()
-	if authToken, err := h.encodeAuthToken(exp, token.NewAuth(
+	if authToken, err := h.encodeAuth(exp, token.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
 	)); err != nil {
 		h.log.Error(err.Error())

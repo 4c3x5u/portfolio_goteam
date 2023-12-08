@@ -16,7 +16,6 @@ import (
 type PostReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	TeamID   string `json:"teamID"`
 }
 
 // PostResp defines the body of POST register responses.
@@ -25,33 +24,44 @@ type PostResp struct {
 	ValidationErrs ValidationErrs `json:"validationErrors,omitempty"`
 }
 
+// ValidationErrs defines the validation errors returned in POSTResp.
+type ValidationErrs struct {
+	Username []string `json:"username,omitempty"`
+	Password []string `json:"password,omitempty"`
+}
+
+// Any checks whether there are any validation errors within the ValidationErrors.
+func (e ValidationErrs) Any() bool {
+	return len(e.Username) > 0 || len(e.Password) > 0
+}
+
 // PostHandler is a api.MethodHandler that can be used to handle POST register
 // requests.
 type PostHandler struct {
-	reqValidator      ReqValidator
-	hasher            Hasher
-	decodeInviteToken token.DecodeFunc[token.Invite]
-	userPutter        db.Putter[userTable.User]
-	encodeAuthToken   token.EncodeFunc[token.Auth]
-	log               pkgLog.Errorer
+	reqValidator ReqValidator
+	hasher       Hasher
+	decodeInvite token.DecodeFunc[token.Invite]
+	userPutter   db.Putter[userTable.User]
+	encodeAuth   token.EncodeFunc[token.Auth]
+	log          pkgLog.Errorer
 }
 
 // NewPostHandler creates and returns a new HandlerPost.
 func NewPostHandler(
 	userValidator ReqValidator,
-	decodeInviteToken token.DecodeFunc[token.Invite],
+	decodeInvite token.DecodeFunc[token.Invite],
 	hasher Hasher,
 	userPutter db.Putter[userTable.User],
-	encodeAuthToken token.EncodeFunc[token.Auth],
+	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
 	return PostHandler{
-		reqValidator:      userValidator,
-		hasher:            hasher,
-		decodeInviteToken: decodeInviteToken,
-		userPutter:        userPutter,
-		encodeAuthToken:   encodeAuthToken,
-		log:               log,
+		reqValidator: userValidator,
+		hasher:       hasher,
+		decodeInvite: decodeInvite,
+		userPutter:   userPutter,
+		encodeAuth:   encodeAuth,
+		log:          log,
 	}
 }
 
@@ -66,11 +76,11 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// validate request
-	errsValidate := h.reqValidator.Validate(req)
-	if errsValidate.Any() {
+	vdtErrs := h.reqValidator.Validate(req)
+	if vdtErrs.Any() {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
-			PostResp{ValidationErrs: errsValidate},
+			PostResp{ValidationErrs: vdtErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -96,7 +106,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else {
-		invite, err := h.decodeInviteToken(ck.Value)
+		invite, err := h.decodeInvite(ck.Value)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(
@@ -140,7 +150,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// generate an auth token
 	exp := time.Now().Add(token.AuthDurationDefault).UTC()
-	tkAuth, err := h.encodeAuthToken(exp, token.NewAuth(
+	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
 	))
 	if err != nil {

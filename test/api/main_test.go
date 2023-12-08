@@ -24,7 +24,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// db is the DynamoDB client used by tests.
+// svcDynamo is the DynamoDB client used by tests.
 var svcDynamo *dynamodb.Client
 
 // used as a prefix to a uuid when creating test tables

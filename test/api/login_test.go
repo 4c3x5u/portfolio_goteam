@@ -21,7 +21,7 @@ import (
 // TestLoginHandler tests the http.Handler for the login API route and asserts
 // that it behaves correctly during various execution paths.
 func TestLoginHandler(t *testing.T) {
-	sut := loginAPI.NewPOSTHandler(
+	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
 		userTable.NewGetter(svcDynamo),
 		loginAPI.NewPasswordComparator(),
