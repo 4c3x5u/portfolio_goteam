@@ -12,10 +12,10 @@ import (
 )
 
 // Putter can be used to put a team into the team table.
-type Putter struct{ ItemPutter db.ItemPutter }
+type Putter struct{ ItemPutter db.DynamoDBPutter }
 
 // NewPutter creates and returns a new Putter.
-func NewPutter(ip db.ItemPutter) Putter { return Putter{ItemPutter: ip} }
+func NewPutter(ip db.DynamoDBPutter) Putter { return Putter{ItemPutter: ip} }
 
 // Put puts a team into the team table.
 func (p Putter) Put(ctx context.Context, team Team) error {

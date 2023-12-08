@@ -42,7 +42,7 @@ func TestGetter(t *testing.T) {
 		},
 		{
 			name:     "NoItem",
-			igOut:    nil,
+			igOut:    &dynamodb.GetItemOutput{Item: nil},
 			igErr:    nil,
 			wantUser: nil,
 			wantErr:  db.ErrNoItem,

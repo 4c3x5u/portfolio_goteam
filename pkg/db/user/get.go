@@ -13,10 +13,10 @@ import (
 )
 
 // Getter can be used to get a user from the user table by ID.
-type Getter struct{ ItemGetter db.ItemGetter }
+type Getter struct{ ItemGetter db.DynamoDBGetter }
 
 // NewGetter creates and returns a new Getter.
-func NewGetter(ig db.ItemGetter) Getter { return Getter{ItemGetter: ig} }
+func NewGetter(ig db.DynamoDBGetter) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets user from the user table by ID.
 func (g Getter) Get(ctx context.Context, username string) (User, error) {
@@ -29,7 +29,7 @@ func (g Getter) Get(ctx context.Context, username string) (User, error) {
 	if err != nil {
 		return User{}, err
 	}
-	if out == nil {
+	if out.Item == nil {
 		return User{}, db.ErrNoItem
 	}
 

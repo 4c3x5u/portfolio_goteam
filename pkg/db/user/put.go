@@ -14,10 +14,10 @@ import (
 )
 
 // ItemPutter can be used to put a user into user table.
-type Putter struct{ ItemPutter db.ItemPutter }
+type Putter struct{ ItemPutter db.DynamoDBPutter }
 
 // NewPutter creates and returns a new Putter.
-func NewPutter(ip db.ItemPutter) Putter { return Putter{ItemPutter: ip} }
+func NewPutter(ip db.DynamoDBPutter) Putter { return Putter{ItemPutter: ip} }
 
 // Put puts a user into the user table only if a user with the same ID does not
 // already exist.

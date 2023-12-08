@@ -14,11 +14,11 @@ import (
 
 // Getter can be used to get a task from the task table.
 type Getter struct {
-	ItemGetter db.ItemGetter
+	ItemGetter db.DynamoDBGetter
 }
 
 // NewGetter creates and returns a new Getter.
-func NewGetter(ig db.ItemGetter) Getter { return Getter{ItemGetter: ig} }
+func NewGetter(ig db.DynamoDBGetter) Getter { return Getter{ItemGetter: ig} }
 
 // Get gets a task from the task table.
 func (g Getter) Get(ctx context.Context, id string) (Task, error) {
@@ -31,7 +31,7 @@ func (g Getter) Get(ctx context.Context, id string) (Task, error) {
 	if err != nil {
 		return Task{}, err
 	}
-	if out == nil {
+	if out.Item == nil {
 		return Task{}, db.ErrNoItem
 	}
 
