@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/kxplxn/goteam/pkg/auth"
 	"github.com/kxplxn/goteam/pkg/db"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -140,7 +139,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// generate an auth token
-	exp := time.Now().Add(auth.Duration).UTC()
+	exp := time.Now().Add(token.AuthDurationDefault).UTC()
 	tkAuth, err := h.encodeAuthToken(exp, token.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
 	))
@@ -160,7 +159,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// set auth cookie and respond OK
 	http.SetCookie(w, &http.Cookie{
-		Name:     token.NameAuth,
+		Name:     token.AuthName,
 		Value:    tkAuth,
 		Expires:  exp,
 		SameSite: http.SameSiteNoneMode,

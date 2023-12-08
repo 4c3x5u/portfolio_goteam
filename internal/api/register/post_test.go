@@ -40,7 +40,7 @@ func TestHandler(t *testing.T) {
 
 	// Used in status 400 cases to assert on validation errors.
 	assertOnErrsValidate := func(
-		wantErrsValidate ValidationErrs,
+		wantValidationErrs ValidationErrs,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, r *http.Response, _ string) {
 			resBody := &PostResp{}
@@ -49,11 +49,11 @@ func TestHandler(t *testing.T) {
 			}
 
 			assert.AllEqual(t.Error,
-				resBody.ValidationErrs.Username, wantErrsValidate.Username,
+				resBody.ValidationErrs.Username, wantValidationErrs.Username,
 			)
 
 			assert.AllEqual(t.Error,
-				resBody.ValidationErrs.Password, wantErrsValidate.Password,
+				resBody.ValidationErrs.Password, wantValidationErrs.Password,
 			)
 		}
 	}

@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	svcDynamoDB := dynamodb.NewFromConfig(cfgDynamoDB)
+	svcDynamo := dynamodb.NewFromConfig(cfgDynamoDB)
 
 	// Create dependencies that are used by multiple handlers.
 	db, err := sql.Open("postgres", env.DBConnStr)
@@ -66,7 +66,6 @@ func main() {
 		log.Fatal(err.Error())
 		os.Exit(4)
 	}
-	jwtGenerator := auth.NewJWTGenerator(env.JWTKey)
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
 	userSelector := userTable.NewSelector(db)
 	columnSelector := columnTable.NewSelector(db)
@@ -83,7 +82,7 @@ func main() {
 				),
 				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				userTableDynamoDB.NewPutter(svcDynamoDB),
+				userTableDynamoDB.NewPutter(svcDynamo),
 				token.EncodeAuth,
 				log,
 			),
@@ -94,9 +93,9 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: loginAPI.NewPOSTHandler(
 				loginAPI.NewValidator(),
-				userSelector,
+				userTableDynamoDB.NewGetter(svcDynamo),
 				loginAPI.NewPasswordComparator(),
-				jwtGenerator,
+				token.EncodeAuth,
 				log,
 			),
 		},

@@ -201,7 +201,7 @@ func TestRegisterHandler(t *testing.T) {
 				); err != nil {
 					t.Fatal(err)
 				}
-				assert.Equal(t.Error, claims["userID"].(string), "bob321")
+				assert.Equal(t.Error, claims["username"].(string), "bob321")
 
 				// no invite token was sent - therefore user must be put as
 				// admin and given a random guid as team ID

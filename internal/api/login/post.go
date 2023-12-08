@@ -1,7 +1,6 @@
 package login
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -9,10 +8,10 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/kxplxn/goteam/pkg/auth"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // POSTReq defines the body of POST login requests.
@@ -23,27 +22,27 @@ type POSTReq struct {
 
 // POSTHandler is a http.POSTHandler that can be used to handle login requests.
 type POSTHandler struct {
-	validator          ReqValidator
-	userSelector       dbaccess.Selector[userTable.Record]
-	passwordComparer   Comparator
-	authTokenGenerator auth.TokenGenerator
-	log                pkgLog.Errorer
+	validator        ReqValidator
+	userGetter       db.Getter[userTable.User]
+	passwordComparer Comparator
+	encodeAuthToken  token.EncodeFunc[token.Auth]
+	log              pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new Handler.
 func NewPOSTHandler(
 	validator ReqValidator,
-	userSelector dbaccess.Selector[userTable.Record],
+	userGetter db.Getter[userTable.User],
 	hashComparer Comparator,
-	authTokenGenerator auth.TokenGenerator,
+	encodeAuthToken token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{
-		validator:          validator,
-		userSelector:       userSelector,
-		passwordComparer:   hashComparer,
-		authTokenGenerator: authTokenGenerator,
-		log:                log,
+		validator:        validator,
+		userGetter:       userGetter,
+		passwordComparer: hashComparer,
+		encodeAuthToken:  encodeAuthToken,
+		log:              log,
 	}
 }
 
@@ -63,8 +62,8 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userSelector.Select(req.ID)
-	if errors.Is(err, sql.ErrNoRows) {
+	user, err := h.userGetter.Get(r.Context(), req.ID)
+	if errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
@@ -88,17 +87,17 @@ func (h POSTHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Generate an authentication cookie for the user and return it within a
 	// Set-Cookie header.
-	expiry := time.Now().Add(auth.Duration).UTC()
-	if authToken, err := h.authTokenGenerator.Generate(
-		req.ID, expiry,
-	); err != nil {
+	exp := time.Now().Add(token.AuthDurationDefault).UTC()
+	if authToken, err := h.encodeAuthToken(exp, token.NewAuth(
+		user.Username, user.IsAdmin, user.TeamID,
+	)); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		http.SetCookie(w, &http.Cookie{
-			Name:     auth.CookieName,
+			Name:     token.AuthName,
 			Value:    authToken,
-			Expires:  expiry,
+			Expires:  exp,
 			SameSite: http.SameSiteNoneMode,
 			Secure:   true,
 		})

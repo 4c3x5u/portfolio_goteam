@@ -3,7 +3,6 @@
 package login
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -12,9 +11,10 @@ import (
 	"time"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,113 +23,113 @@ import (
 // correctly.
 func TestPOSTHandler(t *testing.T) {
 	var (
-		validator          = &fakeReqValidator{}
-		userSelector       = &userTable.FakeSelector{}
-		passwordComparer   = &fakeHashComparer{}
-		authTokenGenerator = &auth.FakeTokenGenerator{}
-		log                = &pkgLog.FakeErrorer{}
+		validator        = &fakeReqValidator{}
+		userGetter       = &userTable.FakeGetter{}
+		passwordComparer = &fakeHashComparer{}
+		encodeAuthToken  = &token.FakeEncodeAuth{}
+		log              = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPOSTHandler(
-		validator, userSelector, passwordComparer, authTokenGenerator, log,
+		validator, userGetter, passwordComparer, encodeAuthToken.Func, log,
 	)
 
 	// Used on cases where no case-specific assertions are required.
-	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
+	assertNone := func(*testing.T, *http.Response, string) {}
 
 	for _, c := range []struct {
-		name              string
-		reqIsValid        bool
-		userRecord        userTable.Record
-		userSelectorErr   error
-		hashComparerErr   error
-		authToken         string
-		tokenGeneratorErr error
-		wantStatusCode    int
-		assertFunc        func(*testing.T, *http.Response, string)
+		name             string
+		reqIsValid       bool
+		userRecord       userTable.User
+		errGetUser       error
+		errCompareHash   error
+		authToken        string
+		errGenerateToken error
+		wantStatus       int
+		assertFunc       func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:              "InvalidRequest",
-			reqIsValid:        false,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   nil,
-			hashComparerErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        emptyAssertFunc,
+			name:             "InvalidRequest",
+			reqIsValid:       false,
+			userRecord:       userTable.User{},
+			errGetUser:       nil,
+			errCompareHash:   nil,
+			authToken:        "",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusBadRequest,
+			assertFunc:       assertNone,
 		},
 		{
-			name:              "UserNotFound",
-			reqIsValid:        true,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			hashComparerErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        emptyAssertFunc,
+			name:             "UserNotFound",
+			reqIsValid:       true,
+			userRecord:       userTable.User{},
+			errGetUser:       db.ErrNoItem,
+			errCompareHash:   nil,
+			authToken:        "",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusBadRequest,
+			assertFunc:       assertNone,
 		},
 		{
-			name:              "UserSelectorError",
-			reqIsValid:        true,
-			userRecord:        userTable.Record{},
-			userSelectorErr:   errors.New("user selector error"),
-			hashComparerErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("user selector error"),
+			name:             "UserSelectorError",
+			reqIsValid:       true,
+			userRecord:       userTable.User{},
+			errGetUser:       errors.New("user selector error"),
+			errCompareHash:   nil,
+			authToken:        "",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusInternalServerError,
+			assertFunc:       assert.OnLoggedErr("user selector error"),
 		},
 		{
 			name:       "WrongPassword",
 			reqIsValid: true,
-			userRecord: userTable.Record{
+			userRecord: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorErr:   nil,
-			hashComparerErr:   bcrypt.ErrMismatchedHashAndPassword,
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        emptyAssertFunc,
+			errGetUser:       nil,
+			errCompareHash:   bcrypt.ErrMismatchedHashAndPassword,
+			authToken:        "",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusBadRequest,
+			assertFunc:       assertNone,
 		},
 		{
 			name:       "HashComparerError",
 			reqIsValid: true,
-			userRecord: userTable.Record{
+			userRecord: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorErr:   nil,
-			hashComparerErr:   errors.New("hash comparer error"),
-			authToken:         "",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("hash comparer error"),
+			errGetUser:       nil,
+			errCompareHash:   errors.New("hash comparer error"),
+			authToken:        "",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusInternalServerError,
+			assertFunc:       assert.OnLoggedErr("hash comparer error"),
 		},
 		{
 			name:       "TokenGeneratorError",
 			reqIsValid: true,
-			userRecord: userTable.Record{
+			userRecord: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorErr:   nil,
-			hashComparerErr:   nil,
-			authToken:         "",
-			tokenGeneratorErr: errors.New("token generator error"),
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr("token generator error"),
+			errGetUser:       nil,
+			errCompareHash:   nil,
+			authToken:        "",
+			errGenerateToken: errors.New("token generator error"),
+			wantStatus:       http.StatusInternalServerError,
+			assertFunc:       assert.OnLoggedErr("token generator error"),
 		},
 		{
 			name:       "Success",
 			reqIsValid: true,
-			userRecord: userTable.Record{
+			userRecord: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			userSelectorErr:   nil,
-			hashComparerErr:   nil,
-			authToken:         "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-			tokenGeneratorErr: nil,
-			wantStatusCode:    http.StatusOK,
+			errGetUser:       nil,
+			errCompareHash:   nil,
+			authToken:        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			errGenerateToken: nil,
+			wantStatus:       http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				authTokenFound := false
 				for _, ck := range r.Cookies() {
@@ -156,11 +156,11 @@ func TestPOSTHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
-			userSelector.Rec = c.userRecord
-			userSelector.Err = c.userSelectorErr
-			passwordComparer.err = c.hashComparerErr
-			authTokenGenerator.AuthToken = c.authToken
-			authTokenGenerator.Err = c.tokenGeneratorErr
+			userGetter.User = c.userRecord
+			userGetter.Err = c.errGetUser
+			passwordComparer.err = c.errCompareHash
+			encodeAuthToken.Encoded = c.authToken
+			encodeAuthToken.Err = c.errGenerateToken
 
 			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func TestPOSTHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions.
 			c.assertFunc(t, res, log.InMessage)

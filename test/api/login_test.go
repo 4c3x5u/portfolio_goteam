@@ -13,9 +13,9 @@ import (
 
 	loginAPI "github.com/kxplxn/goteam/internal/api/login"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestLoginHandler tests the http.Handler for the login API route and asserts
@@ -23,9 +23,9 @@ import (
 func TestLoginHandler(t *testing.T) {
 	sut := loginAPI.NewPOSTHandler(
 		loginAPI.NewValidator(),
-		userTable.NewSelector(db),
+		userTable.NewGetter(svcDynamo),
 		loginAPI.NewPasswordComparator(),
-		auth.NewJWTGenerator(jwtKey),
+		token.EncodeAuth,
 		log.New(),
 	)
 
@@ -70,20 +70,43 @@ func TestLoginHandler(t *testing.T) {
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusOK,
 			assertFunc: func(t *testing.T, res *http.Response) {
-				cookie := res.Cookies()[0]
+				ckAuth := res.Cookies()[0]
 
-				assert.True(t.Error, cookie.Secure)
-				assert.Equal(t.Error, cookie.SameSite, http.SameSiteNoneMode)
+				assert.True(t.Error, ckAuth.Secure)
+				assert.Equal(t.Error, ckAuth.SameSite, http.SameSiteNoneMode)
 
-				claims := jwt.RegisteredClaims{}
+				claims := jwt.MapClaims{}
 				if _, err := jwt.ParseWithClaims(
-					cookie.Value, &claims, func(token *jwt.Token) (any, error) {
+					ckAuth.Value, &claims, func(token *jwt.Token) (any, error) {
 						return []byte(jwtKey), nil
 					},
 				); err != nil {
 					t.Fatal(err)
 				}
-				assert.Equal(t.Error, claims.Subject, "team1Member")
+
+				_, ok := claims["username"].(string)
+				if !ok {
+					t.Error()
+				}
+
+				_, ok = claims["isAdmin"].(bool)
+				if !ok {
+					t.Error()
+				}
+
+				_, ok = claims["teamID"].(string)
+				if !ok {
+					t.Error()
+				}
+
+				assert.Equal(t.Error,
+					claims["username"].(string), "team1Member",
+				)
+				assert.Equal(t.Error, claims["isAdmin"].(bool), false)
+				assert.Equal(t.Error,
+					claims["teamID"].(string),
+					"afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+				)
 			},
 		},
 	} {
