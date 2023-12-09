@@ -4,291 +4,473 @@ package task
 
 import (
 	"bytes"
-	"database/sql"
-	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestPOSTHandler tests the Handle method of POSTHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPOSTHandler(t *testing.T) {
-	userSelector := &userTable.FakeSelector{}
-	taskTitleValidator := &api.FakeStringValidator{}
-	subtaskTitleValidator := &api.FakeStringValidator{}
-	columnSelector := &columnTable.FakeSelector{}
-	boardSelector := &boardTable.FakeSelector{}
-	taskInserter := &taskTable.FakeInserter{}
+	decodeAuth := &token.FakeDecode[token.Auth]{}
+	decodeState := &token.FakeDecode[token.State]{}
+	titleVdtor := &api.FakeStringValidator{}
+	subtTitleVdtor := &api.FakeStringValidator{}
+	colNoVdtor := &api.FakeIntValidator{}
+	taskPutter := &db.FakePutter[taskTable.Task]{}
+	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPOSTHandler(
-		userSelector,
-		taskTitleValidator,
-		subtaskTitleValidator,
-		columnSelector,
-		boardSelector,
-		taskInserter,
+	sut := NewPostHandler(
+		decodeAuth.Func,
+		decodeState.Func,
+		titleVdtor,
+		subtTitleVdtor,
+		colNoVdtor,
+		taskPutter,
+		encodeState.Func,
 		log,
 	)
 
 	for _, c := range []struct {
-		name                     string
-		user                     userTable.Record
-		userSelectorErr          error
-		taskTitleValidatorErr    error
-		subtaskTitleValidatorErr error
-		columnSelectorErr        error
-		board                    boardTable.Record
-		boardSelectorErr         error
-		taskInserterErr          error
-		wantStatusCode           int
-		assertFunc               func(*testing.T, *http.Response, string)
+		name                 string
+		reqBody              string
+		authToken            string
+		authDecoded          token.Auth
+		errDecodeAuth        error
+		inStateToken         string
+		inStateDecoded       token.State
+		errDecodeInState     error
+		errValidateColNo     error
+		errValidateTaskTitle error
+		errValidateSubtTitle error
+		errPutTask           error
+		outStateToken        token.State
+		outStateEncoded      string
+		errEncodeState       error
+		wantStatus           int
+		assertFunc           func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:                     "UserNotRecognised",
-			user:                     userTable.Record{},
-			userSelectorErr:          sql.ErrNoRows,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusUnauthorized,
-			assertFunc: assert.OnResErr(
-				"Username is not recognised.",
-			),
+			name:       "NoAuth",
+			wantStatus: http.StatusUnauthorized,
+			assertFunc: assert.OnResErr("Auth token not found."),
 		},
 		{
-			name:                     "UserSelectorErr",
-			user:                     userTable.Record{},
-			userSelectorErr:          sql.ErrConnDone,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
+			name:                 "InvalidAuth",
+			authToken:            "nonempty",
+			errDecodeAuth:        token.ErrInvalid,
+			inStateToken:         "",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusUnauthorized,
+			assertFunc:           assert.OnResErr("Invalid auth token."),
 		},
 		{
-			name:                     "NotAdmin",
-			user:                     userTable.Record{IsAdmin: false},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusForbidden,
+			name:                 "ErrDecodeAuth",
+			reqBody:              "",
+			authToken:            "nonempty",
+			authDecoded:          token.Auth{},
+			errDecodeAuth:        errors.New("failed decoding token"),
+			inStateToken:         "",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr("failed decoding token"),
+		},
+		{
+			name:                 "NotAdmin",
+			reqBody:              "",
+			authToken:            "nonempty",
+			authDecoded:          token.Auth{},
+			errDecodeAuth:        nil,
+			inStateToken:         "",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only team admins can create tasks.",
 			),
 		},
 		{
-			name:                     "TaskTitleEmpty",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    api.ErrStrEmpty,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Task title cannot be empty.",
-			),
+			name:                 "NoState",
+			reqBody:              "",
+			authToken:            "nonempty",
+			authDecoded:          token.Auth{IsAdmin: true},
+			errDecodeAuth:        nil,
+			inStateToken:         "",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("State token not found."),
 		},
 		{
-			name:                     "TaskTitleTooLong",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    api.ErrStrTooLong,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Task title cannot be longer than 50 characters.",
-			),
+			name:                 "InvalidState",
+			reqBody:              "",
+			authToken:            "nonempty",
+			authDecoded:          token.Auth{IsAdmin: true},
+			errDecodeAuth:        nil,
+			inStateToken:         "nonempty",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     token.ErrInvalid,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("Invalid state token."),
 		},
 		{
-			name:                     "TaskTitleUnexpectedErr",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    api.ErrStrNotInt,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				api.ErrStrNotInt.Error(),
-			),
+			name:                 "ErrDecodeState",
+			reqBody:              "",
+			authToken:            "nonempty",
+			authDecoded:          token.Auth{IsAdmin: true},
+			errDecodeAuth:        nil,
+			inStateToken:         "nonempty",
+			inStateDecoded:       token.State{},
+			errDecodeInState:     errors.New("failed decoding state"),
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr("failed decoding state"),
 		},
 		{
-			name:                     "SubtaskTitleEmpty",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: api.ErrStrEmpty,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Subtask title cannot be empty.",
-			),
-		},
-		{
-			name:                     "SubtaskTitleTooLong",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: api.ErrStrTooLong,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Subtask title cannot be longer than 50 characters.",
-			),
-		},
-		{
-			name:                     "SubtaskTitleUnexpectedErr",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: api.ErrStrNotInt,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				api.ErrStrNotInt.Error(),
-			),
-		},
-		{
-			name:                     "ColumnNotFound",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        sql.ErrNoRows,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusNotFound,
-			assertFunc:               assert.OnResErr("Column not found."),
-		},
-		{
-			name:                     "ColumnSelectorErr",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        sql.ErrConnDone,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:                     "BoardSelectorErr",
-			user:                     userTable.Record{IsAdmin: true},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{},
-			boardSelectorErr:         sql.ErrConnDone,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name: "BoardWrongTeam",
-			user: userTable.Record{
-				IsAdmin: true, TeamID: 2,
+			name:          "ColNoOutOfBounds",
+			reqBody:       `{"board": "boardid"}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{
+				Boards: []token.Board{{ID: "boardid"}},
 			},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{TeamID: 1},
-			boardSelectorErr:         nil,
-			taskInserterErr:          nil,
-			wantStatusCode:           http.StatusForbidden,
+			errDecodeInState:     nil,
+			errValidateColNo:     api.ErrOutOfBounds,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Column number out of bounds.",
+			),
+		},
+		{
+			name:          "NoBoardAccess",
+			reqBody:       `{"board": "boardid"}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{
+				Boards: []token.Board{{ID: "foo"}},
+			},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name: "TaskInserterErr",
-			user: userTable.Record{
-				IsAdmin: true, TeamID: 1,
-			},
-			userSelectorErr:          nil,
-			taskTitleValidatorErr:    nil,
-			subtaskTitleValidatorErr: nil,
-			columnSelectorErr:        nil,
-			board:                    boardTable.Record{TeamID: 1},
-			boardSelectorErr:         nil,
-			taskInserterErr:          sql.ErrConnDone,
-			wantStatusCode:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
+			name:          "TaskTitleEmpty",
+			reqBody:       `{"board": "boardid", "column": 0}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: api.ErrEmpty,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task title cannot be empty.",
 			),
+		},
+		{
+			name:          "TaskTitleTooLong",
+			reqBody:       `{"board": "boardid", "column": 0}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: api.ErrTooLong,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Task title cannot be longer than 50 characters.",
+			),
+		},
+		{
+			name:          "TaskTitleUnexpectedErr",
+			reqBody:       `{"board": "boardid", "column": 0}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: api.ErrNotInt,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrNotInt.Error(),
+			),
+		},
+		{
+			name: "SubtTitleEmpty",
+			reqBody: `{
+                "board": "boardid", "column": 0, "subtasks": ["foo"]
+            }`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: api.ErrEmpty,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Subtask title cannot be empty.",
+			),
+		},
+		{
+			name: "SubtTitleTooLong",
+			reqBody: `{
+                "board": "boardid", "column": 0, "subtasks": ["foo"]
+            }`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: api.ErrTooLong,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"Subtask title cannot be longer than 50 characters.",
+			),
+		},
+		{
+			name: "ValidateSubtTitleErr",
+			reqBody: `{
+                "board": "boardid", "column": 0, "subtasks": ["foo"]
+            }`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: api.ErrNotInt,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				api.ErrNotInt.Error(),
+			),
+		},
+		{
+			name:          "ErrPutTask",
+			reqBody:       `{"board": "boardid", "column": 0}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           errors.New("failed to put task"),
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc: assert.OnLoggedErr(
+				"failed to put task",
+			),
+		},
+		{
+			name:          "ErrEncodeState",
+			reqBody:       `{"board": "boardid", "column": 0}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "",
+			errEncodeState:       errors.New("encode state failed"),
+			wantStatus:           http.StatusInternalServerError,
+			assertFunc:           assert.OnLoggedErr("encode state failed"),
+		},
+		{
+			name:          "OK",
+			reqBody:       `{"board": "boardid"}`,
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			inStateToken:  "nonempty",
+			inStateDecoded: token.State{Boards: []token.Board{{
+				ID:      "boardid",
+				Columns: []token.Column{{TaskCount: 1}},
+			}}},
+			errDecodeInState:     nil,
+			errValidateColNo:     nil,
+			errValidateTaskTitle: nil,
+			errValidateSubtTitle: nil,
+			errPutTask:           nil,
+			outStateToken:        token.State{},
+			outStateEncoded:      "foobarbazbang",
+			errEncodeState:       nil,
+			wantStatus:           http.StatusOK,
+			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
+				// assert on set state
+				ck := resp.Cookies()[0]
+				assert.Equal(t.Error, ck.Name, "state-token")
+				assert.Equal(t.Error, ck.Value, "foobarbazbang")
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.Rec = c.user
-			userSelector.Err = c.userSelectorErr
-			taskTitleValidator.Err = c.taskTitleValidatorErr
-			subtaskTitleValidator.Err = c.subtaskTitleValidatorErr
-			columnSelector.Err = c.columnSelectorErr
-			boardSelector.Board = c.board
-			boardSelector.Err = c.boardSelectorErr
-			taskInserter.Err = c.taskInserterErr
+			decodeAuth.Decoded = c.authDecoded
+			decodeAuth.Err = c.errDecodeAuth
+			decodeState.Decoded = c.inStateDecoded
+			decodeState.Err = c.errDecodeInState
+			colNoVdtor.Err = c.errValidateColNo
+			titleVdtor.Err = c.errValidateTaskTitle
+			subtTitleVdtor.Err = c.errValidateSubtTitle
+			taskPutter.Err = c.errPutTask
+			encodeState.Encoded = c.outStateEncoded
+			encodeState.Err = c.errEncodeState
 
-			reqBody, err := json.Marshal(map[string]any{
-				"title":       "",
-				"description": "",
-				"column":      0,
-				"subtasks":    []string{""},
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req, err := http.NewRequest(
-				http.MethodPost, "", bytes.NewReader(reqBody),
+			req := httptest.NewRequest(
+				http.MethodPost, "/", bytes.NewReader([]byte(c.reqBody)),
 			)
-			if err != nil {
-				t.Fatal(err)
+			if c.authToken != "" {
+				req.AddCookie(&http.Cookie{
+					Name: "auth-token", Value: c.authToken,
+				})
+			}
+			if c.inStateToken != "" {
+				req.AddCookie(&http.Cookie{
+					Name: "state-token", Value: c.inStateToken,
+				})
 			}
 
 			w := httptest.NewRecorder()
@@ -296,7 +478,7 @@ func TestPOSTHandler(t *testing.T) {
 			sut.Handle(w, req, "")
 			res := w.Result()
 
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			c.assertFunc(t, w.Result(), log.InMessage)
 		})

@@ -22,12 +22,12 @@ func TestIDValidator(t *testing.T) {
 		{
 			name:    "Empty",
 			id:      "",
-			wantErr: api.ErrStrEmpty,
+			wantErr: api.ErrEmpty,
 		},
 		{
 			name:    "NotInt",
 			id:      "A",
-			wantErr: api.ErrStrNotInt,
+			wantErr: api.ErrNotInt,
 		},
 		{
 			name:    "Success",

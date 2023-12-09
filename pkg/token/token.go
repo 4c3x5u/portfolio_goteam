@@ -10,6 +10,10 @@ import (
 // key from.
 const keyName = "JWTKEY"
 
+// DefaultDuration is the default amount of time that a token lasts. It must
+// be passed into Encode func to take affect.
+const DefaultDuration = 1 * time.Hour
+
 // ErrInvalid means that the given token is invalid.
 var ErrInvalid = errors.New("invalid token")
 

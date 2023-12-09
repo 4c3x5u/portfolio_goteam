@@ -23,3 +23,9 @@ type FakeStringValidator struct{ Err error }
 
 // Validate implements the StringValidator interface on fakeStringValidator.
 func (f *FakeStringValidator) Validate(_ string) error { return f.Err }
+
+// FakeStringValidator is a test fake for IntValidator.
+type FakeIntValidator struct{ Err error }
+
+// Validate implements the StringValidator interface on fakeIntValidator.
+func (f *FakeIntValidator) Validate(_ int) error { return f.Err }

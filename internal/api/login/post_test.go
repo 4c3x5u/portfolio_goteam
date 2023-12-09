@@ -24,9 +24,9 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	var (
 		validator        = &fakeReqValidator{}
-		userGetter       = &userTable.FakeGetter{}
+		userGetter       = &db.FakeGetter[userTable.User]{}
 		passwordComparer = &fakeHashComparer{}
-		encodeAuthToken  = &token.FakeEncodeAuth{}
+		encodeAuthToken  = &token.FakeEncode[token.Auth]{}
 		log              = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPostHandler(
@@ -39,7 +39,7 @@ func TestPOSTHandler(t *testing.T) {
 	for _, c := range []struct {
 		name             string
 		reqIsValid       bool
-		userRecord       userTable.User
+		user             userTable.User
 		errGetUser       error
 		errCompareHash   error
 		authToken        string
@@ -50,7 +50,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "InvalidRequest",
 			reqIsValid:       false,
-			userRecord:       userTable.User{},
+			user:             userTable.User{},
 			errGetUser:       nil,
 			errCompareHash:   nil,
 			authToken:        "",
@@ -61,7 +61,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "UserNotFound",
 			reqIsValid:       true,
-			userRecord:       userTable.User{},
+			user:             userTable.User{},
 			errGetUser:       db.ErrNoItem,
 			errCompareHash:   nil,
 			authToken:        "",
@@ -72,7 +72,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "UserSelectorError",
 			reqIsValid:       true,
-			userRecord:       userTable.User{},
+			user:             userTable.User{},
 			errGetUser:       errors.New("user selector error"),
 			errCompareHash:   nil,
 			authToken:        "",
@@ -83,7 +83,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "WrongPassword",
 			reqIsValid: true,
-			userRecord: userTable.User{
+			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errGetUser:       nil,
@@ -96,7 +96,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "HashComparerError",
 			reqIsValid: true,
-			userRecord: userTable.User{
+			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errGetUser:       nil,
@@ -109,7 +109,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "TokenGeneratorError",
 			reqIsValid: true,
-			userRecord: userTable.User{
+			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errGetUser:       nil,
@@ -122,7 +122,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "Success",
 			reqIsValid: true,
-			userRecord: userTable.User{
+			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errGetUser:       nil,
@@ -156,7 +156,7 @@ func TestPOSTHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
-			userGetter.User = c.userRecord
+			userGetter.Item = c.user
 			userGetter.Err = c.errGetUser
 			passwordComparer.err = c.errCompareHash
 			encodeAuthToken.Encoded = c.authToken

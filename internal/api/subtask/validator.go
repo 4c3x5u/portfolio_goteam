@@ -15,10 +15,10 @@ func NewIDValidator() IDValidator { return IDValidator{} }
 // Validate validates a given task ID.
 func (i IDValidator) Validate(id string) error {
 	if id == "" {
-		return api.ErrStrEmpty
+		return api.ErrEmpty
 	}
 	if _, err := strconv.Atoi(id); err != nil {
-		return api.ErrStrNotInt
+		return api.ErrNotInt
 	}
 	return nil
 }

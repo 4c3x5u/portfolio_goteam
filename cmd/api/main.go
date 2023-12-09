@@ -19,7 +19,8 @@ import (
 	subtaskAPI "github.com/kxplxn/goteam/internal/api/subtask"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	"github.com/kxplxn/goteam/pkg/auth"
-	userTableDynamoDB "github.com/kxplxn/goteam/pkg/db/user"
+	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
+	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	subtaskTable "github.com/kxplxn/goteam/pkg/dbaccess/subtask"
@@ -82,7 +83,7 @@ func main() {
 				),
 				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				userTableDynamoDB.NewPutter(svcDynamo),
+				dynamoUserTable.NewPutter(svcDynamo),
 				token.EncodeAuth,
 				log,
 			),
@@ -93,7 +94,7 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: loginAPI.NewPostHandler(
 				loginAPI.NewValidator(),
-				userTableDynamoDB.NewGetter(svcDynamo),
+				dynamoUserTable.NewGetter(svcDynamo),
 				loginAPI.NewPasswordComparator(),
 				token.EncodeAuth,
 				log,
@@ -163,13 +164,13 @@ func main() {
 	mux.Handle("/task", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
-			http.MethodPost: taskAPI.NewPOSTHandler(
-				userSelector,
+			http.MethodPost: taskAPI.NewPostHandler(
+				token.DecodeAuth,
+				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				columnSelector,
-				boardSelector,
-				taskTable.NewInserter(db),
+				taskAPI.ColNoValidator{},
+				dynamoTaskTable.NewPutter(svcDynamo),
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(

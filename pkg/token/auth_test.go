@@ -42,7 +42,6 @@ func TestAuth(t *testing.T) {
 		assert.Equal(t.Error, claims["username"].(string), username)
 		assert.Equal(t.Error, claims["isAdmin"].(bool), isAdmin)
 		assert.Equal(t.Error, claims["teamID"].(string), teamID)
-		// assert.Equal(t.Error, claims["exp"].(float64), float64(expiry.Unix()))
 	})
 
 	t.Run("Decode", func(t *testing.T) {
@@ -84,10 +83,8 @@ func TestAuth(t *testing.T) {
 				wantErr:      jwt.ErrTokenExpired,
 			},
 			{
-				name: "Success",
-				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0" +
-					"cnVlLCJ0ZWFtSUQiOiJ0ZWFtaWQiLCJ1c2VybmFtZSI6ImJvYjEyMyJ9" +
-					".0uDIRIhyDinoW9rz6GoXFff8tRl8HxNK2bYpCIvyvFI",
+				name:         "Success",
+				token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6WyJib2FyZDEiLCJib2FyZDIiXSwiaXNBZG1pbiI6dHJ1ZSwidGVhbUlEIjoidGVhbWlkIiwidXNlcm5hbWUiOiJib2IxMjMifQ.4uS5-QGd3Gj2I5Jm2-dnq-1-_3IqcBepLBdzPjjfRuM",
 				wantUsername: username,
 				wantIsAdmin:  isAdmin,
 				wantTeamID:   teamID,

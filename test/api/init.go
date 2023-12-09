@@ -214,7 +214,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "1"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -237,7 +237,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "1"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -260,7 +260,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -283,7 +283,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "4"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -294,7 +294,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "91536664-9749-4dbb-a470-6e52aa353ae4",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "1"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -305,7 +305,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -316,7 +316,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -339,7 +339,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -370,7 +370,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -402,7 +402,7 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "1"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
@@ -413,6 +413,6 @@ var reqsWriteTask = []types.WriteRequest{
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 		},
-		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 }

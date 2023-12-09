@@ -65,13 +65,32 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// endpoints/methods that moved to dynamodb to not require sub
+	// TODO: remove once fully migrated
+	isDynamo := func(endpoint, method string) bool {
+		for _, em := range []struct {
+			e string
+			m string
+		}{
+			{"/task", http.MethodPost},
+		} {
+			if em.e == endpoint && em.m == method {
+				return true
+			}
+		}
+		return false
+	}
+
 	// Find the MethodHandler for the HTTP method of the received request.
 	for method, methodHandler := range h.methodHandlers {
 		if r.Method == method {
 			var username string
 
 			// If it's NOT a register or login request, validate JWT.
-			if r.URL.Path != "/register" && r.URL.Path != "/login" {
+			if r.URL.Path != "/register" &&
+				r.URL.Path != "/login" &&
+				!isDynamo(r.URL.Path, r.Method) {
+
 				// Get auth token from Authorization header, validate it, and
 				// get the subject of the token.
 				ck, err := r.Cookie(auth.CookieName)

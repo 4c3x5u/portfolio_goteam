@@ -106,9 +106,9 @@ func (h *PATCHHandler) Handle(
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); err != nil {
 		var errMsg string
-		if errors.Is(err, api.ErrStrEmpty) {
+		if errors.Is(err, api.ErrEmpty) {
 			errMsg = "Task ID cannot be empty."
-		} else if errors.Is(err, api.ErrStrNotInt) {
+		} else if errors.Is(err, api.ErrNotInt) {
 			errMsg = "Task ID must be an integer."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -136,9 +136,9 @@ func (h *PATCHHandler) Handle(
 	// Validate task title and start building a db-insertable task record.
 	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
-		if errors.Is(err, api.ErrStrEmpty) {
+		if errors.Is(err, api.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, api.ErrStrTooLong) {
+		} else if errors.Is(err, api.ErrTooLong) {
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -161,9 +161,9 @@ func (h *PATCHHandler) Handle(
 	for _, subtask := range reqBody.Subtasks {
 		if err := h.subtaskTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
-			if errors.Is(err, api.ErrStrEmpty) {
+			if errors.Is(err, api.ErrEmpty) {
 				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, api.ErrStrTooLong) {
+			} else if errors.Is(err, api.ErrTooLong) {
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

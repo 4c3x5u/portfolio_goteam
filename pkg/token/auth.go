@@ -10,9 +10,6 @@ import (
 // AuthName is the name of the auth token.
 const AuthName = "auth-token"
 
-// AuthDurationDefault is the default amount of time that an auth token lasts.
-const AuthDurationDefault = 1 * time.Hour
-
 // Auth defines the body of an Auth token.
 type Auth struct {
 	Username string
@@ -22,7 +19,11 @@ type Auth struct {
 
 // NewAuth creates and returns a new Auth.
 func NewAuth(username string, isAdmin bool, teamID string) Auth {
-	return Auth{Username: username, TeamID: teamID, IsAdmin: isAdmin}
+	return Auth{
+		Username: username,
+		IsAdmin:  isAdmin,
+		TeamID:   teamID,
+	}
 }
 
 // EncodeAuth encodes an Auth into a JWT string.

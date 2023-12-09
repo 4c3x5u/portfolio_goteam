@@ -85,21 +85,23 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		return
 	}
 
-	// Generate an authentication cookie for the user and return it within a
-	// Set-Cookie header.
-	exp := time.Now().Add(token.AuthDurationDefault).UTC()
-	if authToken, err := h.encodeAuth(exp, token.NewAuth(
+	// encode a new auth token
+	exp := time.Now().Add(token.DefaultDuration).UTC()
+	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
-	)); err != nil {
+	))
+	if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
-	} else {
-		http.SetCookie(w, &http.Cookie{
-			Name:     token.AuthName,
-			Value:    authToken,
-			Expires:  exp,
-			SameSite: http.SameSiteNoneMode,
-			Secure:   true,
-		})
+		return
 	}
+
+	// set auth token in cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.AuthName,
+		Value:    tkAuth,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
 }

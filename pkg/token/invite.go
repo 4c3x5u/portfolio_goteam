@@ -7,8 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// NameInvite is the name of the invite token.
-const NameInvite = "invite-token"
+// InviteName is the name of the invite token.
+const InviteName = "invite-token"
 
 // Invite defines the body of an Invite token.
 type Invite struct{ TeamID string }

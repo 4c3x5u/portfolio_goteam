@@ -2,28 +2,27 @@ package token
 
 import "time"
 
-// FakeDecodeInvite has a Func method that can be used as a test fake for
-// DecodeInvite.
-type FakeDecodeInvite struct {
-	Decoded Invite
+// FakeDecode has a Func method that can be used as a test fake for DecodeFunc.
+type FakeDecode[T any] struct {
+	Decoded T
 	Err     error
 }
 
-// Func discards the input parameters and returns FakeDecodeInvite's Inv and
+// Func discards the input parameters and returns FakeDecode's Decoded and
 // Err field values.
-func (f *FakeDecodeInvite) Func(_ string) (Invite, error) {
+func (f *FakeDecode[T]) Func(_ string) (T, error) {
 	return f.Decoded, f.Err
 }
 
 // FakeEncodeAuth has a Func method that can be used as a test fake for
 // DecodeInvite.
-type FakeEncodeAuth struct {
+type FakeEncode[T any] struct {
 	Encoded string
 	Err     error
 }
 
 // Func discards the input parameters and returns FakeEncodeAuth's Inv and
 // Err field values.
-func (f *FakeEncodeAuth) Func(_ time.Time, _ Auth) (string, error) {
+func (f *FakeEncode[T]) Func(_ time.Time, _ T) (string, error) {
 	return f.Encoded, f.Err
 }

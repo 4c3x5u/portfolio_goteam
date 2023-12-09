@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -73,7 +72,9 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up user table
 	userTableName = userTablePrefix + uuid.New().String()
-	tearDownUserTable, err := createTable(svcDynamo, &userTableName)
+	tearDownUserTable, err := createTable(
+		svcDynamo, &userTableName, "Username",
+	)
 	if err != nil {
 		return tearDownNothing, err
 	}
@@ -88,7 +89,7 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up team table
 	teamTableName = teamTablePrefix + uuid.New().String()
-	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName)
+	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName, "ID")
 	if err != nil {
 		return tearDown, err
 	}
@@ -103,7 +104,9 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up team table
 	taskTableName = taskTablePrefix + uuid.New().String()
-	tearDownTaskTable, err := createTable(svcDynamo, &taskTableName)
+	tearDownTaskTable, err := createTable(
+		svcDynamo, &taskTableName, "ID", "BoardID",
+	)
 	if err != nil {
 		return tearDown, err
 	}
@@ -196,17 +199,38 @@ func allTablesActive(svc *dynamodb.Client) error {
 
 // createTable creates a DynamoDB table with the given name and a string
 // partition key named ID.
-func createTable(svc *dynamodb.Client, name *string) (func() error, error) {
-	keyName := "ID"
-	if strings.Contains(*name, "user") {
-		keyName = "Username"
+func createTable(
+	svc *dynamodb.Client, name *string, keyName string, secINames ...string,
+) (func() error, error) {
+	attrDefs := []types.AttributeDefinition{
+		{AttributeName: &keyName, AttributeType: types.ScalarAttributeTypeS},
+	}
+
+	var secIs []types.GlobalSecondaryIndex
+	for _, iname := range secINames {
+		attrDefs = append(attrDefs, types.AttributeDefinition{
+			AttributeName: &iname, AttributeType: types.ScalarAttributeTypeS,
+		})
+
+		secIs = append(secIs, types.GlobalSecondaryIndex{
+			IndexName: aws.String(iname + "_index"),
+			KeySchema: []types.KeySchemaElement{
+				{AttributeName: &iname, KeyType: types.KeyTypeHash},
+				{AttributeName: &keyName, KeyType: types.KeyTypeRange},
+			},
+			Projection: &types.Projection{
+				ProjectionType: types.ProjectionTypeAll,
+			},
+			ProvisionedThroughput: &types.ProvisionedThroughput{
+				ReadCapacityUnits:  aws.Int64(25),
+				WriteCapacityUnits: aws.Int64(25),
+			},
+		})
 	}
 
 	_, err := svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
-		TableName: name,
-		AttributeDefinitions: []types.AttributeDefinition{
-			{AttributeName: &keyName, AttributeType: "S"},
-		},
+		TableName:            name,
+		AttributeDefinitions: attrDefs,
 		KeySchema: []types.KeySchemaElement{
 			{AttributeName: &keyName, KeyType: "HASH"},
 		},
@@ -215,6 +239,7 @@ func createTable(svc *dynamodb.Client, name *string) (func() error, error) {
 			ReadCapacityUnits:  aws.Int64(25),
 			WriteCapacityUnits: aws.Int64(25),
 		},
+		GlobalSecondaryIndexes: secIs,
 	})
 	if err != nil {
 		return tearDownNothing, err

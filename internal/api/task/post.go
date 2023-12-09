@@ -1,91 +1,107 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// POSTReq defines the body of POST task requests.
-type POSTReq struct {
-	ColumnID      int      `json:"column"`
-	Title         string   `json:"title"`
-	Description   string   `json:"description"`
-	SubtaskTitles []string `json:"subtasks"`
+// PostReq defines the body of POST task requests.
+type PostReq struct {
+	Title        string   `json:"title"`
+	Description  string   `json:"description"`
+	Subtasks     []string `json:"subtasks"`
+	BoardID      string   `json:"board"`
+	ColumnNumber int      `json:"column"`
 }
 
-// POSTResp defines the body of POST task responses.
-type POSTResp struct {
+// PostResp defines the body of POST task responses.
+type PostResp struct {
 	Error string `json:"error"`
 }
 
-// POSTHandler is an api.MethodHandler that can be used to handle POST requests
+// PostHandler is an api.MethodHandler that can be used to handle POST requests
 // sent to the task route.
-type POSTHandler struct {
-	userSelector          dbaccess.Selector[userTable.Record]
-	taskTitleValidator    api.StringValidator
-	subtaskTitleValidator api.StringValidator
-	columnSelector        dbaccess.Selector[columnTable.Record]
-	boardSelector         dbaccess.Selector[boardTable.Record]
-	taskInserter          dbaccess.Inserter[taskTable.InRecord]
-	log                   pkgLog.Errorer
+type PostHandler struct {
+	decodeAuth     token.DecodeFunc[token.Auth]
+	decodeState    token.DecodeFunc[token.State]
+	titleVdtor     api.StringValidator
+	subtTitleVdtor api.StringValidator
+	colNoVdtor     api.IntValidator
+	taskPutter     db.Putter[taskTable.Task]
+	encodeState    token.EncodeFunc[token.State]
+	log            pkgLog.Errorer
 }
 
-// NewPOSTHandler creates and returns a new POSTHandler.
-func NewPOSTHandler(
-	userSelector dbaccess.Selector[userTable.Record],
-	taskTitleValidator api.StringValidator,
-	subtaskTitleValidator api.StringValidator,
-	columnSelector dbaccess.Selector[columnTable.Record],
-	boardSelector dbaccess.Selector[boardTable.Record],
-	taskInserter dbaccess.Inserter[taskTable.InRecord],
+// NewPostHandler creates and returns a new POSTHandler.
+func NewPostHandler(
+	decodeAuth token.DecodeFunc[token.Auth],
+	decodeState token.DecodeFunc[token.State],
+	titleVdtor api.StringValidator,
+	subtTitleVdtor api.StringValidator,
+	colNoVdtor api.IntValidator,
+	taskPutter db.Putter[taskTable.Task],
+	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
-) *POSTHandler {
-	return &POSTHandler{
-		userSelector:          userSelector,
-		taskTitleValidator:    taskTitleValidator,
-		subtaskTitleValidator: subtaskTitleValidator,
-		columnSelector:        columnSelector,
-		boardSelector:         boardSelector,
-		taskInserter:          taskInserter,
-		log:                   log,
+) *PostHandler {
+	return &PostHandler{
+		decodeAuth:     decodeAuth,
+		decodeState:    decodeState,
+		titleVdtor:     titleVdtor,
+		subtTitleVdtor: subtTitleVdtor,
+		colNoVdtor:     colNoVdtor,
+		taskPutter:     taskPutter,
+		encodeState:    encodeState,
+		log:            log,
 	}
 }
 
 // Handle handles the POST requests sent to the task route.
-func (h *POSTHandler) Handle(
-	w http.ResponseWriter, r *http.Request, username string,
+func (h *PostHandler) Handle(
+	w http.ResponseWriter, r *http.Request, _ string,
 ) {
-	// Check if the user is a team admin.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
+	// get auth token
+	ckAuth, err := r.Cookie(token.AuthName)
+	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
-			Error: "Username is not recognised.",
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "Auth token not found.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// decode auth token
+	auth, err := h.decodeAuth(ckAuth.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "Invalid auth token.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
 	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if !user.IsAdmin {
+
+	// validate user is admin
+	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
 			Error: "Only team admins can create tasks.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -94,93 +110,64 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
-	var reqBody POSTReq
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-
-	// Validate task title.
-	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
-		var errMsg string
-		if errors.Is(err, api.ErrStrEmpty) {
-			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, api.ErrStrTooLong) {
-			errMsg = "Task title cannot be longer than 50 characters."
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
-
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(POSTResp{
-			Error: errMsg,
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-
-	// Validate subtask titles
-	for _, title := range reqBody.SubtaskTitles {
-		if err := h.subtaskTitleValidator.Validate(title); err != nil {
-			var errMsg string
-			if errors.Is(err, api.ErrStrEmpty) {
-				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, api.ErrStrTooLong) {
-				errMsg = "Subtask title cannot be longer than 50 characters."
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
-				return
-			}
-
-			w.WriteHeader(http.StatusBadRequest)
-			if err = json.NewEncoder(w).Encode(POSTResp{
-				Error: errMsg,
-			}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
-			}
-			return
-		}
-	}
-
-	// Get the column from the database with the task's column ID.
-	column, err := h.columnSelector.Select(
-		strconv.Itoa(reqBody.ColumnID),
-	)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
-			Error: "Column not found.",
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "State token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
 	}
+
+	// decode state token
+	state, err := h.decodeState(ckState.Value)
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "Invalid state token.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	// decode request
+	var req PostReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	// Check if the board belongs to the team that the user is the admin of.
-	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
-	if err != nil {
-		// Since boardID is used from a column retrieved from the database,
-		// any error selecting board including ErrNoRows is a 500.
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+	// validate column ID
+	if err := h.colNoVdtor.Validate(req.ColumnNumber); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "Column number out of bounds.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
 		return
 	}
-	if board.TeamID != user.TeamID {
+
+	// validate board ID and determine order for the task
+	var hasBoardAccess bool
+	var order int
+	for _, b := range state.Boards {
+		if req.BoardID == b.ID {
+			hasBoardAccess = true
+			order = b.Columns[req.ColumnNumber].TaskCount
+		}
+	}
+	if !hasBoardAccess {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(POSTResp{
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
 			Error: "You do not have access to this board.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -189,15 +176,99 @@ func (h *POSTHandler) Handle(
 		return
 	}
 
-	// Insert task and subtasks into the database.
-	if err = h.taskInserter.Insert(taskTable.NewInRecord(
-		reqBody.ColumnID,
-		reqBody.Title,
-		reqBody.Description,
-		reqBody.SubtaskTitles,
-	)); err != nil {
+	// validate task
+	if err := h.titleVdtor.Validate(req.Title); err != nil {
+		var errMsg string
+		if errors.Is(err, api.ErrEmpty) {
+			errMsg = "Task title cannot be empty."
+		} else if errors.Is(err, api.ErrTooLong) {
+			errMsg = "Task title cannot be longer than 50 characters."
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(PostResp{
+			Error: errMsg,
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	// validate subtasks
+	var subtasks []taskTable.Subtask
+	for _, title := range req.Subtasks {
+		if err := h.subtTitleVdtor.Validate(title); err != nil {
+			var errMsg string
+			if errors.Is(err, api.ErrEmpty) {
+				errMsg = "Subtask title cannot be empty."
+			} else if errors.Is(err, api.ErrTooLong) {
+				errMsg = "Subtask title cannot be longer than 50 characters."
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			}
+
+			w.WriteHeader(http.StatusBadRequest)
+			if err = json.NewEncoder(w).Encode(PostResp{
+				Error: errMsg,
+			}); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+		subtasks = append(subtasks, taskTable.Subtask{
+			Title: title, IsDone: false,
+		})
+	}
+
+	// put the task into the task table
+	if err = h.taskPutter.Put(r.Context(), taskTable.Task{
+		ID:           uuid.NewString(),
+		Title:        req.Title,
+		Description:  req.Description,
+		Order:        order,
+		Subtasks:     subtasks,
+		BoardID:      req.BoardID,
+		ColumnNumber: req.ColumnNumber,
+	}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
+
+	// update state
+	for _, b := range state.Boards {
+		if b.ID == req.BoardID {
+			for i, c := range b.Columns {
+				if i == req.ColumnNumber {
+					c.TaskCount++
+				}
+			}
+		}
+	}
+
+	// encode state
+	exp := time.Now().Add(token.DefaultDuration).UTC()
+	tkState, err := h.encodeState(exp, state)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// set state
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.StateName,
+		Value:    tkState,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
 }

@@ -97,7 +97,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// set user's TeamID and IsAdmin based on invite token.
-	ck, err := r.Cookie(token.NameInvite)
+	ck, err := r.Cookie(token.InviteName)
 	if err == http.ErrNoCookie {
 		user.TeamID = uuid.NewString()
 		user.IsAdmin = true
@@ -149,7 +149,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// generate an auth token
-	exp := time.Now().Add(token.AuthDurationDefault).UTC()
+	exp := time.Now().Add(token.DefaultDuration).UTC()
 	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
 	))

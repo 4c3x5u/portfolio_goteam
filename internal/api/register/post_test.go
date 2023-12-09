@@ -24,9 +24,9 @@ func TestHandler(t *testing.T) {
 	var (
 		userValidator = &fakeReqValidator{}
 		hasher        = &fakeHasher{}
-		decodeInvite  = &token.FakeDecodeInvite{}
-		userPutter    = &userTable.FakePutter{}
-		encodeAuth    = &token.FakeEncodeAuth{}
+		decodeInvite  = &token.FakeDecode[token.Invite]{}
+		userPutter    = &db.FakePutter[userTable.User]{}
+		encodeAuth    = &token.FakeEncode[token.Auth]{}
 		log           = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPostHandler(
@@ -268,7 +268,7 @@ func TestHandler(t *testing.T) {
 			)
 			if c.inviteToken != "" {
 				req.AddCookie(&http.Cookie{
-					Name:     token.NameInvite,
+					Name:     token.InviteName,
 					Value:    c.inviteToken,
 					SameSite: http.SameSiteNoneMode,
 					Secure:   true,

@@ -1,408 +1,410 @@
-# v1.12.12 (2023-12-08)
+# v1.6.12 (2023-12-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.11 (2023-12-07)
+# v1.6.11 (2023-12-07)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.10 (2023-12-06)
+# v1.6.10 (2023-12-06)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.9 (2023-12-01)
+# v1.6.9 (2023-12-01)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.8 (2023-11-30.2)
+# v1.6.8 (2023-11-30.2)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.7 (2023-11-30)
+# v1.6.7 (2023-11-30)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.6 (2023-11-29)
+# v1.6.6 (2023-11-29)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.5 (2023-11-28.2)
+# v1.6.5 (2023-11-28.2)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.4 (2023-11-28)
+# v1.6.4 (2023-11-28)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.3 (2023-11-20)
+# v1.6.3 (2023-11-20)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.2 (2023-11-15)
+# v1.6.2 (2023-11-15)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.1 (2023-11-09)
+# v1.6.1 (2023-11-09)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.12.0 (2023-11-01)
+# v1.6.0 (2023-11-01)
 
 * **Feature**: Adds support for configured endpoints via environment variables and the AWS shared configuration file.
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.11.0 (2023-10-31)
+# v1.5.0 (2023-10-31)
 
 * **Feature**: **BREAKING CHANGE**: Bump minimum go version to 1.19 per the revised [go version support policy](https://aws.amazon.com/blogs/developer/aws-sdk-for-go-aligns-with-go-release-policy-on-supported-runtimes/).
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.43 (2023-10-18)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.42 (2023-10-12)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.41 (2023-10-06)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.40 (2023-09-26)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.39 (2023-08-21)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.38 (2023-08-18)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.37 (2023-08-17)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.36 (2023-08-07)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.35 (2023-08-01)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.34 (2023-07-31)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.33 (2023-07-28)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.32 (2023-07-25)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.31 (2023-07-13)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.30 (2023-06-29)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.29 (2023-06-21)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.28 (2023-06-15)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.27 (2023-06-13)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.26 (2023-06-12)
-
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.10.25 (2023-05-08)
+# v1.4.71 (2023-10-20)
 
 * No change notes available for this release.
 
-# v1.10.24 (2023-05-04)
+# v1.4.70 (2023-10-18)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.23 (2023-04-24)
+# v1.4.69 (2023-10-12)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.22 (2023-04-17)
+# v1.4.68 (2023-10-06)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.21 (2023-04-10)
+# v1.4.67 (2023-09-26)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.20 (2023-04-07)
+# v1.4.66 (2023-08-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.19 (2023-03-21)
+# v1.4.65 (2023-08-18)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.18 (2023-03-10)
+# v1.4.64 (2023-08-17)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.17 (2023-03-08)
+# v1.4.63 (2023-08-07)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.16 (2023-03-03)
+# v1.4.62 (2023-08-01)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.15 (2023-02-22)
+# v1.4.61 (2023-07-31)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.14 (2023-02-20)
+# v1.4.60 (2023-07-28)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.13 (2023-02-17)
+# v1.4.59 (2023-07-25)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.58 (2023-07-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.57 (2023-06-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.56 (2023-06-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.55 (2023-06-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.54 (2023-06-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.53 (2023-06-12)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.52 (2023-05-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.51 (2023-05-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.50 (2023-04-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.49 (2023-04-17)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.48 (2023-04-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.47 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.46 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.45 (2023-03-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.44 (2023-03-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.43 (2023-03-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.42 (2023-02-22)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.41 (2023-02-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.40 (2023-02-17)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.39 (2023-02-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.38 (2023-02-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.4.37 (2023-02-01)
 
 * No change notes available for this release.
 
-# v1.10.12 (2023-02-15)
+# v1.4.36 (2023-01-23)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.11 (2023-02-03)
+# v1.4.35 (2023-01-05)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.10 (2023-01-23)
+# v1.4.34 (2022-12-15)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.9 (2023-01-05)
+# v1.4.33 (2022-12-02)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.8 (2022-12-15)
+# v1.4.32 (2022-11-22)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.7 (2022-12-02)
+# v1.4.31 (2022-11-18)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.6 (2022-11-22)
+# v1.4.30 (2022-11-16)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.5 (2022-11-18)
+# v1.4.29 (2022-11-10)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.4 (2022-11-16)
+# v1.4.28 (2022-10-24)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.3 (2022-11-10)
+# v1.4.27 (2022-10-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.2 (2022-10-24)
+# v1.4.26 (2022-09-26)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.1 (2022-10-21)
+# v1.4.25 (2022-09-20)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.10.0 (2022-09-26)
-
-* **Feature**: Adds a String method to UnixTime, so that when structs with this field get logged it prints a human readable time.
-
-# v1.9.19 (2022-09-20)
+# v1.4.24 (2022-09-15)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.18 (2022-09-15)
+# v1.4.23 (2022-09-14)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.17 (2022-09-14)
+# v1.4.22 (2022-09-02)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.16 (2022-09-02)
+# v1.4.21 (2022-08-31)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.15 (2022-08-31)
+# v1.4.20 (2022-08-30)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.14 (2022-08-30)
+# v1.4.19 (2022-08-29)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.13 (2022-08-29)
+# v1.4.18 (2022-08-18)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.12 (2022-08-18)
+# v1.4.17 (2022-08-11)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.11 (2022-08-11)
+# v1.4.16 (2022-08-09)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.10 (2022-08-09)
+# v1.4.15 (2022-08-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.9 (2022-08-08)
+# v1.4.14 (2022-08-01)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.8 (2022-08-01)
+# v1.4.13 (2022-07-22)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.7 (2022-07-22)
+# v1.4.12 (2022-07-05)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.6 (2022-07-05)
+# v1.4.11 (2022-06-29)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.5 (2022-06-29)
+# v1.4.10 (2022-06-17)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.4 (2022-06-17)
+# v1.4.9 (2022-06-07)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.3 (2022-06-07)
+# v1.4.8 (2022-05-17)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.2 (2022-05-17)
+# v1.4.7 (2022-04-25)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.1 (2022-04-25)
+# v1.4.6 (2022-04-15)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.9.0 (2022-04-15)
-
-* **Feature**: Support has been added for specifying a custom time format when encoding and decoding DynamoDB AttributeValues. Use `EncoderOptions.EncodeTime` to specify a custom time encoding function, and use `DecoderOptions.DecodeTime` for specifying how to handle the corresponding AttributeValues using the format. Thank you [Pablo Lopez](https://github.com/plopezlpz) for this contribution.
-
-# v1.8.4 (2022-03-31)
-
-* **Documentation**: Fixes documentation typos in Number type's helper methods
-
-# v1.8.3 (2022-03-30)
+# v1.4.5 (2022-03-31)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.8.2 (2022-03-24)
+# v1.4.4 (2022-03-30)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.8.1 (2022-03-23)
+# v1.4.3 (2022-03-24)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.8.0 (2022-03-08)
-
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.7.0 (2022-02-24)
-
-* **Feature**: Fixes [#645](https://github.com/aws/aws-sdk-go-v2/issues/645), [#411](https://github.com/aws/aws-sdk-go-v2/issues/411) by adding support for (un)marshaling AttributeValue maps to Go maps key types of string, number, bool, and types implementing encoding.Text(un)Marshaler interface
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
-* **Bug Fix**: Fixes [#1569](https://github.com/aws/aws-sdk-go-v2/issues/1569) inconsistent serialization of Go struct field names
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.6.0 (2022-01-14)
-
-* **Feature**: Adds new MarshalWithOptions and UnmarshalWithOptions helpers allowing Encoding and Decoding options to be specified when serializing AttributeValues. Addresses issue: https://github.com/aws/aws-sdk-go-v2/issues/1494
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.5.0 (2022-01-07)
-
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.4.5 (2021-12-21)
+# v1.4.2 (2022-03-23)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.4.4 (2021-12-02)
+# v1.4.1 (2022-03-08)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.4.3 (2021-11-30)
+# v1.4.0 (2022-02-24)
+
+* **Feature**: Add support for expression names with dots via new NameBuilder function NameNoDotSplit, related to [aws/aws-sdk-go#2570](https://github.com/aws/aws-sdk-go/issues/2570)
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.3.7 (2022-01-14)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.4.2 (2021-11-19)
+# v1.3.6 (2022-01-07)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.4.1 (2021-11-12)
+# v1.3.5 (2021-12-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.4.0 (2021-11-06)
+# v1.3.4 (2021-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.3.3 (2021-11-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.3.2 (2021-11-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.3.1 (2021-11-12)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.3.0 (2021-11-06)
 
 * **Feature**: The SDK now supports configuration of FIPS and DualStack endpoints using environment variables, shared configuration, or programmatically.
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.3.0 (2021-10-21)
-
-* **Feature**: Updated  to latest version
-* **Dependency Update**: Updated to the latest SDK module versions
-
-# v1.2.2 (2021-10-11)
+# v1.2.6 (2021-10-21)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.2.1 (2021-09-17)
+# v1.2.5 (2021-10-11)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.2.0 (2021-08-27)
+# v1.2.4 (2021-09-24)
 
-* **Feature**: Updated `github.com/aws/smithy-go` to latest version
-* **Bug Fix**: Fix unmarshaler's decoding of AttributeValueMemberN into a type that is a string alias.
-* **Dependency Update**: Updated to the latest SDK module versions
+* **Documentation**: Fixes typo in NameBuilder.NamesList example documentation to use the correct variable name.
 
-# v1.1.5 (2021-08-19)
+# v1.2.3 (2021-09-17)
 
 * **Dependency Update**: Updated to the latest SDK module versions
 
-# v1.1.4 (2021-08-04)
+# v1.2.2 (2021-08-27)
 
-* **Dependency Update**: Updated `github.com/aws/smithy-go` to latest version.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.2.1 (2021-08-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.2.0 (2021-08-04)
+
+* **Feature**: Add IsSet helper for ConditionBuilder and KeyConditionBuilder ([#1329](https://github.com/aws/aws-sdk-go-v2/pull/1329))
 * **Dependency Update**: Updated to the latest SDK module versions
 
 # v1.1.3 (2021-07-15)

@@ -88,7 +88,7 @@ func (h DELETEHandler) Handle(
 
 	// Read and validate task ID.
 	id := r.URL.Query().Get("id")
-	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrStrEmpty) {
+	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrEmpty) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(DELETEResp{
 			Error: "Task ID cannot be empty.",
@@ -97,7 +97,7 @@ func (h DELETEHandler) Handle(
 			h.log.Error(err.Error())
 			return
 		}
-	} else if errors.Is(err, api.ErrStrNotInt) {
+	} else if errors.Is(err, api.ErrNotInt) {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(DELETEResp{
 			Error: "Task ID must be an integer.",

@@ -4,20 +4,29 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/kxplxn/goteam/internal/api"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
+	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestTaskHandler tests the http.Handler for the task API route and asserts
@@ -34,13 +43,14 @@ func TestTaskHandler(t *testing.T) {
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPost: taskAPI.NewPOSTHandler(
-				userSelector,
+			http.MethodPost: taskAPI.NewPostHandler(
+				token.DecodeAuth,
+				token.DecodeState,
 				titleValidator,
 				titleValidator,
-				columnSelector,
-				boardSelector,
-				taskTable.NewInserter(db),
+				taskAPI.NewColNoValidator(),
+				dynamoTaskTable.NewPutter(svcDynamo),
+				token.EncodeState,
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
@@ -106,33 +116,107 @@ func TestTaskHandler(t *testing.T) {
 	t.Run("POST", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
-			reqBody        map[string]any
+			reqBody        string
 			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
-				name: "TaskTitleEmpty",
-				reqBody: map[string]any{
-					"title":       "",
-					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+				name:           "NoAuth",
+				reqBody:        `{}`,
+				authFunc:       func(*http.Request) {},
+				wantStatusCode: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr(
+					"Auth token not found.",
+				),
+			},
+			{
+				name:           "InvalidAuth",
+				reqBody:        `{}`,
+				authFunc:       addCookieAuth("asdfkjldfs"),
+				wantStatusCode: http.StatusUnauthorized,
+				assertFunc:     assert.OnResErr("Invalid auth token."),
+			},
+			{
+				name:           "NotAdmin",
+				reqBody:        `{}`,
+				authFunc:       addCookieAuth(tkTeam1Member),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can create tasks.",
+				),
+			},
+			{
+				name:           "NoState",
+				reqBody:        `{}`,
+				authFunc:       addCookieAuth(tkTeam1Admin),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc: assert.OnResErr(
+					"State token not found.",
+				),
+			},
+			{
+				name:    "InvalidState",
+				reqBody: `{}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState("ksadjfhaskdf")(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnResErr("Invalid state token."),
+			},
+			{
+				name: "ColNoOutOfBounds",
+				reqBody: `{
+                    "column": 5,
+                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4"
+                }`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc: assert.OnResErr(
+					"Column number out of bounds.",
+				),
+			},
+			{
+				name:    "NoAccess",
+				reqBody: `{}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"You do not have access to this board.",
+				),
+			},
+			{
+				name: "TaskTitleEmpty",
+				reqBody: `{
+                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column": 1,
+					"title":  ""
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
 			{
 				name: "TaskTitleTooLong",
-				reqBody: map[string]any{
-					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
-						"qweasd",
-					"description": "",
-					"column":      0,
-					"subtasks":    []string{},
+				reqBody: `{
+                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column": 1,
+					"title":  "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -140,13 +224,16 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "SubtaskTitleEmpty",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      0,
-					"subtasks":    []string{""},
+				reqBody: `{
+                    "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column":   1,
+					"title":    "Some Task",
+					"subtasks": [""]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -154,117 +241,92 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name: "SubtaskTitleTooLong",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      0,
-					"subtasks": []string{
-						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
-					},
+				reqBody: `{
+                    "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column":   1,
+					"title":    "Some Task",
+					"subtasks": [
+						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
+                    ]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
 				),
 			},
 			{
-				name: "ColumnNotFound",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      1001,
-					"subtasks":    []string{"Some Subtask"},
-				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusNotFound,
-				assertFunc:     assert.OnResErr("Column not found."),
-			},
-			{
-				name: "NoAccess",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      5,
-					"subtasks":    []string{"Some Subtask"},
-				},
-				authFunc:       addCookieAuth(jwtTeam2Admin),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"You do not have access to this board.",
-				),
-			},
-			{
-				name: "NotAdmin",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"column":      5,
-					"subtasks":    []string{"Some Subtask"},
-				},
-				authFunc:       addCookieAuth(jwtTeam1Member),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"Only team admins can create tasks.",
-				),
-			},
-			{
 				name: "Success",
-				reqBody: map[string]any{
-					"title":       "Some Task",
+				reqBody: `{
+                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
 					"description": "Do something. Then, do something else.",
-					"column":      7,
-					"subtasks": []string{
-						"Some Subtask", "Some Other Subtask",
-					},
+                    "column":      1,
+					"title":       "Some Task",
+					"subtasks": [
+						"Some Subtask", "Some Other Subtask"
+                    ]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					// A task with the order of 1 and 2 already exists in the given
-					// column. Therefore, the order of the newly created task must
-					// be 3.
-					var taskID, taskOrder int
-					if err := db.QueryRow(
-						`SELECT id, "order" FROM app.task `+
-							`WHERE columnID = $1 AND title = 'Some Task'`,
-						7,
-					).Scan(&taskID, &taskOrder); err != nil {
-						t.Error(err)
+					keyEx := expression.Key("BoardID").Equal(expression.Value(
+						"91536664-9749-4dbb-a470-6e52aa353ae4",
+					))
+					expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+					if err != nil {
+						t.Fatal(err)
 					}
-					assert.Equal(t.Error, taskOrder, 2)
 
-					// The order of the subtasks must be set respective to their
-					// sequential order.
-					for i, subtaskTitle := range []string{
-						"Some Subtask", "Some Other Subtask",
-					} {
-						wantOrder := i
-						var subtaskOrder int
-						if err := db.QueryRow(
-							`SELECT "order" FROM app.subtask `+
-								`WHERE taskID = $1 AND title = $2`,
-							taskID,
-							subtaskTitle,
-						).Scan(&subtaskOrder); err != nil {
-							t.Error(err)
-						}
-						assert.Equal(t.Error, subtaskOrder, wantOrder)
+					out, err := svcDynamo.Query(
+						context.Background(),
+						&dynamodb.QueryInput{
+							TableName: &taskTableName,
+							IndexName: aws.
+								String("BoardID_index"),
+							ExpressionAttributeNames:  expr.Names(),
+							ExpressionAttributeValues: expr.Values(),
+							KeyConditionExpression:    expr.KeyCondition(),
+						},
+					)
+					if err != nil {
+						t.Fatal("failed to get tasks:", err)
 					}
+
+					var taskFound bool
+					for _, av := range out.Items {
+						var task dynamoTaskTable.Task
+						err = attributevalue.UnmarshalMap(av, &task)
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						wantDescr := "Do something. Then, do something else."
+						if task.Description == wantDescr &&
+							task.ColumnNumber == 1 &&
+							task.Title == "Some Task" &&
+							task.Subtasks[0].Title == "Some Subtask" &&
+							task.Subtasks[0].IsDone == false &&
+							task.Subtasks[1].Title == "Some Other Subtask" &&
+							task.Subtasks[1].IsDone == false {
+
+							taskFound = true
+						}
+					}
+
+					assert.True(t.Fatal, taskFound)
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBodyBytes, err := json.Marshal(c.reqBody)
-				if err != nil {
-					t.Fatal(err)
-				}
-				req, err := http.NewRequest(
-					http.MethodPost, "", bytes.NewReader(reqBodyBytes),
+				req := httptest.NewRequest(
+					http.MethodPost, "/task", strings.NewReader(c.reqBody),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 
 				c.authFunc(req)
 
