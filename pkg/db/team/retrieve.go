@@ -12,15 +12,15 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// Getter can be used to get a team from the team table by ID.
-type Getter struct{ ItemGetter db.DynamoDBGetter }
+// Retriever can be used to retrieve by ID a team from the team table.
+type Retriever struct{ ItemGetter db.DynamoDBGetter }
 
-// NewGetter creates and returns a new Getter.
-func NewGetter(ig db.DynamoDBGetter) Getter { return Getter{ItemGetter: ig} }
+// NewRetriever creates and returns a new Retriever.
+func NewRetriever(ig db.DynamoDBGetter) Retriever { return Retriever{ItemGetter: ig} }
 
-// Get gets a team from the team table by ID.
-func (g Getter) Get(ctx context.Context, id string) (Team, error) {
-	out, err := g.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
+// Retrieve retrieves by ID a team from the team table.
+func (r Retriever) Retrieve(ctx context.Context, id string) (Team, error) {
+	out, err := r.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: id},

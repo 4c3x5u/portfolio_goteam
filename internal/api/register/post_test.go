@@ -25,7 +25,7 @@ func TestHandler(t *testing.T) {
 		userValidator = &fakeReqValidator{}
 		hasher        = &fakeHasher{}
 		decodeInvite  = &token.FakeDecode[token.Invite]{}
-		userPutter    = &db.FakePutter[userTable.User]{}
+		userInserter  = &db.FakeInserter[userTable.User]{}
 		encodeAuth    = &token.FakeEncode[token.Auth]{}
 		log           = &pkgLog.FakeErrorer{}
 	)
@@ -33,7 +33,7 @@ func TestHandler(t *testing.T) {
 		userValidator,
 		decodeInvite.Func,
 		hasher,
-		userPutter,
+		userInserter,
 		encodeAuth.Func,
 		log,
 	)
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 		errDecodeInvite error
 		pwdHash         []byte
 		errHash         error
-		errPutUser      error
+		errInsertUser   error
 		authToken       string
 		errEncodeAuth   error
 		wantStatus      int
@@ -99,7 +99,7 @@ func TestHandler(t *testing.T) {
 			errDecodeInvite: nil,
 			pwdHash:         nil,
 			errHash:         nil,
-			errPutUser:      nil,
+			errInsertUser:   nil,
 			authToken:       "",
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
@@ -119,7 +119,7 @@ func TestHandler(t *testing.T) {
 			errDecodeInvite: errors.New("an error"),
 			pwdHash:         nil,
 			errHash:         nil,
-			errPutUser:      nil,
+			errInsertUser:   nil,
 			authToken:       "",
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
@@ -134,7 +134,7 @@ func TestHandler(t *testing.T) {
 			errDecodeInvite: nil,
 			pwdHash:         nil,
 			errHash:         nil,
-			errPutUser:      db.ErrDupKey,
+			errInsertUser:   db.ErrDupKey,
 			authToken:       "",
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
@@ -152,7 +152,7 @@ func TestHandler(t *testing.T) {
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
 			errHash:       errors.New("hasher error"),
-			errPutUser:    nil,
+			errInsertUser: nil,
 			authToken:     "",
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusInternalServerError,
@@ -166,7 +166,7 @@ func TestHandler(t *testing.T) {
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
-			errPutUser:    db.ErrDupKey,
+			errInsertUser: db.ErrDupKey,
 			authToken:     "",
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusBadRequest,
@@ -182,7 +182,7 @@ func TestHandler(t *testing.T) {
 			errValidate:   ValidationErrs{},
 			inviteToken:   "",
 			inviteDecoded: token.Invite{},
-			errPutUser:    errors.New("failed to put user"),
+			errInsertUser: errors.New("failed to put user"),
 			pwdHash:       nil,
 			errHash:       nil,
 			authToken:     "",
@@ -198,7 +198,7 @@ func TestHandler(t *testing.T) {
 			inviteDecoded: token.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
-			errPutUser:    nil,
+			errInsertUser: nil,
 			authToken:     "",
 			errEncodeAuth: errors.New("error encoding auth token"),
 			wantStatus:    http.StatusInternalServerError,
@@ -214,7 +214,7 @@ func TestHandler(t *testing.T) {
 			inviteToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOi" +
 				"J0ZWFtaWQifQ.1h_fmLJ1ip-Z6kJq9JXYDgGuWDPOcOf8abwCgKtHHcY",
 			errValidate:   ValidationErrs{},
-			errPutUser:    nil,
+			errInsertUser: nil,
 			pwdHash:       nil,
 			errHash:       nil,
 			authToken:     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
@@ -252,7 +252,7 @@ func TestHandler(t *testing.T) {
 			decodeInvite.Err = c.errDecodeInvite
 			hasher.hash = c.pwdHash
 			hasher.err = c.errHash
-			userPutter.Err = c.errPutUser
+			userInserter.Err = c.errInsertUser
 			encodeAuth.Encoded = c.authToken
 			encodeAuth.Err = c.errEncodeAuth
 

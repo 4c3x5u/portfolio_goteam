@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/kxplxn/goteam/pkg/db"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -41,7 +42,7 @@ type PostHandler struct {
 	reqValidator ReqValidator
 	hasher       Hasher
 	decodeInvite token.DecodeFunc[token.Invite]
-	userPutter   db.Putter[userTable.User]
+	userInserter db.Inserter[userTable.User]
 	encodeAuth   token.EncodeFunc[token.Auth]
 	log          pkgLog.Errorer
 }
@@ -51,7 +52,7 @@ func NewPostHandler(
 	userValidator ReqValidator,
 	decodeInvite token.DecodeFunc[token.Invite],
 	hasher Hasher,
-	userPutter db.Putter[userTable.User],
+	userInserter db.Inserter[userTable.User],
 	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
@@ -59,7 +60,7 @@ func NewPostHandler(
 		reqValidator: userValidator,
 		hasher:       hasher,
 		decodeInvite: decodeInvite,
-		userPutter:   userPutter,
+		userInserter: userInserter,
 		encodeAuth:   encodeAuth,
 		log:          log,
 	}
@@ -88,19 +89,13 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		return
 	}
 
-	// create user
-	user := userTable.User{
-		Username: req.Username,
-		Password: []byte{},
-		IsAdmin:  false,
-		TeamID:   "",
-	}
-
-	// set user's TeamID and IsAdmin based on invite token.
+	// determine teamID and isAdmin based on invite token.
 	ck, err := r.Cookie(token.InviteName)
+	var teamID string
+	var isAdmin bool
 	if err == http.ErrNoCookie {
-		user.TeamID = uuid.NewString()
-		user.IsAdmin = true
+		teamID = uuid.NewString()
+		isAdmin = true
 	} else if err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -117,8 +112,8 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 			}
 			return
 		}
-		user.TeamID = invite.TeamID
-		user.IsAdmin = false
+		teamID = invite.TeamID
+		isAdmin = false
 	}
 
 	// hash password
@@ -128,10 +123,11 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	user.Password = pwdHash
 
-	// put user into the user table
-	if err = h.userPutter.Put(r.Context(), user); err == db.ErrDupKey {
+	// insert a new user into the user table
+	if err = h.userInserter.Insert(r.Context(), userTable.NewUser(
+		req.Username, pwdHash, isAdmin, teamID,
+	)); err == db.ErrDupKey {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(
 			PostResp{ValidationErrs: ValidationErrs{
@@ -151,7 +147,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// generate an auth token
 	exp := time.Now().Add(token.DefaultDuration).UTC()
 	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
-		user.Username, user.IsAdmin, user.TeamID,
+		req.Username, isAdmin, teamID,
 	))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

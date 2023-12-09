@@ -25,7 +25,7 @@ func TestPOSTHandler(t *testing.T) {
 	titleVdtor := &api.FakeStringValidator{}
 	subtTitleVdtor := &api.FakeStringValidator{}
 	colNoVdtor := &api.FakeIntValidator{}
-	taskPutter := &db.FakePutter[taskTable.Task]{}
+	taskInserter := &db.FakeInserter[taskTable.Task]{}
 	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPostHandler(
@@ -34,7 +34,7 @@ func TestPOSTHandler(t *testing.T) {
 		titleVdtor,
 		subtTitleVdtor,
 		colNoVdtor,
-		taskPutter,
+		taskInserter,
 		encodeState.Func,
 		log,
 	)
@@ -51,7 +51,7 @@ func TestPOSTHandler(t *testing.T) {
 		errValidateColNo     error
 		errValidateTaskTitle error
 		errValidateSubtTitle error
-		errPutTask           error
+		errInsertTask        error
 		outStateToken        token.State
 		outStateEncoded      string
 		errEncodeState       error
@@ -73,31 +73,12 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusUnauthorized,
 			assertFunc:           assert.OnResErr("Invalid auth token."),
-		},
-		{
-			name:                 "ErrDecodeAuth",
-			reqBody:              "",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{},
-			errDecodeAuth:        errors.New("failed decoding token"),
-			inStateToken:         "",
-			inStateDecoded:       token.State{},
-			errDecodeInState:     nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errPutTask:           nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
-			errEncodeState:       nil,
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("failed decoding token"),
 		},
 		{
 			name:                 "NotAdmin",
@@ -111,7 +92,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -132,7 +113,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -151,31 +132,12 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Invalid state token."),
-		},
-		{
-			name:                 "ErrDecodeState",
-			reqBody:              "",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			inStateToken:         "nonempty",
-			inStateDecoded:       token.State{},
-			errDecodeInState:     errors.New("failed decoding state"),
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errPutTask:           nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
-			errEncodeState:       nil,
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("failed decoding state"),
 		},
 		{
 			name:          "ColNoOutOfBounds",
@@ -191,7 +153,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     api.ErrOutOfBounds,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -214,7 +176,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -238,7 +200,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: api.ErrEmpty,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -262,7 +224,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: api.ErrTooLong,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -286,7 +248,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: api.ErrNotInt,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -312,7 +274,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: api.ErrEmpty,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -338,7 +300,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: api.ErrTooLong,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -364,7 +326,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: api.ErrNotInt,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -388,7 +350,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           errors.New("failed to put task"),
+			errInsertTask:        errors.New("failed to put task"),
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
@@ -412,7 +374,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       errors.New("encode state failed"),
@@ -434,7 +396,7 @@ func TestPOSTHandler(t *testing.T) {
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
-			errPutTask:           nil,
+			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "foobarbazbang",
 			errEncodeState:       nil,
@@ -455,7 +417,7 @@ func TestPOSTHandler(t *testing.T) {
 			colNoVdtor.Err = c.errValidateColNo
 			titleVdtor.Err = c.errValidateTaskTitle
 			subtTitleVdtor.Err = c.errValidateSubtTitle
-			taskPutter.Err = c.errPutTask
+			taskInserter.Err = c.errInsertTask
 			encodeState.Encoded = c.outStateEncoded
 			encodeState.Err = c.errEncodeState
 

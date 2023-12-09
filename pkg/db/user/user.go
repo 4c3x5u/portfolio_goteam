@@ -12,3 +12,18 @@ type User struct {
 	IsAdmin  bool
 	TeamID   string
 }
+
+// NewUser creates and returns a new User,
+func NewUser(
+	username string,
+	password []byte,
+	isAdmin bool,
+	teamID string,
+) User {
+	return User{
+		Username: username,
+		Password: password,
+		IsAdmin:  isAdmin,
+		TeamID:   teamID,
+	}
+}

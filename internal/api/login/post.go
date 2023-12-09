@@ -23,7 +23,7 @@ type PostReq struct {
 // PostHandler is a http.PostHandler that can be used to handle login requests.
 type PostHandler struct {
 	validator     ReqValidator
-	userGetter    db.Getter[userTable.User]
+	userRetriever db.Retriever[userTable.User]
 	pwdComparator Comparator
 	encodeAuth    token.EncodeFunc[token.Auth]
 	log           pkgLog.Errorer
@@ -32,14 +32,14 @@ type PostHandler struct {
 // NewPostHandler creates and returns a new Handler.
 func NewPostHandler(
 	validator ReqValidator,
-	userGetter db.Getter[userTable.User],
+	userRetriever db.Retriever[userTable.User],
 	pwdComparator Comparator,
 	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
 	return PostHandler{
 		validator:     validator,
-		userGetter:    userGetter,
+		userRetriever: userRetriever,
 		pwdComparator: pwdComparator,
 		encodeAuth:    encodeAuth,
 		log:           log,
@@ -62,7 +62,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// Read the user in the database who owns the username that came in the
 	// request.
-	user, err := h.userGetter.Get(r.Context(), req.Username)
+	user, err := h.userRetriever.Retrieve(r.Context(), req.Username)
 	if errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusBadRequest)
 		return

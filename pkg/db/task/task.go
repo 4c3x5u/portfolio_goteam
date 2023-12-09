@@ -15,6 +15,27 @@ type Task struct {
 	ColumnNumber int
 }
 
+// NewTask creates and returns a new Task.
+func NewTask(
+	id string,
+	title string,
+	descr string,
+	order int,
+	subtasks []Subtask,
+	boardID string,
+	colNo int,
+) Task {
+	return Task{
+		ID:           id,
+		Title:        title,
+		Description:  descr,
+		Order:        order,
+		Subtasks:     subtasks,
+		BoardID:      boardID,
+		ColumnNumber: colNo,
+	}
+}
+
 // Subtask defines the subtask entity which a task may own one/many of.
 type Subtask struct {
 	Title  string

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
@@ -36,7 +37,7 @@ type PostHandler struct {
 	titleVdtor     api.StringValidator
 	subtTitleVdtor api.StringValidator
 	colNoVdtor     api.IntValidator
-	taskPutter     db.Putter[taskTable.Task]
+	taskInserter   db.Inserter[taskTable.Task]
 	encodeState    token.EncodeFunc[token.State]
 	log            pkgLog.Errorer
 }
@@ -48,7 +49,7 @@ func NewPostHandler(
 	titleVdtor api.StringValidator,
 	subtTitleVdtor api.StringValidator,
 	colNoVdtor api.IntValidator,
-	taskPutter db.Putter[taskTable.Task],
+	taskInserter db.Inserter[taskTable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) *PostHandler {
@@ -58,7 +59,7 @@ func NewPostHandler(
 		titleVdtor:     titleVdtor,
 		subtTitleVdtor: subtTitleVdtor,
 		colNoVdtor:     colNoVdtor,
-		taskPutter:     taskPutter,
+		taskInserter:   taskInserter,
 		encodeState:    encodeState,
 		log:            log,
 	}
@@ -228,16 +229,16 @@ func (h *PostHandler) Handle(
 		})
 	}
 
-	// put the task into the task table
-	if err = h.taskPutter.Put(r.Context(), taskTable.Task{
-		ID:           uuid.NewString(),
-		Title:        req.Title,
-		Description:  req.Description,
-		Order:        order,
-		Subtasks:     subtasks,
-		BoardID:      req.BoardID,
-		ColumnNumber: req.ColumnNumber,
-	}); err != nil {
+	// insert a new task into the task table
+	if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
+		uuid.NewString(),
+		req.Title,
+		req.Description,
+		order,
+		subtasks,
+		req.BoardID,
+		req.ColumnNumber,
+	)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return

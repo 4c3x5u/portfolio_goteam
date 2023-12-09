@@ -12,14 +12,16 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// Getter can be used to get a user from the user table by ID.
-type Getter struct{ ItemGetter db.DynamoDBGetter }
+// Retriever can be used to retrieve by username a user from the user table.
+type Retriever struct{ ItemGetter db.DynamoDBGetter }
 
-// NewGetter creates and returns a new Getter.
-func NewGetter(ig db.DynamoDBGetter) Getter { return Getter{ItemGetter: ig} }
+// NewRetriever creates and returns a new Retriever.
+func NewRetriever(ig db.DynamoDBGetter) Retriever {
+	return Retriever{ItemGetter: ig}
+}
 
-// Get gets user from the user table by ID.
-func (g Getter) Get(ctx context.Context, username string) (User, error) {
+// Retrieve retrieves by username a user from the user table.
+func (g Retriever) Retrieve(ctx context.Context, username string) (User, error) {
 	out, err := g.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{

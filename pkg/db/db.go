@@ -17,24 +17,20 @@ var (
 	ErrDupKey = errors.New("duplicate key")
 )
 
-// Putter defines a type that can put a strongly typed object into a DynamoDB
-// table as a DynamoDB table item.
-type Putter[T any] interface {
-	Put(context.Context, T) error
+// Retriever defines a type that can retrieve an item from a DynamoDB table by
+// a string value.
+type Retriever[T any] interface {
+	Retrieve(context.Context, string) (T, error)
 }
 
-// Getter defines a type that can use a string ID to get an item from a DynamoDB
-// table as a strongly typed object.
-type Getter[T any] interface {
-	Get(context.Context, string) (T, error)
+// Creator defines a type that can insert a new item into a DynamoDB table.
+type Inserter[T any] interface {
+	Insert(context.Context, T) error
 }
 
-// DynamoDBPutter defines a type that can be used to put an item into a DynamoDB
-// table. It is used for dependency-injecting DynamoDB client into Puttter.
-type DynamoDBPutter interface {
-	PutItem(
-		context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
-	) (*dynamodb.PutItemOutput, error)
+// Updater defines a type that can update an item in a DynamoDB table.
+type Updater[T any] interface {
+	Update(context.Context, T) error
 }
 
 // DynamoDBGetter defines a type that can be used to get an item from a DynamoDB
@@ -43,4 +39,12 @@ type DynamoDBGetter interface {
 	GetItem(
 		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.GetItemOutput, error)
+}
+
+// DynamoDBPutter defines a type that can be used to put an item into a DynamoDB
+// table. It is used for dependency-injecting DynamoDB client into Puttter.
+type DynamoDBPutter interface {
+	PutItem(
+		context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
+	) (*dynamodb.PutItemOutput, error)
 }

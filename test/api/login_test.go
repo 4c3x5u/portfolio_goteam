@@ -23,7 +23,7 @@ import (
 func TestLoginHandler(t *testing.T) {
 	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
-		userTable.NewGetter(svcDynamo),
+		userTable.NewRetriever(svcDynamo),
 		loginAPI.NewPasswordComparator(),
 		token.EncodeAuth,
 		log.New(),

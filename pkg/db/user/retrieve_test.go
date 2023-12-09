@@ -14,9 +14,9 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestGetter(t *testing.T) {
+func TestRetriever(t *testing.T) {
 	ig := &db.FakeDynamoDBGetter{}
-	sut := NewGetter(ig)
+	sut := NewRetriever(ig)
 
 	userA := User{
 		Username: "bob123",
@@ -72,7 +72,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.igErr
 
-			user, err := sut.Get(context.Background(), "")
+			user, err := sut.Retrieve(context.Background(), "")
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 			if c.wantUser != nil {

@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
@@ -24,13 +24,13 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	var (
 		validator        = &fakeReqValidator{}
-		userGetter       = &db.FakeGetter[userTable.User]{}
+		userRetriever    = &db.FakeRetriever[userTable.User]{}
 		passwordComparer = &fakeHashComparer{}
 		encodeAuthToken  = &token.FakeEncode[token.Auth]{}
 		log              = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPostHandler(
-		validator, userGetter, passwordComparer, encodeAuthToken.Func, log,
+		validator, userRetriever, passwordComparer, encodeAuthToken.Func, log,
 	)
 
 	// Used on cases where no case-specific assertions are required.
@@ -40,7 +40,7 @@ func TestPOSTHandler(t *testing.T) {
 		name             string
 		reqIsValid       bool
 		user             userTable.User
-		errGetUser       error
+		errRetrieveUser  error
 		errCompareHash   error
 		authToken        string
 		errGenerateToken error
@@ -51,7 +51,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:             "InvalidRequest",
 			reqIsValid:       false,
 			user:             userTable.User{},
-			errGetUser:       nil,
+			errRetrieveUser:  nil,
 			errCompareHash:   nil,
 			authToken:        "",
 			errGenerateToken: nil,
@@ -62,7 +62,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:             "UserNotFound",
 			reqIsValid:       true,
 			user:             userTable.User{},
-			errGetUser:       db.ErrNoItem,
+			errRetrieveUser:  db.ErrNoItem,
 			errCompareHash:   nil,
 			authToken:        "",
 			errGenerateToken: nil,
@@ -73,7 +73,7 @@ func TestPOSTHandler(t *testing.T) {
 			name:             "UserSelectorError",
 			reqIsValid:       true,
 			user:             userTable.User{},
-			errGetUser:       errors.New("user selector error"),
+			errRetrieveUser:  errors.New("user selector error"),
 			errCompareHash:   nil,
 			authToken:        "",
 			errGenerateToken: nil,
@@ -86,7 +86,7 @@ func TestPOSTHandler(t *testing.T) {
 			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			errGetUser:       nil,
+			errRetrieveUser:  nil,
 			errCompareHash:   bcrypt.ErrMismatchedHashAndPassword,
 			authToken:        "",
 			errGenerateToken: nil,
@@ -99,7 +99,7 @@ func TestPOSTHandler(t *testing.T) {
 			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			errGetUser:       nil,
+			errRetrieveUser:  nil,
 			errCompareHash:   errors.New("hash comparer error"),
 			authToken:        "",
 			errGenerateToken: nil,
@@ -112,7 +112,7 @@ func TestPOSTHandler(t *testing.T) {
 			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			errGetUser:       nil,
+			errRetrieveUser:  nil,
 			errCompareHash:   nil,
 			authToken:        "",
 			errGenerateToken: errors.New("token generator error"),
@@ -125,7 +125,7 @@ func TestPOSTHandler(t *testing.T) {
 			user: userTable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
-			errGetUser:       nil,
+			errRetrieveUser:  nil,
 			errCompareHash:   nil,
 			authToken:        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
 			errGenerateToken: nil,
@@ -156,8 +156,8 @@ func TestPOSTHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
-			userGetter.Item = c.user
-			userGetter.Err = c.errGetUser
+			userRetriever.Item = c.user
+			userRetriever.Err = c.errRetrieveUser
 			passwordComparer.err = c.errCompareHash
 			encodeAuthToken.Encoded = c.authToken
 			encodeAuthToken.Err = c.errGenerateToken

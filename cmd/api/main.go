@@ -83,7 +83,7 @@ func main() {
 				),
 				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				dynamoUserTable.NewPutter(svcDynamo),
+				dynamoUserTable.NewInserter(svcDynamo),
 				token.EncodeAuth,
 				log,
 			),
@@ -94,7 +94,7 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: loginAPI.NewPostHandler(
 				loginAPI.NewValidator(),
-				dynamoUserTable.NewGetter(svcDynamo),
+				dynamoUserTable.NewRetriever(svcDynamo),
 				loginAPI.NewPasswordComparator(),
 				token.EncodeAuth,
 				log,
@@ -170,7 +170,8 @@ func main() {
 				taskTitleValidator,
 				taskTitleValidator,
 				taskAPI.ColNoValidator{},
-				dynamoTaskTable.NewPutter(svcDynamo),
+				dynamoTaskTable.NewInserter(svcDynamo),
+				token.EncodeState,
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(

@@ -11,9 +11,9 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestPutter(t *testing.T) {
+func TestUpdater(t *testing.T) {
 	ip := &db.FakeDynamoDBPutter{}
-	sut := NewPutter(ip)
+	sut := NewUpdater(ip)
 
 	errA := errors.New("failed to put item")
 
@@ -28,7 +28,7 @@ func TestPutter(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Put(context.Background(), Team{})
+			err := sut.Update(context.Background(), Team{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})

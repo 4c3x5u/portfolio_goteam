@@ -1,4 +1,4 @@
-package user
+package team
 
 import (
 	"context"
@@ -13,16 +13,15 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// ItemPutter can be used to put a user into user table.
-type Putter struct{ ItemPutter db.DynamoDBPutter }
+// Updater can be used to update a team in the team table.
+type Updater struct{ ItemPutter db.DynamoDBPutter }
 
-// NewPutter creates and returns a new Putter.
-func NewPutter(ip db.DynamoDBPutter) Putter { return Putter{ItemPutter: ip} }
+// NewUpdater creates and returns a new Updater.
+func NewUpdater(ip db.DynamoDBPutter) Updater { return Updater{ItemPutter: ip} }
 
-// Put puts a user into the user table only if a user with the same ID does not
-// already exist.
-func (p Putter) Put(ctx context.Context, user User) error {
-	item, err := attributevalue.MarshalMap(user)
+// Update updates a team in the team table.
+func (p Updater) Update(ctx context.Context, team Team) error {
+	item, err := attributevalue.MarshalMap(team)
 	if err != nil {
 		return err
 	}
@@ -30,12 +29,12 @@ func (p Putter) Put(ctx context.Context, user User) error {
 	_, err = p.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
-		ConditionExpression: aws.String("attribute_not_exists(Username)"),
+		ConditionExpression: aws.String("attribute_exists(ID)"),
 	})
 
 	var ex *types.ConditionalCheckFailedException
 	if errors.As(err, &ex) {
-		return db.ErrDupKey
+		return db.ErrNoItem
 	}
 
 	return err

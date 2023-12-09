@@ -16,12 +16,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
 	"github.com/kxplxn/goteam/pkg/assert"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // TestRegisterHandler tests the http.Handler for the register API route and
@@ -34,7 +35,7 @@ func TestRegisterHandler(t *testing.T) {
 		),
 		token.DecodeInvite,
 		registerAPI.NewPasswordHasher(),
-		userTable.NewPutter(svcDynamo),
+		userTable.NewInserter(svcDynamo),
 		token.EncodeAuth,
 		log.New(),
 	)

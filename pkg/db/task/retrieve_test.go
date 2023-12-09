@@ -10,13 +10,14 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestGetter(t *testing.T) {
+func TestRetriever(t *testing.T) {
 	ig := &db.FakeDynamoDBGetter{}
-	sut := NewGetter(ig)
+	sut := NewRetriever(ig)
 
 	errA := errors.New("failed")
 	taskA := Task{
@@ -106,7 +107,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.igErr
 
-			task, err := sut.Get(context.Background(), "")
+			task, err := sut.Retrieve(context.Background(), "")
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 			if c.wantTask != nil {

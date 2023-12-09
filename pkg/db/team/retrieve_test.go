@@ -14,9 +14,9 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestGetter(t *testing.T) {
+func TestRetriever(t *testing.T) {
 	ig := &db.FakeDynamoDBGetter{}
-	sut := NewGetter(ig)
+	sut := NewRetriever(ig)
 
 	errA := errors.New("failed to get team")
 	teamA := Team{
@@ -98,7 +98,7 @@ func TestGetter(t *testing.T) {
 			ig.Out = c.igOut
 			ig.Err = c.igErr
 
-			team, err := sut.Get(context.Background(), "")
+			team, err := sut.Retrieve(context.Background(), "")
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 

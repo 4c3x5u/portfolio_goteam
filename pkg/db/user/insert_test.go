@@ -1,19 +1,22 @@
 //go:build utest
 
-package task
+package user
 
 import (
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestPutter(t *testing.T) {
+func TestInserter(t *testing.T) {
 	ip := &db.FakeDynamoDBPutter{}
-	sut := NewPutter(ip)
+	sut := NewInserter(ip)
 
 	errA := errors.New("failed to put item")
 
@@ -23,12 +26,19 @@ func TestPutter(t *testing.T) {
 		wantErr error
 	}{
 		{name: "Err", ipErr: errA, wantErr: errA},
+		{
+			name: "DupKey",
+			ipErr: &smithy.OperationError{
+				Err: &types.ConditionalCheckFailedException{},
+			},
+			wantErr: db.ErrDupKey,
+		},
 		{name: "OK", ipErr: nil, wantErr: nil},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Put(context.Background(), Task{})
+			err := sut.Insert(context.Background(), User{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})
