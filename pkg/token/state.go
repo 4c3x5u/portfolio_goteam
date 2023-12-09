@@ -29,13 +29,22 @@ func NewBoard(id string, columns []Column) Board {
 	return Board{ID: id, Columns: columns}
 }
 
-// Column defines the column data board contains.
+// Column defines an element in the column data that a Board contains.
 type Column struct {
-	TaskCount int `json:"taskCount"`
+	Tasks []Task `json:"tasks"`
 }
 
 // NewColumn creates and returns a new Column
-func NewColumn(taskCount int) Column { return Column{TaskCount: taskCount} }
+func NewColumn(tasks []Task) Column { return Column{Tasks: tasks} }
+
+// Task defines an element in the tasks that a Column contains.
+type Task struct {
+	ID    string `json:"id"`
+	Order int    `json:"order"`
+}
+
+// NewTask creates and returns a new Task.
+func NewTask(id string, order int) Task { return Task{ID: id, Order: order} }
 
 // EncodeAuth encodes an Auth into a JWT string.
 func EncodeState(exp time.Time, state State) (string, error) {
@@ -66,7 +75,7 @@ func DecodeState(raw string) (State, error) {
 		return State{}, ErrInvalid
 	}
 
-	boards := []Board{}
+	var boards []Board
 	for _, b := range boardsRaw {
 		board := Board{}
 
@@ -86,19 +95,39 @@ func DecodeState(raw string) (State, error) {
 			return State{}, ErrInvalid
 		}
 
-		columns := []Column{}
+		var columns []Column
 		for _, c := range columnsRaw {
 			colRaw, ok := c.(map[string]any)
 			if !ok {
 				return State{}, ErrInvalid
 			}
 
-			taskCount, ok := colRaw["taskCount"].(float64)
+			tasksRaw, ok := colRaw["tasks"].([]any)
 			if !ok {
 				return State{}, ErrInvalid
 			}
 
-			columns = append(columns, NewColumn(int(taskCount)))
+			var tasks []Task
+			for _, t := range tasksRaw {
+				tRaw, ok := t.(map[string]any)
+				if !ok {
+					return State{}, ErrInvalid
+				}
+
+				tID, ok := tRaw["id"].(string)
+				if !ok {
+					return State{}, ErrInvalid
+				}
+
+				tOrder, ok := tRaw["order"].(float64)
+				if !ok {
+					return State{}, ErrInvalid
+				}
+
+				tasks = append(tasks, NewTask(tID, int(tOrder)))
+			}
+
+			columns = append(columns, NewColumn(tasks))
 		}
 
 		boards = append(boards, NewBoard(id, columns))

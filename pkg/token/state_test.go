@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 )
 
@@ -16,7 +17,9 @@ func TestState(t *testing.T) {
 		t.Fatal("failed to set key env var", err)
 	}
 	boards := []Board{
-		NewBoard("boardid", []Column{NewColumn(1)}),
+		NewBoard("boardid", []Column{NewColumn([]Task{
+			NewTask("taskid", 2),
+		})}),
 	}
 
 	t.Run("Encode", func(t *testing.T) {
@@ -49,13 +52,15 @@ func TestState(t *testing.T) {
 			id := boardRaw["id"].(string)
 			assert.Equal(t.Error, id, boards[0].ID)
 
-			columnsRaw := boardRaw["columns"].([]any)
+			columns := boardRaw["columns"].([]any)
+			col := columns[0].(map[string]any)
 
-			col := columnsRaw[0].(map[string]any)
-			taskCount := col["taskCount"].(float64)
-			assert.Equal(t.Error,
-				taskCount, float64(boards[0].Columns[0].TaskCount),
-			)
+			tasks := col["tasks"].([]any)
+			ta := tasks[0].(map[string]any)
+			taID := ta["id"].(string)
+			assert.Equal(t.Error, taID, boards[0].Columns[0].Tasks[0].ID)
+			taOrder := int(ta["order"].(float64))
+			assert.Equal(t.Error, taOrder, boards[0].Columns[0].Tasks[0].Order)
 		}
 	})
 
@@ -90,8 +95,11 @@ func TestState(t *testing.T) {
 				wantErr:    jwt.ErrTokenExpired,
 			},
 			{
-				name:       "Success",
-				token:      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt7ImlkIjoiYm9hcmRpZCIsImNvbHVtbnMiOlt7InRhc2tDb3VudCI6MX1dfV19.vVhDRAKKHD9FAu9FIV__N74HYm3UBKhD_4Z_bJujpDw",
+				name: "Success",
+				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt7" +
+					"ImlkIjoiYm9hcmRpZCIsImNvbHVtbnMiOlt7InRhc2tzIjpbeyJpZCI6" +
+					"InRhc2tpZCIsIm9yZGVyIjoyfV19XX1dLCJleHAiOjE3MDIxNTkzNDl9" +
+					".slGGkG39sM9KfMxnBU2Ib9yPBISBvMYxBnaX4NbQjrI",
 				wantBoards: boards,
 				wantErr:    nil,
 			},
@@ -103,7 +111,10 @@ func TestState(t *testing.T) {
 
 				for i, b := range c.wantBoards {
 					assert.Equal(t.Error, st.Boards[i].ID, b.ID)
-					assert.AllEqual(t.Error, st.Boards[i].Columns, b.Columns)
+					assert.AllEqual(t.Error,
+						st.Boards[i].Columns[0].Tasks,
+						b.Columns[0].Tasks,
+					)
 				}
 			})
 		}

@@ -157,13 +157,17 @@ func (h *PostHandler) Handle(
 		return
 	}
 
-	// validate board ID and determine order for the task
+	// validate board access and determine order for the task
 	var hasBoardAccess bool
-	var order int
+	var highestOrder int
 	for _, b := range state.Boards {
 		if req.BoardID == b.ID {
 			hasBoardAccess = true
-			order = b.Columns[req.ColumnNumber].TaskCount
+			for _, t := range b.Columns[req.ColumnNumber].Tasks {
+				if t.Order > highestOrder {
+					highestOrder = t.Order
+				}
+			}
 		}
 	}
 	if !hasBoardAccess {
@@ -176,6 +180,7 @@ func (h *PostHandler) Handle(
 		}
 		return
 	}
+	order := highestOrder + 1
 
 	// validate task
 	if err := h.titleVdtor.Validate(req.Title); err != nil {
@@ -230,8 +235,9 @@ func (h *PostHandler) Handle(
 	}
 
 	// insert a new task into the task table
+	id := uuid.NewString()
 	if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
-		uuid.NewString(),
+		id,
 		req.Title,
 		req.Description,
 		order,
@@ -247,11 +253,10 @@ func (h *PostHandler) Handle(
 	// update state
 	for _, b := range state.Boards {
 		if b.ID == req.BoardID {
-			for i, c := range b.Columns {
-				if i == req.ColumnNumber {
-					c.TaskCount++
-				}
-			}
+			b.Columns[req.ColumnNumber].Tasks = append(
+				b.Columns[req.ColumnNumber].Tasks,
+				token.NewTask(id, order),
+			)
 		}
 	}
 

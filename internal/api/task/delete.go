@@ -16,14 +16,14 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-// DELETEResp defines the body of DELETE task responses.
-type DELETEResp struct {
+// DeleteResp defines the body of DELETE task responses.
+type DeleteResp struct {
 	Error string `json:"error"`
 }
 
-// DELETEHandler is an api.MethodHandler that can be used to handle DELETE
-// requests sent to the task route.
-type DELETEHandler struct {
+// DeleteHandler is an api.MethodHandler that can be used to handle DELETE
+// requests made to the task route.
+type DeleteHandler struct {
 	userSelector   dbaccess.Selector[userTable.Record]
 	idValidator    api.StringValidator
 	taskSelector   dbaccess.Selector[taskTable.Record]
@@ -42,8 +42,8 @@ func NewDELETEHandler(
 	boardSelector dbaccess.Selector[boardTable.Record],
 	taskDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
-) DELETEHandler {
-	return DELETEHandler{
+) DeleteHandler {
+	return DeleteHandler{
 		idValidator:    idValidator,
 		taskSelector:   taskSelector,
 		columnSelector: columnSelector,
@@ -55,14 +55,14 @@ func NewDELETEHandler(
 }
 
 // Handle handles the DELETE requests sent to the task route.
-func (h DELETEHandler) Handle(
+func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Validate that the user is a team admin.
 	user, err := h.userSelector.Select(username)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
-		if err = json.NewEncoder(w).Encode(DELETEResp{
+		if err = json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Username is not recognised.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -77,7 +77,7 @@ func (h DELETEHandler) Handle(
 	}
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(DELETEResp{
+		if err = json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Only board admins can delete tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -90,7 +90,7 @@ func (h DELETEHandler) Handle(
 	id := r.URL.Query().Get("id")
 	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrEmpty) {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(DELETEResp{
+		if err := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Task ID cannot be empty.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -99,7 +99,7 @@ func (h DELETEHandler) Handle(
 		}
 	} else if errors.Is(err, api.ErrNotInt) {
 		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(DELETEResp{
+		if err = json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Task ID must be an integer.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -116,7 +116,7 @@ func (h DELETEHandler) Handle(
 	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
-		if err = json.NewEncoder(w).Encode(DELETEResp{
+		if err = json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Task not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -148,7 +148,7 @@ func (h DELETEHandler) Handle(
 	}
 	if user.TeamID != board.TeamID {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(DELETEResp{
+		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "You do not have access to this board.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)

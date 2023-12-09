@@ -2,7 +2,9 @@
 
 package api
 
-import "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+import (
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+)
 
 // reqsWriteUser are the requests sent to the user table to initialise it for
 // test use.
@@ -312,7 +314,7 @@ var reqsWriteTask = []types.WriteRequest{
 			Value: "a2e5b55f-01cc-4eac-8882-d76acb94a5b9",
 		},
 		"Title": &types.AttributeValueMemberS{Value: "task 7"},
-		"Order": &types.AttributeValueMemberN{Value: "1"},
+		"Order": &types.AttributeValueMemberN{Value: "2"},
 		"BoardID": &types.AttributeValueMemberS{
 			Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 		},
@@ -323,7 +325,7 @@ var reqsWriteTask = []types.WriteRequest{
 			Value: "e0021a56-6a1e-4007-b773-395d3991fb7e",
 		},
 		"Title": &types.AttributeValueMemberS{Value: "task 8"},
-		"Order": &types.AttributeValueMemberN{Value: "1"},
+		"Order": &types.AttributeValueMemberN{Value: "3"},
 		"Subtasks": &types.AttributeValueMemberL{
 			Value: []types.AttributeValue{
 				&types.AttributeValueMemberM{

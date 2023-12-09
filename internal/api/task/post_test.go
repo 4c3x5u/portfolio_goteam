@@ -193,8 +193,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -217,8 +219,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -241,8 +245,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -267,8 +273,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -293,8 +301,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -319,8 +329,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -343,8 +355,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -367,8 +381,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
@@ -389,8 +405,10 @@ func TestPOSTHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
 			inStateDecoded: token.State{Boards: []token.Board{{
-				ID:      "boardid",
-				Columns: []token.Column{{TaskCount: 1}},
+				ID: "boardid",
+				Columns: []token.Column{{Tasks: []token.Task{{
+					ID: "taskid", Order: 0,
+				}}}},
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
