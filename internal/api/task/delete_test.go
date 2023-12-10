@@ -4,6 +4,7 @@ package task
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,11 +17,13 @@ import (
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
+	decodeAuth := &token.FakeDecode[token.Auth]{}
 	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
@@ -28,8 +31,8 @@ func TestDELETEHandler(t *testing.T) {
 	boardSelector := &boardTable.FakeSelector{}
 	taskDeleter := &dbaccess.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewDELETEHandler(
-		userSelector,
+	sut := NewDeleteHandler(
+		decodeAuth.Func,
 		idValidator,
 		taskSelector,
 		columnSelector,
@@ -39,212 +42,231 @@ func TestDELETEHandler(t *testing.T) {
 	)
 
 	for _, c := range []struct {
-		user              userTable.Record
-		userSelectorErr   error
-		name              string
-		idValidatorErr    error
-		taskSelectorErr   error
-		columnSelectorErr error
-		board             boardTable.Record
-		boardSelectorErr  error
-		taskDeleterErr    error
-		wantStatusCode    int
-		assertFunc        func(*testing.T, *http.Response, string)
+		authToken       string
+		authDecoded     token.Auth
+		errDecodeAuth   error
+		name            string
+		errValidateID   error
+		errSelectTask   error
+		errSelectColumn error
+		board           boardTable.Record
+		errSelectBoard  error
+		errDeleteTask   error
+		wantStatus      int
+		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:              "UserSelectorErr",
-			user:              userTable.Record{},
-			userSelectorErr:   sql.ErrConnDone,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			name:            "NoAuth",
+			authToken:       "",
+			authDecoded:     token.Auth{},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusUnauthorized,
+			assertFunc:      assert.OnResErr("Auth token not found."),
 		},
 		{
-			name:              "UserNotRecognised",
-			user:              userTable.Record{},
-			userSelectorErr:   sql.ErrNoRows,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusUnauthorized,
-			assertFunc:        assert.OnResErr("Username is not recognised."),
+			name:            "ErrEncodeAuth",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{},
+			errDecodeAuth:   errors.New("encode auth failed"),
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusUnauthorized,
+			assertFunc:      assert.OnResErr("Invalid auth token."),
 		},
 		{
-			name:              "NotAdmin",
-			user:              userTable.Record{IsAdmin: false},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusForbidden,
+			name:            "NotAdmin",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: false},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can delete tasks.",
 			),
 		},
 		{
-			name:              "IDEmpty",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    api.ErrEmpty,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID cannot be empty."),
+			name:            "IDEmpty",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   api.ErrEmpty,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("Task ID cannot be empty."),
 		},
 		{
-			name:              "IDNotInt",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    api.ErrNotInt,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusBadRequest,
-			assertFunc:        assert.OnResErr("Task ID must be an integer."),
+			name:            "IDNotInt",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   api.ErrNotInt,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("Task ID must be an integer."),
 		},
 		{
-			name:              "IDUnexpectedErr",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    api.ErrTooLong,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(api.ErrTooLong.Error()),
+			name:            "IDUnexpectedErr",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   api.ErrTooLong,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(api.ErrTooLong.Error()),
 		},
 		{
-			name:              "TaskSelectorErr",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrConnDone,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrConnDone.Error()),
+			name:            "TaskSelectorErr",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   sql.ErrConnDone,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrConnDone.Error()),
 		},
 		{
-			name:              "TaskNotFound",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   sql.ErrNoRows,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusNotFound,
-			assertFunc:        assert.OnResErr("Task not found."),
+			name:            "TaskNotFound",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   sql.ErrNoRows,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusNotFound,
+			assertFunc:      assert.OnResErr("Task not found."),
 		},
 		{
-			name:              "ColumnSelectorErr",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: sql.ErrNoRows,
-			board:             boardTable.Record{},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:            "ColumnSelectorErr",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: sql.ErrNoRows,
+			board:           boardTable.Record{},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:              "BoardSelectorErr",
-			user:              userTable.Record{IsAdmin: true},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{},
-			boardSelectorErr:  sql.ErrNoRows,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:            "BoardSelectorErr",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{},
+			errSelectBoard:  sql.ErrNoRows,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:              "BoardWrongTeam",
-			user:              userTable.Record{IsAdmin: true, TeamID: 2},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{TeamID: 1},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusForbidden,
+			name:            "BoardWrongTeam",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true, TeamID: "1"},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{TeamID: 2},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:              "TaskDeleterErr",
-			user:              userTable.Record{IsAdmin: true, TeamID: 1},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{TeamID: 1},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    sql.ErrNoRows,
-			wantStatusCode:    http.StatusInternalServerError,
-			assertFunc:        assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			name:            "ErrDeleteTask",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true, TeamID: "2"},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{TeamID: 2},
+			errSelectBoard:  nil,
+			errDeleteTask:   sql.ErrNoRows,
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:              "Success",
-			user:              userTable.Record{IsAdmin: true, TeamID: 1},
-			userSelectorErr:   nil,
-			idValidatorErr:    nil,
-			taskSelectorErr:   nil,
-			columnSelectorErr: nil,
-			board:             boardTable.Record{TeamID: 1},
-			boardSelectorErr:  nil,
-			taskDeleterErr:    nil,
-			wantStatusCode:    http.StatusOK,
-			assertFunc:        func(*testing.T, *http.Response, string) {},
+			name:            "Success",
+			authToken:       "nonempty",
+			authDecoded:     token.Auth{IsAdmin: true, TeamID: "2"},
+			errDecodeAuth:   nil,
+			errValidateID:   nil,
+			errSelectTask:   nil,
+			errSelectColumn: nil,
+			board:           boardTable.Record{TeamID: 2},
+			errSelectBoard:  nil,
+			errDeleteTask:   nil,
+			wantStatus:      http.StatusOK,
+			assertFunc:      func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.Rec = c.user
-			userSelector.Err = c.userSelectorErr
-			idValidator.Err = c.idValidatorErr
-			taskSelector.Err = c.taskSelectorErr
-			columnSelector.Err = c.columnSelectorErr
+			decodeAuth.Decoded = c.authDecoded
+			decodeAuth.Err = c.errDecodeAuth
+			userSelector.Err = c.errDecodeAuth
+			idValidator.Err = c.errValidateID
+			taskSelector.Err = c.errSelectTask
+			columnSelector.Err = c.errSelectColumn
 			boardSelector.Board = c.board
-			boardSelector.Err = c.boardSelectorErr
-			taskDeleter.Err = c.taskDeleterErr
+			boardSelector.Err = c.errSelectBoard
+			taskDeleter.Err = c.errDeleteTask
 
-			r, err := http.NewRequest("", "", nil)
-			if err != nil {
-				t.Fatal(err)
+			r := httptest.NewRequest("", "/", nil)
+			if c.authToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  "auth-token",
+					Value: c.authToken,
+				})
 			}
+
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")
 			res := w.Result()
 
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			c.assertFunc(t, res, log.InMessage)
 		})

@@ -185,8 +185,8 @@ func main() {
 				taskTable.NewUpdater(db),
 				log,
 			),
-			http.MethodDelete: taskAPI.NewDELETEHandler(
-				userSelector,
+			http.MethodDelete: taskAPI.NewDeleteHandler(
+				token.DecodeAuth,
 				taskIDValidator,
 				taskSelector,
 				columnSelector,

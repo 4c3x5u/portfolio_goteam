@@ -64,8 +64,8 @@ func TestTaskHandler(t *testing.T) {
 				taskTable.NewUpdater(db),
 				log,
 			),
-			http.MethodDelete: taskAPI.NewDELETEHandler(
-				userSelector,
+			http.MethodDelete: taskAPI.NewDeleteHandler(
+				token.DecodeAuth,
 				idValidator,
 				taskSelector,
 				columnSelector,

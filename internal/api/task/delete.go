@@ -12,8 +12,8 @@ import (
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // DeleteResp defines the body of DELETE task responses.
@@ -24,7 +24,7 @@ type DeleteResp struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE
 // requests made to the task route.
 type DeleteHandler struct {
-	userSelector   dbaccess.Selector[userTable.Record]
+	decodeAuth     token.DecodeFunc[token.Auth]
 	idValidator    api.StringValidator
 	taskSelector   dbaccess.Selector[taskTable.Record]
 	columnSelector dbaccess.Selector[columnTable.Record]
@@ -33,9 +33,9 @@ type DeleteHandler struct {
 	log            pkgLog.Errorer
 }
 
-// NewDELETEHandler creates and returns a new DELETEHandler.
-func NewDELETEHandler(
-	userSelector dbaccess.Selector[userTable.Record],
+// NewDeleteHandler creates and returns a new DELETEHandler.
+func NewDeleteHandler(
+	decodeAuth token.DecodeFunc[token.Auth],
 	idValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
 	columnSelector dbaccess.Selector[columnTable.Record],
@@ -44,11 +44,11 @@ func NewDELETEHandler(
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
+		decodeAuth:     decodeAuth,
 		idValidator:    idValidator,
 		taskSelector:   taskSelector,
 		columnSelector: columnSelector,
 		boardSelector:  boardSelector,
-		userSelector:   userSelector,
 		taskDeleter:    taskDeleter,
 		log:            log,
 	}
@@ -58,22 +58,34 @@ func NewDELETEHandler(
 func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Validate that the user is a team admin.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
+	// get auth token
+	ckAuth, err := r.Cookie(token.AuthName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusUnauthorized)
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "Auth token not found.",
+		}); encodeErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// decode auth token and validate user is admin
+	user, err := h.decodeAuth(ckAuth.Value)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Username is not recognised.",
+			Error: "Invalid auth token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 			return
 		}
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
 	}
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
@@ -146,7 +158,7 @@ func (h DeleteHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if user.TeamID != board.TeamID {
+	if user.TeamID != strconv.Itoa(board.TeamID) {
 		w.WriteHeader(http.StatusForbidden)
 		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "You do not have access to this board.",
