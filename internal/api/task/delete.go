@@ -1,17 +1,10 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strconv"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -24,33 +17,24 @@ type DeleteResp struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE
 // requests made to the task route.
 type DeleteHandler struct {
-	decodeAuth     token.DecodeFunc[token.Auth]
-	idValidator    api.StringValidator
-	taskSelector   dbaccess.Selector[taskTable.Record]
-	columnSelector dbaccess.Selector[columnTable.Record]
-	boardSelector  dbaccess.Selector[boardTable.Record]
-	taskDeleter    dbaccess.Deleter
-	log            pkgLog.Errorer
+	decodeAuth  token.DecodeFunc[token.Auth]
+	decodeState token.DecodeFunc[token.State]
+	taskDeleter dbaccess.Deleter
+	log         pkgLog.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DELETEHandler.
 func NewDeleteHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	idValidator api.StringValidator,
-	taskSelector dbaccess.Selector[taskTable.Record],
-	columnSelector dbaccess.Selector[columnTable.Record],
-	boardSelector dbaccess.Selector[boardTable.Record],
+	decodeState token.DecodeFunc[token.State],
 	taskDeleter dbaccess.Deleter,
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
-		decodeAuth:     decodeAuth,
-		idValidator:    idValidator,
-		taskSelector:   taskSelector,
-		columnSelector: columnSelector,
-		boardSelector:  boardSelector,
-		taskDeleter:    taskDeleter,
-		log:            log,
+		decodeAuth:  decodeAuth,
+		decodeState: decodeState,
+		taskDeleter: taskDeleter,
+		log:         log,
 	}
 }
 
@@ -75,8 +59,8 @@ func (h DeleteHandler) Handle(
 		return
 	}
 
-	// decode auth token and validate user is admin
-	user, err := h.decodeAuth(ckAuth.Value)
+	// decode auth token
+	auth, err := h.decodeAuth(ckAuth.Value)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
@@ -87,7 +71,9 @@ func (h DeleteHandler) Handle(
 			return
 		}
 	}
-	if !user.IsAdmin {
+
+	// validate user is admin
+	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Only board admins can delete tasks.",
@@ -98,75 +84,64 @@ func (h DeleteHandler) Handle(
 		}
 	}
 
-	// Read and validate task ID.
-	id := r.URL.Query().Get("id")
-	if err := h.idValidator.Validate(id); errors.Is(err, api.ErrEmpty) {
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Task ID cannot be empty.",
-		}); err != nil {
+		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+			Error: "State token not found.",
+		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
-			return
 		}
-	} else if errors.Is(err, api.ErrNotInt) {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Task ID must be an integer.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
-		}
+		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	// Select task from the database to access its column ID.
-	task, err := h.taskSelector.Select(id)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
+	// decode state token
+	state, err := h.decodeState(ckState.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Task not found.",
+			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 			return
 		}
 	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
 
-	// Select column from the database to access its board ID.
-	column, err := h.columnSelector.Select(strconv.Itoa(task.ColumnID))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
+	// validate task ID exists in state
+	id := r.URL.Query().Get("id")
+	var isValid bool
+	for _, b := range state.Boards {
+		for _, c := range b.Columns {
+			for _, t := range c.Tasks {
+				if t.ID == id {
+					isValid = true
+					break
+				}
+			}
+			if isValid {
+				break
+			}
+		}
+		if isValid {
+			break
+		}
 	}
-
-	// Validate that the board belongs to the team that the user is the admin
-	// of.
-	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if user.TeamID != strconv.Itoa(board.TeamID) {
-		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
-			Error: "You do not have access to this board.",
-		}); encodeErr != nil {
+	if !isValid {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(DeleteResp{
+			Error: "Invalid task ID.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
+			return
 		}
-		return
 	}
 
 	// Delete the record from task table that has the given ID.
