@@ -2,6 +2,7 @@ package task
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -148,8 +149,19 @@ func (h DeleteHandler) Handle(
 		}
 	}
 
-	// delete task from DynamoDB
-	if err = h.taskDeleter.Delete(r.Context(), id); err != nil {
+	// delete task from the task table
+	if err = h.taskDeleter.Delete(
+		r.Context(), id,
+	); errors.Is(err, db.ErrNoItem) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(DeleteResp{
+			Error: "Task not found.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return

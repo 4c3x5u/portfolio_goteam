@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"errors"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,5 +29,11 @@ func (r Deleter) Delete(ctx context.Context, id string) error {
 		},
 		ConditionExpression: aws.String("attribute_exists(ID)"),
 	})
+
+	var ex *types.ConditionalCheckFailedException
+	if errors.As(err, &ex) {
+		return db.ErrNoItem
+	}
+
 	return err
 }

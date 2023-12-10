@@ -132,6 +132,24 @@ func TestDeleteHandler(t *testing.T) {
 			assertFunc:     assert.OnResErr("Invalid task ID."),
 		},
 		{
+			name:           "NotFound",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			auth:           token.Auth{IsAdmin: true},
+			inState:        "nonempty",
+			errDecodeState: nil,
+			inStateDecoded: token.State{
+				Boards: []token.Board{{Columns: []token.Column{{
+					Tasks: []token.Task{{ID: "foo"}},
+				}}}},
+			},
+			errDeleteTask:  db.ErrNoItem,
+			errEncodeState: nil,
+			outState:       "",
+			wantStatus:     http.StatusNotFound,
+			assertFunc:     assert.OnResErr("Task not found."),
+		},
+		{
 			name:           "ErrDeleteTask",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,

@@ -7,6 +7,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
+
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 )
@@ -23,6 +26,13 @@ func TestDelete(t *testing.T) {
 		wantErr error
 	}{
 		{name: "Err", idelErr: errA, wantErr: errA},
+		{
+			name: "Err",
+			idelErr: &smithy.OperationError{
+				Err: &types.ConditionalCheckFailedException{},
+			},
+			wantErr: db.ErrNoItem,
+		},
 		{name: "OK", idelErr: nil, wantErr: nil},
 	} {
 		t.Run(c.name, func(t *testing.T) {
