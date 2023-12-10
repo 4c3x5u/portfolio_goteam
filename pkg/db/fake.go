@@ -38,7 +38,7 @@ func (f *FakeUpdater[T]) Update(_ context.Context, _ T) error { return f.Err }
 type FakeDeleter struct{ Err error }
 
 // Delete discards params and returns FakeDeleter.Err.
-func (f *FakeDeleter) Delete(_ context.Context) error { return f.Err }
+func (f *FakeDeleter) Delete(_ context.Context, _ string) error { return f.Err }
 
 // FakeDynamoItemGetter is a test fake for DynamoItemGetter.
 type FakeDynamoItemGetter struct {

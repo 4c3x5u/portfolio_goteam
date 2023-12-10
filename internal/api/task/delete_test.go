@@ -3,14 +3,13 @@
 package task
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -20,7 +19,7 @@ import (
 func TestDeleteHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	taskDeleter := &dbaccess.FakeDeleter{}
+	taskDeleter := &db.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDeleteHandler(
 		decodeAuth.Func,
@@ -128,9 +127,9 @@ func TestDeleteHandler(t *testing.T) {
 					Tasks: []token.Task{{ID: "foo"}},
 				}}}},
 			},
-			errDeleteTask: sql.ErrNoRows,
+			errDeleteTask: errors.New("delete task failed"),
 			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    assert.OnLoggedErr(sql.ErrNoRows.Error()),
+			assertFunc:    assert.OnLoggedErr("delete task failed"),
 		},
 		{
 			name:           "Success",

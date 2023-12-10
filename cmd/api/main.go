@@ -188,7 +188,7 @@ func main() {
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				taskTable.NewDeleter(db),
+				dynamoTaskTable.NewDeleter(svcDynamo),
 				log,
 			),
 		},

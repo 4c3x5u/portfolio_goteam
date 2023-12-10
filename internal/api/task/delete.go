@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -19,7 +19,7 @@ type DeleteResp struct {
 type DeleteHandler struct {
 	decodeAuth  token.DecodeFunc[token.Auth]
 	decodeState token.DecodeFunc[token.State]
-	taskDeleter dbaccess.Deleter
+	taskDeleter db.Deleter
 	log         pkgLog.Errorer
 }
 
@@ -27,7 +27,7 @@ type DeleteHandler struct {
 func NewDeleteHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	taskDeleter dbaccess.Deleter,
+	taskDeleter db.Deleter,
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
@@ -145,7 +145,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// Delete the record from task table that has the given ID.
-	if err = h.taskDeleter.Delete(id); err != nil {
+	if err = h.taskDeleter.Delete(r.Context(), id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
