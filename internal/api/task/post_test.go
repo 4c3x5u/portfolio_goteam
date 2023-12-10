@@ -17,9 +17,9 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestPOSTHandler tests the Handle method of POSTHandler to assert that it
+// TestPostHandler tests the Handle method of PostHandler to assert that it
 // behaves correctly in all possible scenarios.
-func TestPOSTHandler(t *testing.T) {
+func TestPostHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
 	titleVdtor := &api.FakeStringValidator{}

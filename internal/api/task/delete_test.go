@@ -15,16 +15,14 @@ import (
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
+// TestDeleteHandler tests the Handle method of DeleteHandler to assert that it
 // behaves correctly in all possible scenarios.
-func TestDELETEHandler(t *testing.T) {
+func TestDeleteHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
-	userSelector := &userTable.FakeSelector{}
 	idValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
 	columnSelector := &columnTable.FakeSelector{}
@@ -245,7 +243,6 @@ func TestDELETEHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Decoded = c.authDecoded
 			decodeAuth.Err = c.errDecodeAuth
-			userSelector.Err = c.errDecodeAuth
 			idValidator.Err = c.errValidateID
 			taskSelector.Err = c.errSelectTask
 			columnSelector.Err = c.errSelectColumn
