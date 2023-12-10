@@ -1,6 +1,6 @@
 //go:build utest
 
-package team
+package task
 
 import (
 	"context"
@@ -38,7 +38,7 @@ func TestUpdater(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ip.Err = c.ipErr
 
-			err := sut.Update(context.Background(), Team{})
+			err := sut.Update(context.Background(), Task{})
 
 			assert.ErrIs(t.Fatal, err, c.wantErr)
 		})
