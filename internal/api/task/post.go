@@ -234,17 +234,25 @@ func (h *PostHandler) Handle(
 		})
 	}
 
-	// insert a new task into the task table
+	// insert a new task into the task table - retry up to 3 times for the
+	// unlikely event that the generated UUID is a duplicate
 	id := uuid.NewString()
-	if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
-		id,
-		req.Title,
-		req.Description,
-		order,
-		subtasks,
-		req.BoardID,
-		req.ColumnNumber,
-	)); err != nil {
+	for tries := 0; tries < 3; tries++ {
+		if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
+			id,
+			req.Title,
+			req.Description,
+			order,
+			subtasks,
+			req.BoardID,
+			req.ColumnNumber,
+		)); errors.Is(err, db.ErrDupKey) {
+			id = uuid.NewString()
+		} else if err != nil {
+			break
+		}
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
