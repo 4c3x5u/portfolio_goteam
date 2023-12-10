@@ -178,10 +178,7 @@ func main() {
 				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				taskSelector,
-				columnSelector,
-				boardSelector,
-				taskTable.NewUpdater(db),
+				dynamoTaskTable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(

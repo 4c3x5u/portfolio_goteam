@@ -1,17 +1,13 @@
 package task
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -22,7 +18,6 @@ type PatchReq struct {
 	Description string `json:"description"`
 	Subtasks    []struct {
 		Title  string `json:"title"`
-		Order  int    `json:"order"`
 		IsDone bool   `json:"done"`
 	} `json:"subtasks"`
 }
@@ -34,15 +29,12 @@ type PatchResp struct {
 
 // PatchHandler handles PATCH requests sent to the task route.
 type PatchHandler struct {
-	decodeAuth            token.DecodeFunc[token.Auth]
-	decodeState           token.DecodeFunc[token.State]
-	taskTitleValidator    api.StringValidator
-	subtaskTitleValidator api.StringValidator
-	taskSelector          dbaccess.Selector[taskTable.Record]
-	columnSelector        dbaccess.Selector[columnTable.Record]
-	boardSelector         dbaccess.Selector[boardTable.Record]
-	taskUpdater           dbaccess.Updater[taskTable.UpRecord]
-	log                   pkgLog.Errorer
+	decodeAuth         token.DecodeFunc[token.Auth]
+	decodeState        token.DecodeFunc[token.State]
+	titleValidator     api.StringValidator
+	subtTitleValidator api.StringValidator
+	taskUpdater        db.Updater[taskTable.Task]
+	log                pkgLog.Errorer
 }
 
 // NewPatchHandler returns a new PatchHandler.
@@ -51,22 +43,16 @@ func NewPatchHandler(
 	decodeState token.DecodeFunc[token.State],
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
-	taskSelector dbaccess.Selector[taskTable.Record],
-	columnSelector dbaccess.Selector[columnTable.Record],
-	boardSelector dbaccess.Selector[boardTable.Record],
-	taskUpdater dbaccess.Updater[taskTable.UpRecord],
+	taskUpdater db.Updater[taskTable.Task],
 	log pkgLog.Errorer,
 ) *PatchHandler {
 	return &PatchHandler{
-		decodeAuth:            decodeAuth,
-		decodeState:           decodeState,
-		taskTitleValidator:    taskTitleValidator,
-		subtaskTitleValidator: subtaskTitleValidator,
-		taskSelector:          taskSelector,
-		columnSelector:        columnSelector,
-		boardSelector:         boardSelector,
-		taskUpdater:           taskUpdater,
-		log:                   log,
+		decodeAuth:         decodeAuth,
+		decodeState:        decodeState,
+		titleValidator:     taskTitleValidator,
+		subtTitleValidator: subtaskTitleValidator,
+		taskUpdater:        taskUpdater,
+		log:                log,
 	}
 }
 
@@ -146,24 +132,30 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// validate id exists in state
+	// validate id exists in state and determine location
 	id := r.URL.Query().Get("id")
-	var idFound bool
+	var (
+		idFound bool
+		boardID string
+		colNo   int
+		order   int
+	)
 	for _, b := range state.Boards {
-		for _, c := range b.Columns {
-			for _, t := range c.Tasks {
+		for i, c := range b.Columns {
+			for j, t := range c.Tasks {
 				if t.ID == id {
 					idFound = true
-				}
-				if idFound {
+					order = j
 					break
 				}
 			}
 			if idFound {
+				colNo = i
 				break
 			}
 		}
 		if idFound {
+			boardID = b.ID
 			break
 		}
 	}
@@ -187,7 +179,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// validate task title
-	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
+	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, api.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
@@ -209,10 +201,10 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// Validate subtask titles and transform them into db-insertable types.
-	var subtaskRecords []taskTable.Subtask
+	// validate subtask titles
+	var subtasks []taskTable.Subtask
 	for _, subtask := range reqBody.Subtasks {
-		if err := h.subtaskTitleValidator.Validate(subtask.Title); err != nil {
+		if err := h.subtTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
 			if errors.Is(err, api.ErrEmpty) {
 				errMsg = "Subtask title cannot be empty."
@@ -233,15 +225,16 @@ func (h *PatchHandler) Handle(
 			}
 			return
 		}
-		subtaskRecords = append(
-			subtaskRecords,
-			taskTable.NewSubtask(subtask.Title, subtask.Order, subtask.IsDone),
+		subtasks = append(
+			subtasks,
+			taskTable.NewSubtask(subtask.Title, subtask.IsDone),
 		)
 	}
 
-	// Select the task in the database to get its columnID.
-	task, err := h.taskSelector.Select(id)
-	if errors.Is(err, sql.ErrNoRows) {
+	// Update the task and subtasks in the database.
+	if err = h.taskUpdater.Update(r.Context(), taskTable.NewTask(
+		id, reqBody.Title, reqBody.Description, order, subtasks, boardID, colNo,
+	)); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Task not found.",
@@ -250,49 +243,8 @@ func (h *PatchHandler) Handle(
 			h.log.Error(err.Error())
 		}
 		return
-	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
 
-	// Get the column from the database to access its board ID for
-	// authorization.
-	column, err := h.columnSelector.Select(strconv.Itoa(task.ColumnID))
-	if err != nil {
-		// Return 500 on any error (even sql.ErrNoRows) because if task was
-		// found, so must the column because the columnID is a foreign key for
-		// the column table.
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-
-	// Validate that the board belongs to the team that the user is the admin
-	// of.
-	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-
-	}
-	if strconv.Itoa(board.TeamID) != auth.TeamID {
-		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(PatchResp{
-			Error: "You do not have access to this board.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-
-	// Update the task and subtasks in the database.
-	if err = h.taskUpdater.Update(id, taskTable.NewUpRecord(
-		reqBody.Title, reqBody.Description, subtaskRecords,
-	)); err != nil {
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return

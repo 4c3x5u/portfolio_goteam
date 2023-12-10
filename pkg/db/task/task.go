@@ -41,3 +41,11 @@ type Subtask struct {
 	Title  string
 	IsDone bool
 }
+
+// NewSubtask creates and returns a new Subtask.
+func NewSubtask(title string, isDone bool) Subtask {
+	return Subtask{
+		Title:  title,
+		IsDone: isDone,
+	}
+}

@@ -22,8 +22,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
@@ -33,9 +31,6 @@ import (
 // that it behaves correctly during various execution paths.
 func TestTaskHandler(t *testing.T) {
 	titleValidator := taskAPI.NewTitleValidator()
-	taskSelector := taskTable.NewSelector(db)
-	columnSelector := columnTable.NewSelector(db)
-	boardSelector := boardTable.NewSelector(db)
 	log := pkgLog.New()
 
 	sut := api.NewHandler(
@@ -56,10 +51,7 @@ func TestTaskHandler(t *testing.T) {
 				token.DecodeState,
 				titleValidator,
 				titleValidator,
-				taskSelector,
-				columnSelector,
-				boardSelector,
-				taskTable.NewUpdater(db),
+				dynamoTaskTable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(

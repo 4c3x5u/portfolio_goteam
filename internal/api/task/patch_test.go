@@ -3,7 +3,7 @@
 package task
 
 import (
-	"database/sql"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,9 +11,8 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -24,19 +23,13 @@ func TestPatchHandler(t *testing.T) {
 	decodeState := &token.FakeDecode[token.State]{}
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
-	taskSelector := &taskTable.FakeSelector{}
-	columnSelector := &columnTable.FakeSelector{}
-	boardSelector := &boardTable.FakeSelector{}
-	taskUpdater := &taskTable.FakeUpdater{}
+	taskUpdater := &db.FakeUpdater[taskTable.Task]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPatchHandler(
 		decodeAuth.Func,
 		decodeState.Func,
 		titleValidator,
 		subtTitleValidator,
-		taskSelector,
-		columnSelector,
-		boardSelector,
 		taskUpdater,
 		log,
 	)
@@ -51,10 +44,6 @@ func TestPatchHandler(t *testing.T) {
 		errDecodeState       error
 		errValidateTitle     error
 		errValidateSubtTitle error
-		errSelectTask        error
-		errSelectColumn      error
-		board                boardTable.Record
-		boardSelectorErr     error
 		taskUpdaterErr       error
 		wantStatusCode       int
 		assertFunc           func(*testing.T, *http.Response, string)
@@ -69,10 +58,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusUnauthorized,
 			assertFunc:           assert.OnResErr("Auth token not found."),
@@ -87,10 +72,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusUnauthorized,
 			assertFunc:           assert.OnResErr("Invalid auth token."),
@@ -105,10 +86,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -125,10 +102,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("State token not found."),
@@ -143,10 +116,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       token.ErrInvalid,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Invalid state token."),
@@ -162,10 +131,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Invalid task ID."),
@@ -182,10 +147,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     api.ErrEmpty,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -204,10 +165,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     api.ErrTooLong,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -215,7 +172,7 @@ func TestPatchHandler(t *testing.T) {
 			),
 		},
 		{
-			name:          "TaskTitleUnexpectedErr",
+			name:          "TaskTitleErr",
 			authToken:     "nonempty",
 			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
@@ -226,10 +183,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     api.ErrNotInt,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -248,10 +201,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrEmpty,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -270,10 +219,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrTooLong,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -281,7 +226,7 @@ func TestPatchHandler(t *testing.T) {
 			),
 		},
 		{
-			name:          "SubtaskTitleUnexpectedErr",
+			name:          "SubtaskTitleErr",
 			authToken:     "nonempty",
 			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
@@ -292,10 +237,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrNotInt,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -314,97 +255,9 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        sql.ErrNoRows,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
-			taskUpdaterErr:       nil,
+			taskUpdaterErr:       db.ErrNoItem,
 			wantStatusCode:       http.StatusNotFound,
 			assertFunc:           assert.OnResErr("Task not found."),
-		},
-		{
-			name:          "TaskSelectorErr",
-			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth: nil,
-			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
-			}},
-			errDecodeState:       nil,
-			errValidateTitle:     nil,
-			errValidateSubtTitle: nil,
-			errSelectTask:        sql.ErrConnDone,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
-			taskUpdaterErr:       nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:          "ColumnSelectorErr",
-			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth: nil,
-			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
-			}},
-			errDecodeState:       nil,
-			errValidateTitle:     nil,
-			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      sql.ErrNoRows,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
-			taskUpdaterErr:       nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
-		},
-		{
-			name:          "BoardSelectorErr",
-			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth: nil,
-			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
-			}},
-			errDecodeState:       nil,
-			errValidateTitle:     nil,
-			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     sql.ErrNoRows,
-			taskUpdaterErr:       nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
-		},
-		{
-			name:          "NoAccess",
-			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "32"},
-			errDecodeAuth: nil,
-			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
-			}},
-			errDecodeState:       nil,
-			errValidateTitle:     nil,
-			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
-			taskUpdaterErr:       nil,
-			wantStatusCode:       http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
-			),
 		},
 		{
 			name:          "TaskUpdaterErr",
@@ -415,21 +268,12 @@ func TestPatchHandler(t *testing.T) {
 			stateDecoded: token.State{Boards: []token.Board{{
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
 			}},
-			errDecodeState: nil,
-			// user: userTable.Record{
-			// 	IsAdmin: true, TeamID: 1,
-			// },
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
-			taskUpdaterErr:       sql.ErrConnDone,
+			taskUpdaterErr:       errors.New("update task failed"),
 			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
+			assertFunc:           assert.OnLoggedErr("update task failed"),
 		},
 		{
 			name:          "Success",
@@ -443,10 +287,6 @@ func TestPatchHandler(t *testing.T) {
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
-			errSelectTask:        nil,
-			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
-			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusOK,
 			assertFunc:           func(*testing.T, *http.Response, string) {},
@@ -459,10 +299,6 @@ func TestPatchHandler(t *testing.T) {
 			decodeState.Err = c.errDecodeState
 			titleValidator.Err = c.errValidateTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
-			taskSelector.Err = c.errSelectTask
-			columnSelector.Err = c.errSelectColumn
-			boardSelector.Board = c.board
-			boardSelector.Err = c.boardSelectorErr
 			taskUpdater.Err = c.taskUpdaterErr
 			r := httptest.NewRequest("", "/?id=qwerty", strings.NewReader(`{
 				"column":      0,
