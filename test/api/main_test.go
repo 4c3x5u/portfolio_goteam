@@ -17,13 +17,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
-
-	_ "github.com/lib/pq"
 )
 
 // svcDynamo is the DynamoDB client used by tests.
+// TODO: rename as db once the migration is complete
 var svcDynamo *dynamodb.Client
 
 // used as a prefix to a uuid when creating test tables

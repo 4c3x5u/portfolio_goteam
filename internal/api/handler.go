@@ -73,8 +73,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			m string
 		}{
 			{"/task", http.MethodPost},
+			{"/task", http.MethodDelete},
 		} {
-			if em.e == endpoint && em.m == method {
+			if em.m == method &&
+				(em.e == endpoint ||
+					len(endpoint) > len(em.e) &&
+						em.e == endpoint[:len(em.e)]) {
+
 				return true
 			}
 		}

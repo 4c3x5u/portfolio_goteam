@@ -189,6 +189,7 @@ func main() {
 				token.DecodeAuth,
 				token.DecodeState,
 				dynamoTaskTable.NewDeleter(svcDynamo),
+				token.EncodeState,
 				log,
 			),
 		},

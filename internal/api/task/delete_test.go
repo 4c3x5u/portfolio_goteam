@@ -20,11 +20,13 @@ func TestDeleteHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
 	taskDeleter := &db.FakeDeleter{}
+	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDeleteHandler(
 		decodeAuth.Func,
 		decodeState.Func,
 		taskDeleter,
+		encodeState.Func,
 		log,
 	)
 
@@ -33,10 +35,12 @@ func TestDeleteHandler(t *testing.T) {
 		authToken      string
 		errDecodeAuth  error
 		auth           token.Auth
-		stateToken     string
+		inState        string
 		errDecodeState error
-		state          token.State
+		inStateDecoded token.State
 		errDeleteTask  error
+		errEncodeState error
+		outState       string
 		wantStatus     int
 		assertFunc     func(*testing.T, *http.Response, string)
 	}{
@@ -45,10 +49,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{},
-			state:          token.State{},
-			stateToken:     "",
+			inStateDecoded: token.State{},
+			inState:        "",
 			errDecodeState: nil,
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusUnauthorized,
 			assertFunc:     assert.OnResErr("Auth token not found."),
 		},
@@ -57,10 +63,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  errors.New("encode auth failed"),
 			auth:           token.Auth{},
-			stateToken:     "",
+			inState:        "",
 			errDecodeState: nil,
-			state:          token.State{},
+			inStateDecoded: token.State{},
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusUnauthorized,
 			assertFunc:     assert.OnResErr("Invalid auth token."),
 		},
@@ -69,10 +77,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: false},
-			stateToken:     "",
+			inState:        "",
 			errDecodeState: nil,
-			state:          token.State{},
+			inStateDecoded: token.State{},
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only board admins can delete tasks.",
@@ -83,10 +93,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: true},
-			stateToken:     "",
+			inState:        "",
 			errDecodeState: nil,
-			state:          token.State{},
+			inStateDecoded: token.State{},
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusBadRequest,
 			assertFunc:     assert.OnResErr("State token not found."),
 		},
@@ -95,10 +107,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
+			inState:        "nonempty",
 			errDecodeState: errors.New("encode state failed"),
-			state:          token.State{},
+			inStateDecoded: token.State{},
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusBadRequest,
 			assertFunc:     assert.OnResErr("Invalid state token."),
 		},
@@ -108,10 +122,12 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
+			inState:        "nonempty",
 			errDecodeState: nil,
-			state:          token.State{},
+			inStateDecoded: token.State{},
 			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "",
 			wantStatus:     http.StatusBadRequest,
 			assertFunc:     assert.OnResErr("Invalid task ID."),
 		},
@@ -120,40 +136,67 @@ func TestDeleteHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
+			inState:        "nonempty",
 			errDecodeState: nil,
-			state: token.State{
+			inStateDecoded: token.State{
 				Boards: []token.Board{{Columns: []token.Column{{
 					Tasks: []token.Task{{ID: "foo"}},
 				}}}},
 			},
-			errDeleteTask: errors.New("delete task failed"),
-			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    assert.OnLoggedErr("delete task failed"),
+			errDeleteTask:  errors.New("delete task failed"),
+			errEncodeState: nil,
+			outState:       "",
+			wantStatus:     http.StatusInternalServerError,
+			assertFunc:     assert.OnLoggedErr("delete task failed"),
+		},
+		{
+			name:           "ErrEncodeState",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			auth:           token.Auth{IsAdmin: true},
+			inState:        "nonempty",
+			errDecodeState: nil,
+			inStateDecoded: token.State{
+				Boards: []token.Board{{Columns: []token.Column{{
+					Tasks: []token.Task{{ID: "foo"}},
+				}}}},
+			},
+			errDeleteTask:  nil,
+			errEncodeState: errors.New("encode state failed"),
+			outState:       "",
+			wantStatus:     http.StatusInternalServerError,
+			assertFunc:     assert.OnLoggedErr("encode state failed"),
 		},
 		{
 			name:           "Success",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			auth:           token.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
+			inState:        "nonempty",
 			errDecodeState: nil,
-			state: token.State{
+			inStateDecoded: token.State{
 				Boards: []token.Board{{Columns: []token.Column{{
 					Tasks: []token.Task{{ID: "foo"}},
 				}}}},
 			},
-			errDeleteTask: nil,
-			wantStatus:    http.StatusOK,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			errDeleteTask:  nil,
+			errEncodeState: nil,
+			outState:       "asdfkljhadfskjsdfah",
+			wantStatus:     http.StatusOK,
+			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+				ckState := r.Cookies()[0]
+				assert.Equal(t.Error, ckState.Value, "asdfkljhadfskjsdfah")
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Decoded = c.auth
 			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Decoded = c.state
+			decodeState.Decoded = c.inStateDecoded
 			decodeState.Err = c.errDecodeState
 			taskDeleter.Err = c.errDeleteTask
+			encodeState.Encoded = c.outState
+			encodeState.Err = c.errEncodeState
 
 			r := httptest.NewRequest("", "/?id=foo", nil)
 			if c.authToken != "" {
@@ -162,7 +205,7 @@ func TestDeleteHandler(t *testing.T) {
 					Value: c.authToken,
 				})
 			}
-			if c.stateToken != "" {
+			if c.inState != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  "state-token",
 					Value: c.authToken,

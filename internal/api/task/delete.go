@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -20,6 +21,7 @@ type DeleteHandler struct {
 	decodeAuth  token.DecodeFunc[token.Auth]
 	decodeState token.DecodeFunc[token.State]
 	taskDeleter db.Deleter
+	encodeState token.EncodeFunc[token.State]
 	log         pkgLog.Errorer
 }
 
@@ -28,12 +30,14 @@ func NewDeleteHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
 	taskDeleter db.Deleter,
+	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
 		decodeAuth:  decodeAuth,
 		decodeState: decodeState,
 		taskDeleter: taskDeleter,
+		encodeState: encodeState,
 		log:         log,
 	}
 }
@@ -144,10 +148,39 @@ func (h DeleteHandler) Handle(
 		}
 	}
 
-	// Delete the record from task table that has the given ID.
+	// delete task from DynamoDB
 	if err = h.taskDeleter.Delete(r.Context(), id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
+
+	// update state
+	for _, b := range state.Boards {
+		for _, c := range b.Columns {
+			var tasks []token.Task
+			for _, t := range c.Tasks {
+				if t.ID != id {
+					tasks = append(tasks, t)
+				}
+			}
+			c.Tasks = tasks
+		}
+	}
+
+	// encode state into cookie
+	exp := time.Now().Add(token.DefaultDuration).UTC()
+	tkState, err := h.encodeState(exp, state)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.StateName,
+		Value:    tkState,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
 }

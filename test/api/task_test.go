@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/kxplxn/goteam/internal/api"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
@@ -67,7 +68,8 @@ func TestTaskHandler(t *testing.T) {
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				taskTable.NewDeleter(db),
+				dynamoTaskTable.NewDeleter(svcDynamo),
+				token.EncodeState,
 				log,
 			),
 		},
@@ -577,71 +579,66 @@ func TestTaskHandler(t *testing.T) {
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
-				name:           "IDEmpty",
+				name:           "NoAuth",
 				id:             "",
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
+				authFunc:       func(*http.Request) {},
+				wantStatusCode: http.StatusUnauthorized,
+				assertFunc:     assert.OnResErr("Auth token not found."),
 			},
 			{
-				name:           "IDNotInt",
-				id:             "A",
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task ID must be an integer."),
-			},
-			{
-				name:           "TaskNotFound",
-				id:             "1001",
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusNotFound,
-				assertFunc:     assert.OnResErr("Task not found."),
-			},
-			{
-				name:           "WrongTeam",
-				id:             "8",
-				authFunc:       addCookieAuth(jwtTeam2Admin),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"You do not have access to this board.",
-				),
+				name:           "InvalidAuth",
+				id:             "",
+				authFunc:       addCookieAuth("asdfasdf"),
+				wantStatusCode: http.StatusUnauthorized,
+				assertFunc:     assert.OnResErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
-				id:             "8",
-				authFunc:       addCookieAuth(jwtTeam1Member),
+				id:             "",
+				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only board admins can delete tasks.",
 				),
 			},
 			{
-				name:           "OK",
-				id:             "9",
-				authFunc:       addCookieAuth(jwtTeam1Admin),
+				name: "InvalidID",
+				id:   "1001",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnResErr("Invalid task ID."),
+			},
+			{
+				name: "OK",
+				id:   "c684a6a0-404d-46fa-9fa5-1497f9874567",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					var taskCount int
-					err := db.QueryRow(
-						"SELECT COUNT(*) FROM app.task WHERE id = 9",
-					).Scan(&taskCount)
-					if err != nil {
-						t.Fatal(err)
-					}
-					assert.Equal(t.Error, taskCount, 0)
-					var subtaskCount int
-					err = db.QueryRow(
-						"SELECT COUNT(*) FROM app.subtask WHERE taskID = 9",
-					).Scan(&taskCount)
-					assert.Equal(t.Error, subtaskCount, 0)
+					out, err := svcDynamo.GetItem(
+						context.Background(),
+						&dynamodb.GetItemInput{
+							TableName: &taskTableName,
+							Key: map[string]types.AttributeValue{
+								"ID": &types.AttributeValueMemberS{
+									Value: "c684a6a0-404d-46fa-9fa5-1497f9874" +
+										"567",
+								},
+							},
+						},
+					)
+					assert.Nil(t.Fatal, err)
+					assert.Equal(t.Fatal, len(out.Item), 0)
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				r, err := http.NewRequest(http.MethodDelete, "?id="+c.id, nil)
-				if err != nil {
-					t.Fatal(err)
-				}
+				r := httptest.NewRequest(http.MethodDelete, "/task?id="+c.id, nil)
 				c.authFunc(r)
 				w := httptest.NewRecorder()
 

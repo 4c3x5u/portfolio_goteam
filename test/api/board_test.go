@@ -84,7 +84,7 @@ func TestBoardHandler(t *testing.T) {
 					http.MethodPatch,
 				} {
 					t.Run(method, func(t *testing.T) {
-						req := httptest.NewRequest(method, "/", nil)
+						req := httptest.NewRequest(method, "/board", nil)
 						c.authFunc(req)
 						w := httptest.NewRecorder()
 
