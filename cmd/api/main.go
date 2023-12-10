@@ -158,7 +158,6 @@ func main() {
 		},
 	))
 
-	taskIDValidator := taskAPI.NewIDValidator()
 	taskTitleValidator := taskAPI.NewTitleValidator()
 	taskSelector := taskTable.NewSelector(db)
 	mux.Handle("/task", api.NewHandler(
@@ -174,9 +173,9 @@ func main() {
 				token.EncodeState,
 				log,
 			),
-			http.MethodPatch: taskAPI.NewPATCHHandler(
+			http.MethodPatch: taskAPI.NewPatchHandler(
 				token.DecodeAuth,
-				taskIDValidator,
+				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
 				taskSelector,

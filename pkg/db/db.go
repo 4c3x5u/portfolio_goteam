@@ -9,21 +9,19 @@ import (
 )
 
 var (
-	// ErrNoItem means that no items were found.
+	// ErrNoItem means that the item was not found in the table.
 	ErrNoItem = errors.New("item not found")
 
-	// ErrDupKey means that operation does not allow an update on an existing
-	// item and the key passed in was not unique.
+	// ErrDupKey means that the item already exists in the table.
 	ErrDupKey = errors.New("duplicate key")
 )
 
-// Retriever defines a type that can retrieve an item from a DynamoDB table by
-// a string value.
+// Retriever defines a type that can retrieve an item from a DynamoDB table.
 type Retriever[T any] interface {
 	Retrieve(context.Context, string) (T, error)
 }
 
-// Creator defines a type that can insert a new item into a DynamoDB table.
+// Inserter defines a type that can insert an item into a DynamoDB table.
 type Inserter[T any] interface {
 	Insert(context.Context, T) error
 }
@@ -40,7 +38,7 @@ type Deleter interface {
 
 // DynamoItemGetter defines a type that can be used to get an item from a
 // DynamoDB table. It is used to dependency-inject the DynamoDB client into
-// Retriever.
+// Retrievers.
 type DynamoItemGetter interface {
 	GetItem(
 		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
@@ -49,7 +47,7 @@ type DynamoItemGetter interface {
 
 // DynamoItemPutter defines a type that can be used to put an item into a
 // DynamoDB table. It is used to dependency-inject the DynamoDB client into
-// Inserter and Updater.
+// Inserters and Updaters.
 type DynamoItemPutter interface {
 	PutItem(
 		context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
@@ -58,7 +56,7 @@ type DynamoItemPutter interface {
 
 // DynamoItemDeleter defines a type that can be used to delete an item from a
 // DynamoDB table. It is used to dependency-inject the DynamoDB client into
-// Deleter.
+// Deleters.
 type DynamoItemDeleter interface {
 	DeleteItem(
 		context.Context, *dynamodb.DeleteItemInput, ...func(*dynamodb.Options),

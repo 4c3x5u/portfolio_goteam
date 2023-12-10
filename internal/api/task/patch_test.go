@@ -18,11 +18,10 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestPATCHHandler tests the Handle method of PATCHHandler to assert that it
-// behaves correctly in all possible scenarios.
-func TestPATCHHandler(t *testing.T) {
+// TestPatchHandler tests the PATCH handler.
+func TestPatchHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
-	idValidator := &api.FakeStringValidator{}
+	decodeState := &token.FakeDecode[token.State]{}
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
 	taskSelector := &taskTable.FakeSelector{}
@@ -30,9 +29,9 @@ func TestPATCHHandler(t *testing.T) {
 	boardSelector := &boardTable.FakeSelector{}
 	taskUpdater := &taskTable.FakeUpdater{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPATCHHandler(
+	sut := NewPatchHandler(
 		decodeAuth.Func,
-		idValidator,
+		decodeState.Func,
 		titleValidator,
 		subtTitleValidator,
 		taskSelector,
@@ -47,7 +46,9 @@ func TestPATCHHandler(t *testing.T) {
 		authToken            string
 		authDecoded          token.Auth
 		errDecodeAuth        error
-		errValidateID        error
+		stateToken           string
+		stateDecoded         token.State
+		errDecodeState       error
 		errValidateTitle     error
 		errValidateSubtTitle error
 		errSelectTask        error
@@ -63,7 +64,9 @@ func TestPATCHHandler(t *testing.T) {
 			authToken:            "",
 			authDecoded:          token.Auth{},
 			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			stateToken:           "",
+			stateDecoded:         token.State{},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -79,7 +82,9 @@ func TestPATCHHandler(t *testing.T) {
 			authToken:            "nonempty",
 			authDecoded:          token.Auth{},
 			errDecodeAuth:        token.ErrInvalid,
-			errValidateID:        nil,
+			stateToken:           "",
+			stateDecoded:         token.State{},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -95,7 +100,9 @@ func TestPATCHHandler(t *testing.T) {
 			authToken:            "nonempty",
 			authDecoded:          token.Auth{IsAdmin: false},
 			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			stateToken:           "",
+			stateDecoded:         token.State{},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -109,65 +116,70 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "TaskIDEmpty",
+			name:                 "NoState",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:          token.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
-			errValidateID:        api.ErrEmpty,
+			stateToken:           "",
+			stateDecoded:         token.State{},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
 			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
+			board:                boardTable.Record{},
 			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Task ID cannot be empty.",
-			),
+			assertFunc:           assert.OnResErr("State token not found."),
 		},
 		{
-			name:                 "TaskIDNotInt",
+			name:                 "ErrDecodeState",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:          token.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
-			errValidateID:        api.ErrNotInt,
+			stateToken:           "nonempty",
+			stateDecoded:         token.State{},
+			errDecodeState:       token.ErrInvalid,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
 			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
+			board:                boardTable.Record{},
 			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Task ID must be an integer.",
-			),
+			assertFunc:           assert.OnResErr("Invalid state token."),
 		},
+		// task id is invalid when it is not found in state
 		{
-			name:                 "TaskIDUnexpectedErr",
+			name:                 "TaskIDInvalid",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:          token.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
-			errValidateID:        api.ErrTooLong,
+			stateToken:           "nonempty",
+			stateDecoded:         token.State{},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
 			errSelectColumn:      nil,
-			board:                boardTable.Record{TeamID: 21},
+			board:                boardTable.Record{},
 			boardSelectorErr:     nil,
 			taskUpdaterErr:       nil,
-			wantStatusCode:       http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				api.ErrTooLong.Error(),
-			),
+			wantStatusCode:       http.StatusBadRequest,
+			assertFunc:           assert.OnResErr("Invalid task ID."),
 		},
 		{
-			name:                 "TaskTitleEmpty",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "TaskTitleEmpty",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     api.ErrEmpty,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -181,11 +193,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "TaskTitleTooLong",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "TaskTitleTooLong",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     api.ErrTooLong,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -199,11 +215,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "TaskTitleUnexpectedErr",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "TaskTitleUnexpectedErr",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     api.ErrNotInt,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -217,11 +237,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "SubtaskTitleEmpty",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "SubtaskTitleEmpty",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrEmpty,
 			errSelectTask:        nil,
@@ -235,11 +259,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "SubtaskTitleTooLong",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "SubtaskTitleTooLong",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrTooLong,
 			errSelectTask:        nil,
@@ -253,11 +281,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "SubtaskTitleUnexpectedErr",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "SubtaskTitleUnexpectedErr",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: api.ErrNotInt,
 			errSelectTask:        nil,
@@ -271,11 +303,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "TaskNotFound",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "TaskNotFound",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        sql.ErrNoRows,
@@ -287,11 +323,15 @@ func TestPATCHHandler(t *testing.T) {
 			assertFunc:           assert.OnResErr("Task not found."),
 		},
 		{
-			name:                 "TaskSelectorErr",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "TaskSelectorErr",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        sql.ErrConnDone,
@@ -305,11 +345,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "ColumnSelectorErr",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "ColumnSelectorErr",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -321,11 +365,15 @@ func TestPATCHHandler(t *testing.T) {
 			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                 "BoardSelectorErr",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "BoardSelectorErr",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -337,11 +385,15 @@ func TestPATCHHandler(t *testing.T) {
 			assertFunc:           assert.OnLoggedErr(sql.ErrNoRows.Error()),
 		},
 		{
-			name:                 "NoAccess",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "32"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "NoAccess",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "32"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -359,7 +411,11 @@ func TestPATCHHandler(t *testing.T) {
 			authToken:     "nonempty",
 			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
-			errValidateID: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState: nil,
 			// user: userTable.Record{
 			// 	IsAdmin: true, TeamID: 1,
 			// },
@@ -376,11 +432,15 @@ func TestPATCHHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "Success",
-			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true, TeamID: "21"},
-			errDecodeAuth:        nil,
-			errValidateID:        nil,
+			name:          "Success",
+			authToken:     "nonempty",
+			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			errDecodeAuth: nil,
+			stateToken:    "nonempty",
+			stateDecoded: token.State{Boards: []token.Board{{
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			}},
+			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			errSelectTask:        nil,
@@ -395,7 +455,8 @@ func TestPATCHHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Decoded = c.authDecoded
 			decodeAuth.Err = c.errDecodeAuth
-			idValidator.Err = c.errValidateID
+			decodeState.Decoded = c.stateDecoded
+			decodeState.Err = c.errDecodeState
 			titleValidator.Err = c.errValidateTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskSelector.Err = c.errSelectTask
@@ -403,7 +464,7 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelector.Board = c.board
 			boardSelector.Err = c.boardSelectorErr
 			taskUpdater.Err = c.taskUpdaterErr
-			r := httptest.NewRequest("", "/", strings.NewReader(`{
+			r := httptest.NewRequest("", "/?id=qwerty", strings.NewReader(`{
 				"column":      0,
 				"title":       "",
 				"description": "",
@@ -415,6 +476,13 @@ func TestPATCHHandler(t *testing.T) {
 					Value: c.authToken,
 				})
 			}
+			if c.stateToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  "state-token",
+					Value: c.stateToken,
+				})
+			}
+
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")

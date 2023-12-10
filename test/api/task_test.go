@@ -25,7 +25,6 @@ import (
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -33,12 +32,10 @@ import (
 // TestTaskHandler tests the http.Handler for the task API route and asserts
 // that it behaves correctly during various execution paths.
 func TestTaskHandler(t *testing.T) {
-	idValidator := taskAPI.NewIDValidator()
 	titleValidator := taskAPI.NewTitleValidator()
 	taskSelector := taskTable.NewSelector(db)
 	columnSelector := columnTable.NewSelector(db)
 	boardSelector := boardTable.NewSelector(db)
-	userSelector := userTable.NewSelector(db)
 	log := pkgLog.New()
 
 	sut := api.NewHandler(
@@ -54,9 +51,9 @@ func TestTaskHandler(t *testing.T) {
 				token.EncodeState,
 				log,
 			),
-			http.MethodPatch: taskAPI.NewPATCHHandler(
+			http.MethodPatch: taskAPI.NewPatchHandler(
 				token.DecodeAuth,
-				idValidator,
+				token.DecodeState,
 				titleValidator,
 				titleValidator,
 				taskSelector,

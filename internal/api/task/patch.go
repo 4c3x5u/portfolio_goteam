@@ -16,8 +16,8 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// PATCHReq defines the body of PATCH task requests.
-type PATCHReq struct {
+// PatchReq defines the body of PATCH task requests.
+type PatchReq struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Subtasks    []struct {
@@ -27,16 +27,15 @@ type PATCHReq struct {
 	} `json:"subtasks"`
 }
 
-// PATCHResp defines the body of PATCH task responses.
-type PATCHResp struct {
+// PatchResp defines the body of PATCH task responses.
+type PatchResp struct {
 	Error string `json:"error"`
 }
 
-// PATCHHandler is an api.MethodHandler that can be used to handle PATCH
-// requests sent to the task route.
-type PATCHHandler struct {
+// PatchHandler handles PATCH requests sent to the task route.
+type PatchHandler struct {
 	decodeAuth            token.DecodeFunc[token.Auth]
-	idValidator           api.StringValidator
+	decodeState           token.DecodeFunc[token.State]
 	taskTitleValidator    api.StringValidator
 	subtaskTitleValidator api.StringValidator
 	taskSelector          dbaccess.Selector[taskTable.Record]
@@ -46,10 +45,10 @@ type PATCHHandler struct {
 	log                   pkgLog.Errorer
 }
 
-// NewPATCHHandler creates and returns a new PAT  CHHandler.
-func NewPATCHHandler(
+// NewPatchHandler returns a new PatchHandler.
+func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	idValidator api.StringValidator,
+	decodeState token.DecodeFunc[token.State],
 	taskTitleValidator api.StringValidator,
 	subtaskTitleValidator api.StringValidator,
 	taskSelector dbaccess.Selector[taskTable.Record],
@@ -57,10 +56,10 @@ func NewPATCHHandler(
 	boardSelector dbaccess.Selector[boardTable.Record],
 	taskUpdater dbaccess.Updater[taskTable.UpRecord],
 	log pkgLog.Errorer,
-) *PATCHHandler {
-	return &PATCHHandler{
+) *PatchHandler {
+	return &PatchHandler{
 		decodeAuth:            decodeAuth,
-		idValidator:           idValidator,
+		decodeState:           decodeState,
 		taskTitleValidator:    taskTitleValidator,
 		subtaskTitleValidator: subtaskTitleValidator,
 		taskSelector:          taskSelector,
@@ -71,8 +70,8 @@ func NewPATCHHandler(
 	}
 }
 
-// Handle handles the PATCH requests sent to the task route.
-func (h *PATCHHandler) Handle(
+// Handle handles PATCH requests sent to the task route.
+func (h *PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
@@ -108,7 +107,7 @@ func (h *PATCHHandler) Handle(
 	// validate user is admin
 	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(PATCHResp{
+		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Only team admins can edit tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -117,22 +116,29 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	id := r.URL.Query().Get("id")
-	if err := h.idValidator.Validate(id); err != nil {
-		var errMsg string
-		if errors.Is(err, api.ErrEmpty) {
-			errMsg = "Task ID cannot be empty."
-		} else if errors.Is(err, api.ErrNotInt) {
-			errMsg = "Task ID must be an integer."
-		} else {
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "State token not found.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
-			return
 		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
 
+	// decode state token
+	state, err := h.decodeState(ckState.Value)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(PATCHResp{
-			Error: errMsg,
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -140,14 +146,47 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	var reqBody PATCHReq
+	// validate id exists in state
+	id := r.URL.Query().Get("id")
+	var idFound bool
+	for _, b := range state.Boards {
+		for _, c := range b.Columns {
+			for _, t := range c.Tasks {
+				if t.ID == id {
+					idFound = true
+				}
+				if idFound {
+					break
+				}
+			}
+			if idFound {
+				break
+			}
+		}
+		if idFound {
+			break
+		}
+	}
+	if !idFound {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(PatchResp{
+			Error: "Invalid task ID.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	// read request body
+	var reqBody PatchReq
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	// Validate task title and start building a db-insertable task record.
+	// validate task title
 	if err := h.taskTitleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, api.ErrEmpty) {
@@ -161,7 +200,7 @@ func (h *PATCHHandler) Handle(
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(PATCHResp{
+		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -186,7 +225,7 @@ func (h *PATCHHandler) Handle(
 			}
 
 			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(PATCHResp{
+			if err := json.NewEncoder(w).Encode(PatchResp{
 				Error: errMsg,
 			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
@@ -204,7 +243,7 @@ func (h *PATCHHandler) Handle(
 	task, err := h.taskSelector.Select(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(PATCHResp{
+		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Task not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -241,7 +280,7 @@ func (h *PATCHHandler) Handle(
 	}
 	if strconv.Itoa(board.TeamID) != auth.TeamID {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(PATCHResp{
+		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "You do not have access to this board.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

@@ -9,8 +9,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 )
 
-// TestTitleValidator tests the Validate method of TitleValidator to assert that
-// it returns the correct error message based on task title it's given.
+// TestTitleValidator tests the TitleValidator.Validate method.
 func TestTitleValidator(t *testing.T) {
 	sut := NewTitleValidator()
 
@@ -42,34 +41,33 @@ func TestTitleValidator(t *testing.T) {
 	}
 }
 
-// TestIDValidator tests the Validate method of IDValidator to assert
-// that it returns the correct error message based on the board ID it's given.
-func TestIDValidator(t *testing.T) {
-	sut := NewIDValidator()
+// TestColNoValidator tests the ColNoValidator.Validate method.
+func TestColNoValidator(t *testing.T) {
+	sut := NewColNoValidator()
 
 	for _, c := range []struct {
 		name    string
-		id      string
+		colNo   int
 		wantErr error
 	}{
 		{
-			name:    "Empty",
-			id:      "",
-			wantErr: api.ErrEmpty,
+			name:    "ColNoTooSmall",
+			colNo:   -1,
+			wantErr: api.ErrOutOfBounds,
 		},
 		{
-			name:    "NotInt",
-			id:      "A",
-			wantErr: api.ErrNotInt,
+			name:    "ColNoTooBig",
+			colNo:   4,
+			wantErr: api.ErrOutOfBounds,
 		},
 		{
 			name:    "Success",
-			id:      "1",
+			colNo:   2,
 			wantErr: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			err := sut.Validate(c.id)
+			err := sut.Validate(c.colNo)
 			assert.ErrIs(t.Error, err, c.wantErr)
 		})
 	}
