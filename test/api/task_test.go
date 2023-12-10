@@ -55,7 +55,7 @@ func TestTaskHandler(t *testing.T) {
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
-				userSelector,
+				token.DecodeAuth,
 				idValidator,
 				titleValidator,
 				titleValidator,

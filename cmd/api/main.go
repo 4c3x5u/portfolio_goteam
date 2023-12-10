@@ -175,7 +175,7 @@ func main() {
 				log,
 			),
 			http.MethodPatch: taskAPI.NewPATCHHandler(
-				userSelector,
+				token.DecodeAuth,
 				taskIDValidator,
 				taskTitleValidator,
 				taskTitleValidator,
