@@ -116,24 +116,24 @@ func (h DeleteHandler) Handle(
 
 	// validate task ID exists in state
 	id := r.URL.Query().Get("id")
-	var isValid bool
+	var idValid bool
 	for _, b := range state.Boards {
 		for _, c := range b.Columns {
 			for _, t := range c.Tasks {
 				if t.ID == id {
-					isValid = true
+					idValid = true
 					break
 				}
 			}
-			if isValid {
+			if idValid {
 				break
 			}
 		}
-		if isValid {
+		if idValid {
 			break
 		}
 	}
-	if !isValid {
+	if !idValid {
 		w.WriteHeader(http.StatusBadRequest)
 		if err := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Invalid task ID.",

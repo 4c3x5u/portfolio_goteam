@@ -66,10 +66,7 @@ func TestTaskHandler(t *testing.T) {
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
-				idValidator,
-				taskSelector,
-				columnSelector,
-				boardSelector,
+				token.DecodeState,
 				taskTable.NewDeleter(db),
 				log,
 			),

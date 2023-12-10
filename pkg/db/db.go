@@ -33,7 +33,8 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
-type Deleter[T any] interface {
+// Deleter defines a type that can delete an item from a DynamoDB table.
+type Deleter interface {
 	Delete(context.Context, string) error
 }
 

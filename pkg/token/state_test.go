@@ -23,16 +23,13 @@ func TestState(t *testing.T) {
 	}
 
 	t.Run("Encode", func(t *testing.T) {
-		// arrange
 		expiry := time.Now().Add(1 * time.Hour)
 
-		// act
 		token, err := EncodeState(expiry, NewState(boards))
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		// assert
 		claims := jwt.MapClaims{}
 		if _, err = jwt.ParseWithClaims(token, &claims,
 			func(token *jwt.Token) (any, error) {
@@ -98,8 +95,8 @@ func TestState(t *testing.T) {
 				name: "Success",
 				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt7" +
 					"ImlkIjoiYm9hcmRpZCIsImNvbHVtbnMiOlt7InRhc2tzIjpbeyJpZCI6" +
-					"InRhc2tpZCIsIm9yZGVyIjoyfV19XX1dLCJleHAiOjE3MDIxNTkzNDl9" +
-					".slGGkG39sM9KfMxnBU2Ib9yPBISBvMYxBnaX4NbQjrI",
+					"InRhc2tpZCIsIm9yZGVyIjoyfV19XX1dfQ._LZ3QROcAY0n6LbPsqvUF" +
+					"ugCD9JQ4CYco00BmrS3Ukc",
 				wantBoards: boards,
 				wantErr:    nil,
 			},

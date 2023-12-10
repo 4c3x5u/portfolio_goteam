@@ -30,13 +30,13 @@ func TestDeleteHandler(t *testing.T) {
 	)
 
 	for _, c := range []struct {
+		name           string
 		authToken      string
 		errDecodeAuth  error
 		auth           token.Auth
 		stateToken     string
 		errDecodeState error
 		state          token.State
-		name           string
 		errDeleteTask  error
 		wantStatus     int
 		assertFunc     func(*testing.T, *http.Response, string)

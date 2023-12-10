@@ -34,6 +34,12 @@ type FakeUpdater[T any] struct{ Err error }
 // Update discards params and returns FakeUpdater.Err.
 func (f *FakeUpdater[T]) Update(_ context.Context, _ T) error { return f.Err }
 
+// FakeDeleter is a test fake for Deleter.
+type FakeDeleter struct{ Err error }
+
+// Delete discards params and returns FakeDeleter.Err.
+func (f *FakeDeleter) Delete(_ context.Context) error { return f.Err }
+
 // FakeDynamoItemGetter is a test fake for DynamoItemGetter.
 type FakeDynamoItemGetter struct {
 	Out *dynamodb.GetItemOutput

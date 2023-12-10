@@ -187,10 +187,7 @@ func main() {
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
-				taskIDValidator,
-				taskSelector,
-				columnSelector,
-				boardSelector,
+				token.DecodeState,
 				taskTable.NewDeleter(db),
 				log,
 			),
