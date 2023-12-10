@@ -12,7 +12,7 @@ import (
 )
 
 func TestUpdater(t *testing.T) {
-	ip := &db.FakeDynamoDBPutter{}
+	ip := &db.FakeDynamoItemPutter{}
 	sut := NewUpdater(ip)
 
 	errA := errors.New("failed to put item")

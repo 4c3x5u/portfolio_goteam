@@ -14,10 +14,10 @@ import (
 )
 
 // Updater can be used to update a team in the team table.
-type Updater struct{ ItemPutter db.DynamoDBPutter }
+type Updater struct{ ItemPutter db.DynamoItemPutter }
 
 // NewUpdater creates and returns a new Updater.
-func NewUpdater(ip db.DynamoDBPutter) Updater { return Updater{ItemPutter: ip} }
+func NewUpdater(ip db.DynamoItemPutter) Updater { return Updater{ItemPutter: ip} }
 
 // Update updates a team in the team table.
 func (p Updater) Update(ctx context.Context, team Team) error {

@@ -15,7 +15,7 @@ import (
 )
 
 func TestRetriever(t *testing.T) {
-	ig := &db.FakeDynamoDBGetter{}
+	ig := &db.FakeDynamoItemGetter{}
 	sut := NewRetriever(ig)
 
 	userA := User{

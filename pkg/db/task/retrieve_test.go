@@ -16,7 +16,7 @@ import (
 )
 
 func TestRetriever(t *testing.T) {
-	ig := &db.FakeDynamoDBGetter{}
+	ig := &db.FakeDynamoItemGetter{}
 	sut := NewRetriever(ig)
 
 	errA := errors.New("failed")
@@ -55,7 +55,7 @@ func TestRetriever(t *testing.T) {
 			wantErr:  db.ErrNoItem,
 		},
 		{
-			name: "Err",
+			name: "OK",
 			igOut: &dynamodb.GetItemOutput{
 				Item: map[string]types.AttributeValue{
 					"ID":    &types.AttributeValueMemberS{Value: taskA.ID},

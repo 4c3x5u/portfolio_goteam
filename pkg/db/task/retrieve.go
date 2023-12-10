@@ -13,10 +13,10 @@ import (
 )
 
 // Retriever can be used to retrieve by ID a task from the task table.
-type Retriever struct{ ItemGetter db.DynamoDBGetter }
+type Retriever struct{ ItemGetter db.DynamoItemGetter }
 
 // NewRetriever creates and returns a new Getter.
-func NewRetriever(ig db.DynamoDBGetter) Retriever {
+func NewRetriever(ig db.DynamoItemGetter) Retriever {
 	return Retriever{ItemGetter: ig}
 }
 

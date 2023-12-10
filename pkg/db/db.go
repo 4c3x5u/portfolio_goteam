@@ -33,18 +33,33 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
-// DynamoDBGetter defines a type that can be used to get an item from a DynamoDB
-// table. It is used for dependency-injecting DynamoDB client into Getter.
-type DynamoDBGetter interface {
+type Deleter[T any] interface {
+	Delete(context.Context, string) error
+}
+
+// DynamoItemGetter defines a type that can be used to get an item from a
+// DynamoDB table. It is used to dependency-inject the DynamoDB client into
+// Retriever.
+type DynamoItemGetter interface {
 	GetItem(
 		context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.GetItemOutput, error)
 }
 
-// DynamoDBPutter defines a type that can be used to put an item into a DynamoDB
-// table. It is used for dependency-injecting DynamoDB client into Puttter.
-type DynamoDBPutter interface {
+// DynamoItemPutter defines a type that can be used to put an item into a
+// DynamoDB table. It is used to dependency-inject the DynamoDB client into
+// Inserter and Updater.
+type DynamoItemPutter interface {
 	PutItem(
 		context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.PutItemOutput, error)
+}
+
+// DynamoItemDeleter defines a type that can be used to delete an item from a
+// DynamoDB table. It is used to dependency-inject the DynamoDB client into
+// Deleter.
+type DynamoItemDeleter interface {
+	DeleteItem(
+		context.Context, *dynamodb.DeleteItemInput, ...func(*dynamodb.Options),
+	) (*dynamodb.DeleteItemOutput, error)
 }

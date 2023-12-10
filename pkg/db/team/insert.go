@@ -14,10 +14,10 @@ import (
 )
 
 // Inserter can be used to insert a new team into the team table.
-type Inserter struct{ ItemPutter db.DynamoDBPutter }
+type Inserter struct{ ItemPutter db.DynamoItemPutter }
 
 // NewInserter creates and returns a new Inserter.
-func NewInserter(ip db.DynamoDBPutter) Inserter {
+func NewInserter(ip db.DynamoItemPutter) Inserter {
 	return Inserter{ItemPutter: ip}
 }
 

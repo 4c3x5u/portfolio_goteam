@@ -13,10 +13,10 @@ import (
 )
 
 // Retriever can be used to retrieve by username a user from the user table.
-type Retriever struct{ ItemGetter db.DynamoDBGetter }
+type Retriever struct{ ItemGetter db.DynamoItemGetter }
 
 // NewRetriever creates and returns a new Retriever.
-func NewRetriever(ig db.DynamoDBGetter) Retriever {
+func NewRetriever(ig db.DynamoItemGetter) Retriever {
 	return Retriever{ItemGetter: ig}
 }
 

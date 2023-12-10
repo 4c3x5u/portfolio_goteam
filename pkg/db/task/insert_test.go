@@ -15,7 +15,7 @@ import (
 )
 
 func TestInserter(t *testing.T) {
-	ip := &db.FakeDynamoDBPutter{}
+	ip := &db.FakeDynamoItemPutter{}
 	sut := NewInserter(ip)
 
 	errA := errors.New("failed to put item")

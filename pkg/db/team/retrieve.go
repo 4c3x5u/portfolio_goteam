@@ -13,10 +13,10 @@ import (
 )
 
 // Retriever can be used to retrieve by ID a team from the team table.
-type Retriever struct{ ItemGetter db.DynamoDBGetter }
+type Retriever struct{ ItemGetter db.DynamoItemGetter }
 
 // NewRetriever creates and returns a new Retriever.
-func NewRetriever(ig db.DynamoDBGetter) Retriever { return Retriever{ItemGetter: ig} }
+func NewRetriever(ig db.DynamoItemGetter) Retriever { return Retriever{ItemGetter: ig} }
 
 // Retrieve retrieves by ID a team from the team table.
 func (r Retriever) Retrieve(ctx context.Context, id string) (Team, error) {
