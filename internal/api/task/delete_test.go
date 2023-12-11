@@ -59,9 +59,9 @@ func TestDeleteHandler(t *testing.T) {
 			assertFunc:     assert.OnResErr("Auth token not found."),
 		},
 		{
-			name:           "ErrEncodeAuth",
+			name:           "ErrDecodeAuth",
 			authToken:      "nonempty",
-			errDecodeAuth:  errors.New("encode auth failed"),
+			errDecodeAuth:  errors.New("decode auth failed"),
 			auth:           token.Auth{},
 			inState:        "",
 			errDecodeState: nil,

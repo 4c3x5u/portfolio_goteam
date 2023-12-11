@@ -16,15 +16,12 @@ import (
 	columnAPI "github.com/kxplxn/goteam/internal/api/column"
 	loginAPI "github.com/kxplxn/goteam/internal/api/login"
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
-	subtaskAPI "github.com/kxplxn/goteam/internal/api/subtask"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
 	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	subtaskTable "github.com/kxplxn/goteam/pkg/dbaccess/subtask"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -159,7 +156,6 @@ func main() {
 	))
 
 	taskTitleValidator := taskAPI.NewTitleValidator()
-	taskSelector := taskTable.NewSelector(db)
 	mux.Handle("/task", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
@@ -187,22 +183,6 @@ func main() {
 				dynamoTaskTable.NewDeleter(svcDynamo),
 				token.EncodeState,
 				log,
-			),
-		},
-	))
-
-	mux.Handle("/subtask", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
-			http.MethodPatch: subtaskAPI.NewPATCHHandler(
-				userSelector,
-				subtaskAPI.NewIDValidator(),
-				subtaskTable.NewSelector(db),
-				taskSelector,
-				columnSelector,
-				boardSelector,
-				subtaskTable.NewUpdater(db),
-				pkgLog.New(),
 			),
 		},
 	))
