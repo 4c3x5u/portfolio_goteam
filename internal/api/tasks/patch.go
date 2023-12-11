@@ -1,4 +1,4 @@
-package column
+package tasks
 
 import (
 	"database/sql"
@@ -15,23 +15,23 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-// PATCHReq defines body of PATCH column requests.
-type PATCHReq []Task
+// PatchReq defines body of PATCH tasks requests.
+type PatchReq []Task
 
-// Task represents a task data item in PATCHReq.
+// Task represents an element in PatchReq.
 type Task struct {
 	ID    int `json:"id"`
 	Order int `json:"order"`
 }
 
-// PATCHResp defines the body for PATCH column responses.
-type PATCHResp struct {
+// PatchResp defines the body for PATCH column responses.
+type PatchResp struct {
 	Error string `json:"error"`
 }
 
-// PATCHHandler is an api.MethodHandler that can be used to handle PATCH
-// requests sent to the column route.
-type PATCHHandler struct {
+// PatchHandler is an api.MethodHandler that can be used to handle PATCH
+// requests sent to the tasks route.
+type PatchHandler struct {
 	userSelector   dbaccess.Selector[userTable.Record]
 	idValidator    api.StringValidator
 	columnSelector dbaccess.Selector[columnTable.Record]
@@ -48,8 +48,8 @@ func NewPATCHHandler(
 	boardSelector dbaccess.Selector[boardTable.Record],
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
-) PATCHHandler {
-	return PATCHHandler{
+) PatchHandler {
+	return PatchHandler{
 		userSelector:   userSelector,
 		idValidator:    idValidator,
 		columnSelector: columnSelector,
@@ -59,8 +59,8 @@ func NewPATCHHandler(
 	}
 }
 
-// Handle handles the PATCH requests sent to the column route.
-func (h PATCHHandler) Handle(
+// Handle handles the PATCH requests sent to the tasks route.
+func (h PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// Validate that the user is a team admin.
@@ -68,7 +68,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Username is not recognised."},
+			PatchResp{Error: "Username is not recognised."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -83,7 +83,7 @@ func (h PATCHHandler) Handle(
 	if !user.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Only team admins can move tasks."},
+			PatchResp{Error: "Only team admins can move tasks."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -96,7 +96,7 @@ func (h PATCHHandler) Handle(
 	if err := h.idValidator.Validate(columnID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: err.Error()},
+			PatchResp{Error: err.Error()},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -110,7 +110,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Column not found."},
+			PatchResp{Error: "Column not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -129,7 +129,7 @@ func (h PATCHHandler) Handle(
 	if errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Board not found."},
+			PatchResp{Error: "Board not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -144,7 +144,7 @@ func (h PATCHHandler) Handle(
 	if board.TeamID != user.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "You do not have access to this board."},
+			PatchResp{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -153,7 +153,7 @@ func (h PATCHHandler) Handle(
 	}
 
 	// Decode request body and map it into tasks.
-	var req PATCHReq
+	var req PatchReq
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
@@ -170,7 +170,7 @@ func (h PATCHHandler) Handle(
 	); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Task not found."},
+			PatchResp{Error: "Task not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())

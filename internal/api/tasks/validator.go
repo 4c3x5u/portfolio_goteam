@@ -1,4 +1,4 @@
-package column
+package tasks
 
 import (
 	"errors"

@@ -159,7 +159,7 @@ func TestPOSTHandler(t *testing.T) {
 			userRetriever.Item = c.user
 			userRetriever.Err = c.errRetrieveUser
 			passwordComparer.err = c.errCompareHash
-			encodeAuthToken.Encoded = c.authToken
+			encodeAuthToken.Res = c.authToken
 			encodeAuthToken.Err = c.errGenerateToken
 
 			req := httptest.NewRequest("", "/", strings.NewReader("{}"))

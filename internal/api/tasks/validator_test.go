@@ -1,6 +1,6 @@
 //go:build utest
 
-package column
+package tasks
 
 import (
 	"testing"

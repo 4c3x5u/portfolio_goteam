@@ -13,10 +13,10 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	boardAPI "github.com/kxplxn/goteam/internal/api/board"
-	columnAPI "github.com/kxplxn/goteam/internal/api/column"
 	loginAPI "github.com/kxplxn/goteam/internal/api/login"
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
+	columnAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
 	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
@@ -141,7 +141,7 @@ func main() {
 		},
 	))
 
-	mux.Handle("/column", api.NewHandler(
+	mux.Handle("/tasks", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(

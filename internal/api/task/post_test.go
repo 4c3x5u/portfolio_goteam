@@ -428,15 +428,15 @@ func TestPostHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Decoded = c.authDecoded
+			decodeAuth.Res = c.authDecoded
 			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Decoded = c.inStateDecoded
+			decodeState.Res = c.inStateDecoded
 			decodeState.Err = c.errDecodeInState
 			colNoVdtor.Err = c.errValidateColNo
 			titleVdtor.Err = c.errValidateTaskTitle
 			subtTitleVdtor.Err = c.errValidateSubtTitle
 			taskInserter.Err = c.errInsertTask
-			encodeState.Encoded = c.outStateEncoded
+			encodeState.Res = c.outStateEncoded
 			encodeState.Err = c.errEncodeState
 
 			req := httptest.NewRequest(

@@ -208,12 +208,12 @@ func TestDeleteHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Decoded = c.auth
+			decodeAuth.Res = c.auth
 			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Decoded = c.inStateDecoded
+			decodeState.Res = c.inStateDecoded
 			decodeState.Err = c.errDecodeState
 			taskDeleter.Err = c.errDeleteTask
-			encodeState.Encoded = c.outState
+			encodeState.Res = c.outState
 			encodeState.Err = c.errEncodeState
 
 			r := httptest.NewRequest("", "/?id=foo", nil)

@@ -293,9 +293,9 @@ func TestPatchHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Decoded = c.authDecoded
+			decodeAuth.Res = c.authDecoded
 			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Decoded = c.stateDecoded
+			decodeState.Res = c.stateDecoded
 			decodeState.Err = c.errDecodeState
 			titleValidator.Err = c.errValidateTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle

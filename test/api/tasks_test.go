@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/internal/api"
-	columnAPI "github.com/kxplxn/goteam/internal/api/column"
+	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
@@ -19,15 +19,14 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-func TestColumnAPI(t *testing.T) {
-	// Create board API handler.
+func TestTasksAPI(t *testing.T) {
 	log := pkgLog.New()
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPatch: columnAPI.NewPATCHHandler(
+			http.MethodPatch: tasksAPI.NewPATCHHandler(
 				userTable.NewSelector(db),
-				columnAPI.NewIDValidator(),
+				tasksAPI.NewIDValidator(),
 				columnTable.NewSelector(db),
 				boardTable.NewSelector(db),
 				columnTable.NewUpdater(db),
@@ -69,7 +68,7 @@ func TestColumnAPI(t *testing.T) {
 		for _, c := range []struct {
 			name       string
 			id         string
-			reqBody    columnAPI.PATCHReq
+			reqBody    tasksAPI.PatchReq
 			authFunc   func(*http.Request)
 			statusCode int
 			assertFunc func(*testing.T, *http.Response, string)
@@ -77,7 +76,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "IDEmpty",
 				id:         "",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID cannot be empty."),
@@ -85,7 +84,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "IDNotInt",
 				id:         "A",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Column ID must be an integer."),
@@ -93,7 +92,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "ColumnNotFound",
 				id:         "1001",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Column not found."),
@@ -101,7 +100,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "NotAdmin",
 				id:         "5",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Member),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr("Only team admins can move tasks."),
@@ -109,7 +108,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "NoAccess",
 				id:         "5",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam2Admin),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -119,7 +118,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "TaskNotFound",
 				id:         "5",
-				reqBody:    columnAPI.PATCHReq{{ID: 0, Order: 0}},
+				reqBody:    tasksAPI.PatchReq{{ID: 0, Order: 0}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusNotFound,
 				assertFunc: assert.OnResErr("Task not found."),
@@ -127,7 +126,7 @@ func TestColumnAPI(t *testing.T) {
 			{
 				name:       "Success",
 				id:         "6",
-				reqBody:    columnAPI.PATCHReq{{ID: 5, Order: 2}},
+				reqBody:    tasksAPI.PatchReq{{ID: 5, Order: 2}},
 				authFunc:   addCookieAuth(jwtTeam1Admin),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {

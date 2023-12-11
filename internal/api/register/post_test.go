@@ -248,12 +248,12 @@ func TestHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			userValidator.validationErrs = c.errValidate
-			decodeInvite.Decoded = c.inviteDecoded
+			decodeInvite.Res = c.inviteDecoded
 			decodeInvite.Err = c.errDecodeInvite
 			hasher.hash = c.pwdHash
 			hasher.err = c.errHash
 			userInserter.Err = c.errInsertUser
-			encodeAuth.Encoded = c.authToken
+			encodeAuth.Res = c.authToken
 			encodeAuth.Err = c.errEncodeAuth
 
 			// Prepare request and response recorder.
