@@ -19,10 +19,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-// TestBoardHandler tests the http.Handler for the board API route and asserts
-// that it behaves correctly during various execution paths.
-func TestBoardHandler(t *testing.T) {
-	// Create board API handler.
+func TestBoardAPI(t *testing.T) {
 	userSelector := userTable.NewSelector(db)
 	boardInserter := boardTable.NewInserter(db)
 	nameValidator := boardAPI.NewNameValidator()

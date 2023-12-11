@@ -411,10 +411,7 @@ func TestGETHandler(t *testing.T) {
 			boardSelectorRecursive.Rec = c.activeBoard
 			boardSelectorRecursive.Err = c.boardSelectorRecursiveErr
 
-			r, err := http.NewRequest(http.MethodGet, "?id="+c.boardID, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
+			r := httptest.NewRequest(http.MethodGet, "/?id="+c.boardID, nil)
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "bob123")

@@ -19,9 +19,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-// TestColumnHandler tests the http.Handler for the column API route and asserts
-// that it behaves correctly during various execution paths.
-func TestColumnHandler(t *testing.T) {
+func TestColumnAPI(t *testing.T) {
 	// Create board API handler.
 	log := pkgLog.New()
 	sut := api.NewHandler(

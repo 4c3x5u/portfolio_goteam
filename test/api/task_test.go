@@ -3,9 +3,7 @@
 package api
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -22,14 +20,11 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
-	taskTable "github.com/kxplxn/goteam/pkg/dbaccess/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestTaskHandler tests the http.Handler for the task API route and asserts
-// that it behaves correctly during various execution paths.
-func TestTaskHandler(t *testing.T) {
+func TestTaskAPI(t *testing.T) {
 	titleValidator := taskAPI.NewTitleValidator()
 	log := pkgLog.New()
 
@@ -78,10 +73,7 @@ func TestTaskHandler(t *testing.T) {
 					http.MethodPost, http.MethodPatch, http.MethodDelete,
 				} {
 					t.Run(httpMethod, func(t *testing.T) {
-						req, err := http.NewRequest(httpMethod, "", nil)
-						if err != nil {
-							t.Fatal(err)
-						}
+						req := httptest.NewRequest(httpMethod, "/", nil)
 						c.authFunc(req)
 						w := httptest.NewRecorder()
 
@@ -315,16 +307,13 @@ func TestTaskHandler(t *testing.T) {
 				req := httptest.NewRequest(
 					http.MethodPost, "/task", strings.NewReader(c.reqBody),
 				)
-
 				c.authFunc(req)
-
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
+
 				res := w.Result()
-
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
 				c.assertFunc(t, res, "")
 			})
 		}
@@ -334,57 +323,67 @@ func TestTaskHandler(t *testing.T) {
 		for _, c := range []struct {
 			name           string
 			taskID         string
-			reqBody        map[string]any
+			reqBody        string
 			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, string)
 		}{
 			{
-				name:   "TaskIDEmpty",
-				taskID: "",
-				reqBody: map[string]any{
-					"title":       "",
+				name:   "NotAdmin",
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
+					"title":       "Some Task",
 					"description": "",
-					"subtasks":    []map[string]any{},
-				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task ID cannot be empty."),
+					"subtasks":    [{"title": "Some Subtask"}]
+				}`,
+				authFunc:       addCookieAuth(tkTeam1Member),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can edit tasks.",
+				),
 			},
 			{
-				name:   "TaskIDNotInt",
-				taskID: "A",
-				reqBody: map[string]any{
+				name:   "InvalidTaskID",
+				taskID: "",
+				reqBody: `{
 					"title":       "",
 					"description": "",
-					"subtasks":    []map[string]any{},
+					"subtasks":    []
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task ID must be an integer."),
+				assertFunc:     assert.OnResErr("Invalid task ID."),
 			},
 			{
 				name:   "TaskTitleEmpty",
-				taskID: "0",
-				reqBody: map[string]any{
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
 					"title":       "",
 					"description": "",
-					"subtasks":    []map[string]any{},
+					"subtasks":    []
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
 			},
 			{
 				name:   "TaskTitleTooLong",
-				taskID: "0",
-				reqBody: map[string]any{
-					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasd" +
-						"qweasd",
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
+					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					"description": "",
-					"subtasks":    []map[string]any{},
+					"subtasks":    []
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Task title cannot be longer than 50 characters.",
@@ -392,15 +391,16 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name:   "SubtaskTitleEmpty",
-				taskID: "0",
-				reqBody: map[string]any{
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
 					"title":       "Some Task",
 					"description": "",
-					"subtasks": []map[string]any{
-						{"title": ""},
-					},
+					"subtasks":    [{"title": ""}]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be empty.",
@@ -408,152 +408,90 @@ func TestTaskHandler(t *testing.T) {
 			},
 			{
 				name:   "SubtaskTitleTooLong",
-				taskID: "0",
-				reqBody: map[string]any{
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
 					"title":       "Some Task",
 					"description": "",
-					"subtasks": []map[string]any{{
-						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqwea" +
-							"sdqweasd",
-					}},
+					"subtasks": [{
+						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
+					}]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Subtask title cannot be longer than 50 characters.",
 				),
 			},
 			{
-				name:   "TaskNotFound",
-				taskID: "1001",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"subtasks":    []map[string]any{{"title": "Some Subtask"}},
-				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
-				wantStatusCode: http.StatusNotFound,
-				assertFunc:     assert.OnResErr("Task not found."),
-			},
-			{
-				name:   "WrongTeam",
-				taskID: "7",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"subtasks": []map[string]any{{
-						"title": "Some Subtask",
-					}},
-				},
-				authFunc:       addCookieAuth(jwtTeam2Admin),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"You do not have access to this board.",
-				),
-			},
-			{
-				name:   "NotAdmin",
-				taskID: "8",
-				reqBody: map[string]any{
-					"title":       "Some Task",
-					"description": "",
-					"subtasks": []map[string]any{{
-						"title": "Some Subtask",
-					}},
-				},
-				authFunc:       addCookieAuth(jwtTeam1Member),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"Only team admins can edit tasks.",
-				),
-			},
-			{
 				name:   "OK",
-				taskID: "8",
-				reqBody: map[string]any{
+				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				reqBody: `{
 					"title":       "Some Task",
 					"description": "Some Description",
-					"subtasks": []map[string]any{
+					"subtasks": [
 						{
 							"title": "Some Subtask",
-							"order": 1,
-							"done":  false,
+							"done":  false
 						},
 						{
 							"title": "Some Other Subtask",
-							"order": 2,
-							"done":  true,
-						},
-					},
+							"done":  true
+						}
+                    ]
+				}`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
 				},
-				authFunc:       addCookieAuth(jwtTeam1Admin),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					var (
-						title       string
-						description *string
-						columnID    int
-						order       int
+					out, err := svcDynamo.GetItem(
+						context.Background(),
+						&dynamodb.GetItemInput{
+							TableName: &taskTableName,
+							Key: map[string]types.AttributeValue{
+								"ID": &types.AttributeValueMemberS{
+									Value: "e0021a56-6a1e-4007-b773-395d3991f" +
+										"b7e",
+								},
+							},
+						},
 					)
-					if err := db.QueryRow(
-						`SELECT title, description, columnID, "order" `+
-							`FROM app.task WHERE id = 8`,
-					).Scan(&title, &description, &columnID, &order); err != nil {
-						t.Error(err)
-					}
+					assert.Nil(t.Fatal, err)
 
-					assert.Equal(t.Error, title, "Some Task")
-					assert.Equal(t.Error, *description, "Some Description")
+					var task dynamoTaskTable.Task
+					err = attributevalue.UnmarshalMap(out.Item, &task)
+					assert.Nil(t.Fatal, err)
 
-					rows, err := db.Query(
-						`SELECT title, "order", isDone FROM app.subtask WHERE taskID = 8`,
+					assert.Equal(t.Error, task.Title, "Some Task")
+					assert.Equal(t.Error, task.Description, "Some Description")
+					assert.Equal(t.Error,
+						task.Subtasks[0].Title, "Some Subtask",
 					)
-					if err != nil {
-						t.Fatal(err)
-					}
-					var subtasks []taskTable.Subtask
-					for rows.Next() {
-						var subtask taskTable.Subtask
-						if err := rows.Scan(
-							&subtask.Title, &subtask.Order, &subtask.IsDone,
-						); err != nil {
-							t.Fatal(err)
-						}
-						subtasks = append(subtasks, subtask)
-					}
-					assert.Equal(t.Error, len(subtasks), 2)
-					assert.Equal(t.Error, subtasks[0].Title, "Some Subtask")
-					assert.Equal(t.Error, subtasks[0].Order, 1)
-					assert.True(t.Error, !subtasks[0].IsDone)
-					assert.Equal(t.Error, "Some Other Subtask", subtasks[1].Title)
-					assert.Equal(t.Error, 2, subtasks[1].Order)
-					assert.True(t.Error, subtasks[1].IsDone)
+					assert.True(t.Error, !task.Subtasks[0].IsDone)
+					assert.Equal(t.Error,
+						task.Subtasks[1].Title, "Some Other Subtask",
+					)
+					assert.True(t.Error, task.Subtasks[1].IsDone)
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBodyBytes, err := json.Marshal(c.reqBody)
-				if err != nil {
-					t.Fatal(err)
-				}
-				req, err := http.NewRequest(
+				req := httptest.NewRequest(
 					http.MethodPatch,
-					"?id="+c.taskID,
-					bytes.NewReader(reqBodyBytes),
+					"/task?id="+c.taskID,
+					strings.NewReader(c.reqBody),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
-
 				c.authFunc(req)
-
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
+
 				res := w.Result()
-
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
 				c.assertFunc(t, res, "")
 			})
 		}
@@ -632,10 +570,9 @@ func TestTaskHandler(t *testing.T) {
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, r)
+
 				res := w.Result()
-
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
 				c.assertFunc(t, res, "")
 			})
 		}

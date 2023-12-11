@@ -18,9 +18,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestLoginHandler tests the http.Handler for the login API route and asserts
-// that it behaves correctly during various execution paths.
-func TestLoginHandler(t *testing.T) {
+func TestLoginAPI(t *testing.T) {
 	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
 		userTable.NewRetriever(svcDynamo),

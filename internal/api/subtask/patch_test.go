@@ -3,11 +3,10 @@
 package subtask
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kxplxn/goteam/internal/api"
@@ -267,14 +266,9 @@ func TestPATCHHandler(t *testing.T) {
 			boardSelector.Err = c.boardSelectorErr
 			subtaskUpdater.Err = c.subtaskUpdaterErr
 
-			reqBody, err := json.Marshal(map[string]any{"done": false})
-			if err != nil {
-				t.Fatal(err)
-			}
-			r, err := http.NewRequest("", "?id=", bytes.NewReader(reqBody))
-			if err != nil {
-				t.Fatal(err)
-			}
+			r := httptest.NewRequest("", "/?id=", strings.NewReader(
+				`{"done": false}`,
+			))
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")

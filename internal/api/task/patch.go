@@ -27,7 +27,8 @@ type PatchResp struct {
 	Error string `json:"error"`
 }
 
-// PatchHandler handles PATCH requests sent to the task route.
+// PatchHandler is an api.MethodHandler that can handle PATCH requests sent to
+// the task route.
 type PatchHandler struct {
 	decodeAuth         token.DecodeFunc[token.Auth]
 	decodeState        token.DecodeFunc[token.State]
@@ -231,7 +232,7 @@ func (h *PatchHandler) Handle(
 		)
 	}
 
-	// Update the task and subtasks in the database.
+	// update task in task table
 	if err = h.taskUpdater.Update(r.Context(), taskTable.NewTask(
 		id, reqBody.Title, reqBody.Description, order, subtasks, boardID, colNo,
 	)); errors.Is(err, db.ErrNoItem) {
@@ -249,4 +250,7 @@ func (h *PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+
+	// no need to update state token as it does not store any of the updated
+	// fields and the frontend will have updated its own state already
 }

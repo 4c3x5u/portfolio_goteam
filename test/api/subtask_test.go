@@ -3,10 +3,9 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/kxplxn/goteam/internal/api"
@@ -21,9 +20,7 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
-// TestSubtaskHandler tests the http.Handler for the subtask API route and
-// asserts that it behaves correctly during various execution paths.
-func TestSubtaskHandler(t *testing.T) {
+func TestSubtaskAPI(t *testing.T) {
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
@@ -104,16 +101,9 @@ func TestSubtaskHandler(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				reqBody, err := json.Marshal(map[string]any{"done": true})
-				if err != nil {
-					t.Fatal(err)
-				}
-				r, err := http.NewRequest(
-					http.MethodPatch, "?id="+c.id, bytes.NewReader(reqBody),
+				r := httptest.NewRequest(http.MethodPatch, "/?id="+c.id,
+					strings.NewReader(`{"done": true}`),
 				)
-				if err != nil {
-					t.Fatal(err)
-				}
 				c.authFunc(r)
 				w := httptest.NewRecorder()
 

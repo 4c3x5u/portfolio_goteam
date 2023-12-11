@@ -25,9 +25,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestRegisterHandler tests the http.Handler for the register API route and
-// asserts that it behaves correctly during various execution paths.
-func TestRegisterHandler(t *testing.T) {
+func TestRegisterAPI(t *testing.T) {
 	sut := registerAPI.NewPostHandler(
 		registerAPI.NewUserValidator(
 			registerAPI.NewUsernameValidator(),

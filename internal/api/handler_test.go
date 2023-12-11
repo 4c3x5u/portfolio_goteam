@@ -34,10 +34,7 @@ func TestHandler(t *testing.T) {
 			http.MethodTrace,
 		} {
 			t.Run(httpMethod, func(t *testing.T) {
-				req, err := http.NewRequest(httpMethod, "", nil)
-				if err != nil {
-					t.Fatal(err)
-				}
+				req := httptest.NewRequest(httpMethod, "/", nil)
 				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, req)
@@ -64,14 +61,11 @@ func TestHandler(t *testing.T) {
 		authTokenValidator.Sub = ""
 
 		// Prepare request and response recorder.
-		req, err := http.NewRequest(http.MethodPost, "", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
+		r := httptest.NewRequest(http.MethodPost, "/", nil)
 		w := httptest.NewRecorder()
 
 		// Handle request with sut and get the result.
-		sut.ServeHTTP(w, req)
+		sut.ServeHTTP(w, r)
 		res := w.Result()
 
 		// Assert on the status code.
@@ -92,15 +86,12 @@ func TestHandler(t *testing.T) {
 				authTokenValidator.Sub = wantSub
 
 				// Prepare request and response recorder.
-				req, err := http.NewRequest(httpMethod, "", nil)
-				if err != nil {
-					t.Fatal(err)
-				}
-				req.AddCookie(&http.Cookie{Name: auth.CookieName, Value: ""})
+				r := httptest.NewRequest(httpMethod, "/", nil)
+				r.AddCookie(&http.Cookie{Name: auth.CookieName, Value: ""})
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.
-				sut.ServeHTTP(w, req)
+				sut.ServeHTTP(w, r)
 				res := w.Result()
 
 				// Assert on the status code.
@@ -108,7 +99,7 @@ func TestHandler(t *testing.T) {
 
 				fakeMethodHandler := methodHandler.(*FakeMethodHandler)
 				assert.Equal(t.Error, fakeMethodHandler.InResponseWriter, w)
-				assert.Equal(t.Error, fakeMethodHandler.InReq, req)
+				assert.Equal(t.Error, fakeMethodHandler.InReq, r)
 				assert.Equal(t.Error, fakeMethodHandler.InSub, wantSub)
 			})
 		}
