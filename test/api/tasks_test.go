@@ -15,8 +15,8 @@ import (
 	"github.com/kxplxn/goteam/pkg/auth"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestTasksAPI(t *testing.T) {
@@ -25,7 +25,7 @@ func TestTasksAPI(t *testing.T) {
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
 			http.MethodPatch: tasksAPI.NewPATCHHandler(
-				userTable.NewSelector(db),
+				token.DecodeAuth,
 				tasksAPI.NewIDValidator(),
 				columnTable.NewSelector(db),
 				boardTable.NewSelector(db),

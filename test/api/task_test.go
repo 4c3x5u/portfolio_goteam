@@ -525,7 +525,7 @@ func TestTaskAPI(t *testing.T) {
 				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
-					"Only board admins can delete tasks.",
+					"Only team admins can delete tasks.",
 				),
 			},
 			{

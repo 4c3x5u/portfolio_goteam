@@ -11,8 +11,8 @@ import (
 	"github.com/kxplxn/goteam/pkg/dbaccess"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // PatchReq defines body of PATCH tasks requests.
@@ -32,7 +32,7 @@ type PatchResp struct {
 // PatchHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the tasks route.
 type PatchHandler struct {
-	userSelector   dbaccess.Selector[userTable.Record]
+	decodeAuth     token.DecodeFunc[token.Auth]
 	idValidator    api.StringValidator
 	columnSelector dbaccess.Selector[columnTable.Record]
 	boardSelector  dbaccess.Selector[boardTable.Record]
@@ -42,7 +42,7 @@ type PatchHandler struct {
 
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
-	userSelector dbaccess.Selector[userTable.Record],
+	decodeAuth token.DecodeFunc[token.Auth],
 	idValidator api.StringValidator,
 	columnSelector dbaccess.Selector[columnTable.Record],
 	boardSelector dbaccess.Selector[boardTable.Record],
@@ -50,7 +50,7 @@ func NewPATCHHandler(
 	log pkgLog.Errorer,
 ) PatchHandler {
 	return PatchHandler{
-		userSelector:   userSelector,
+		decodeAuth:     decodeAuth,
 		idValidator:    idValidator,
 		columnSelector: columnSelector,
 		boardSelector:  boardSelector,
@@ -63,32 +63,46 @@ func NewPATCHHandler(
 func (h PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Validate that the user is a team admin.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
+	// get auth token
+	ckAuth, err := r.Cookie(token.AuthName)
+	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: "Username is not recognised."},
-		); err != nil {
+		if encodeErr := json.NewEncoder(w).Encode(PatchResp{
+			Error: "Auth token not found.",
+		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
-	}
-	if err != nil {
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	if !user.IsAdmin {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: "Only team admins can move tasks."},
-		); err != nil {
+
+	// decode auth token
+	auth, err := h.decodeAuth(ckAuth.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Invalid auth token.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
+			return
 		}
-		return
+	}
+
+	// validate user is admin
+	if !auth.IsAdmin {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Only team admins can edit tasks.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
 	}
 
 	// Get and validate the column ID.
@@ -141,7 +155,7 @@ func (h PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	if board.TeamID != user.TeamID {
+	if strconv.Itoa(board.TeamID) != auth.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(
 			PatchResp{Error: "You do not have access to this board."},

@@ -51,7 +51,7 @@ func (h DeleteHandler) Handle(
 	ckAuth, err := r.Cookie(token.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -81,7 +81,7 @@ func (h DeleteHandler) Handle(
 	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Only board admins can delete tasks.",
+			Error: "Only team admins can delete tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -93,7 +93,7 @@ func (h DeleteHandler) Handle(
 	ckState, err := r.Cookie(token.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
 			Error: "State token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)

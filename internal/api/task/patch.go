@@ -65,7 +65,7 @@ func (h *PatchHandler) Handle(
 	ckAuth, err := r.Cookie(token.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if encodeErr := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -82,7 +82,7 @@ func (h *PatchHandler) Handle(
 	auth, err := h.decodeAuth(ckAuth.Value)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		if err = json.NewEncoder(w).Encode(DeleteResp{
+		if err = json.NewEncoder(w).Encode(PatchResp{
 			Error: "Invalid auth token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

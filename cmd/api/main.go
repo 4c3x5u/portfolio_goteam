@@ -145,7 +145,7 @@ func main() {
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPatch: columnAPI.NewPATCHHandler(
-				userSelector,
+				token.DecodeAuth,
 				columnAPI.NewIDValidator(),
 				columnSelector,
 				boardSelector,

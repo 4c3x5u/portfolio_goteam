@@ -156,7 +156,7 @@ func TestPOSTHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
-			userRetriever.Item = c.user
+			userRetriever.Res = c.user
 			userRetriever.Err = c.errRetrieveUser
 			passwordComparer.err = c.errCompareHash
 			encodeAuthToken.Res = c.authToken

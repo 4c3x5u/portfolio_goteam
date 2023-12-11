@@ -14,21 +14,21 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestPATCHHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly in all possible scenarios.
 func TestPATCHHandler(t *testing.T) {
-	userSelector := &userTable.FakeSelector{}
+	decodeAuth := token.FakeDecode[token.Auth]{}
 	idValidator := &api.FakeStringValidator{}
 	columnSelector := &columnTable.FakeSelector{}
 	boardSelector := &boardTable.FakeSelector{}
 	columnUpdater := &columnTable.FakeUpdater{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
-		userSelector,
+		decodeAuth.Func,
 		idValidator,
 		columnSelector,
 		boardSelector,
@@ -38,8 +38,9 @@ func TestPATCHHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name            string
-		user            userTable.Record
-		selectUserErr   error
+		authToken       string
+		errDecodeAuth   error
+		auth            token.Auth
 		idValidatorErr  error
 		column          columnTable.Record
 		selectColumnErr error
@@ -50,9 +51,10 @@ func TestPATCHHandler(t *testing.T) {
 		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:            "UserNotRecognised",
-			user:            userTable.Record{},
-			selectUserErr:   sql.ErrNoRows,
+			name:            "NoAuth",
+			authToken:       "",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -60,27 +62,27 @@ func TestPATCHHandler(t *testing.T) {
 			selectBoardErr:  nil,
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusUnauthorized,
-			assertFunc:      assert.OnResErr("Username is not recognised."),
+			assertFunc:      assert.OnResErr("Auth token not found."),
 		},
 		{
-			name:            "UserSelectorErr",
-			user:            userTable.Record{},
-			selectUserErr:   sql.ErrConnDone,
+			name:            "ErrDecodeAuth",
+			authToken:       "nonempty",
+			errDecodeAuth:   errors.New("decode auth failed"),
+			auth:            token.Auth{},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
 			board:           boardTable.Record{},
 			selectBoardErr:  nil,
 			updateColumnErr: nil,
-			wantStatusCode:  http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
+			wantStatusCode:  http.StatusUnauthorized,
+			assertFunc:      assert.OnResErr("Invalid auth token."),
 		},
 		{
 			name:            "NotAdmin",
-			user:            userTable.Record{IsAdmin: false},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: false},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -89,13 +91,14 @@ func TestPATCHHandler(t *testing.T) {
 			updateColumnErr: nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
-				"Only team admins can move tasks.",
+				"Only team admins can edit tasks.",
 			),
 		},
 		{
 			name:            "IDValidatorErr",
-			user:            userTable.Record{IsAdmin: true},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true},
 			idValidatorErr:  errors.New("invalid id"),
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -107,8 +110,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "ColumnNotFound",
-			user:            userTable.Record{IsAdmin: true},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: sql.ErrNoRows,
@@ -120,8 +124,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "ColumnSelectorErr",
-			user:            userTable.Record{IsAdmin: true},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: sql.ErrConnDone,
@@ -135,8 +140,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "BoardNotFound",
-			user:            userTable.Record{IsAdmin: true},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -148,8 +154,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "BoardSelectorErr",
-			user:            userTable.Record{IsAdmin: true},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -161,8 +168,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "BoardWrongTeam",
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true, TeamID: "1"},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -176,8 +184,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "TaskNotFound",
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true, TeamID: "1"},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -189,8 +198,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "ColumnUpdaterErr",
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true, TeamID: "1"},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -204,8 +214,9 @@ func TestPATCHHandler(t *testing.T) {
 		},
 		{
 			name:            "OK",
-			user:            userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:   nil,
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			auth:            token.Auth{IsAdmin: true, TeamID: "1"},
 			idValidatorErr:  nil,
 			column:          columnTable.Record{},
 			selectColumnErr: nil,
@@ -217,9 +228,8 @@ func TestPATCHHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			// Set pre-determinate return values for sut's dependencies.
-			userSelector.Rec = c.user
-			userSelector.Err = c.selectUserErr
+			decodeAuth.Res = c.auth
+			decodeAuth.Err = c.errDecodeAuth
 			idValidator.Err = c.idValidatorErr
 			columnSelector.Column = c.column
 			columnSelector.Err = c.selectColumnErr
@@ -228,11 +238,17 @@ func TestPATCHHandler(t *testing.T) {
 			columnUpdater.Err = c.updateColumnErr
 
 			// Prepare request and response recorder.
-			req := httptest.NewRequest("", "/", strings.NewReader("[]"))
+			r := httptest.NewRequest("", "/", strings.NewReader("[]"))
+			if c.authToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  "auth-token",
+					Value: c.authToken,
+				})
+			}
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
-			sut.Handle(w, req, "")
+			sut.Handle(w, r, "")
 			res := w.Result()
 
 			// Assert on the status code.

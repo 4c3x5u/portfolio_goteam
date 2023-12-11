@@ -85,7 +85,7 @@ func TestDeleteHandler(t *testing.T) {
 			outState:       "",
 			wantStatus:     http.StatusForbidden,
 			assertFunc: assert.OnResErr(
-				"Only board admins can delete tasks.",
+				"Only team admins can delete tasks.",
 			),
 		},
 		{
