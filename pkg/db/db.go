@@ -31,6 +31,12 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
+// MultiUpdater defines a type that can update multiple items in a DynamoDB
+// table.
+type MultiUpdater[T any] interface {
+	Update(context.Context, []T) error
+}
+
 // Deleter defines a type that can delete an item from a DynamoDB table.
 type Deleter interface {
 	Delete(context.Context, string) error
@@ -61,4 +67,15 @@ type DynamoItemDeleter interface {
 	DeleteItem(
 		context.Context, *dynamodb.DeleteItemInput, ...func(*dynamodb.Options),
 	) (*dynamodb.DeleteItemOutput, error)
+}
+
+// DynamoTransactWriter defines a type that can be used to write multiple items
+// to a DynamoDB table in a transaction. It is used to dependency-inject the
+// DynamoDB client into BatchUpdaters.
+type DynamoTransactWriter interface {
+	TransactWriteItems(
+		context.Context,
+		*dynamodb.TransactWriteItemsInput,
+		...func(*dynamodb.Options),
+	) (*dynamodb.TransactWriteItemsOutput, error)
 }

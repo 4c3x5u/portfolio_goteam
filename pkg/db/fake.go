@@ -10,16 +10,14 @@ import (
 
 // FakeRetriever is a test fake for Retriever.
 type FakeRetriever[T any] struct {
-	Item T
-	Err  error
+	Res T
+	Err error
 }
 
 // Retrieve discards params and returns FakeRetriever.Item and
 // FakeRetriever.Err.
-func (f *FakeRetriever[T]) Retrieve(
-	ctx context.Context, username string,
-) (T, error) {
-	return f.Item, f.Err
+func (f *FakeRetriever[T]) Retrieve(context.Context, string) (T, error) {
+	return f.Res, f.Err
 }
 
 // FakeInserter is a test fake for Inserter.
@@ -79,5 +77,21 @@ type FakeDynamoItemDeleter struct {
 func (f *FakeDynamoItemDeleter) DeleteItem(
 	context.Context, *dynamodb.DeleteItemInput, ...func(*dynamodb.Options),
 ) (*dynamodb.DeleteItemOutput, error) {
+	return f.Out, f.Err
+}
+
+// FakeDynamoTransactWriter is a test fake for DynamoTransactWriter.
+type FakeDynamoTransactWriter struct {
+	Out *dynamodb.TransactWriteItemsOutput
+	Err error
+}
+
+// TransactWriteItems discards the input parameters and returns Out and Err
+// fields set on FakeDynamoTransactWriter.
+func (f *FakeDynamoTransactWriter) TransactWriteItems(
+	context.Context,
+	*dynamodb.TransactWriteItemsInput,
+	...func(*dynamodb.Options),
+) (*dynamodb.TransactWriteItemsOutput, error) {
 	return f.Out, f.Err
 }
