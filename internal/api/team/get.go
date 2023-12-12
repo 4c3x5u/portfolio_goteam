@@ -40,9 +40,17 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// decode auth token
-	_, err = h.decodeAuth(ckAuth.Value)
+	auth, err := h.decodeAuth(ckAuth.Value)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// retrieve team
+	_, err = h.retriever.Retrieve(r.Context(), auth.TeamID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 

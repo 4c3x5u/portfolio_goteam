@@ -17,8 +17,10 @@ import (
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
+	teamAPI "github.com/kxplxn/goteam/internal/api/team"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
+	dynamoTeamTable "github.com/kxplxn/goteam/pkg/db/team"
 	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
@@ -92,6 +94,16 @@ func main() {
 				dynamoUserTable.NewRetriever(svcDynamo),
 				loginAPI.NewPasswordComparator(),
 				token.EncodeAuth,
+				log,
+			),
+		},
+	))
+
+	mux.Handle("/team", api.NewHandler(nil,
+		map[string]api.MethodHandler{
+			http.MethodGet: teamAPI.NewGetHandler(
+				token.DecodeAuth,
+				dynamoTeamTable.NewRetriever(svcDynamo),
 				log,
 			),
 		},

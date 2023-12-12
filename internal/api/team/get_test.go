@@ -27,6 +27,7 @@ func TestGetHandler(t *testing.T) {
 		errRetrieve   error
 		team          teamTable.Team
 		wantStatus    int
+		assertFunc    func(*testing.T, *http.Response, string)
 	}{
 		{
 			name:          "NoAuth",
@@ -36,6 +37,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			team:          teamTable.Team{},
 			wantStatus:    http.StatusUnauthorized,
+			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:          "InvalidAuth",
@@ -45,6 +47,17 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			team:          teamTable.Team{},
 			wantStatus:    http.StatusUnauthorized,
+			assertFunc:    func(*testing.T, *http.Response, string) {},
+		},
+		{
+			name:          "ErrRetrieve",
+			auth:          "nonempty",
+			errDecodeAuth: nil,
+			authDecoded:   token.Auth{},
+			errRetrieve:   errors.New("retrieve failed"),
+			team:          teamTable.Team{},
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("retrieve failed"),
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -64,6 +77,8 @@ func TestGetHandler(t *testing.T) {
 			res := w.Result()
 
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
+
+			c.assertFunc(t, res, log.InMessage)
 		})
 	}
 }
