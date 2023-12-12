@@ -5,43 +5,38 @@ package tasks
 import (
 	"testing"
 
+	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 )
 
-// TestIDValidator tests the Validate method of IDValidator to assert
-// that it returns the correct error message based on the column ID it's given.
-func TestIDValidator(t *testing.T) {
-	sut := NewIDValidator()
+// TestColNoValidator tests the ColNoValidator.Validate method.
+func TestColNoValidator(t *testing.T) {
+	sut := NewColNoValidator()
 
 	for _, c := range []struct {
-		name       string
-		columnID   string
-		wantErrMsg string
+		name    string
+		colNo   int
+		wantErr error
 	}{
 		{
-			name:       "Nil",
-			columnID:   "",
-			wantErrMsg: "Column ID cannot be empty.",
+			name:    "ColNoTooSmall",
+			colNo:   -1,
+			wantErr: api.ErrOutOfBounds,
 		},
 		{
-			name:       "NotInt",
-			columnID:   "A",
-			wantErrMsg: "Column ID must be an integer.",
+			name:    "ColNoTooBig",
+			colNo:   4,
+			wantErr: api.ErrOutOfBounds,
 		},
 		{
-			name:       "Success",
-			columnID:   "12",
-			wantErrMsg: "",
+			name:    "Success",
+			colNo:   2,
+			wantErr: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			err := sut.Validate(c.columnID)
-
-			if c.wantErrMsg == "" {
-				assert.Nil(t.Error, err)
-			} else {
-				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
-			}
+			err := sut.Validate(c.colNo)
+			assert.ErrIs(t.Error, err, c.wantErr)
 		})
 	}
 }

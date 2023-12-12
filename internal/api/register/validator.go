@@ -1,6 +1,8 @@
 package register
 
-import "regexp"
+import (
+	"regexp"
+)
 
 // ReqValidator describes a type that validates a request body and returns
 // validation errors that occur.
@@ -14,10 +16,12 @@ type UserValidator struct {
 }
 
 // NewUserValidator creates and returns a new UserValidator.
-func NewUserValidator(usnVdtor, pwdVdtor StrValidator) UserValidator {
+func NewUserValidator(
+	usernameValidator, passwordValidator StrValidator,
+) UserValidator {
 	return UserValidator{
-		UsernameValidator: usnVdtor,
-		PasswordValidator: pwdVdtor,
+		UsernameValidator: usernameValidator,
+		PasswordValidator: passwordValidator,
 	}
 }
 

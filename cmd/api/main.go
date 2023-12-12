@@ -16,7 +16,7 @@ import (
 	loginAPI "github.com/kxplxn/goteam/internal/api/login"
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
-	columnAPI "github.com/kxplxn/goteam/internal/api/tasks"
+	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	"github.com/kxplxn/goteam/pkg/auth"
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
 	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
@@ -66,7 +66,6 @@ func main() {
 	}
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
 	userSelector := userTable.NewSelector(db)
-	columnSelector := columnTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -144,11 +143,10 @@ func main() {
 	mux.Handle("/tasks", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
-			http.MethodPatch: columnAPI.NewPATCHHandler(
+			http.MethodPatch: tasksAPI.NewPATCHHandler(
 				token.DecodeAuth,
-				columnAPI.NewIDValidator(),
-				columnSelector,
-				boardSelector,
+				token.DecodeState,
+				tasksAPI.NewColNoValidator(),
 				columnTable.NewUpdater(db),
 				log,
 			),

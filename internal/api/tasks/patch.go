@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
 	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
@@ -20,8 +18,9 @@ type PatchReq []Task
 
 // Task represents an element in PatchReq.
 type Task struct {
-	ID    int `json:"id"`
-	Order int `json:"order"`
+	ID    string `json:"id"`
+	Order int    `json:"order"`
+	ColNo int    `json:"columnNumber"`
 }
 
 // PatchResp defines the body for PATCH column responses.
@@ -33,9 +32,8 @@ type PatchResp struct {
 // requests sent to the tasks route.
 type PatchHandler struct {
 	decodeAuth     token.DecodeFunc[token.Auth]
-	idValidator    api.StringValidator
-	columnSelector dbaccess.Selector[columnTable.Record]
-	boardSelector  dbaccess.Selector[boardTable.Record]
+	decodeState    token.DecodeFunc[token.State]
+	colNoValidator api.IntValidator
 	columnUpdater  dbaccess.Updater[[]columnTable.Task]
 	log            pkgLog.Errorer
 }
@@ -43,17 +41,15 @@ type PatchHandler struct {
 // NewPATCHHandler creates and returns a new PATCHHandler.
 func NewPATCHHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	idValidator api.StringValidator,
-	columnSelector dbaccess.Selector[columnTable.Record],
-	boardSelector dbaccess.Selector[boardTable.Record],
+	decodeState token.DecodeFunc[token.State],
+	colNoValidator api.IntValidator,
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
 	log pkgLog.Errorer,
 ) PatchHandler {
 	return PatchHandler{
 		decodeAuth:     decodeAuth,
-		idValidator:    idValidator,
-		columnSelector: columnSelector,
-		boardSelector:  boardSelector,
+		decodeState:    decodeState,
+		colNoValidator: colNoValidator,
 		columnUpdater:  columnUpdater,
 		log:            log,
 	}
@@ -105,61 +101,30 @@ func (h PatchHandler) Handle(
 		}
 	}
 
-	// Get and validate the column ID.
-	columnID := r.URL.Query().Get("id")
-	if err := h.idValidator.Validate(columnID); err != nil {
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: err.Error()},
-		); err != nil {
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "State token not found.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
-	}
-
-	// Retrieve the column from the database so that we find out its board ID to
-	// validate that the user has the right to edit it.
-	column, err := h.columnSelector.Select(columnID)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: "Column not found."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-	if err != nil {
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	// Validate that the column's board belongs to the team that the user is the
-	// admin of.
-	board, err := h.boardSelector.Select(strconv.Itoa(column.BoardID))
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: "Board not found."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
+	// decode state token
+	state, err := h.decodeState(ckState.Value)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if strconv.Itoa(board.TeamID) != auth.TeamID {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(
-			PatchResp{Error: "You do not have access to this board."},
-		); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Invalid state token.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
@@ -173,15 +138,58 @@ func (h PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+	// TODO: remove
 	var tasks []columnTable.Task
 	for _, t := range req {
-		tasks = append(tasks, columnTable.Task{ID: t.ID, Order: t.Order})
+		tasks = append(tasks, columnTable.Task{ID: 0, Order: t.Order})
 	}
 
-	// Update task records in the database using column ID and order from tasks.
-	if err = h.columnUpdater.Update(
-		columnID, tasks,
-	); errors.Is(err, sql.ErrNoRows) {
+	// validate task access and column numbers
+	for _, t := range req {
+		var hasAccess bool
+		for _, sb := range state.Boards {
+			for _, sc := range sb.Columns {
+				for _, st := range sc.Tasks {
+					if st.ID == t.ID {
+						hasAccess = true
+						break
+					}
+				}
+				if hasAccess {
+					break
+				}
+			}
+			if hasAccess {
+				break
+			}
+		}
+
+		if !hasAccess {
+			w.WriteHeader(http.StatusBadRequest)
+			if err = json.NewEncoder(w).Encode(
+				PatchResp{Error: "Invalid task ID."},
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+
+		if err := h.colNoValidator.Validate(t.ColNo); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			if err = json.NewEncoder(w).Encode(
+				PatchResp{Error: "Invalid column number."},
+			); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+			}
+			return
+		}
+
+	}
+
+	// update task records in the database using column ID and order from tasks
+	if err = h.columnUpdater.Update("", tasks); errors.Is(err, sql.ErrNoRows) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
 			PatchResp{Error: "Task not found."},
@@ -195,7 +203,4 @@ func (h PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-
-	// All went well. Return 200.
-	w.WriteHeader(http.StatusOK)
 }

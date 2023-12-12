@@ -32,36 +32,36 @@ type PostResp struct {
 // PostHandler is an api.MethodHandler that can be used to handle POST requests
 // sent to the task route.
 type PostHandler struct {
-	decodeAuth     token.DecodeFunc[token.Auth]
-	decodeState    token.DecodeFunc[token.State]
-	titleVdtor     api.StringValidator
-	subtTitleVdtor api.StringValidator
-	colNoVdtor     api.IntValidator
-	taskInserter   db.Inserter[taskTable.Task]
-	encodeState    token.EncodeFunc[token.State]
-	log            pkgLog.Errorer
+	decodeAuth         token.DecodeFunc[token.Auth]
+	decodeState        token.DecodeFunc[token.State]
+	titleValidator     api.StringValidator
+	subtTitleValidator api.StringValidator
+	colNoValidator     api.IntValidator
+	taskInserter       db.Inserter[taskTable.Task]
+	encodeState        token.EncodeFunc[token.State]
+	log                pkgLog.Errorer
 }
 
 // NewPostHandler creates and returns a new POSTHandler.
 func NewPostHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	titleVdtor api.StringValidator,
-	subtTitleVdtor api.StringValidator,
-	colNoVdtor api.IntValidator,
+	titleValidator api.StringValidator,
+	subtTitleValidator api.StringValidator,
+	colNoValidator api.IntValidator,
 	taskInserter db.Inserter[taskTable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) *PostHandler {
 	return &PostHandler{
-		decodeAuth:     decodeAuth,
-		decodeState:    decodeState,
-		titleVdtor:     titleVdtor,
-		subtTitleVdtor: subtTitleVdtor,
-		colNoVdtor:     colNoVdtor,
-		taskInserter:   taskInserter,
-		encodeState:    encodeState,
-		log:            log,
+		decodeAuth:         decodeAuth,
+		decodeState:        decodeState,
+		titleValidator:     titleValidator,
+		subtTitleValidator: subtTitleValidator,
+		colNoValidator:     colNoValidator,
+		taskInserter:       taskInserter,
+		encodeState:        encodeState,
+		log:                log,
 	}
 }
 
@@ -146,7 +146,7 @@ func (h *PostHandler) Handle(
 	}
 
 	// validate column ID
-	if err := h.colNoVdtor.Validate(req.ColumnNumber); err != nil {
+	if err := h.colNoValidator.Validate(req.ColumnNumber); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if encodeErr := json.NewEncoder(w).Encode(PostResp{
 			Error: "Column number out of bounds.",
@@ -183,7 +183,7 @@ func (h *PostHandler) Handle(
 	order := highestOrder + 1
 
 	// validate task
-	if err := h.titleVdtor.Validate(req.Title); err != nil {
+	if err := h.titleValidator.Validate(req.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, api.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
@@ -208,7 +208,7 @@ func (h *PostHandler) Handle(
 	// validate subtasks
 	var subtasks []taskTable.Subtask
 	for _, title := range req.Subtasks {
-		if err := h.subtTitleVdtor.Validate(title); err != nil {
+		if err := h.subtTitleValidator.Validate(title); err != nil {
 			var errMsg string
 			if errors.Is(err, api.ErrEmpty) {
 				errMsg = "Subtask title cannot be empty."

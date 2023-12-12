@@ -22,18 +22,18 @@ import (
 func TestPostHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	titleVdtor := &api.FakeStringValidator{}
-	subtTitleVdtor := &api.FakeStringValidator{}
-	colNoVdtor := &api.FakeIntValidator{}
+	titleValidator := &api.FakeStringValidator{}
+	subtTitleValidator := &api.FakeStringValidator{}
+	colNoValidator := &api.FakeIntValidator{}
 	taskInserter := &db.FakeInserter[taskTable.Task]{}
 	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPostHandler(
 		decodeAuth.Func,
 		decodeState.Func,
-		titleVdtor,
-		subtTitleVdtor,
-		colNoVdtor,
+		titleValidator,
+		subtTitleValidator,
+		colNoValidator,
 		taskInserter,
 		encodeState.Func,
 		log,
@@ -432,9 +432,9 @@ func TestPostHandler(t *testing.T) {
 			decodeAuth.Err = c.errDecodeAuth
 			decodeState.Res = c.inStateDecoded
 			decodeState.Err = c.errDecodeInState
-			colNoVdtor.Err = c.errValidateColNo
-			titleVdtor.Err = c.errValidateTaskTitle
-			subtTitleVdtor.Err = c.errValidateSubtTitle
+			colNoValidator.Err = c.errValidateColNo
+			titleValidator.Err = c.errValidateTaskTitle
+			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskInserter.Err = c.errInsertTask
 			encodeState.Res = c.outStateEncoded
 			encodeState.Err = c.errEncodeState

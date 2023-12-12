@@ -1,16 +1,5 @@
 package column
 
-// FakeSelector is a test fake for dbaccess.Selector[Record].
-type FakeSelector struct {
-	Column Record
-	Err    error
-}
-
-// Select implements the dbaccess.Selector[Record] interface on FakeSelector.
-func (f *FakeSelector) Select(_ string) (Record, error) {
-	return f.Column, f.Err
-}
-
 // FakeUpdater is a test fake for Updater.
 type FakeUpdater struct{ Err error }
 
