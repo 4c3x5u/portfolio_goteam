@@ -239,13 +239,14 @@ func (h *PostHandler) Handle(
 	id := uuid.NewString()
 	for tries := 0; tries < 3; tries++ {
 		if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
+			auth.TeamID,
+			req.BoardID,
+			req.ColumnNumber,
 			id,
 			req.Title,
 			req.Description,
 			order,
 			subtasks,
-			req.BoardID,
-			req.ColumnNumber,
 		)); errors.Is(err, db.ErrDupKey) {
 			id = uuid.NewString()
 		} else if err != nil {

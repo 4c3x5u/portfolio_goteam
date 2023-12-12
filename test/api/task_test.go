@@ -239,7 +239,7 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name: "Success",
+				name: "OK",
 				reqBody: `{
                     "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
 					"description": "Do something. Then, do something else.",
@@ -258,7 +258,8 @@ func TestTaskAPI(t *testing.T) {
 					keyEx := expression.Key("BoardID").Equal(expression.Value(
 						"91536664-9749-4dbb-a470-6e52aa353ae4",
 					))
-					expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+					expr, err := expression.NewBuilder().
+						WithKeyCondition(keyEx).Build()
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -267,8 +268,9 @@ func TestTaskAPI(t *testing.T) {
 						context.Background(),
 						&dynamodb.QueryInput{
 							TableName: &taskTableName,
-							IndexName: aws.
-								String("BoardID_index"),
+							IndexName: aws.String(
+								"BoardID_index",
+							),
 							ExpressionAttributeNames:  expr.Names(),
 							ExpressionAttributeValues: expr.Values(),
 							KeyConditionExpression:    expr.KeyCondition(),
@@ -453,6 +455,10 @@ func TestTaskAPI(t *testing.T) {
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,
 							Key: map[string]types.AttributeValue{
+								"TeamID": &types.AttributeValueMemberS{
+									Value: "afeadc4a-68b0-4c33-9e83-4648d20ff" +
+										"26a",
+								},
 								"ID": &types.AttributeValueMemberS{
 									Value: "e0021a56-6a1e-4007-b773-395d3991f" +
 										"b7e",
@@ -552,6 +558,10 @@ func TestTaskAPI(t *testing.T) {
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,
 							Key: map[string]types.AttributeValue{
+								"TeamID": &types.AttributeValueMemberS{
+									Value: "91536664-9749-4dbb-a470-6e52aa353" +
+										"ae4",
+								},
 								"ID": &types.AttributeValueMemberS{
 									Value: "9dd9c982-8d1c-49ac-a412-3b01ba74b" +
 										"634",

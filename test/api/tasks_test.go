@@ -144,6 +144,10 @@ func TestTasksAPI(t *testing.T) {
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,
 							Key: map[string]types.AttributeValue{
+								"TeamID": &types.AttributeValueMemberS{
+									Value: "afeadc4a-68b0-4c33-9e83-4648d20ff" +
+										"26a",
+								},
 								"ID": &types.AttributeValueMemberS{
 									Value: "c684a6a0-404d-46fa-9fa5-1497f9874" +
 										"567",

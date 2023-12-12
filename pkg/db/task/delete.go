@@ -21,11 +21,12 @@ func NewDeleter(d db.DynamoItemDeleter) Deleter {
 }
 
 // Retrieve retrieves by ID a task from the task table.
-func (r Deleter) Delete(ctx context.Context, id string) error {
+func (r Deleter) Delete(ctx context.Context, teamID, taskID string) error {
 	_, err := r.ItemDeleter.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
-			"ID": &types.AttributeValueMemberS{Value: id},
+			"TeamID": &types.AttributeValueMemberS{Value: teamID},
+			"ID":     &types.AttributeValueMemberS{Value: taskID},
 		},
 		ConditionExpression: aws.String("attribute_exists(ID)"),
 	})

@@ -196,6 +196,9 @@ var reqsWriteTeam = []types.WriteRequest{
 // test use.
 var reqsWriteTask = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "c146486d-7260-4d3d-9da5-2545a5109ca1",
 		},
@@ -219,6 +222,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "379a94ac-3af4-4ca0-8469-5b41567e1bf1",
 		},
@@ -242,6 +248,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "1"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "b59bcff3-9829-4630-a21f-83977dfc4665",
 		},
@@ -265,6 +274,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "8fd4d2a3-6247-4dcc-bc6a-5077d8e57be1",
 		},
@@ -288,6 +300,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "3"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "c684a6a0-404d-46fa-9fa5-1497f9874567",
 		},
@@ -299,6 +314,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "8fb040a2-910c-47af-a4ab-9dee49f16d1d",
 		},
@@ -310,6 +328,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "a2e5b55f-01cc-4eac-8882-d76acb94a5b9",
 		},
@@ -321,6 +342,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "e0021a56-6a1e-4007-b773-395d3991fb7e",
 		},
@@ -344,6 +368,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "9362dcd5-408b-4e26-9dda-68056ba7b833",
 		},
@@ -375,6 +402,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "01a3168d-6d2a-46fb-aed9-70c26a4d71e9",
 		},
@@ -407,6 +437,9 @@ var reqsWriteTask = []types.WriteRequest{
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+		},
 		"ID": &types.AttributeValueMemberS{
 			Value: "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
 		},

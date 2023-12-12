@@ -36,6 +36,12 @@ type Deleter interface {
 	Delete(context.Context, string) error
 }
 
+// DeleterDualKey defines a type that can delete an item from a DynamoDB table
+// using a partition and a sort key.
+type DeleterDualKey interface {
+	Delete(context.Context, string, string) error
+}
+
 // DynamoItemGetter defines a type that can be used to get an item from a
 // DynamoDB table. It is used to dependency-inject the DynamoDB client into
 // Retrievers.

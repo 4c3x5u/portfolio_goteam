@@ -38,7 +38,7 @@ func TestDelete(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			idel.Err = c.idelErr
 
-			err := sut.Delete(context.Background(), "")
+			err := sut.Delete(context.Background(), "", "")
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 		})

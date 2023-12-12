@@ -6,33 +6,36 @@ const tableName = "DYNAMODB_TABLE_TASK"
 
 // Task defines the task entity - the primary entity of task domain.
 type Task struct {
+	TeamID       string //guid
+	BoardID      string //guid
+	ColumnNumber int
 	ID           string //guid
 	Title        string
 	Description  string
 	Order        int
 	Subtasks     []Subtask
-	BoardID      string //guid
-	ColumnNumber int
 }
 
 // NewTask creates and returns a new Task.
 func NewTask(
+	teamID string,
+	boardID string,
+	colNo int,
 	id string,
 	title string,
 	descr string,
 	order int,
 	subtasks []Subtask,
-	boardID string,
-	colNo int,
 ) Task {
 	return Task{
+		TeamID:       teamID,
+		BoardID:      boardID,
+		ColumnNumber: colNo,
 		ID:           id,
 		Title:        title,
 		Description:  descr,
 		Order:        order,
 		Subtasks:     subtasks,
-		BoardID:      boardID,
-		ColumnNumber: colNo,
 	}
 }
 

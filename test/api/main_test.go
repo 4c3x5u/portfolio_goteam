@@ -73,7 +73,7 @@ func setUpDynamoDB() (func() error, error) {
 	// set up user table
 	userTableName = userTablePrefix + uuid.New().String()
 	tearDownUserTable, err := createTable(
-		svcDynamo, &userTableName, "Username",
+		svcDynamo, &userTableName, "Username", "",
 	)
 	if err != nil {
 		return tearDownNothing, err
@@ -89,7 +89,7 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up team table
 	teamTableName = teamTablePrefix + uuid.New().String()
-	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName, "ID")
+	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName, "ID", "")
 	if err != nil {
 		return tearDown, err
 	}
@@ -105,7 +105,7 @@ func setUpDynamoDB() (func() error, error) {
 	// set up team table
 	taskTableName = taskTablePrefix + uuid.New().String()
 	tearDownTaskTable, err := createTable(
-		svcDynamo, &taskTableName, "ID", "BoardID",
+		svcDynamo, &taskTableName, "TeamID", "ID", "BoardID",
 	)
 	if err != nil {
 		return tearDown, err
@@ -200,10 +200,10 @@ func allTablesActive(svc *dynamodb.Client) error {
 // createTable creates a DynamoDB table with the given name and a string
 // partition key named ID.
 func createTable(
-	svc *dynamodb.Client, name *string, keyName string, secINames ...string,
+	svc *dynamodb.Client, name *string, partKey string, sortKey string, secINames ...string,
 ) (func() error, error) {
 	attrDefs := []types.AttributeDefinition{
-		{AttributeName: &keyName, AttributeType: types.ScalarAttributeTypeS},
+		{AttributeName: &partKey, AttributeType: types.ScalarAttributeTypeS},
 	}
 
 	var secIs []types.GlobalSecondaryIndex
@@ -216,7 +216,7 @@ func createTable(
 			IndexName: aws.String(iname + "_index"),
 			KeySchema: []types.KeySchemaElement{
 				{AttributeName: &iname, KeyType: types.KeyTypeHash},
-				{AttributeName: &keyName, KeyType: types.KeyTypeRange},
+				{AttributeName: &partKey, KeyType: types.KeyTypeRange},
 			},
 			Projection: &types.Projection{
 				ProjectionType: types.ProjectionTypeAll,
@@ -228,13 +228,23 @@ func createTable(
 		})
 	}
 
+	keySchema := []types.KeySchemaElement{
+		{AttributeName: &partKey, KeyType: types.KeyTypeHash},
+	}
+	if sortKey != "" {
+		attrDefs = append(attrDefs, types.AttributeDefinition{
+			AttributeName: &sortKey, AttributeType: types.ScalarAttributeTypeS,
+		})
+		keySchema = append(keySchema, types.KeySchemaElement{
+			AttributeName: &sortKey, KeyType: types.KeyTypeRange,
+		})
+	}
+
 	_, err := svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
 		TableName:            name,
 		AttributeDefinitions: attrDefs,
-		KeySchema: []types.KeySchemaElement{
-			{AttributeName: &keyName, KeyType: "HASH"},
-		},
-		BillingMode: types.BillingModeProvisioned,
+		KeySchema:            keySchema,
+		BillingMode:          types.BillingModeProvisioned,
 		ProvisionedThroughput: &types.ProvisionedThroughput{
 			ReadCapacityUnits:  aws.Int64(25),
 			WriteCapacityUnits: aws.Int64(25),

@@ -200,7 +200,14 @@ func (h PatchHandler) Handle(
 			subtasks = append(subtasks, taskTable.NewSubtask(st.Title, st.IsDone))
 		}
 		tasks = append(tasks, taskTable.NewTask(
-			t.ID, t.Title, t.Descr, t.Order, subtasks, t.BoardID, t.ColNo,
+			auth.TeamID,
+			t.BoardID,
+			t.ColNo,
+			t.ID,
+			t.Title,
+			t.Descr,
+			t.Order,
+			subtasks,
 		))
 	}
 

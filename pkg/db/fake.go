@@ -38,6 +38,14 @@ type FakeDeleter struct{ Err error }
 // Delete discards params and returns FakeDeleter.Err.
 func (f *FakeDeleter) Delete(_ context.Context, _ string) error { return f.Err }
 
+// FakeDeleterDualKey is a test fake for DeleterDualKey.
+type FakeDeleterDualKey struct{ Err error }
+
+// Delete discards params and returns FakeDeleterDualKey.Err.
+func (f *FakeDeleterDualKey) Delete(_ context.Context, _, _ string) error {
+	return f.Err
+}
+
 // FakeDynamoItemGetter is a test fake for DynamoItemGetter.
 type FakeDynamoItemGetter struct {
 	Out *dynamodb.GetItemOutput

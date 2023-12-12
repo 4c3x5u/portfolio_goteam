@@ -21,7 +21,7 @@ type DeleteResp struct {
 type DeleteHandler struct {
 	decodeAuth  token.DecodeFunc[token.Auth]
 	decodeState token.DecodeFunc[token.State]
-	taskDeleter db.Deleter
+	taskDeleter db.DeleterDualKey
 	encodeState token.EncodeFunc[token.State]
 	log         pkgLog.Errorer
 }
@@ -30,7 +30,7 @@ type DeleteHandler struct {
 func NewDeleteHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	taskDeleter db.Deleter,
+	taskDeleter db.DeleterDualKey,
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) DeleteHandler {
@@ -151,7 +151,7 @@ func (h DeleteHandler) Handle(
 
 	// delete task from the task table
 	if err = h.taskDeleter.Delete(
-		r.Context(), id,
+		r.Context(), auth.TeamID, id,
 	); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(DeleteResp{

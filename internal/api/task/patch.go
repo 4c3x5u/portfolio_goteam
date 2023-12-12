@@ -234,7 +234,14 @@ func (h *PatchHandler) Handle(
 
 	// update task in task table
 	if err = h.taskUpdater.Update(r.Context(), taskTable.NewTask(
-		id, reqBody.Title, reqBody.Description, order, subtasks, boardID, colNo,
+		auth.TeamID,
+		boardID,
+		colNo,
+		id,
+		reqBody.Title,
+		reqBody.Description,
+		order,
+		subtasks,
 	)); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(PatchResp{

@@ -19,7 +19,7 @@ import (
 func TestDeleteHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	taskDeleter := &db.FakeDeleter{}
+	taskDeleter := &db.FakeDeleterDualKey{}
 	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDeleteHandler(
