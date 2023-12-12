@@ -79,11 +79,20 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 			},
 		)
 
-		// insert team into the team table
-		if err = h.inserter.Insert(r.Context(), team); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-			return
+		// retry a couple of times in the unlitekly event of GUID collision
+		for i := 0; i < 3; i++ {
+			// insert team into the team table
+			if err = h.inserter.Insert(
+				r.Context(), team,
+			); errors.Is(err, db.ErrDupKey) {
+				team.Boards[0].ID = uuid.NewString()
+			} else if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err.Error())
+				return
+			} else {
+				break
+			}
 		}
 
 		// write 201 to indicate creation of the new team
