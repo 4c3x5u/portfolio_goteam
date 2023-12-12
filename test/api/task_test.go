@@ -540,7 +540,7 @@ func TestTaskAPI(t *testing.T) {
 			},
 			{
 				name: "OK",
-				id:   "c684a6a0-404d-46fa-9fa5-1497f9874567",
+				id:   "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkStateTeam1)(r)
@@ -553,8 +553,8 @@ func TestTaskAPI(t *testing.T) {
 							TableName: &taskTableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
-									Value: "c684a6a0-404d-46fa-9fa5-1497f9874" +
-										"567",
+									Value: "9dd9c982-8d1c-49ac-a412-3b01ba74b" +
+										"634",
 								},
 							},
 						},
@@ -565,7 +565,9 @@ func TestTaskAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				r := httptest.NewRequest(http.MethodDelete, "/task?id="+c.id, nil)
+				r := httptest.NewRequest(
+					http.MethodDelete, "/task?id="+c.id, nil,
+				)
 				c.authFunc(r)
 				w := httptest.NewRecorder()
 

@@ -3,17 +3,21 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/kxplxn/goteam/internal/api"
 	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -27,7 +31,7 @@ func TestTasksAPI(t *testing.T) {
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
-				columnTable.NewUpdater(db),
+				taskTable.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -66,88 +70,106 @@ func TestTasksAPI(t *testing.T) {
 	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
-			id         string
-			reqBody    tasksAPI.PatchReq
+			reqBody    string
 			authFunc   func(*http.Request)
 			statusCode int
 			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
-				name:       "IDEmpty",
-				id:         "",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Column ID cannot be empty."),
+				name:       "NoAuth",
+				reqBody:    `[]`,
+				authFunc:   func(*http.Request) {},
+				statusCode: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr("Auth token not found."),
 			},
 			{
-				name:       "IDNotInt",
-				id:         "A",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Column ID must be an integer."),
-			},
-			{
-				name:       "ColumnNotFound",
-				id:         "1001",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusNotFound,
-				assertFunc: assert.OnResErr("Column not found."),
+				name:       "InvalidAuth",
+				reqBody:    `[]`,
+				authFunc:   addCookieAuth("asdfjkahsd"),
+				statusCode: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
-				id:         "5",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam1Member),
+				reqBody:    `[]`,
+				authFunc:   addCookieAuth(tkTeam1Member),
 				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr("Only team admins can move tasks."),
+				assertFunc: assert.OnResErr("Only team admins can edit tasks."),
 			},
 			{
-				name:       "NoAccess",
-				id:         "5",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam2Admin),
-				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"You do not have access to this board.",
-				),
+				name:       "NoState",
+				reqBody:    `[]`,
+				authFunc:   addCookieAuth(tkTeam1Admin),
+				statusCode: http.StatusBadRequest,
+				assertFunc: assert.OnResErr("State token not found."),
 			},
 			{
-				name:       "TaskNotFound",
-				id:         "5",
-				reqBody:    tasksAPI.PatchReq{{ID: "0", Order: 0}},
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusNotFound,
-				assertFunc: assert.OnResErr("Task not found."),
+				name:    "InvalidState",
+				reqBody: `[]`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState("askdjfhasdlfk")(r)
+				},
+				statusCode: http.StatusBadRequest,
+				assertFunc: assert.OnResErr("Invalid state token."),
 			},
 			{
-				name:       "Success",
-				id:         "6",
-				reqBody:    tasksAPI.PatchReq{{ID: "5", Order: 2}},
-				authFunc:   addCookieAuth(jwtTeam1Admin),
+				name:    "InvalidTaskID",
+				reqBody: `[{"id": "0"}]`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
+				statusCode: http.StatusBadRequest,
+				assertFunc: assert.OnResErr("Invalid task ID."),
+			},
+			{
+				name: "Success",
+				reqBody: `[{
+                    "id": "c684a6a0-404d-46fa-9fa5-1497f9874567", 
+                    "title": "task 5",
+                    "order": 2,
+                    "subtasks": [],
+                    "board": "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+                    "column": 2
+                }]`,
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkStateTeam1)(r)
+				},
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					var columnID, order int
-					if err := db.QueryRow(
-						`SELECT columnID, "order" FROM app.task WHERE id = $1`,
-						5,
-					).Scan(&columnID, &order); err != nil {
-						t.Fatal(err)
-					}
-					assert.Equal(t.Error, columnID, 6)
-					assert.Equal(t.Error, order, 2)
+					out, err := svcDynamo.GetItem(
+						context.Background(),
+						&dynamodb.GetItemInput{
+							TableName: &taskTableName,
+							Key: map[string]types.AttributeValue{
+								"ID": &types.AttributeValueMemberS{
+									Value: "c684a6a0-404d-46fa-9fa5-1497f9874" +
+										"567",
+								},
+							},
+						},
+					)
+					assert.Nil(t.Fatal, err)
+
+					var task taskTable.Task
+					assert.Nil(t.Fatal, attributevalue.UnmarshalMap(
+						out.Item, &task,
+					))
+
+					assert.Equal(t.Error, task.ID, "c684a6a0-404d-46fa-9fa5-1497f9874567")
+					assert.Equal(t.Error, task.Title, "task 5")
+					assert.Equal(t.Error, task.Order, 2)
+					assert.Equal(t.Error, len(task.Subtasks), 0)
+					assert.Equal(t.Error, task.BoardID, "f0c5d521-ccb5-47cc-ba40-313ddb901165")
+					assert.Equal(t.Error, task.ColumnNumber, 2)
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				tasks, err := json.Marshal(c.reqBody)
-				if err != nil {
-					t.Fatal(err)
-				}
 				req := httptest.NewRequest(
-					http.MethodPatch, "/?id="+c.id, bytes.NewReader(tasks),
+					http.MethodPatch, "/tasks", strings.NewReader(c.reqBody),
 				)
 				c.authFunc(req)
 				w := httptest.NewRecorder()

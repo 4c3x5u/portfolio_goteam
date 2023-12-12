@@ -75,6 +75,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{"/task", http.MethodPost},
 			{"/task", http.MethodDelete},
 			{"/task", http.MethodPatch},
+			{"/tasks", http.MethodPatch},
 		} {
 			if em.m == method &&
 				(em.e == endpoint ||

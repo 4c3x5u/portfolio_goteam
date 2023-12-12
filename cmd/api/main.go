@@ -21,7 +21,6 @@ import (
 	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
 	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
 	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
 	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
 	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -147,7 +146,7 @@ func main() {
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
-				columnTable.NewUpdater(db),
+				dynamoTaskTable.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
 				log,
 			),

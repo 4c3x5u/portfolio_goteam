@@ -22,7 +22,7 @@ func NewMultiUpdater(tw db.DynamoTransactWriter) MultiUpdater {
 }
 
 // Update updates multiple tasks in the task table at once.
-func (u *MultiUpdater) Update(ctx context.Context, tasks []Task) error {
+func (u MultiUpdater) Update(ctx context.Context, tasks []Task) error {
 	tableName := os.Getenv("DYNAMODB_TABLE_TASK")
 
 	items := make([]types.TransactWriteItem, len(tasks))

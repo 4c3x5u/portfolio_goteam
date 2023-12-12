@@ -31,12 +31,6 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
-// MultiUpdater defines a type that can update multiple items in a DynamoDB
-// table.
-type MultiUpdater[T any] interface {
-	Update(context.Context, []T) error
-}
-
 // Deleter defines a type that can delete an item from a DynamoDB table.
 type Deleter interface {
 	Delete(context.Context, string) error

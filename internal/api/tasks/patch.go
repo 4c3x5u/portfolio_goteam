@@ -1,15 +1,14 @@
 package tasks
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -19,9 +18,19 @@ type PatchReq []Task
 
 // Task represents an element in PatchReq.
 type Task struct {
-	ID    string `json:"id"`
-	Order int    `json:"order"`
-	ColNo int    `json:"columnNumber"`
+	ID      string    `json:"id"`
+	Title   string    `json:"title"`
+	Descr   string    `json:"description"`
+	Order   int       `json:"order"`
+	Subt    []Subtask `json:"subtasks"`
+	BoardID string    `json:"board"`
+	ColNo   int       `json:"column"`
+}
+
+// Subtask represents a subtask element in Task.
+type Subtask struct {
+	Title  string `json:"title"`
+	IsDone bool   `json:"done"`
 }
 
 // PatchResp defines the body for PATCH column responses.
@@ -35,7 +44,7 @@ type PatchHandler struct {
 	decodeAuth     token.DecodeFunc[token.Auth]
 	decodeState    token.DecodeFunc[token.State]
 	colNoValidator api.IntValidator
-	columnUpdater  dbaccess.Updater[[]columnTable.Task]
+	tasksUpdater   db.Updater[[]taskTable.Task]
 	encodeState    token.EncodeFunc[token.State]
 	log            pkgLog.Errorer
 }
@@ -45,7 +54,7 @@ func NewPATCHHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
 	colNoValidator api.IntValidator,
-	columnUpdater dbaccess.Updater[[]columnTable.Task],
+	tasksUpdater db.Updater[[]taskTable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) PatchHandler {
@@ -53,7 +62,7 @@ func NewPATCHHandler(
 		decodeAuth:     decodeAuth,
 		decodeState:    decodeState,
 		colNoValidator: colNoValidator,
-		columnUpdater:  columnUpdater,
+		tasksUpdater:   tasksUpdater,
 		encodeState:    encodeState,
 		log:            log,
 	}
@@ -142,13 +151,9 @@ func (h PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-	// TODO: remove
-	var tasks []columnTable.Task
-	for _, t := range req {
-		tasks = append(tasks, columnTable.Task{ID: 0, Order: t.Order})
-	}
 
 	// validate task access and column numbers
+	var tasks []taskTable.Task
 	for _, t := range req {
 		var hasAccess bool
 		for _, sb := range state.Boards {
@@ -190,10 +195,19 @@ func (h PatchHandler) Handle(
 			return
 		}
 
+		var subtasks []taskTable.Subtask
+		for _, st := range t.Subt {
+			subtasks = append(subtasks, taskTable.NewSubtask(st.Title, st.IsDone))
+		}
+		tasks = append(tasks, taskTable.NewTask(
+			t.ID, t.Title, t.Descr, t.Order, subtasks, t.BoardID, t.ColNo,
+		))
 	}
 
-	// update task records in the database using column ID and order from tasks
-	if err = h.columnUpdater.Update("", tasks); errors.Is(err, sql.ErrNoRows) {
+	// update tasks in the task table
+	if err = h.tasksUpdater.Update(
+		r.Context(), tasks,
+	); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err = json.NewEncoder(w).Encode(
 			PatchResp{Error: "Task not found."},
@@ -209,17 +223,19 @@ func (h PatchHandler) Handle(
 	}
 
 	// generate new state
+	// FIXME: this is wrong but don't fix it for now because I'm going to
+	//        replace state tokens with signed-IDs soon
 	var boards []token.Board
-	for _, sb := range state.Boards {
+	for _, stB := range state.Boards {
 		var columns []token.Column
-		for _, sc := range sb.Columns {
+		for _, stC := range stB.Columns {
 			var tasks []token.Task
-			for _, st := range sc.Tasks {
-				tasks = append(tasks, st)
+			for _, stT := range stC.Tasks {
+				tasks = append(tasks, stT)
 			}
 			columns = append(columns, token.NewColumn(tasks))
 		}
-		boards = append(boards, token.NewBoard(sb.ID, columns))
+		boards = append(boards, token.NewBoard(stB.ID, columns))
 	}
 	newState := token.NewState(boards)
 

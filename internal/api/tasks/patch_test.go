@@ -3,7 +3,6 @@
 package tasks
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -12,25 +11,24 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	columnTable "github.com/kxplxn/goteam/pkg/dbaccess/column"
+	"github.com/kxplxn/goteam/pkg/db"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// TestPATCHHandler tests the ServeHTTP method of Handler to assert that it behaves
-// correctly in all possible scenarios.
-func TestPATCHHandler(t *testing.T) {
+func TestPatchHandler(t *testing.T) {
 	decodeAuth := token.FakeDecode[token.Auth]{}
 	decodeState := token.FakeDecode[token.State]{}
 	colNoVdtor := &api.FakeIntValidator{}
-	columnUpdater := &columnTable.FakeUpdater{}
+	tasksUpdater := &db.FakeUpdater[[]taskTable.Task]{}
 	encodeState := token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
 		decodeAuth.Func,
 		decodeState.Func,
 		colNoVdtor,
-		columnUpdater,
+		tasksUpdater,
 		encodeState.Func,
 		log,
 	)
@@ -44,7 +42,7 @@ func TestPATCHHandler(t *testing.T) {
 		errDecodeState   error
 		stateDecoded     token.State
 		errValidateColNo error
-		errUpdateCol     error
+		errUpdateTasks   error
 		errEncodeState   error
 		outState         string
 		wantStatus       int
@@ -59,7 +57,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   nil,
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusUnauthorized,
@@ -74,7 +72,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   nil,
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusUnauthorized,
@@ -89,7 +87,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   nil,
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusForbidden,
@@ -106,7 +104,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   nil,
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusBadRequest,
@@ -121,7 +119,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   errors.New("decode state failed"),
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusBadRequest,
@@ -136,7 +134,7 @@ func TestPATCHHandler(t *testing.T) {
 			errDecodeState:   nil,
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusBadRequest,
@@ -154,14 +152,14 @@ func TestPATCHHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: errors.New("err validate column number"),
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid column number."),
 		},
 		{
-			name:           "ColumnUpdaterErr",
+			name:           "TaskNotFound",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
@@ -172,13 +170,29 @@ func TestPATCHHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
-			errUpdateCol:     sql.ErrConnDone,
+			errUpdateTasks:   db.ErrNoItem,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusNotFound,
+			assertFunc:       assert.OnResErr("Task not found."),
+		},
+		{
+			name:           "ErrUpdateTasks",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{{
+				ID:      "1",
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+			}}},
+			errValidateColNo: nil,
+			errUpdateTasks:   errors.New("update tasks failed"),
 			errEncodeState:   nil,
 			outState:         "",
 			wantStatus:       http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
+			assertFunc:       assert.OnLoggedErr("update tasks failed"),
 		},
 		{
 			name:           "ErrEncodeState",
@@ -192,7 +206,7 @@ func TestPATCHHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   errors.New("encode state failed"),
 			outState:         "",
 			wantStatus:       http.StatusInternalServerError,
@@ -210,7 +224,7 @@ func TestPATCHHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
-			errUpdateCol:     nil,
+			errUpdateTasks:   nil,
 			errEncodeState:   nil,
 			outState:         "aklsdjhfalks",
 			wantStatus:       http.StatusOK,
@@ -227,7 +241,7 @@ func TestPATCHHandler(t *testing.T) {
 			decodeState.Res = c.stateDecoded
 			decodeState.Err = c.errDecodeState
 			colNoVdtor.Err = c.errValidateColNo
-			columnUpdater.Err = c.errUpdateCol
+			tasksUpdater.Err = c.errUpdateTasks
 			encodeState.Err = c.errEncodeState
 			encodeState.Res = c.outState
 
@@ -235,7 +249,7 @@ func TestPATCHHandler(t *testing.T) {
 			r := httptest.NewRequest("", "/", strings.NewReader(`[{
                 "id": "taskid",
                 "order": 3,
-                "columnNumber": 0
+                "column": 0
             }]`))
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
