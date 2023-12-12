@@ -12,8 +12,16 @@ type Team struct {
 	Boards  []Board
 }
 
+// NewTeam creates and returns a new team.
+func NewTeam(id string, members []string, boards []Board) Team {
+	return Team{ID: id, Members: members, Boards: boards}
+}
+
 // Board defines the board entity which a team may own one/many of.
 type Board struct {
 	ID   string //guid
 	Name string
 }
+
+// NewBoard creates and returns a new board.
+func NewBoard(id, name string) Board { return Board{ID: id, Name: name} }

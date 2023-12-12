@@ -104,6 +104,7 @@ func main() {
 			http.MethodGet: teamAPI.NewGetHandler(
 				token.DecodeAuth,
 				dynamoTeamTable.NewRetriever(svcDynamo),
+				dynamoTeamTable.NewInserter(svcDynamo),
 				log,
 			),
 		},

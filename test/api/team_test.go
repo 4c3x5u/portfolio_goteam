@@ -19,6 +19,7 @@ func TestTeamAPI(t *testing.T) {
 	handler := teamAPI.NewGetHandler(
 		token.DecodeAuth,
 		teamTable.NewRetriever(svcDynamo),
+		teamTable.NewInserter(svcDynamo),
 		pkgLog.New(),
 	)
 
@@ -107,29 +108,31 @@ func TestTeamAPI(t *testing.T) {
 		assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
 	})
 
-	// t.Run("Created", func(t *testing.T) {
-	// 	authNoAdmin := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpm" +
-	// 		"YWxzZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I"
-	// 	wantResp := teamAPI.GetResp{
-	// 		ID:      "d5dca9bc-bc98-47b4-b8b7-9f01813da571",
-	// 		Members: []string{"newuser"},
-	// 		Boards:  []teamTable.Board{{Name: "NewBoard"}},
-	// 	}
-	// 	r := httptest.NewRequest(http.MethodGet, "/team", nil)
-	// 	addCookieAuth(authNoAdmin)(r)
-	// 	w := httptest.NewRecorder()
+	t.Run("Created", func(t *testing.T) {
+		authAdmin := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0cn" +
+			"VlLCJ0ZWFtSUQiOiJkNWRjYTliYy1iYzk4LTQ3YjQtYjhiNy05ZjAxODEzZGE1Nz" +
+			"EiLCJ1c2VybmFtZSI6Im5ld3VzZXIifQ.lCjQirzU_3yxOi2bNXRLuyxgzbUnEft" +
+			"ITcIFMz2jCb8"
+		wantResp := teamAPI.GetResp{
+			ID:      "d5dca9bc-bc98-47b4-b8b7-9f01813da571",
+			Members: []string{"newuser"},
+			Boards:  []teamTable.Board{{Name: "New Board"}},
+		}
+		r := httptest.NewRequest(http.MethodGet, "/team", nil)
+		addCookieAuth(authAdmin)(r)
+		w := httptest.NewRecorder()
 
-	// 	handler.Handle(w, r, "")
+		handler.Handle(w, r, "")
 
-	// 	res := w.Result()
-	// 	var resp teamAPI.GetResp
-	// 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
-	// 		t.Fatal(err)
-	// 	}
+		res := w.Result()
+		var resp teamAPI.GetResp
+		if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+			t.Fatal(err)
+		}
 
-	// 	assert.Equal(t.Error, resp.ID, wantResp.ID)
-	// 	assert.AllEqual(t.Error, resp.Members, wantResp.Members)
-	// 	assert.Equal(t.Error, len(resp.Boards), 1)
-	// 	assert.Equal(t.Error, resp.Boards[0].Name, wantResp.Boards[0].Name)
-	// })
+		assert.Equal(t.Error, resp.ID, wantResp.ID)
+		assert.AllEqual(t.Error, resp.Members, wantResp.Members)
+		assert.Equal(t.Error, len(resp.Boards), 1)
+		assert.Equal(t.Error, resp.Boards[0].Name, wantResp.Boards[0].Name)
+	})
 }

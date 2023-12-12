@@ -17,8 +17,9 @@ import (
 func TestGetHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	retriever := &db.FakeRetriever[teamTable.Team]{}
+	inserter := &db.FakeInserter[teamTable.Team]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewGetHandler(decodeAuth.Func, retriever, log)
+	sut := NewGetHandler(decodeAuth.Func, retriever, inserter, log)
 
 	wantTeam := teamTable.Team{
 		ID:      "teamid",
@@ -36,6 +37,7 @@ func TestGetHandler(t *testing.T) {
 		authDecoded   token.Auth
 		errRetrieve   error
 		team          teamTable.Team
+		errInsert     error
 		wantStatus    int
 		assertFunc    func(*testing.T, *http.Response, string)
 	}{
@@ -46,6 +48,7 @@ func TestGetHandler(t *testing.T) {
 			authDecoded:   token.Auth{},
 			errRetrieve:   nil,
 			team:          teamTable.Team{},
+			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
@@ -56,6 +59,7 @@ func TestGetHandler(t *testing.T) {
 			authDecoded:   token.Auth{},
 			errRetrieve:   nil,
 			team:          teamTable.Team{},
+			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
@@ -66,6 +70,7 @@ func TestGetHandler(t *testing.T) {
 			authDecoded:   token.Auth{},
 			errRetrieve:   errors.New("retrieve failed"),
 			team:          teamTable.Team{},
+			errInsert:     nil,
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("retrieve failed"),
 		},
@@ -76,6 +81,7 @@ func TestGetHandler(t *testing.T) {
 			authDecoded:   token.Auth{},
 			errRetrieve:   nil,
 			team:          wantTeam,
+			errInsert:     nil,
 			wantStatus:    http.StatusOK,
 			assertFunc: func(t *testing.T, res *http.Response, _ string) {
 				var team teamTable.Team
@@ -91,18 +97,48 @@ func TestGetHandler(t *testing.T) {
 				}
 			},
 		},
-		// if the team wasn't found and since we trust the JWT, we check whether
-		// it tells us that the user is admin to determine whether to create a
-		// new team
+		// check comments in implementation for explanation
 		{
 			name:          "NotAdmin",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{IsAdmin: false},
 			errRetrieve:   db.ErrNoItem,
-			team:          wantTeam,
+			team:          teamTable.Team{},
+			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(t *testing.T, res *http.Response, _ string) {},
+		},
+		{
+			name:          "ErrInsert",
+			auth:          "nonempty",
+			errDecodeAuth: nil,
+			authDecoded:   token.Auth{IsAdmin: true},
+			errRetrieve:   db.ErrNoItem,
+			team:          teamTable.Team{},
+			errInsert:     errors.New("insert failed"),
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("insert failed"),
+		},
+		{
+			name:          "Created",
+			auth:          "nonempty",
+			errDecodeAuth: nil,
+			authDecoded:   token.Auth{IsAdmin: true, Username: "newuser"},
+			errRetrieve:   db.ErrNoItem,
+			team:          teamTable.Team{},
+			errInsert:     nil,
+			wantStatus:    http.StatusCreated,
+			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+				var team teamTable.Team
+				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
+					t.Fatal(err)
+				}
+
+				assert.AllEqual(t.Error, team.Members, []string{"newuser"})
+				assert.Equal(t.Error, len(team.Boards), 1)
+				assert.Equal(t.Error, team.Boards[0].Name, "New Board")
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -110,6 +146,7 @@ func TestGetHandler(t *testing.T) {
 			decodeAuth.Res = c.authDecoded
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.team
+			inserter.Err = c.errInsert
 
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if c.auth != "" {
