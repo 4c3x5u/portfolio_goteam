@@ -2,6 +2,7 @@ package team
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/kxplxn/goteam/pkg/db"
@@ -52,7 +53,12 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 
 	// retrieve team
 	team, err := h.retriever.Retrieve(r.Context(), auth.TeamID)
-	if err != nil {
+	if errors.Is(err, db.ErrNoItem) {
+		if !auth.IsAdmin {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return

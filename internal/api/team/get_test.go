@@ -91,6 +91,19 @@ func TestGetHandler(t *testing.T) {
 				}
 			},
 		},
+		// if the team wasn't found and since we trust the JWT, we check whether
+		// it tells us that the user is admin to determine whether to create a
+		// new team
+		{
+			name:          "NotAdmin",
+			auth:          "nonempty",
+			errDecodeAuth: nil,
+			authDecoded:   token.Auth{IsAdmin: false},
+			errRetrieve:   db.ErrNoItem,
+			team:          wantTeam,
+			wantStatus:    http.StatusUnauthorized,
+			assertFunc:    func(t *testing.T, res *http.Response, _ string) {},
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Err = c.errDecodeAuth

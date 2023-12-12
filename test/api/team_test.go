@@ -1,3 +1,5 @@
+//go:build itest
+
 package api
 
 import (
@@ -42,7 +44,7 @@ func TestTeamAPI(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
 		})
 
-		t.Run("Found", func(t *testing.T) {
+		t.Run("OK", func(t *testing.T) {
 			wantResp := teamAPI.GetResp{
 				ID:      "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
 				Members: []string{"team1Admin", "team1Member"},
@@ -68,6 +70,9 @@ func TestTeamAPI(t *testing.T) {
 			handler.Handle(w, r, "")
 
 			res := w.Result()
+
+			assert.Equal(t.Error, res.StatusCode, http.StatusOK)
+
 			var resp teamAPI.GetResp
 			if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
 				t.Fatal(err)
@@ -83,4 +88,48 @@ func TestTeamAPI(t *testing.T) {
 			}
 		})
 	})
+
+	// if no team was found and since we trust the token, this is our sign from
+	// the user endpoint that we should create a new team for the user
+
+	// however, we should not create a new team if the user is not admin - this
+	// case should never happen but we should still test it
+	t.Run("NotAdmin", func(t *testing.T) {
+		authNotAdmin := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp" +
+			"mYWxzZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I"
+		r := httptest.NewRequest(http.MethodGet, "/team", nil)
+		addCookieAuth(authNotAdmin)(r)
+		w := httptest.NewRecorder()
+
+		handler.Handle(w, r, "")
+
+		res := w.Result()
+		assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
+	})
+
+	// t.Run("Created", func(t *testing.T) {
+	// 	authNoAdmin := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpm" +
+	// 		"YWxzZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I"
+	// 	wantResp := teamAPI.GetResp{
+	// 		ID:      "d5dca9bc-bc98-47b4-b8b7-9f01813da571",
+	// 		Members: []string{"newuser"},
+	// 		Boards:  []teamTable.Board{{Name: "NewBoard"}},
+	// 	}
+	// 	r := httptest.NewRequest(http.MethodGet, "/team", nil)
+	// 	addCookieAuth(authNoAdmin)(r)
+	// 	w := httptest.NewRecorder()
+
+	// 	handler.Handle(w, r, "")
+
+	// 	res := w.Result()
+	// 	var resp teamAPI.GetResp
+	// 	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+	// 		t.Fatal(err)
+	// 	}
+
+	// 	assert.Equal(t.Error, resp.ID, wantResp.ID)
+	// 	assert.AllEqual(t.Error, resp.Members, wantResp.Members)
+	// 	assert.Equal(t.Error, len(resp.Boards), 1)
+	// 	assert.Equal(t.Error, resp.Boards[0].Name, wantResp.Boards[0].Name)
+	// })
 }
