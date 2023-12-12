@@ -162,11 +162,15 @@ func TestTasksAPI(t *testing.T) {
 						out.Item, &task,
 					))
 
-					assert.Equal(t.Error, task.ID, "c684a6a0-404d-46fa-9fa5-1497f9874567")
+					assert.Equal(t.Error,
+						task.ID, "c684a6a0-404d-46fa-9fa5-1497f9874567",
+					)
 					assert.Equal(t.Error, task.Title, "task 5")
 					assert.Equal(t.Error, task.Order, 2)
 					assert.Equal(t.Error, len(task.Subtasks), 0)
-					assert.Equal(t.Error, task.BoardID, "f0c5d521-ccb5-47cc-ba40-313ddb901165")
+					assert.Equal(t.Error,
+						task.BoardID, "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+					)
 					assert.Equal(t.Error, task.ColumnNumber, 2)
 				},
 			},
