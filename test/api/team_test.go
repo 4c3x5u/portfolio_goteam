@@ -30,6 +30,17 @@ func TestTeamAPI(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
 		})
 
+		t.Run("InvalidAuth", func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodGet, "/team", nil)
+			r.AddCookie(&http.Cookie{Name: "auth-token", Value: "asdfasdf"})
+			w := httptest.NewRecorder()
+			handler.Handle(w, r, "")
+
+			res := w.Result()
+
+			assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
+		})
+
 		// t.Run("Found", func(t *testing.T) {
 		// 	wantResp := teamAPI.GetResp{
 		// 		ID:      "afeadc4a-68b0-4c33-9e83-4648d20ff26a",

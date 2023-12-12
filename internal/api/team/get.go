@@ -33,9 +33,18 @@ func NewGetHandler(
 // Handle handles GET requests sent to the team route.
 func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// get auth token
-	_, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(token.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	// decode auth token
+	_, err = h.decodeAuth(ckAuth.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

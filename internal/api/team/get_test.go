@@ -1,6 +1,7 @@
 package team
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestGetHandler(t *testing.T) {
-	decodeAuth := token.FakeDecode[token.Auth]{}
+	decodeAuth := &token.FakeDecode[token.Auth]{}
 	retriever := &db.FakeRetriever[teamTable.Team]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewGetHandler(decodeAuth.Func, retriever, log)
@@ -36,6 +37,15 @@ func TestGetHandler(t *testing.T) {
 			team:          teamTable.Team{},
 			wantStatus:    http.StatusUnauthorized,
 		},
+		{
+			name:          "InvalidAuth",
+			auth:          "nonempty",
+			errDecodeAuth: errors.New("decode auth failed"),
+			authDecoded:   token.Auth{},
+			errRetrieve:   nil,
+			team:          teamTable.Team{},
+			wantStatus:    http.StatusUnauthorized,
+		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Err = c.errDecodeAuth
@@ -44,6 +54,9 @@ func TestGetHandler(t *testing.T) {
 			retriever.Res = c.team
 
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			if c.auth != "" {
+				r.AddCookie(&http.Cookie{Name: "auth-token", Value: c.auth})
+			}
 			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")
