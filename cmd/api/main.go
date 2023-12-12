@@ -148,6 +148,7 @@ func main() {
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
 				columnTable.NewUpdater(db),
+				token.EncodeState,
 				log,
 			),
 		},

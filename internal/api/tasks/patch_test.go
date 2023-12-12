@@ -24,12 +24,14 @@ func TestPATCHHandler(t *testing.T) {
 	decodeState := token.FakeDecode[token.State]{}
 	colNoVdtor := &api.FakeIntValidator{}
 	columnUpdater := &columnTable.FakeUpdater{}
+	encodeState := token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPATCHHandler(
 		decodeAuth.Func,
 		decodeState.Func,
 		colNoVdtor,
 		columnUpdater,
+		encodeState.Func,
 		log,
 	)
 
@@ -43,7 +45,9 @@ func TestPATCHHandler(t *testing.T) {
 		stateDecoded     token.State
 		errValidateColNo error
 		errUpdateCol     error
-		wantStatusCode   int
+		errEncodeState   error
+		outState         string
+		wantStatus       int
 		assertFunc       func(*testing.T, *http.Response, string)
 	}{
 		{
@@ -56,7 +60,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusUnauthorized,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusUnauthorized,
 			assertFunc:       assert.OnResErr("Auth token not found."),
 		},
 		{
@@ -69,7 +75,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusUnauthorized,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusUnauthorized,
 			assertFunc:       assert.OnResErr("Invalid auth token."),
 		},
 		{
@@ -82,7 +90,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusForbidden,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only team admins can edit tasks.",
 			),
@@ -97,7 +107,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusBadRequest,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("State token not found."),
 		},
 		{
@@ -110,7 +122,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusBadRequest,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid state token."),
 		},
 		{
@@ -123,7 +137,9 @@ func TestPATCHHandler(t *testing.T) {
 			stateDecoded:     token.State{},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusBadRequest,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid task ID."),
 		},
 		{
@@ -139,7 +155,9 @@ func TestPATCHHandler(t *testing.T) {
 			}}},
 			errValidateColNo: errors.New("err validate column number"),
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusBadRequest,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid column number."),
 		},
 		{
@@ -155,10 +173,30 @@ func TestPATCHHandler(t *testing.T) {
 			}}},
 			errValidateColNo: nil,
 			errUpdateCol:     sql.ErrConnDone,
-			wantStatusCode:   http.StatusInternalServerError,
+			errEncodeState:   nil,
+			outState:         "",
+			wantStatus:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
 				sql.ErrConnDone.Error(),
 			),
+		},
+		{
+			name:           "ErrEncodeState",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{{
+				ID:      "1",
+				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+			}}},
+			errValidateColNo: nil,
+			errUpdateCol:     nil,
+			errEncodeState:   errors.New("encode state failed"),
+			outState:         "",
+			wantStatus:       http.StatusInternalServerError,
+			assertFunc:       assert.OnLoggedErr("encode state failed"),
 		},
 		{
 			name:           "OK",
@@ -173,8 +211,14 @@ func TestPATCHHandler(t *testing.T) {
 			}}},
 			errValidateColNo: nil,
 			errUpdateCol:     nil,
-			wantStatusCode:   http.StatusOK,
-			assertFunc:       func(_ *testing.T, _ *http.Response, _ string) {},
+			errEncodeState:   nil,
+			outState:         "aklsdjhfalks",
+			wantStatus:       http.StatusOK,
+			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+				ck := r.Cookies()[0]
+				assert.Equal(t.Error, ck.Name, "state-token")
+				assert.Equal(t.Error, ck.Value, "aklsdjhfalks")
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -184,6 +228,8 @@ func TestPATCHHandler(t *testing.T) {
 			decodeState.Err = c.errDecodeState
 			colNoVdtor.Err = c.errValidateColNo
 			columnUpdater.Err = c.errUpdateCol
+			encodeState.Err = c.errEncodeState
+			encodeState.Res = c.outState
 
 			// Prepare request and response recorder.
 			r := httptest.NewRequest("", "/", strings.NewReader(`[{
@@ -208,7 +254,7 @@ func TestPATCHHandler(t *testing.T) {
 			res := w.Result()
 
 			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions.
 			c.assertFunc(t, res, log.InMessage)

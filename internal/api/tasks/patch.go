@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/dbaccess"
@@ -35,6 +36,7 @@ type PatchHandler struct {
 	decodeState    token.DecodeFunc[token.State]
 	colNoValidator api.IntValidator
 	columnUpdater  dbaccess.Updater[[]columnTable.Task]
+	encodeState    token.EncodeFunc[token.State]
 	log            pkgLog.Errorer
 }
 
@@ -44,6 +46,7 @@ func NewPATCHHandler(
 	decodeState token.DecodeFunc[token.State],
 	colNoValidator api.IntValidator,
 	columnUpdater dbaccess.Updater[[]columnTable.Task],
+	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) PatchHandler {
 	return PatchHandler{
@@ -51,6 +54,7 @@ func NewPATCHHandler(
 		decodeState:    decodeState,
 		colNoValidator: colNoValidator,
 		columnUpdater:  columnUpdater,
+		encodeState:    encodeState,
 		log:            log,
 	}
 }
@@ -203,4 +207,35 @@ func (h PatchHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
+
+	// generate new state
+	var boards []token.Board
+	for _, sb := range state.Boards {
+		var columns []token.Column
+		for _, sc := range sb.Columns {
+			var tasks []token.Task
+			for _, st := range sc.Tasks {
+				tasks = append(tasks, st)
+			}
+			columns = append(columns, token.NewColumn(tasks))
+		}
+		boards = append(boards, token.NewBoard(sb.ID, columns))
+	}
+	newState := token.NewState(boards)
+
+	// encode state into cookie
+	exp := time.Now().Add(token.DefaultDuration).UTC()
+	tkState, err := h.encodeState(exp, newState)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.StateName,
+		Value:    tkState,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
 }

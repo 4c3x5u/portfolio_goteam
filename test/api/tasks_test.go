@@ -28,6 +28,7 @@ func TestTasksAPI(t *testing.T) {
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
 				columnTable.NewUpdater(db),
+				token.EncodeState,
 				log,
 			),
 		},
