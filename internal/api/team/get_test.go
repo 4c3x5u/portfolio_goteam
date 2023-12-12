@@ -1,6 +1,7 @@
 package team
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,15 @@ func TestGetHandler(t *testing.T) {
 	retriever := &db.FakeRetriever[teamTable.Team]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewGetHandler(decodeAuth.Func, retriever, log)
+
+	wantTeam := teamTable.Team{
+		ID:      "teamid",
+		Members: []string{"memberone", "membertwo"},
+		Boards: []teamTable.Board{
+			{ID: "board1", Name: "boardone"},
+			{ID: "board2", Name: "boardtwo"},
+		},
+	}
 
 	for _, c := range []struct {
 		name          string
@@ -58,6 +68,28 @@ func TestGetHandler(t *testing.T) {
 			team:          teamTable.Team{},
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("retrieve failed"),
+		},
+		{
+			name:          "OK",
+			auth:          "nonempty",
+			errDecodeAuth: nil,
+			authDecoded:   token.Auth{},
+			errRetrieve:   nil,
+			team:          wantTeam,
+			wantStatus:    http.StatusOK,
+			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+				var team teamTable.Team
+				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t.Error, team.ID, wantTeam.ID)
+				assert.AllEqual(t.Error, team.Members, wantTeam.Members)
+				for i, b := range wantTeam.Boards {
+					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
+					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
+				}
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

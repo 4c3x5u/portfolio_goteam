@@ -1,6 +1,7 @@
 package team
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/kxplxn/goteam/pkg/db"
@@ -8,6 +9,9 @@ import (
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
+
+// GetResp defines the body of GET team responses.
+type GetResp teamTable.Team
 
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // team route.
@@ -47,12 +51,17 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// retrieve team
-	_, err = h.retriever.Retrieve(r.Context(), auth.TeamID)
+	team, err := h.retriever.Retrieve(r.Context(), auth.TeamID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// encode team
+	if err = json.NewEncoder(w).Encode(GetResp(team)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
 }
