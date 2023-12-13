@@ -1,4 +1,4 @@
-package dbaccess
+package legacydb
 
 import (
 	"database/sql"

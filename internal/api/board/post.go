@@ -8,10 +8,10 @@ import (
 	"strconv"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/legacydb"
+	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	teamTable "github.com/kxplxn/goteam/pkg/legacydb/team"
+	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
@@ -28,20 +28,20 @@ type POSTResp struct {
 // POSTHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type POSTHandler struct {
-	userSelector  dbaccess.Selector[userTable.Record]
+	userSelector  legacydb.Selector[userTable.Record]
 	validator     api.StringValidator
-	teamSelector  dbaccess.Selector[teamTable.Record]
-	boardCounter  dbaccess.Counter
-	boardInserter dbaccess.Inserter[boardTable.InRecord]
+	teamSelector  legacydb.Selector[teamTable.Record]
+	boardCounter  legacydb.Counter
+	boardInserter legacydb.Inserter[boardTable.InRecord]
 	log           pkgLog.Errorer
 }
 
 // NewPOSTHandler creates and returns a new POSTHandler.
 func NewPOSTHandler(
-	userSelector dbaccess.Selector[userTable.Record],
+	userSelector legacydb.Selector[userTable.Record],
 	validator api.StringValidator,
-	boardCounter dbaccess.Counter,
-	boardInserter dbaccess.Inserter[boardTable.InRecord],
+	boardCounter legacydb.Counter,
+	boardInserter legacydb.Inserter[boardTable.InRecord],
 	log pkgLog.Errorer,
 ) POSTHandler {
 	return POSTHandler{

@@ -9,14 +9,14 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestInserter tests the Insert method of Inserter to assert that it sends the
 // correct queries to the database with the correct arguments, and returns
 // whatever error occurs.
 func TestInserter(t *testing.T) {
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewInserter(db)

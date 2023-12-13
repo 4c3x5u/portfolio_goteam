@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestSelector tests the Select method of Selector to assert that it sends the
@@ -23,7 +23,7 @@ func TestSelector(t *testing.T) {
 	t.Run("Error", func(t *testing.T) {
 		wantErr := errors.New("error selecting user")
 
-		db, mock, teardown := dbaccess.SetUpDBTest(t)
+		db, mock, teardown := legacydb.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnError(wantErr)
 		mock.ExpectClose()
@@ -39,7 +39,7 @@ func TestSelector(t *testing.T) {
 		wantTeamID := 21
 		wantIsAdmin := true
 
-		db, mock, teardown := dbaccess.SetUpDBTest(t)
+		db, mock, teardown := legacydb.SetUpDBTest(t)
 		defer teardown()
 		mock.ExpectQuery(query).WithArgs(username).WillReturnRows(
 			mock.NewRows([]string{"password", "teamID", "isAdmin"}).

@@ -12,9 +12,9 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/legacydb"
+	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
@@ -23,7 +23,7 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	userSelector := &userTable.FakeSelector{}
 	validator := &api.FakeStringValidator{}
-	boardCounter := &dbaccess.FakeCounter{}
+	boardCounter := &legacydb.FakeCounter{}
 	boardInserter := &boardTable.FakeInserter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPOSTHandler(

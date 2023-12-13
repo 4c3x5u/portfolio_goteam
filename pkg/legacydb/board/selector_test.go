@@ -8,15 +8,16 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestSelector tests the Select method of Selector to assert that it sends the
 // correct query to the database with the correct arguments, and returns all
 // data or whatever error occurs.
 func TestSelector(t *testing.T) {
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewSelector(db)

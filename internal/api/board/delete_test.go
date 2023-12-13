@@ -11,9 +11,9 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/legacydb"
+	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
@@ -23,7 +23,7 @@ func TestDELETEHandler(t *testing.T) {
 	validator := &api.FakeStringValidator{}
 	userSelector := &userTable.FakeSelector{}
 	boardSelector := &boardTable.FakeSelector{}
-	userBoardDeleter := &dbaccess.FakeDeleter{}
+	userBoardDeleter := &legacydb.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
 		userSelector, validator, boardSelector, userBoardDeleter, log,

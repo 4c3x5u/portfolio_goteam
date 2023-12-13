@@ -6,28 +6,28 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/legacydb"
+	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	userSelector  dbaccess.Selector[userTable.Record]
+	userSelector  legacydb.Selector[userTable.Record]
 	validator     api.StringValidator
-	boardSelector dbaccess.Selector[boardTable.Record]
-	boardDeleter  dbaccess.Deleter
+	boardSelector legacydb.Selector[boardTable.Record]
+	boardDeleter  legacydb.Deleter
 	log           pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
-	userSelector dbaccess.Selector[userTable.Record],
+	userSelector legacydb.Selector[userTable.Record],
 	validator api.StringValidator,
-	boardSelector dbaccess.Selector[boardTable.Record],
-	boardDeleter dbaccess.Deleter,
+	boardSelector legacydb.Selector[boardTable.Record],
+	boardDeleter legacydb.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{

@@ -9,7 +9,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestSelectorByInvCode tests SelectorByInvCode to assert that it queries the
@@ -21,7 +21,7 @@ func TestSelectorByInvCode(t *testing.T) {
 			`WHERE inviteCode = \$1`
 	)
 
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewSelectorByInvCode(db)

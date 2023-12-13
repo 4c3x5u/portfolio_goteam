@@ -1,4 +1,4 @@
-package dbaccess
+package legacydb
 
 // FakeCounter is a test fake for Counter.
 type FakeCounter struct {

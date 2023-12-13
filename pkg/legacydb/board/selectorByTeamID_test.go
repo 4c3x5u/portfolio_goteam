@@ -7,15 +7,16 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 func TestSelectorByTeamID(t *testing.T) {
 	teamID := "21"
 	sqlSelect := `SELECT id, name FROM app.board WHERE teamID = \$1`
 
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewSelectorByTeamID(db)

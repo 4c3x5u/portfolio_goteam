@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	"github.com/kxplxn/goteam/pkg/legacydb"
+	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 )
 
@@ -24,20 +24,20 @@ type PATCHResp struct {
 }
 
 type PATCHHandler struct {
-	userSelector  dbaccess.Selector[userTable.Record]
+	userSelector  legacydb.Selector[userTable.Record]
 	idValidator   api.StringValidator
 	nameValidator api.StringValidator
-	boardSelector dbaccess.Selector[boardTable.Record]
-	boardUpdater  dbaccess.Updater[string]
+	boardSelector legacydb.Selector[boardTable.Record]
+	boardUpdater  legacydb.Updater[string]
 	log           pkgLog.Errorer
 }
 
 func NewPATCHHandler(
-	userSelector dbaccess.Selector[userTable.Record],
+	userSelector legacydb.Selector[userTable.Record],
 	idValidator api.StringValidator,
 	nameValidator api.StringValidator,
-	boardSelector dbaccess.Selector[boardTable.Record],
-	boardUpdater dbaccess.Updater[string],
+	boardSelector legacydb.Selector[boardTable.Record],
+	boardUpdater legacydb.Updater[string],
 	log pkgLog.Errorer,
 ) *PATCHHandler {
 	return &PATCHHandler{

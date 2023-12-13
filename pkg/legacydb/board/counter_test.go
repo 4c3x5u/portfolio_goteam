@@ -6,17 +6,17 @@ import (
 	"database/sql"
 	"testing"
 
-	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
-
 	"github.com/DATA-DOG/go-sqlmock"
+
+	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestCounter tests the Counter.Count to assert that it sends the correct
 func TestCounter(t *testing.T) {
 	cmdCount := `SELECT COUNT\(\*\) FROM app.board WHERE teamID = \$1`
 
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewCounter(db)

@@ -19,7 +19,7 @@ import (
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
-	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -37,7 +37,7 @@ func TestTaskAPI(t *testing.T) {
 				titleValidator,
 				titleValidator,
 				taskAPI.NewColNoValidator(),
-				dynamoTaskTable.NewInserter(svcDynamo),
+				taskTable.NewInserter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -46,13 +46,13 @@ func TestTaskAPI(t *testing.T) {
 				token.DecodeState,
 				titleValidator,
 				titleValidator,
-				dynamoTaskTable.NewUpdater(svcDynamo),
+				taskTable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				dynamoTaskTable.NewDeleter(svcDynamo),
+				taskTable.NewDeleter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -282,7 +282,7 @@ func TestTaskAPI(t *testing.T) {
 
 					var taskFound bool
 					for _, av := range out.Items {
-						var task dynamoTaskTable.Task
+						var task taskTable.Task
 						err = attributevalue.UnmarshalMap(av, &task)
 						if err != nil {
 							t.Fatal(err)
@@ -468,7 +468,7 @@ func TestTaskAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var task dynamoTaskTable.Task
+					var task taskTable.Task
 					err = attributevalue.UnmarshalMap(out.Item, &task)
 					assert.Nil(t.Fatal, err)
 

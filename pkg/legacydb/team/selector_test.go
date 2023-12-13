@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestSelector tests Selector to assert that it queries the database correctly
@@ -21,7 +22,7 @@ func TestSelector(t *testing.T) {
 			`WHERE id = \$1`
 	)
 
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer teardown()
 
 	sut := NewSelector(db)

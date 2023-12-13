@@ -10,7 +10,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/dbaccess"
+	"github.com/kxplxn/goteam/pkg/legacydb"
 )
 
 // TestRecursiveSelector tests the Select method of RecursiveSelector to assert
@@ -26,7 +26,7 @@ func TestRecursiveSelector(t *testing.T) {
 	sqlSelectSubtask := `SELECT id, title, \"order\", isDone ` +
 		`FROM app.subtask WHERE taskID = \$1`
 
-	db, mock, teardown := dbaccess.SetUpDBTest(t)
+	db, mock, teardown := legacydb.SetUpDBTest(t)
 	defer func() {
 		mock.ExpectClose()
 		teardown()

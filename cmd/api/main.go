@@ -19,12 +19,11 @@ import (
 	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	teamAPI "github.com/kxplxn/goteam/internal/api/team"
 	"github.com/kxplxn/goteam/pkg/auth"
-	dynamoTaskTable "github.com/kxplxn/goteam/pkg/db/task"
-	dynamoTeamTable "github.com/kxplxn/goteam/pkg/db/team"
-	dynamoUserTable "github.com/kxplxn/goteam/pkg/db/user"
-	boardTable "github.com/kxplxn/goteam/pkg/dbaccess/board"
-	teamTable "github.com/kxplxn/goteam/pkg/dbaccess/team"
-	userTable "github.com/kxplxn/goteam/pkg/dbaccess/user"
+	taskTAble "github.com/kxplxn/goteam/pkg/db/task"
+	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	legacyBoardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	legacyUserTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -66,7 +65,7 @@ func main() {
 		os.Exit(4)
 	}
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
-	userSelector := userTable.NewSelector(db)
+	userSelector := legacyUserTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
@@ -80,7 +79,7 @@ func main() {
 				),
 				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				dynamoUserTable.NewInserter(svcDynamo),
+				userTable.NewInserter(svcDynamo),
 				token.EncodeAuth,
 				log,
 			),
@@ -91,7 +90,7 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodPost: loginAPI.NewPostHandler(
 				loginAPI.NewValidator(),
-				dynamoUserTable.NewRetriever(svcDynamo),
+				userTable.NewRetriever(svcDynamo),
 				loginAPI.NewPasswordComparator(),
 				token.EncodeAuth,
 				log,
@@ -103,8 +102,8 @@ func main() {
 		map[string]api.MethodHandler{
 			http.MethodGet: teamAPI.NewGetHandler(
 				token.DecodeAuth,
-				dynamoTeamTable.NewRetriever(svcDynamo),
-				dynamoTeamTable.NewInserter(svcDynamo),
+				teamTable.NewRetriever(svcDynamo),
+				teamTable.NewInserter(svcDynamo),
 				log,
 			),
 		},
@@ -112,25 +111,15 @@ func main() {
 
 	boardIDValidator := boardAPI.NewIDValidator()
 	boardNameValidator := boardAPI.NewNameValidator()
-	boardSelector := boardTable.NewSelector(db)
-	boardInserter := boardTable.NewInserter(db)
+	boardSelector := legacyBoardTable.NewSelector(db)
+	boardInserter := legacyBoardTable.NewInserter(db)
 	mux.Handle("/board", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
-			http.MethodGet: boardAPI.NewGETHandler(
-				userSelector,
-				boardInserter,
-				boardIDValidator,
-				boardTable.NewRecursiveSelector(db),
-				teamTable.NewSelector(db),
-				userTable.NewSelectorByTeamID(db),
-				boardTable.NewSelectorByTeamID(db),
-				log,
-			),
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				userSelector,
 				boardNameValidator,
-				boardTable.NewCounter(db),
+				legacyBoardTable.NewCounter(db),
 				boardInserter,
 				log,
 			),
@@ -138,7 +127,7 @@ func main() {
 				userSelector,
 				boardIDValidator,
 				boardSelector,
-				boardTable.NewDeleter(db),
+				legacyBoardTable.NewDeleter(db),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
@@ -146,7 +135,7 @@ func main() {
 				boardIDValidator,
 				boardNameValidator,
 				boardSelector,
-				boardTable.NewUpdater(db),
+				legacyBoardTable.NewUpdater(db),
 				log,
 			),
 		},
@@ -159,13 +148,13 @@ func main() {
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
-				dynamoTaskTable.NewMultiUpdater(svcDynamo),
+				taskTAble.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
 				log,
 			),
 			http.MethodGet: tasksAPI.NewGetHandler(
 				token.DecodeAuth,
-				dynamoTaskTable.NewMultiRetriever(svcDynamo),
+				taskTAble.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},
@@ -180,8 +169,8 @@ func main() {
 				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				taskAPI.ColNoValidator{},
-				dynamoTaskTable.NewInserter(svcDynamo),
+				taskAPI.NewColNoValidator(),
+				taskTAble.NewInserter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -190,13 +179,13 @@ func main() {
 				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				dynamoTaskTable.NewUpdater(svcDynamo),
+				taskTAble.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				dynamoTaskTable.NewDeleter(svcDynamo),
+				taskTAble.NewDeleter(svcDynamo),
 				token.EncodeState,
 				log,
 			),

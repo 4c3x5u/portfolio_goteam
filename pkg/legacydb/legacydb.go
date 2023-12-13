@@ -1,5 +1,5 @@
 // Package dbaccess contains code for working with the goteam database.
-package dbaccess
+package legacydb
 
 // Inserter describes a type that inserts a record into a table in the database.
 type Inserter[T any] interface{ Insert(T) error }
