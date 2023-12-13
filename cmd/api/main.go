@@ -155,12 +155,17 @@ func main() {
 	mux.Handle("/tasks", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
-			http.MethodPatch: tasksAPI.NewPATCHHandler(
+			http.MethodPatch: tasksAPI.NewPatchHandler(
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
 				dynamoTaskTable.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
+				log,
+			),
+			http.MethodGet: tasksAPI.NewGetHandler(
+				token.DecodeAuth,
+				dynamoTaskTable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},

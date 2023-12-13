@@ -51,6 +51,15 @@ type DynamoItemGetter interface {
 	) (*dynamodb.GetItemOutput, error)
 }
 
+// DynamoQueryer defines a type that can be used to query a DynamoDB table. It
+// is used to dependency-inject the DynamoDB client into Retrievers that are
+// used to retrieve a collection of items.
+type DynamoQueryer interface {
+	Query(
+		context.Context, *dynamodb.QueryInput, ...func(*dynamodb.Options),
+	) (*dynamodb.QueryOutput, error)
+}
+
 // DynamoItemPutter defines a type that can be used to put an item into a
 // DynamoDB table. It is used to dependency-inject the DynamoDB client into
 // Inserters and Updaters.
@@ -71,7 +80,7 @@ type DynamoItemDeleter interface {
 
 // DynamoTransactWriter defines a type that can be used to write multiple items
 // to a DynamoDB table in a transaction. It is used to dependency-inject the
-// DynamoDB client into BatchUpdaters.
+// DynamoDB client into Updaters that are used to update a collecton of items.
 type DynamoTransactWriter interface {
 	TransactWriteItems(
 		context.Context,

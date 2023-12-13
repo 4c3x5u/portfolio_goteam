@@ -69,7 +69,7 @@ func NewPostHandler(
 // ServeHTTP responds to requests made to the register route.
 func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// decode request
-	req := PostReq{}
+	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

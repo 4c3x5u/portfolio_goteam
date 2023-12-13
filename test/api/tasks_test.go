@@ -4,6 +4,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -27,7 +28,13 @@ func TestTasksAPI(t *testing.T) {
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
 		map[string]api.MethodHandler{
-			http.MethodPatch: tasksAPI.NewPATCHHandler(
+			http.MethodGet: tasksAPI.NewGetHandler(
+				token.DecodeAuth,
+				// TODO: create tasks retriever
+				taskTable.NewMultiRetriever(svcDynamo),
+				log,
+			),
+			http.MethodPatch: tasksAPI.NewPatchHandler(
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
@@ -67,6 +74,107 @@ func TestTasksAPI(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("GET", func(t *testing.T) {
+		for _, c := range []struct {
+			name       string
+			authFunc   func(*http.Request)
+			statusCode int
+			assertFunc func(*testing.T, *http.Response, string)
+		}{
+			{
+				name:       "NoAuth",
+				authFunc:   func(*http.Request) {},
+				statusCode: http.StatusUnauthorized,
+			},
+			{
+				name:       "InvalidAuth",
+				authFunc:   addCookieAuth("asdkjlfhass"),
+				statusCode: http.StatusUnauthorized,
+			},
+			{
+				name: "OK",
+				authFunc: addCookieAuth(
+					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
+						"zZSwidGVhbUlEIjoiM2MzZWM0ZWEtYTg1MC00ZmM1LWFhYjAtMjR" +
+						"lOWU3MjIzYmJjIiwidXNlcm5hbWUiOiJ0ZWFtNG1lbWJlciJ9.SN" +
+						"OvcdaHsziQzAcQA7DP5PB74HyxNV8HpbowA7goZUI",
+				),
+				statusCode: http.StatusOK,
+				assertFunc: func(t *testing.T, r *http.Response, _ string) {
+					wantResp := tasksAPI.GetResp{
+						{
+							TeamID:       "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+							BoardID:      "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+							ColumnNumber: 0,
+							ID:           "55e275e4-de80-4241-b73b-88e784d5522b",
+							Title:        "team 4 task 1",
+							Description:  "team 4 task 1 description",
+							Order:        1,
+							Subtasks: []taskTable.Subtask{
+								{Title: "team 4 subtask 1", IsDone: false},
+							},
+						},
+						{
+							TeamID:       "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+							BoardID:      "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+							ColumnNumber: 0,
+							ID:           "5ccd750d-3783-4832-891d-025f24a4944f",
+							Title:        "team 4 task 2",
+							Description:  "team 4 task 2 description",
+							Order:        0,
+							Subtasks: []taskTable.Subtask{
+								{Title: "team 4 subtask 2", IsDone: true},
+							},
+						},
+					}
+
+					var resp tasksAPI.GetResp
+					err := json.NewDecoder(r.Body).Decode(&resp)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					assert.Equal(t.Error, len(resp), len(wantResp))
+					for i, wt := range wantResp {
+						task := resp[i]
+						assert.Equal(t.Error, task.TeamID, wt.TeamID)
+						assert.Equal(t.Error, task.BoardID, wt.BoardID)
+						assert.Equal(t.Error,
+							task.ColumnNumber, wt.ColumnNumber,
+						)
+						assert.Equal(t.Error, task.ID, wt.ID)
+						assert.Equal(t.Error, task.Title, wt.Title)
+						assert.Equal(t.Error,
+							task.Description, wt.Description,
+						)
+						assert.Equal(t.Error, task.Order, wt.Order)
+
+						assert.Equal(t.Error,
+							len(task.Subtasks), len(wt.Subtasks),
+						)
+						for j, wst := range wt.Subtasks {
+							subtask := task.Subtasks[j]
+							assert.Equal(t.Error, subtask.Title, wst.Title)
+							assert.Equal(t.Error, subtask.IsDone, wst.IsDone)
+						}
+					}
+				},
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+				c.authFunc(req)
+				w := httptest.NewRecorder()
+
+				sut.ServeHTTP(w, req)
+				res := w.Result()
+
+				assert.Equal(t.Error, res.StatusCode, c.statusCode)
+			})
+		}
+	})
+
 	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string

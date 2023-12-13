@@ -49,8 +49,8 @@ type PatchHandler struct {
 	log            pkgLog.Errorer
 }
 
-// NewPATCHHandler creates and returns a new PATCHHandler.
-func NewPATCHHandler(
+// NewPatchHandler creates and returns a new PATCHHandler.
+func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
 	colNoValidator api.IntValidator,

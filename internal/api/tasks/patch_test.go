@@ -24,7 +24,7 @@ func TestPatchHandler(t *testing.T) {
 	tasksUpdater := &db.FakeUpdater[[]taskTable.Task]{}
 	encodeState := token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPATCHHandler(
+	sut := NewPatchHandler(
 		decodeAuth.Func,
 		decodeState.Func,
 		colNoVdtor,

@@ -1,3 +1,5 @@
+//go:build utest
+
 package team
 
 import (

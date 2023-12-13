@@ -188,7 +188,20 @@ var reqsWriteTeam = []types.WriteRequest{
 				&types.AttributeValueMemberS{Value: "team4Admin"},
 			},
 		},
-		"Boards": &types.AttributeValueMemberL{Value: []types.AttributeValue{}},
+		"Boards": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"ID": &types.AttributeValueMemberS{
+							Value: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+						},
+						"Name": &types.AttributeValueMemberS{
+							Value: "Team 4 Board 1",
+						},
+					},
+				},
+			},
+		},
 	}}},
 }
 
@@ -449,5 +462,63 @@ var reqsWriteTask = []types.WriteRequest{
 			Value: "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 		},
 		"ColumnNumber": &types.AttributeValueMemberN{Value: "2"},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+		},
+		"ID": &types.AttributeValueMemberS{
+			Value: "55e275e4-de80-4241-b73b-88e784d5522b",
+		},
+		"Title": &types.AttributeValueMemberS{Value: "team 4 task 1"},
+		"Description": &types.AttributeValueMemberS{
+			Value: "team 4 task 1 description",
+		},
+		"Order": &types.AttributeValueMemberN{Value: "1"},
+		"Subtasks": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"Title": &types.AttributeValueMemberS{
+							Value: "team 4 subtask 1",
+						},
+						"IsDone": &types.AttributeValueMemberBOOL{Value: false},
+					},
+				},
+			},
+		},
+		"BoardID": &types.AttributeValueMemberS{
+			Value: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+		},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
+	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+		},
+		"ID": &types.AttributeValueMemberS{
+			Value: "5ccd750d-3783-4832-891d-025f24a4944f",
+		},
+		"Title": &types.AttributeValueMemberS{Value: "team 4 task 2"},
+		"Description": &types.AttributeValueMemberS{
+			Value: "team 4 task 2 description",
+		},
+		"Order": &types.AttributeValueMemberN{Value: "0"},
+		"Subtasks": &types.AttributeValueMemberL{
+			Value: []types.AttributeValue{
+				&types.AttributeValueMemberM{
+					Value: map[string]types.AttributeValue{
+						"Title": &types.AttributeValueMemberS{
+							Value: "team 4 subtask 2",
+						},
+						"IsDone": &types.AttributeValueMemberBOOL{Value: true},
+					},
+				},
+			},
+		},
+		"BoardID": &types.AttributeValueMemberS{
+			Value: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+		},
+		"ColumnNumber": &types.AttributeValueMemberN{Value: "0"},
 	}}},
 }

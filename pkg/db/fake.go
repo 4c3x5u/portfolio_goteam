@@ -52,6 +52,20 @@ type FakeDynamoItemGetter struct {
 	Err error
 }
 
+// FakeDynamoQueryer is a test fake for DynamoQueryer.
+type FakeDynamoQueryer struct {
+	Out *dynamodb.QueryOutput
+	Err error
+}
+
+// Query discards the input parameters and returns Out and Err fields set on
+// FakeDynamoQueryer.
+func (f *FakeDynamoQueryer) Query(
+	context.Context, *dynamodb.QueryInput, ...func(*dynamodb.Options),
+) (*dynamodb.QueryOutput, error) {
+	return f.Out, f.Err
+}
+
 // GetItem discards the input parameters and returns Out and Err fields set on
 // FakeDynamoItemGetter.
 func (f *FakeDynamoItemGetter) GetItem(
