@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/legacydb"
+	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -19,14 +19,9 @@ import (
 func TestDELETEHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	userBoardDeleter := &legacydb.FakeDeleter{}
+	deleter := &db.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewDELETEHandler(
-		decodeAuth.Func,
-		decodeState.Func,
-		userBoardDeleter,
-		log,
-	)
+	sut := NewDELETEHandler(decodeAuth.Func, decodeState.Func, deleter, log)
 
 	// Used on cases where no case-specific assertions are required.
 	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
@@ -108,9 +103,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
-			stateToken:     "",
+			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded:   token.State{},
+			stateDecoded:   token.State{Boards: []token.Board{{ID: "3"}}},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
@@ -123,11 +118,9 @@ func TestDELETEHandler(t *testing.T) {
 			stateToken:     "nonempty",
 			errDecodeState: nil,
 			stateDecoded:   token.State{Boards: []token.Board{{ID: "2"}}},
-			deleteBoardErr: errors.New("delete board error"),
+			deleteBoardErr: errors.New("delete board failed"),
 			wantStatusCode: http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				"delete board error",
-			),
+			assertFunc:     assert.OnLoggedErr("delete board failed"),
 		},
 		{
 			name:           "Success",
@@ -148,7 +141,7 @@ func TestDELETEHandler(t *testing.T) {
 			decodeAuth.Res = c.authDecoded
 			decodeState.Err = c.errDecodeState
 			decodeState.Res = c.stateDecoded
-			userBoardDeleter.Err = c.deleteBoardErr
+			deleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
 			r := httptest.NewRequest(http.MethodPost, "/?id=2", nil)

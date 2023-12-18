@@ -3,7 +3,7 @@ package board
 import (
 	"net/http"
 
-	"github.com/kxplxn/goteam/pkg/legacydb"
+	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -13,7 +13,7 @@ import (
 type DELETEHandler struct {
 	decodeAuth   token.DecodeFunc[token.Auth]
 	decodeState  token.DecodeFunc[token.State]
-	boardDeleter legacydb.Deleter
+	boardDeleter db.Deleter
 	log          pkgLog.Errorer
 }
 
@@ -21,7 +21,7 @@ type DELETEHandler struct {
 func NewDELETEHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	boardDeleter legacydb.Deleter,
+	boardDeleter db.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
@@ -93,12 +93,9 @@ func (h DELETEHandler) Handle(
 	}
 
 	// delete the board
-	if err = h.boardDeleter.Delete(id); err != nil {
+	if err = h.boardDeleter.Delete(r.Context(), id); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// All went well. Return 200.
-	w.WriteHeader(http.StatusOK)
 }
