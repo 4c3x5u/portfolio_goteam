@@ -44,8 +44,7 @@ func TestBoardAPI(t *testing.T) {
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				token.DecodeAuth,
-				idValidator,
-				boardSelector,
+				token.DecodeState,
 				boardTable.NewDeleter(db),
 				log,
 			),

@@ -98,6 +98,6 @@ func OnResErr(
 // table-driven tests.
 func OnLoggedErr(wantErrMsg string) func(*testing.T, *http.Response, string) {
 	return func(t *testing.T, _ *http.Response, loggedErr string) {
-		Equal(t.Error, wantErrMsg, loggedErr)
+		Equal(t.Error, loggedErr, wantErrMsg)
 	}
 }

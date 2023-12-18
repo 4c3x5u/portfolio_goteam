@@ -1,14 +1,9 @@
 package board
 
 import (
-	"database/sql"
-	"errors"
 	"net/http"
-	"strconv"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/legacydb"
-	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -16,27 +11,24 @@ import (
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	decodeAuth    token.DecodeFunc[token.Auth]
-	validator     api.StringValidator
-	boardSelector legacydb.Selector[boardTable.Record]
-	boardDeleter  legacydb.Deleter
-	log           pkgLog.Errorer
+	decodeAuth   token.DecodeFunc[token.Auth]
+	decodeState  token.DecodeFunc[token.State]
+	boardDeleter legacydb.Deleter
+	log          pkgLog.Errorer
 }
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	validator api.StringValidator,
-	boardSelector legacydb.Selector[boardTable.Record],
+	decodeState token.DecodeFunc[token.State],
 	boardDeleter legacydb.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
-		decodeAuth:    decodeAuth,
-		validator:     validator,
-		boardSelector: boardSelector,
-		boardDeleter:  boardDeleter,
-		log:           log,
+		decodeAuth:   decodeAuth,
+		decodeState:  decodeState,
+		boardDeleter: boardDeleter,
+		log:          log,
 	}
 }
 
@@ -44,6 +36,7 @@ func NewDELETEHandler(
 func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
+	// get auth token
 	ckAuth, err := r.Cookie(token.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -67,32 +60,40 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
-	// get and validate board ID
-	boardID := r.URL.Query().Get("id")
-	if err := h.validator.Validate(boardID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
 
-	// Select board to validate that it belongs to the team that the user is the
-	// admin of.
-	board, err := h.boardSelector.Select(boardID)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	// decode auth token
+	state, err := h.decodeState(ckState.Value)
 	if err != nil {
-		h.log.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	if strconv.Itoa(board.TeamID) != auth.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	// Delete the board.
-	if err = h.boardDeleter.Delete(boardID); err != nil {
+	// check if the user has access to the board
+	id := r.URL.Query().Get("id")
+	var hasAccess bool
+	for _, b := range state.Boards {
+		if b.ID == id {
+			hasAccess = true
+			break
+		}
+	}
+	if !hasAccess {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// delete the board
+	if err = h.boardDeleter.Delete(id); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

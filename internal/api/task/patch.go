@@ -87,8 +87,8 @@ func (h *PatchHandler) Handle(
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
-			return
 		}
+		return
 	}
 
 	// validate user is admin

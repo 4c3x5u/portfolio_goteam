@@ -3,16 +3,13 @@
 package board
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/legacydb"
-	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -20,15 +17,13 @@ import (
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
-	validator := &api.FakeStringValidator{}
 	decodeAuth := &token.FakeDecode[token.Auth]{}
-	boardSelector := &boardTable.FakeSelector{}
+	decodeState := &token.FakeDecode[token.State]{}
 	userBoardDeleter := &legacydb.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
 		decodeAuth.Func,
-		validator,
-		boardSelector,
+		decodeState.Func,
 		userBoardDeleter,
 		log,
 	)
@@ -41,9 +36,9 @@ func TestDELETEHandler(t *testing.T) {
 		authToken      string
 		errDecodeAuth  error
 		authDecoded    token.Auth
-		validatorErr   error
-		board          boardTable.Record
-		selectBoardErr error
+		stateToken     string
+		errDecodeState error
+		stateDecoded   token.State
 		deleteBoardErr error
 		wantStatusCode int
 		assertFunc     func(*testing.T, *http.Response, string)
@@ -53,9 +48,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{},
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusUnauthorized,
 			assertFunc:     emptyAssertFunc,
@@ -65,9 +60,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  token.ErrInvalid,
 			authDecoded:    token.Auth{},
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusUnauthorized,
 			assertFunc:     emptyAssertFunc,
@@ -77,57 +72,45 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: false},
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
-			name:           "ValidatorErr",
+			name:           "NoState",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
-			validatorErr:   errors.New("some validator err"),
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
-			wantStatusCode: http.StatusBadRequest,
+			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
-			name:           "BoardNotFound",
+			name:           "InvalidState",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: sql.ErrNoRows,
+			stateToken:     "nonempty",
+			errDecodeState: token.ErrInvalid,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
-			wantStatusCode: http.StatusNotFound,
+			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
-			name:           "SelectBoardErr",
+			name:           "NoAccess",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: sql.ErrConnDone,
-			deleteBoardErr: nil,
-			wantStatusCode: http.StatusInternalServerError,
-			assertFunc:     emptyAssertFunc,
-		},
-		{
-			name:           "BoardWrongTeam",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
-			validatorErr:   nil,
-			board:          boardTable.Record{TeamID: 2},
-			selectBoardErr: nil,
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
 			assertFunc:     emptyAssertFunc,
@@ -137,9 +120,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
-			validatorErr:   nil,
-			board:          boardTable.Record{TeamID: 1},
-			selectBoardErr: nil,
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded:   token.State{Boards: []token.Board{{ID: "2"}}},
 			deleteBoardErr: errors.New("delete board error"),
 			wantStatusCode: http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -151,9 +134,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
-			validatorErr:   nil,
-			board:          boardTable.Record{TeamID: 1},
-			selectBoardErr: nil,
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded:   token.State{Boards: []token.Board{{ID: "2"}}},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusOK,
 			assertFunc:     emptyAssertFunc,
@@ -163,16 +146,21 @@ func TestDELETEHandler(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			decodeAuth.Err = c.errDecodeAuth
 			decodeAuth.Res = c.authDecoded
-			validator.Err = c.validatorErr
-			boardSelector.Board = c.board
-			boardSelector.Err = c.selectBoardErr
+			decodeState.Err = c.errDecodeState
+			decodeState.Res = c.stateDecoded
 			userBoardDeleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
-			r := httptest.NewRequest(http.MethodPost, "/", nil)
+			r := httptest.NewRequest(http.MethodPost, "/?id=2", nil)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  "auth-token",
+					Value: c.authToken,
+				})
+			}
+			if c.stateToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  "state-token",
 					Value: c.authToken,
 				})
 			}

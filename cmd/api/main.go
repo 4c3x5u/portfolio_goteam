@@ -125,8 +125,7 @@ func main() {
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
 				token.DecodeAuth,
-				boardIDValidator,
-				boardSelector,
+				token.DecodeState,
 				legacyBoardTable.NewDeleter(db),
 				log,
 			),
