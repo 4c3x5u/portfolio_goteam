@@ -13,20 +13,24 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/legacydb"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestDELETEHandler(t *testing.T) {
 	validator := &api.FakeStringValidator{}
-	userSelector := &userTable.FakeSelector{}
+	decodeAuth := &token.FakeDecode[token.Auth]{}
 	boardSelector := &boardTable.FakeSelector{}
 	userBoardDeleter := &legacydb.FakeDeleter{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDELETEHandler(
-		userSelector, validator, boardSelector, userBoardDeleter, log,
+		decodeAuth.Func,
+		validator,
+		boardSelector,
+		userBoardDeleter,
+		log,
 	)
 
 	// Used on cases where no case-specific assertions are required.
@@ -34,8 +38,9 @@ func TestDELETEHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name           string
-		user           userTable.Record
-		selectUserErr  error
+		authToken      string
+		errDecodeAuth  error
+		authDecoded    token.Auth
 		validatorErr   error
 		board          boardTable.Record
 		selectBoardErr error
@@ -44,20 +49,34 @@ func TestDELETEHandler(t *testing.T) {
 		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:           "UserNotFound",
-			user:           userTable.Record{},
-			selectUserErr:  sql.ErrNoRows,
+			name:           "NoAuth",
+			authToken:      "",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{},
 			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
 			deleteBoardErr: nil,
-			wantStatusCode: http.StatusForbidden,
+			wantStatusCode: http.StatusUnauthorized,
+			assertFunc:     emptyAssertFunc,
+		},
+		{
+			name:           "InvalidAuth",
+			authToken:      "nonempty",
+			errDecodeAuth:  token.ErrInvalid,
+			authDecoded:    token.Auth{},
+			validatorErr:   nil,
+			board:          boardTable.Record{},
+			selectBoardErr: nil,
+			deleteBoardErr: nil,
+			wantStatusCode: http.StatusUnauthorized,
 			assertFunc:     emptyAssertFunc,
 		},
 		{
 			name:           "NotAdmin",
-			user:           userTable.Record{IsAdmin: false},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: false},
 			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
@@ -66,22 +85,10 @@ func TestDELETEHandler(t *testing.T) {
 			assertFunc:     emptyAssertFunc,
 		},
 		{
-			name:           "SelectUserErr",
-			user:           userTable.Record{},
-			selectUserErr:  sql.ErrConnDone,
-			validatorErr:   nil,
-			board:          boardTable.Record{},
-			selectBoardErr: nil,
-			deleteBoardErr: nil,
-			wantStatusCode: http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
 			name:           "ValidatorErr",
-			user:           userTable.Record{IsAdmin: true},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
 			validatorErr:   errors.New("some validator err"),
 			board:          boardTable.Record{},
 			selectBoardErr: nil,
@@ -91,8 +98,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "BoardNotFound",
-			user:           userTable.Record{IsAdmin: true},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
 			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: sql.ErrNoRows,
@@ -102,8 +110,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "SelectBoardErr",
-			user:           userTable.Record{IsAdmin: true},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
 			validatorErr:   nil,
 			board:          boardTable.Record{},
 			selectBoardErr: sql.ErrConnDone,
@@ -113,8 +122,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "BoardWrongTeam",
-			user:           userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
 			validatorErr:   nil,
 			board:          boardTable.Record{TeamID: 2},
 			selectBoardErr: nil,
@@ -124,9 +134,10 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "DeleteErr",
-			user:           userTable.Record{IsAdmin: true, TeamID: 1},
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
 			validatorErr:   nil,
-			selectUserErr:  nil,
 			board:          boardTable.Record{TeamID: 1},
 			selectBoardErr: nil,
 			deleteBoardErr: errors.New("delete board error"),
@@ -137,8 +148,9 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "Success",
-			user:           userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:  nil,
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
 			validatorErr:   nil,
 			board:          boardTable.Record{TeamID: 1},
 			selectBoardErr: nil,
@@ -149,19 +161,25 @@ func TestDELETEHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
-			userSelector.Rec = c.user
-			userSelector.Err = c.selectUserErr
+			decodeAuth.Err = c.errDecodeAuth
+			decodeAuth.Res = c.authDecoded
 			validator.Err = c.validatorErr
 			boardSelector.Board = c.board
 			boardSelector.Err = c.selectBoardErr
 			userBoardDeleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
-			req := httptest.NewRequest(http.MethodPost, "/", nil)
+			r := httptest.NewRequest(http.MethodPost, "/", nil)
+			if c.authToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  "auth-token",
+					Value: c.authToken,
+				})
+			}
 			w := httptest.NewRecorder()
 
 			// Handle request with sut and get the result.
-			sut.Handle(w, req, "")
+			sut.Handle(w, r, "")
 			res := w.Result()
 
 			// Assert on the status code.

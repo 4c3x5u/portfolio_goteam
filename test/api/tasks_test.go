@@ -226,7 +226,7 @@ func TestTasksAPI(t *testing.T) {
 				reqBody: `[{"id": "0"}]`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Invalid task ID."),
@@ -243,7 +243,7 @@ func TestTasksAPI(t *testing.T) {
                 }]`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {

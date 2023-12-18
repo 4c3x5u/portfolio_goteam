@@ -4,18 +4,25 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
 	"github.com/kxplxn/goteam/internal/api"
 	boardAPI "github.com/kxplxn/goteam/internal/api/board"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
+	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestBoardAPI(t *testing.T) {
@@ -36,7 +43,7 @@ func TestBoardAPI(t *testing.T) {
 				log,
 			),
 			http.MethodDelete: boardAPI.NewDELETEHandler(
-				userSelector,
+				token.DecodeAuth,
 				idValidator,
 				boardSelector,
 				boardTable.NewDeleter(db),
@@ -64,10 +71,7 @@ func TestBoardAPI(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				for _, method := range []string{
-					http.MethodGet,
-					http.MethodPost,
-					http.MethodDelete,
-					http.MethodPatch,
+					http.MethodPost, http.MethodPatch,
 				} {
 					t.Run(method, func(t *testing.T) {
 						req := httptest.NewRequest(method, "/board", nil)
@@ -210,96 +214,60 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name:           "NotAdmin",
 				id:             "1",
-				authFunc:       addCookieAuth(jwtTeam1Member),
+				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "EmptyID",
 				id:             "",
-				authFunc:       addCookieAuth(jwtTeam3Admin),
+				authFunc:       addCookieAuth(tkTeam3Admin),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
-				name:           "NonIntID",
-				id:             "qwerty",
-				authFunc:       addCookieAuth(jwtTeam3Admin),
+				name: "InvalidID",
+				id:   "qwerty",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam3Admin)(r)
+					addCookieState(tkTeam3State)(r)
+				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
-				name:           "Success",
-				id:             "4",
-				authFunc:       addCookieAuth(jwtTeam3Admin),
+				name: "Success",
+				id:   "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam3Admin)(r)
+					addCookieState(tkTeam3State)(r)
+				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
-					// Assert that all user_board records with this board ID are
-					// deleted.
-					// Assert that the board record with this ID is deleted.
-					var boardCount int
-					err := db.QueryRow(
-						"SELECT COUNT(*) FROM app.board WHERE teamID = 3",
-					).Scan(&boardCount)
-					if err != nil {
-						t.Fatal(err)
-					}
-					assert.Equal(t.Error, boardCount, 0)
+					out, err := svcDynamo.GetItem(context.Background(),
+						&dynamodb.GetItemInput{
+							TableName: &teamTableName,
+							Key: map[string]types.AttributeValue{
+								"id": &types.AttributeValueMemberS{
+									Value: "74c80ae5-64f3-4298-a8ff-48f8f920c" +
+										"7d4",
+								},
+							},
+						},
+					)
+					assert.Nil(t.Fatal, err)
 
-					var count int
-					err = db.QueryRow(
-						"SELECT COUNT(*) FROM app.board WHERE id = 4",
-					).Scan(&count)
-					if err != nil {
-						t.Error(err)
-					}
-					assert.Equal(t.Error, count, 0)
+					var team teamTable.Team
+					err = attributevalue.UnmarshalMap(out.Item, &team)
+					assert.Nil(t.Fatal, err)
 
-					// Assert that all column records with this board ID are
-					// deleted.
-					var columnCount int
-					err = db.QueryRow(
-						`SELECT COUNT(*) FROM app."column" WHERE boardID = 4`,
-					).Scan(&columnCount)
-					if err != nil {
-						t.Fatal(err)
-					}
-					assert.Equal(t.Error, columnCount, 0)
-
-					// Assert that all task records associated with each
-					// column record is deleted.
-					for columnID := 1; columnID < 5; columnID++ {
-						var count int
-						err = db.QueryRow(
-							`SELECT COUNT(*) FROM app.task WHERE columnID = $1`,
-							columnID,
-						).Scan(&count)
-						if err != nil {
-							t.Fatal(err)
-						}
-						assert.Equal(t.Error, count, 0)
-					}
-
-					// Assert that all subtask records associated with each
-					// task record is deleted.
-					for taskID := 1; taskID < 5; taskID++ {
-						var count int
-						err = db.QueryRow(
-							"SELECT COUNT(*) FROM app.subtask "+
-								"WHERE taskID = $1",
-							taskID,
-						).Scan(&count)
-						if err != nil {
-							t.Fatal(err)
-						}
-						assert.Equal(t.Error, count, 0)
-					}
+					assert.Equal(t.Error, len(team.Boards), 0)
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				req := httptest.NewRequest(
-					http.MethodDelete, "/?id="+c.id, nil,
+					http.MethodDelete, "/board?id="+c.id, nil,
 				)
 				c.authFunc(req)
 				w := httptest.NewRecorder()

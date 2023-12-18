@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/legacydb"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DELETEHandler struct {
-	userSelector  legacydb.Selector[userTable.Record]
+	decodeAuth    token.DecodeFunc[token.Auth]
 	validator     api.StringValidator
 	boardSelector legacydb.Selector[boardTable.Record]
 	boardDeleter  legacydb.Deleter
@@ -24,14 +25,14 @@ type DELETEHandler struct {
 
 // NewDELETEHandler creates and returns a new DELETEHandler.
 func NewDELETEHandler(
-	userSelector legacydb.Selector[userTable.Record],
+	decodeAuth token.DecodeFunc[token.Auth],
 	validator api.StringValidator,
 	boardSelector legacydb.Selector[boardTable.Record],
 	boardDeleter legacydb.Deleter,
 	log pkgLog.Errorer,
 ) DELETEHandler {
 	return DELETEHandler{
-		userSelector:  userSelector,
+		decodeAuth:    decodeAuth,
 		validator:     validator,
 		boardSelector: boardSelector,
 		boardDeleter:  boardDeleter,
@@ -43,26 +44,31 @@ func NewDELETEHandler(
 func (h DELETEHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Validate that the user is a team admin.
-	user, err := h.userSelector.Select(username)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		h.log.Error(err.Error())
+	ckAuth, err := r.Cookie(token.AuthName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
 		return
 	}
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusForbidden)
+
+	// decode auth token
+	auth, err := h.decodeAuth(ckAuth.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	if !user.IsAdmin {
+
+	// validate user is admin
+	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
-	// Get id query parameter. That's our board ID.
+	// get and validate board ID
 	boardID := r.URL.Query().Get("id")
-
-	// Validate board ID.
 	if err := h.validator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -80,7 +86,7 @@ func (h DELETEHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if board.TeamID != user.TeamID {
+	if strconv.Itoa(board.TeamID) != auth.TeamID {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}

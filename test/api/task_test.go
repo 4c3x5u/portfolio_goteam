@@ -153,7 +153,7 @@ func TestTaskAPI(t *testing.T) {
                 }`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -165,7 +165,7 @@ func TestTaskAPI(t *testing.T) {
 				reqBody: `{}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
@@ -181,7 +181,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
@@ -195,7 +195,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -212,7 +212,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -231,7 +231,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -251,7 +251,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
@@ -354,7 +354,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Invalid task ID."),
@@ -369,7 +369,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Task title cannot be empty."),
@@ -384,7 +384,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -401,7 +401,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -420,7 +420,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
@@ -446,7 +446,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
@@ -539,7 +539,7 @@ func TestTaskAPI(t *testing.T) {
 				id:   "1001",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnResErr("Invalid task ID."),
@@ -549,7 +549,7 @@ func TestTaskAPI(t *testing.T) {
 				id:   "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkStateTeam1)(r)
+					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
