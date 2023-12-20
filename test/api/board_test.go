@@ -19,18 +19,18 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
-	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
+	lgcBoardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	lgcUserTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestBoardAPI(t *testing.T) {
-	userSelector := userTable.NewSelector(db)
-	boardInserter := boardTable.NewInserter(db)
+	userSelector := lgcUserTable.NewSelector(db)
+	boardInserter := lgcBoardTable.NewInserter(db)
 	nameValidator := boardAPI.NewNameValidator()
 	idValidator := boardAPI.NewIDValidator()
-	boardSelector := boardTable.NewSelector(db)
+	boardSelector := lgcBoardTable.NewSelector(db)
 	log := pkgLog.New()
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
@@ -38,14 +38,14 @@ func TestBoardAPI(t *testing.T) {
 			http.MethodPost: boardAPI.NewPOSTHandler(
 				userSelector,
 				nameValidator,
-				boardTable.NewCounter(db),
+				lgcBoardTable.NewCounter(db),
 				boardInserter,
 				log,
 			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
+			http.MethodDelete: boardAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				boardTable.NewDeleter(db),
+				teamTable.NewBoardDeleter(svcDynamo, svcDynamo),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(
@@ -53,7 +53,7 @@ func TestBoardAPI(t *testing.T) {
 				idValidator,
 				nameValidator,
 				boardSelector,
-				boardTable.NewUpdater(db),
+				lgcBoardTable.NewUpdater(db),
 				log,
 			),
 		},
@@ -212,15 +212,35 @@ func TestBoardAPI(t *testing.T) {
 		}{
 			{
 				name:           "NotAdmin",
-				id:             "1",
+				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
-				name:           "EmptyID",
-				id:             "",
+				name:           "NoState",
+				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 				authFunc:       addCookieAuth(tkTeam3Admin),
+				wantStatusCode: http.StatusForbidden,
+				assertFunc:     func(*testing.T) {},
+			},
+			{
+				name: "NoAccess",
+				id:   "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam3Admin)(r)
+					addCookieState(tkTeam1State)(r)
+				},
+				wantStatusCode: http.StatusForbidden,
+				assertFunc:     func(*testing.T) {},
+			},
+			{
+				name: "EmptyID",
+				id:   "",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam3Admin)(r)
+					addCookieState(tkTeam3State)(r)
+				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
 			},
@@ -247,7 +267,7 @@ func TestBoardAPI(t *testing.T) {
 						&dynamodb.GetItemInput{
 							TableName: &teamTableName,
 							Key: map[string]types.AttributeValue{
-								"id": &types.AttributeValueMemberS{
+								"ID": &types.AttributeValueMemberS{
 									Value: "74c80ae5-64f3-4298-a8ff-48f8f920c" +
 										"7d4",
 								},
@@ -265,13 +285,13 @@ func TestBoardAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest(
+				r := httptest.NewRequest(
 					http.MethodDelete, "/board?id="+c.id, nil,
 				)
-				c.authFunc(req)
+				c.authFunc(r)
 				w := httptest.NewRecorder()
 
-				sut.ServeHTTP(w, req)
+				sut.ServeHTTP(w, r)
 				res := w.Result()
 
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)

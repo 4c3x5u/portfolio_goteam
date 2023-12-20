@@ -123,10 +123,10 @@ func main() {
 				boardInserter,
 				log,
 			),
-			http.MethodDelete: boardAPI.NewDELETEHandler(
+			http.MethodDelete: boardAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				legacyBoardTable.NewDeleter(db),
+				teamTable.NewBoardDeleter(svcDynamo, svcDynamo),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPATCHHandler(

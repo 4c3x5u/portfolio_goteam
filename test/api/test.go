@@ -86,14 +86,14 @@ const (
 // addCookieAuth is used in various test cases to authenticate the request
 // being sent to a handler.
 func addCookieAuth(token string) func(*http.Request) {
-	return func(req *http.Request) {
-		req.AddCookie(&http.Cookie{Name: "auth-token", Value: token})
+	return func(r *http.Request) {
+		r.AddCookie(&http.Cookie{Name: "auth-token", Value: token})
 	}
 }
 
 // addCookieState adds the given token as the state cookie value to the request.
 func addCookieState(token string) func(*http.Request) {
-	return func(req *http.Request) {
-		req.AddCookie(&http.Cookie{Name: "state-token", Value: token})
+	return func(r *http.Request) {
+		r.AddCookie(&http.Cookie{Name: "state-token", Value: token})
 	}
 }

@@ -19,15 +19,16 @@ import (
 func TestDELETEHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	deleter := &db.FakeDeleter{}
+	deleter := &db.FakeDeleterDualKey{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewDELETEHandler(decodeAuth.Func, decodeState.Func, deleter, log)
+	sut := NewDeleteHandler(decodeAuth.Func, decodeState.Func, deleter, log)
 
 	// Used on cases where no case-specific assertions are required.
 	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
 
 	for _, c := range []struct {
 		name           string
+		boardID        string
 		authToken      string
 		errDecodeAuth  error
 		authDecoded    token.Auth
@@ -39,7 +40,21 @@ func TestDELETEHandler(t *testing.T) {
 		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
+			name:           "NoID",
+			boardID:        "",
+			authToken:      "",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{},
+			stateToken:     "",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
+			deleteBoardErr: nil,
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     emptyAssertFunc,
+		},
+		{
 			name:           "NoAuth",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{},
@@ -52,6 +67,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "InvalidAuth",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  token.ErrInvalid,
 			authDecoded:    token.Auth{},
@@ -64,6 +80,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "NotAdmin",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: false},
@@ -76,6 +93,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "NoState",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
@@ -88,6 +106,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "InvalidState",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
@@ -100,6 +119,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "NoAccess",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
@@ -112,6 +132,7 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "DeleteErr",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
@@ -124,12 +145,15 @@ func TestDELETEHandler(t *testing.T) {
 		},
 		{
 			name:           "Success",
+			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded:   token.State{Boards: []token.Board{{ID: "2"}}},
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "66c16e54-c14f-4481-ada6-404bca897fb0"},
+			}},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusOK,
 			assertFunc:     emptyAssertFunc,
@@ -144,7 +168,7 @@ func TestDELETEHandler(t *testing.T) {
 			deleter.Err = c.deleteBoardErr
 
 			// Prepare request and response recorder.
-			r := httptest.NewRequest(http.MethodPost, "/?id=2", nil)
+			r := httptest.NewRequest(http.MethodPost, "/?id="+c.boardID, nil)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  "auth-token",

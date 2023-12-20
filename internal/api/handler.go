@@ -84,7 +84,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				(em.e == endpoint ||
 					len(endpoint) > len(em.e) &&
 						em.e == endpoint[:len(em.e)]) {
-
 				return true
 			}
 		}

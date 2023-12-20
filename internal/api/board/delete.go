@@ -3,28 +3,30 @@ package board
 import (
 	"net/http"
 
+	"github.com/google/uuid"
+
 	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// DELETEHandler is an api.MethodHandler that can be used to handle DELETE board
+// DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
-type DELETEHandler struct {
+type DeleteHandler struct {
 	decodeAuth   token.DecodeFunc[token.Auth]
 	decodeState  token.DecodeFunc[token.State]
-	boardDeleter db.Deleter
+	boardDeleter db.DeleterDualKey
 	log          pkgLog.Errorer
 }
 
-// NewDELETEHandler creates and returns a new DELETEHandler.
-func NewDELETEHandler(
+// NewDeleteHandler creates and returns a new DeleteHandler.
+func NewDeleteHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	boardDeleter db.Deleter,
+	boardDeleter db.DeleterDualKey,
 	log pkgLog.Errorer,
-) DELETEHandler {
-	return DELETEHandler{
+) DeleteHandler {
+	return DeleteHandler{
 		decodeAuth:   decodeAuth,
 		decodeState:  decodeState,
 		boardDeleter: boardDeleter,
@@ -33,7 +35,7 @@ func NewDELETEHandler(
 }
 
 // Handle handles the DELETE requests sent to the board route.
-func (h DELETEHandler) Handle(
+func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
@@ -78,8 +80,14 @@ func (h DELETEHandler) Handle(
 		return
 	}
 
-	// check if the user has access to the board
+	// get id and check it's a valid GUID
 	id := r.URL.Query().Get("id")
+	if _, err := uuid.Parse(id); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// check if the user has access to the board
 	var hasAccess bool
 	for _, b := range state.Boards {
 		if b.ID == id {
@@ -93,7 +101,7 @@ func (h DELETEHandler) Handle(
 	}
 
 	// delete the board
-	if err = h.boardDeleter.Delete(r.Context(), id); err != nil {
+	if err = h.boardDeleter.Delete(r.Context(), auth.TeamID, id); err != nil {
 		h.log.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return

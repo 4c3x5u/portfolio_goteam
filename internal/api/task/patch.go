@@ -146,17 +146,17 @@ func (h *PatchHandler) Handle(
 			for j, t := range c.Tasks {
 				if t.ID == id {
 					idFound = true
+					boardID = b.ID
+					colNo = i
 					order = j
 					break
 				}
 			}
 			if idFound {
-				colNo = i
 				break
 			}
 		}
 		if idFound {
-			boardID = b.ID
 			break
 		}
 	}

@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -34,7 +35,7 @@ func (d BoardDeleter) Delete(
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: teamID},
 		},
-		TableName: aws.String(tableName),
+		TableName: aws.String(os.Getenv(tableName)),
 	})
 	if err != nil {
 		return err
@@ -88,7 +89,7 @@ func (d BoardDeleter) Delete(
 	// update the team based on the new team
 	_, err = d.iput.PutItem(ctx, &dynamodb.PutItemInput{
 		Item:      newItem,
-		TableName: aws.String(tableName),
+		TableName: aws.String(os.Getenv(tableName)),
 	})
 
 	return err
