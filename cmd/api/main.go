@@ -13,12 +13,12 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
-	loginAPI "github.com/kxplxn/goteam/internal/api/login"
-	registerAPI "github.com/kxplxn/goteam/internal/api/register"
-	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
+	taskAPI "github.com/kxplxn/goteam/internal/api/tasks/task"
 	teamAPI "github.com/kxplxn/goteam/internal/api/team"
 	boardAPI "github.com/kxplxn/goteam/internal/api/team/board"
+	loginAPI "github.com/kxplxn/goteam/internal/api/user/login"
+	registerAPI "github.com/kxplxn/goteam/internal/api/user/register"
 	"github.com/kxplxn/goteam/pkg/auth"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
@@ -139,7 +139,27 @@ func main() {
 	))
 
 	taskTitleValidator := taskAPI.NewTitleValidator()
-	mux.Handle("/task", api.NewHandler(
+
+	mux.Handle("/tasks", api.NewHandler(
+		jwtValidator,
+		map[string]api.MethodHandler{
+			http.MethodPatch: tasksAPI.NewPatchHandler(
+				token.DecodeAuth,
+				token.DecodeState,
+				tasksAPI.NewColNoValidator(),
+				taskTable.NewMultiUpdater(svcDynamo),
+				token.EncodeState,
+				log,
+			),
+			http.MethodGet: tasksAPI.NewGetHandler(
+				token.DecodeAuth,
+				taskTable.NewMultiRetriever(svcDynamo),
+				log,
+			),
+		},
+	))
+
+	mux.Handle("/tasks/task", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPostHandler(
@@ -165,25 +185,6 @@ func main() {
 				token.DecodeState,
 				taskTable.NewDeleter(svcDynamo),
 				token.EncodeState,
-				log,
-			),
-		},
-	))
-
-	mux.Handle("/tasks", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
-			http.MethodPatch: tasksAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				tasksAPI.NewColNoValidator(),
-				taskTable.NewMultiUpdater(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-			http.MethodGet: tasksAPI.NewGetHandler(
-				token.DecodeAuth,
-				taskTable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},

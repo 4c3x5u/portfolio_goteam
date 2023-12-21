@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 
-	loginAPI "github.com/kxplxn/goteam/internal/api/login"
+	loginAPI "github.com/kxplxn/goteam/internal/api/user/login"
 	"github.com/kxplxn/goteam/pkg/assert"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	"github.com/kxplxn/goteam/pkg/log"

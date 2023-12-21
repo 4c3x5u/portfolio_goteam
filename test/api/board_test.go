@@ -1,3 +1,5 @@
+//go:build itest
+
 package api
 
 import (
@@ -117,7 +119,7 @@ func TestBoardAPI(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				r := httptest.NewRequest(
-					http.MethodDelete, "/board?id="+c.id, nil,
+					http.MethodDelete, "/team/board?id="+c.id, nil,
 				)
 				c.authFunc(r)
 				w := httptest.NewRecorder()

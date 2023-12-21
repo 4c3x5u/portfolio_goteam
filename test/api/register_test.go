@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	registerAPI "github.com/kxplxn/goteam/internal/api/register"
+	registerAPI "github.com/kxplxn/goteam/internal/api/user/register"
 	"github.com/kxplxn/goteam/pkg/assert"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
 	"github.com/kxplxn/goteam/pkg/log"

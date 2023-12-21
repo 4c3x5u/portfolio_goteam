@@ -72,11 +72,11 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			e string
 			m string
 		}{
-			{e: "/task", m: http.MethodPost},
-			{e: "/task", m: http.MethodDelete},
-			{e: "/task", m: http.MethodPatch},
 			{e: "/tasks", m: http.MethodGet},
 			{e: "/tasks", m: http.MethodPatch},
+			{e: "/tasks/task", m: http.MethodPost},
+			{e: "/tasks/task", m: http.MethodDelete},
+			{e: "/tasks/task", m: http.MethodPatch},
 			{e: "/team", m: http.MethodGet},
 			{e: "/team/board", m: http.MethodDelete},
 		} {

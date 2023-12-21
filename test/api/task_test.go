@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/kxplxn/goteam/internal/api"
-	taskAPI "github.com/kxplxn/goteam/internal/api/task"
+	taskAPI "github.com/kxplxn/goteam/internal/api/tasks/task"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
@@ -307,7 +307,7 @@ func TestTaskAPI(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				req := httptest.NewRequest(
-					http.MethodPost, "/task", strings.NewReader(c.reqBody),
+					http.MethodPost, "/tasks/task", strings.NewReader(c.reqBody),
 				)
 				c.authFunc(req)
 				w := httptest.NewRecorder()
@@ -488,7 +488,7 @@ func TestTaskAPI(t *testing.T) {
 			t.Run(c.name, func(t *testing.T) {
 				req := httptest.NewRequest(
 					http.MethodPatch,
-					"/task?id="+c.taskID,
+					"/tasks/task?id="+c.taskID,
 					strings.NewReader(c.reqBody),
 				)
 				c.authFunc(req)
@@ -576,7 +576,7 @@ func TestTaskAPI(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				r := httptest.NewRequest(
-					http.MethodDelete, "/task?id="+c.id, nil,
+					http.MethodDelete, "/tasks/task?id="+c.id, nil,
 				)
 				c.authFunc(r)
 				w := httptest.NewRecorder()

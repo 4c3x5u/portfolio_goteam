@@ -40,19 +40,6 @@ func TestDELETEHandler(t *testing.T) {
 		assertFunc     func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:           "NoID",
-			boardID:        "",
-			authToken:      "",
-			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{},
-			stateToken:     "",
-			errDecodeState: nil,
-			stateDecoded:   token.State{},
-			deleteBoardErr: nil,
-			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     emptyAssertFunc,
-		},
-		{
 			name:           "NoAuth",
 			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "",
@@ -118,6 +105,19 @@ func TestDELETEHandler(t *testing.T) {
 			assertFunc:     emptyAssertFunc,
 		},
 		{
+			name:           "NoID",
+			boardID:        "",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
+			deleteBoardErr: nil,
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     emptyAssertFunc,
+		},
+		{
 			name:           "NoAccess",
 			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
@@ -138,7 +138,9 @@ func TestDELETEHandler(t *testing.T) {
 			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded:   token.State{Boards: []token.Board{{ID: "2"}}},
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "66c16e54-c14f-4481-ada6-404bca897fb0"},
+			}},
 			deleteBoardErr: errors.New("delete board failed"),
 			wantStatusCode: http.StatusInternalServerError,
 			assertFunc:     assert.OnLoggedErr("delete board failed"),
