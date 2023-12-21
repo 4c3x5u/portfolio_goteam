@@ -12,18 +12,19 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/kxplxn/goteam/internal/api"
-	boardAPI "github.com/kxplxn/goteam/internal/api/board"
+	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
 	loginAPI "github.com/kxplxn/goteam/internal/api/login"
 	registerAPI "github.com/kxplxn/goteam/internal/api/register"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task"
 	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
 	teamAPI "github.com/kxplxn/goteam/internal/api/team"
+	boardAPI "github.com/kxplxn/goteam/internal/api/team/board"
 	"github.com/kxplxn/goteam/pkg/auth"
-	taskTAble "github.com/kxplxn/goteam/pkg/db/task"
+	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	userTable "github.com/kxplxn/goteam/pkg/db/user"
-	legacyBoardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	legacyUserTable "github.com/kxplxn/goteam/pkg/legacydb/user"
+	lgcBoardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
+	lgcUserTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -65,95 +66,73 @@ func main() {
 		os.Exit(4)
 	}
 	jwtValidator := auth.NewJWTValidator(env.JWTKey)
-	userSelector := legacyUserTable.NewSelector(db)
+	userSelector := lgcUserTable.NewSelector(db)
 
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", api.NewHandler(nil,
-		map[string]api.MethodHandler{
-			http.MethodPost: registerAPI.NewPostHandler(
-				registerAPI.NewUserValidator(
-					registerAPI.NewUsernameValidator(),
-					registerAPI.NewPasswordValidator(),
-				),
-				token.DecodeInvite,
-				registerAPI.NewPasswordHasher(),
-				userTable.NewInserter(svcDynamo),
-				token.EncodeAuth,
-				log,
+	mux.Handle("/register", api.NewHandler(nil, map[string]api.MethodHandler{
+		http.MethodPost: registerAPI.NewPostHandler(
+			registerAPI.NewUserValidator(
+				registerAPI.NewUsernameValidator(),
+				registerAPI.NewPasswordValidator(),
 			),
-		},
-	))
+			token.DecodeInvite,
+			registerAPI.NewPasswordHasher(),
+			userTable.NewInserter(svcDynamo),
+			token.EncodeAuth,
+			log,
+		),
+	}))
 
-	mux.Handle("/login", api.NewHandler(nil,
-		map[string]api.MethodHandler{
-			http.MethodPost: loginAPI.NewPostHandler(
-				loginAPI.NewValidator(),
-				userTable.NewRetriever(svcDynamo),
-				loginAPI.NewPasswordComparator(),
-				token.EncodeAuth,
-				log,
-			),
-		},
-	))
+	mux.Handle("/login", api.NewHandler(nil, map[string]api.MethodHandler{
+		http.MethodPost: loginAPI.NewPostHandler(
+			loginAPI.NewValidator(),
+			userTable.NewRetriever(svcDynamo),
+			loginAPI.NewPasswordComparator(),
+			token.EncodeAuth,
+			log,
+		),
+	}))
 
-	mux.Handle("/team", api.NewHandler(nil,
-		map[string]api.MethodHandler{
-			http.MethodGet: teamAPI.NewGetHandler(
-				token.DecodeAuth,
-				teamTable.NewRetriever(svcDynamo),
-				teamTable.NewInserter(svcDynamo),
-				log,
-			),
-		},
-	))
+	mux.Handle("/team", api.NewHandler(nil, map[string]api.MethodHandler{
+		http.MethodGet: teamAPI.NewGetHandler(
+			token.DecodeAuth,
+			teamTable.NewRetriever(svcDynamo),
+			teamTable.NewInserter(svcDynamo),
+			log,
+		),
+	}))
 
-	boardIDValidator := boardAPI.NewIDValidator()
-	boardNameValidator := boardAPI.NewNameValidator()
-	boardSelector := legacyBoardTable.NewSelector(db)
-	boardInserter := legacyBoardTable.NewInserter(db)
+	mux.Handle("/team/board", api.NewHandler(nil, map[string]api.MethodHandler{
+		http.MethodDelete: boardAPI.NewDeleteHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			teamTable.NewBoardDeleter(svcDynamo, svcDynamo),
+			log,
+		),
+	}))
+
+	boardIDValidator := lgcBoardAPI.NewIDValidator()
+	boardNameValidator := lgcBoardAPI.NewNameValidator()
+	boardSelector := lgcBoardTable.NewSelector(db)
+	boardInserter := lgcBoardTable.NewInserter(db)
 	mux.Handle("/board", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
-			http.MethodPost: boardAPI.NewPOSTHandler(
+			http.MethodPost: lgcBoardAPI.NewPOSTHandler(
 				userSelector,
 				boardNameValidator,
-				legacyBoardTable.NewCounter(db),
+				lgcBoardTable.NewCounter(db),
 				boardInserter,
 				log,
 			),
-			http.MethodDelete: boardAPI.NewDeleteHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				teamTable.NewBoardDeleter(svcDynamo, svcDynamo),
-				log,
-			),
-			http.MethodPatch: boardAPI.NewPATCHHandler(
+			http.MethodPatch: lgcBoardAPI.NewPATCHHandler(
 				userSelector,
 				boardIDValidator,
 				boardNameValidator,
 				boardSelector,
-				legacyBoardTable.NewUpdater(db),
-				log,
-			),
-		},
-	))
-
-	mux.Handle("/tasks", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
-			http.MethodPatch: tasksAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				tasksAPI.NewColNoValidator(),
-				taskTAble.NewMultiUpdater(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-			http.MethodGet: tasksAPI.NewGetHandler(
-				token.DecodeAuth,
-				taskTAble.NewMultiRetriever(svcDynamo),
+				lgcBoardTable.NewUpdater(db),
 				log,
 			),
 		},
@@ -169,7 +148,7 @@ func main() {
 				taskTitleValidator,
 				taskTitleValidator,
 				taskAPI.NewColNoValidator(),
-				taskTAble.NewInserter(svcDynamo),
+				taskTable.NewInserter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -178,14 +157,33 @@ func main() {
 				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				taskTAble.NewUpdater(svcDynamo),
+				taskTable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				taskTAble.NewDeleter(svcDynamo),
+				taskTable.NewDeleter(svcDynamo),
 				token.EncodeState,
+				log,
+			),
+		},
+	))
+
+	mux.Handle("/tasks", api.NewHandler(
+		jwtValidator,
+		map[string]api.MethodHandler{
+			http.MethodPatch: tasksAPI.NewPatchHandler(
+				token.DecodeAuth,
+				token.DecodeState,
+				tasksAPI.NewColNoValidator(),
+				taskTable.NewMultiUpdater(svcDynamo),
+				token.EncodeState,
+				log,
+			),
+			http.MethodGet: tasksAPI.NewGetHandler(
+				token.DecodeAuth,
+				taskTable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},
