@@ -71,21 +71,24 @@ func main() {
 	// Register handlers for API routes.
 	mux := http.NewServeMux()
 
-	mux.Handle("/register", api.NewHandler(nil, map[string]api.MethodHandler{
-		http.MethodPost: registerAPI.NewPostHandler(
-			registerAPI.NewUserValidator(
-				registerAPI.NewUsernameValidator(),
-				registerAPI.NewPasswordValidator(),
+	mux.Handle("/user/register", api.NewHandler(
+		nil,
+		map[string]api.MethodHandler{
+			http.MethodPost: registerAPI.NewPostHandler(
+				registerAPI.NewUserValidator(
+					registerAPI.NewUsernameValidator(),
+					registerAPI.NewPasswordValidator(),
+				),
+				token.DecodeInvite,
+				registerAPI.NewPasswordHasher(),
+				userTable.NewInserter(svcDynamo),
+				token.EncodeAuth,
+				log,
 			),
-			token.DecodeInvite,
-			registerAPI.NewPasswordHasher(),
-			userTable.NewInserter(svcDynamo),
-			token.EncodeAuth,
-			log,
-		),
-	}))
+		},
+	))
 
-	mux.Handle("/login", api.NewHandler(nil, map[string]api.MethodHandler{
+	mux.Handle("/user/login", api.NewHandler(nil, map[string]api.MethodHandler{
 		http.MethodPost: loginAPI.NewPostHandler(
 			loginAPI.NewValidator(),
 			userTable.NewRetriever(svcDynamo),
@@ -113,6 +116,7 @@ func main() {
 		),
 	}))
 
+	// TODO: remove once fully migrated to DynamoDB
 	boardIDValidator := lgcBoardAPI.NewIDValidator()
 	boardNameValidator := lgcBoardAPI.NewNameValidator()
 	boardSelector := lgcBoardTable.NewSelector(db)
@@ -139,7 +143,6 @@ func main() {
 	))
 
 	taskTitleValidator := taskAPI.NewTitleValidator()
-
 	mux.Handle("/tasks", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
