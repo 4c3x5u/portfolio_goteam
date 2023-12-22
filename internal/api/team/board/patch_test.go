@@ -9,13 +9,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestPATCHHandler tests the Handle method of PATCHHandler to assert that it
@@ -136,7 +137,7 @@ func TestPATCHHandler(t *testing.T) {
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   ErrEmpty,
+			errValidateID:   validator.ErrEmpty,
 			errValidateName: nil,
 			board:           boardTable.Record{},
 			boardUpdaterErr: nil,
@@ -151,7 +152,7 @@ func TestPATCHHandler(t *testing.T) {
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   ErrNotUUID,
+			errValidateID:   validator.ErrWrongFormat,
 			errValidateName: nil,
 			board:           boardTable.Record{},
 			boardUpdaterErr: nil,
@@ -169,7 +170,7 @@ func TestPATCHHandler(t *testing.T) {
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateID:   nil,
-			errValidateName: ErrEmpty,
+			errValidateName: validator.ErrEmpty,
 			board:           boardTable.Record{},
 			boardUpdaterErr: nil,
 			wantStatusCode:  http.StatusBadRequest,
@@ -186,7 +187,7 @@ func TestPATCHHandler(t *testing.T) {
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateID:   nil,
-			errValidateName: ErrTooLong,
+			errValidateName: validator.ErrTooLong,
 			board:           boardTable.Record{},
 			boardUpdaterErr: nil,
 			wantStatusCode:  http.StatusBadRequest,

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"

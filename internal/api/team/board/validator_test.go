@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 func TestNameValidator(t *testing.T) {
@@ -19,12 +20,12 @@ func TestNameValidator(t *testing.T) {
 		{
 			name:      "Empty",
 			boardName: "",
-			wantErr:   ErrEmpty,
+			wantErr:   validator.ErrEmpty,
 		},
 		{
 			name:      "TooLong",
 			boardName: "boardyboardsyboardkyboardishboardxyz",
-			wantErr:   ErrTooLong,
+			wantErr:   validator.ErrTooLong,
 		},
 		{
 			name:      "OK",
@@ -49,12 +50,12 @@ func TestIDValidator(t *testing.T) {
 		{
 			name:    "Empty",
 			boardID: "",
-			wantErr: ErrEmpty,
+			wantErr: validator.ErrEmpty,
 		},
 		{
 			name:    "NotUUID",
 			boardID: "21",
-			wantErr: ErrNotUUID,
+			wantErr: validator.ErrWrongFormat,
 		},
 		{
 			name:    "Success",

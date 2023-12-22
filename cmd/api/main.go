@@ -11,7 +11,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 
-	"github.com/kxplxn/goteam/internal/api"
 	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
 	taskAPI "github.com/kxplxn/goteam/internal/api/task/task"
 	tasksAPI "github.com/kxplxn/goteam/internal/api/task/tasks"
@@ -19,6 +18,7 @@ import (
 	boardAPI "github.com/kxplxn/goteam/internal/api/team/board"
 	loginAPI "github.com/kxplxn/goteam/internal/api/user/login"
 	registerAPI "github.com/kxplxn/goteam/internal/api/user/register"
+	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/auth"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"

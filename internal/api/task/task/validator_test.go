@@ -5,8 +5,8 @@ package task
 import (
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestTitleValidator tests the TitleValidator.Validate method.
@@ -21,12 +21,12 @@ func TestTitleValidator(t *testing.T) {
 		{
 			name:    "TitleEmpty",
 			title:   "",
-			wantErr: api.ErrEmpty,
+			wantErr: validator.ErrEmpty,
 		},
 		{
 			name:    "TitleTooLong",
 			title:   "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
-			wantErr: api.ErrTooLong,
+			wantErr: validator.ErrTooLong,
 		},
 		{
 			name:    "Success",
@@ -53,12 +53,12 @@ func TestColNoValidator(t *testing.T) {
 		{
 			name:    "ColNoTooSmall",
 			colNo:   -1,
-			wantErr: api.ErrOutOfBounds,
+			wantErr: validator.ErrOutOfBounds,
 		},
 		{
 			name:    "ColNoTooBig",
 			colNo:   4,
-			wantErr: api.ErrOutOfBounds,
+			wantErr: validator.ErrOutOfBounds,
 		},
 		{
 			name:    "Success",

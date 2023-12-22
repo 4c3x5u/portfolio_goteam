@@ -1,7 +1,7 @@
 package task
 
 import (
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TitleValidator can be used to validate a task title.
@@ -13,10 +13,10 @@ func NewTitleValidator() TitleValidator { return TitleValidator{} }
 // Validate validates a given task title.
 func (v TitleValidator) Validate(title string) error {
 	if title == "" {
-		return api.ErrEmpty
+		return validator.ErrEmpty
 	}
 	if len(title) > 50 {
-		return api.ErrTooLong
+		return validator.ErrTooLong
 	}
 	return nil
 }
@@ -30,7 +30,7 @@ func NewColNoValidator() ColNoValidator { return ColNoValidator{} }
 // Validate validates a task's column number.
 func (v ColNoValidator) Validate(number int) error {
 	if number < 0 || number > 3 {
-		return api.ErrOutOfBounds
+		return validator.ErrOutOfBounds
 	}
 	return nil
 }

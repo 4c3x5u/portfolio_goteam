@@ -9,12 +9,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestPostHandler tests the Handle method of PostHandler to assert that it
@@ -150,7 +151,7 @@ func TestPostHandler(t *testing.T) {
 				Boards: []token.Board{{ID: "boardid"}},
 			},
 			errDecodeInState:     nil,
-			errValidateColNo:     api.ErrOutOfBounds,
+			errValidateColNo:     validator.ErrOutOfBounds,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
@@ -200,7 +201,7 @@ func TestPostHandler(t *testing.T) {
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
-			errValidateTaskTitle: api.ErrEmpty,
+			errValidateTaskTitle: validator.ErrEmpty,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
@@ -226,7 +227,7 @@ func TestPostHandler(t *testing.T) {
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
-			errValidateTaskTitle: api.ErrTooLong,
+			errValidateTaskTitle: validator.ErrTooLong,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
@@ -252,7 +253,7 @@ func TestPostHandler(t *testing.T) {
 			}}},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
-			errValidateTaskTitle: api.ErrNotInt,
+			errValidateTaskTitle: validator.ErrWrongFormat,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
@@ -260,7 +261,7 @@ func TestPostHandler(t *testing.T) {
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
-				api.ErrNotInt.Error(),
+				validator.ErrWrongFormat.Error(),
 			),
 		},
 		{
@@ -281,7 +282,7 @@ func TestPostHandler(t *testing.T) {
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
-			errValidateSubtTitle: api.ErrEmpty,
+			errValidateSubtTitle: validator.ErrEmpty,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
@@ -309,7 +310,7 @@ func TestPostHandler(t *testing.T) {
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
-			errValidateSubtTitle: api.ErrTooLong,
+			errValidateSubtTitle: validator.ErrTooLong,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
@@ -337,14 +338,14 @@ func TestPostHandler(t *testing.T) {
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
-			errValidateSubtTitle: api.ErrNotInt,
+			errValidateSubtTitle: validator.ErrWrongFormat,
 			errInsertTask:        nil,
 			outStateToken:        token.State{},
 			outStateEncoded:      "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
-				api.ErrNotInt.Error(),
+				validator.ErrWrongFormat.Error(),
 			),
 		},
 		{

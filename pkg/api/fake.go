@@ -1,6 +1,8 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // FakeMethodHandler is a test fake for MethodHandler.
 type FakeMethodHandler struct {

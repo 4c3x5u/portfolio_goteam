@@ -9,12 +9,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
+	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestPatchHandler tests the PATCH handler.
@@ -145,7 +146,7 @@ func TestPatchHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
-			errValidateTitle:     api.ErrEmpty,
+			errValidateTitle:     validator.ErrEmpty,
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
@@ -163,7 +164,7 @@ func TestPatchHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
-			errValidateTitle:     api.ErrTooLong,
+			errValidateTitle:     validator.ErrTooLong,
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
@@ -181,12 +182,12 @@ func TestPatchHandler(t *testing.T) {
 				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
-			errValidateTitle:     api.ErrNotInt,
+			errValidateTitle:     validator.ErrWrongFormat,
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
-				api.ErrNotInt.Error(),
+				validator.ErrWrongFormat.Error(),
 			),
 		},
 		{
@@ -200,7 +201,7 @@ func TestPatchHandler(t *testing.T) {
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
-			errValidateSubtTitle: api.ErrEmpty,
+			errValidateSubtTitle: validator.ErrEmpty,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -218,7 +219,7 @@ func TestPatchHandler(t *testing.T) {
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
-			errValidateSubtTitle: api.ErrTooLong,
+			errValidateSubtTitle: validator.ErrTooLong,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -236,11 +237,11 @@ func TestPatchHandler(t *testing.T) {
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
-			errValidateSubtTitle: api.ErrNotInt,
+			errValidateSubtTitle: validator.ErrWrongFormat,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
-				api.ErrNotInt.Error(),
+				validator.ErrWrongFormat.Error(),
 			),
 		},
 		{

@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // PostReq defines the body of POST task requests.
@@ -34,9 +34,9 @@ type PostResp struct {
 type PostHandler struct {
 	decodeAuth         token.DecodeFunc[token.Auth]
 	decodeState        token.DecodeFunc[token.State]
-	titleValidator     api.StringValidator
-	subtTitleValidator api.StringValidator
-	colNoValidator     api.IntValidator
+	titleValidator     validator.String
+	subtTitleValidator validator.String
+	colNoValidator     validator.Int
 	taskInserter       db.Inserter[taskTable.Task]
 	encodeState        token.EncodeFunc[token.State]
 	log                pkgLog.Errorer
@@ -46,9 +46,9 @@ type PostHandler struct {
 func NewPostHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	titleValidator api.StringValidator,
-	subtTitleValidator api.StringValidator,
-	colNoValidator api.IntValidator,
+	titleValidator validator.String,
+	subtTitleValidator validator.String,
+	colNoValidator validator.Int,
 	taskInserter db.Inserter[taskTable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
@@ -185,9 +185,9 @@ func (h *PostHandler) Handle(
 	// validate task
 	if err := h.titleValidator.Validate(req.Title); err != nil {
 		var errMsg string
-		if errors.Is(err, api.ErrEmpty) {
+		if errors.Is(err, validator.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, api.ErrTooLong) {
+		} else if errors.Is(err, validator.ErrTooLong) {
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -210,9 +210,9 @@ func (h *PostHandler) Handle(
 	for _, title := range req.Subtasks {
 		if err := h.subtTitleValidator.Validate(title); err != nil {
 			var errMsg string
-			if errors.Is(err, api.ErrEmpty) {
+			if errors.Is(err, validator.ErrEmpty) {
 				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, api.ErrTooLong) {
+			} else if errors.Is(err, validator.ErrTooLong) {
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

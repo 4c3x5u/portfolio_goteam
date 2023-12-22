@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // PatchReq defines body of PATCH tasks requests.
@@ -43,7 +43,7 @@ type PatchResp struct {
 type PatchHandler struct {
 	decodeAuth     token.DecodeFunc[token.Auth]
 	decodeState    token.DecodeFunc[token.State]
-	colNoValidator api.IntValidator
+	colNoValidator validator.Int
 	tasksUpdater   db.Updater[[]taskTable.Task]
 	encodeState    token.EncodeFunc[token.State]
 	log            pkgLog.Errorer
@@ -53,7 +53,7 @@ type PatchHandler struct {
 func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	colNoValidator api.IntValidator,
+	colNoValidator validator.Int,
 	tasksUpdater db.Updater[[]taskTable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,

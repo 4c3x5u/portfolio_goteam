@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/db"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // PatchReq defines the body of PATCH board requests.
@@ -24,8 +24,8 @@ type PatchResp struct {
 type PatchHandler struct {
 	decodeAuth    token.DecodeFunc[token.Auth]
 	decodeState   token.DecodeFunc[token.State]
-	idValidator   api.StringValidator
-	nameValidator api.StringValidator
+	idValidator   validator.String
+	nameValidator validator.String
 	boardUpdater  db.UpdaterDualKey[teamTable.Board]
 	log           pkgLog.Errorer
 }
@@ -35,8 +35,8 @@ type PatchHandler struct {
 func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	idValidator api.StringValidator,
-	nameValidator api.StringValidator,
+	idValidator validator.String,
+	nameValidator validator.String,
 	boardUpdater db.UpdaterDualKey[teamTable.Board],
 	log pkgLog.Errorer,
 ) *PatchHandler {
@@ -138,9 +138,9 @@ func (h *PatchHandler) Handle(
 	if err := h.idValidator.Validate(req.ID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		var msg string
-		if errors.Is(err, ErrEmpty) {
+		if errors.Is(err, validator.ErrEmpty) {
 			msg = "Board ID cannot be empty."
-		} else if errors.Is(err, ErrNotUUID) {
+		} else if errors.Is(err, validator.ErrWrongFormat) {
 			msg = "Board ID must be a UUID."
 		}
 
@@ -155,9 +155,9 @@ func (h *PatchHandler) Handle(
 	if err := h.nameValidator.Validate(req.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		var msg string
-		if errors.Is(err, ErrEmpty) {
+		if errors.Is(err, validator.ErrEmpty) {
 			msg = "Board name cannot be empty."
-		} else if errors.Is(err, ErrTooLong) {
+		} else if errors.Is(err, validator.ErrTooLong) {
 			msg = "Board name cannot be longer than 35 characters."
 		}
 

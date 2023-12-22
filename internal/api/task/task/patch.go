@@ -5,11 +5,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/db"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // PatchReq defines the body of PATCH task requests.
@@ -32,8 +32,8 @@ type PatchResp struct {
 type PatchHandler struct {
 	decodeAuth         token.DecodeFunc[token.Auth]
 	decodeState        token.DecodeFunc[token.State]
-	titleValidator     api.StringValidator
-	subtTitleValidator api.StringValidator
+	titleValidator     validator.String
+	subtTitleValidator validator.String
 	taskUpdater        db.Updater[taskTable.Task]
 	log                pkgLog.Errorer
 }
@@ -42,8 +42,8 @@ type PatchHandler struct {
 func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	taskTitleValidator api.StringValidator,
-	subtaskTitleValidator api.StringValidator,
+	taskTitleValidator validator.String,
+	subtaskTitleValidator validator.String,
 	taskUpdater db.Updater[taskTable.Task],
 	log pkgLog.Errorer,
 ) *PatchHandler {
@@ -182,9 +182,9 @@ func (h *PatchHandler) Handle(
 	// validate task title
 	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
 		var errMsg string
-		if errors.Is(err, api.ErrEmpty) {
+		if errors.Is(err, validator.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, api.ErrTooLong) {
+		} else if errors.Is(err, validator.ErrTooLong) {
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -207,9 +207,9 @@ func (h *PatchHandler) Handle(
 	for _, subtask := range reqBody.Subtasks {
 		if err := h.subtTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
-			if errors.Is(err, api.ErrEmpty) {
+			if errors.Is(err, validator.ErrEmpty) {
 				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, api.ErrTooLong) {
+			} else if errors.Is(err, validator.ErrTooLong) {
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)

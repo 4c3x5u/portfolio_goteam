@@ -5,8 +5,8 @@ package tasks
 import (
 	"testing"
 
-	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestColNoValidator tests the ColNoValidator.Validate method.
@@ -21,12 +21,12 @@ func TestColNoValidator(t *testing.T) {
 		{
 			name:    "ColNoTooSmall",
 			colNo:   -1,
-			wantErr: api.ErrOutOfBounds,
+			wantErr: validator.ErrOutOfBounds,
 		},
 		{
 			name:    "ColNoTooBig",
 			colNo:   4,
-			wantErr: api.ErrOutOfBounds,
+			wantErr: validator.ErrOutOfBounds,
 		},
 		{
 			name:    "Success",
