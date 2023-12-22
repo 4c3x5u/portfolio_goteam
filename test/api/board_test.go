@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/kxplxn/goteam/internal/api"
-	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
 	boardAPI "github.com/kxplxn/goteam/internal/api/team/board"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
@@ -25,8 +24,6 @@ import (
 
 func TestBoardAPI(t *testing.T) {
 	log := pkgLog.New()
-	idValidator := lgcBoardAPI.NewIDValidator()
-	nameValidator := lgcBoardAPI.NewNameValidator()
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey), map[string]api.MethodHandler{
 			http.MethodDelete: boardAPI.NewDeleteHandler(
@@ -35,11 +32,11 @@ func TestBoardAPI(t *testing.T) {
 				teamTable.NewBoardDeleter(svcDynamo),
 				log,
 			),
-			http.MethodPatch: lgcBoardAPI.NewPatchHandler(
+			http.MethodPatch: boardAPI.NewPatchHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				idValidator,
-				nameValidator,
+				boardAPI.NewIDValidator(),
+				boardAPI.NewNameValidator(),
 				teamTable.NewBoardUpdater(svcDynamo),
 				log,
 			),

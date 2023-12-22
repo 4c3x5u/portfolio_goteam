@@ -2,6 +2,8 @@ package board
 
 import (
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -30,6 +32,23 @@ func (b NameValidator) Validate(boardName string) error {
 	}
 	if len(boardName) > 35 {
 		return ErrTooLong
+	}
+	return nil
+}
+
+// IDValidator can be used to validate a board ID.
+type IDValidator struct{}
+
+// NewIDValidator creates and returns a new IDValidator.
+func NewIDValidator() IDValidator { return IDValidator{} }
+
+// Validate validates a given board ID.
+func (i IDValidator) Validate(boardID string) error {
+	if boardID == "" {
+		return ErrEmpty
+	}
+	if _, err := uuid.Parse(boardID); err != nil {
+		return ErrNotUUID
 	}
 	return nil
 }
