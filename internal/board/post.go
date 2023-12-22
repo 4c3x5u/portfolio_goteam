@@ -9,7 +9,6 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/legacydb"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	teamTable "github.com/kxplxn/goteam/pkg/legacydb/team"
 	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -30,7 +29,6 @@ type POSTResp struct {
 type POSTHandler struct {
 	userSelector  legacydb.Selector[userTable.Record]
 	validator     validator.String
-	teamSelector  legacydb.Selector[teamTable.Record]
 	boardCounter  legacydb.Counter
 	boardInserter legacydb.Inserter[boardTable.InRecord]
 	log           pkgLog.Errorer
