@@ -6,26 +6,26 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // GetResp defines the body of GET tasks responses.
-type GetResp []taskTable.Task
+type GetResp []tasktable.Task
 
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // tasks route.
 type GetHandler struct {
 	decodeAuth token.DecodeFunc[token.Auth]
-	retriever  db.Retriever[[]taskTable.Task]
+	retriever  db.Retriever[[]tasktable.Task]
 	log        pkgLog.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	retriever db.Retriever[[]taskTable.Task],
+	retriever db.Retriever[[]tasktable.Task],
 	log pkgLog.Errorer,
 ) GetHandler {
 	return GetHandler{decodeAuth: decodeAuth, retriever: retriever, log: log}
@@ -51,7 +51,7 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	tasks, err := h.retriever.Retrieve(r.Context(), auth.TeamID)
 	if errors.Is(err, db.ErrNoItem) {
 		// if no items, set tasks to empty slice
-		tasks = []taskTable.Task{}
+		tasks = []tasktable.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

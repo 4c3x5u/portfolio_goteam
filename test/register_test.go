@@ -20,7 +20,7 @@ import (
 
 	registerAPI "github.com/kxplxn/goteam/internal/user/register"
 	"github.com/kxplxn/goteam/pkg/assert"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -33,7 +33,7 @@ func TestRegisterAPI(t *testing.T) {
 		),
 		token.DecodeInvite,
 		registerAPI.NewPasswordHasher(),
-		userTable.NewInserter(svcDynamo),
+		usertable.NewInserter(svcDynamo),
 		token.EncodeAuth,
 		log.New(),
 	)
@@ -175,7 +175,7 @@ func TestRegisterAPI(t *testing.T) {
 					},
 				)
 
-				var user userTable.User
+				var user usertable.User
 				attributevalue.UnmarshalMap(out.Item, &user)
 
 				if err != nil {

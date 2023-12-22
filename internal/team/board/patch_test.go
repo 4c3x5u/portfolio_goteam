@@ -12,7 +12,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"

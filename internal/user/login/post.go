@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -23,7 +23,7 @@ type PostReq struct {
 // PostHandler is a http.PostHandler that can be used to handle login requests.
 type PostHandler struct {
 	validator     ReqValidator
-	userRetriever db.Retriever[userTable.User]
+	userRetriever db.Retriever[usertable.User]
 	pwdComparator Comparator
 	encodeAuth    token.EncodeFunc[token.Auth]
 	log           pkgLog.Errorer
@@ -32,7 +32,7 @@ type PostHandler struct {
 // NewPostHandler creates and returns a new Handler.
 func NewPostHandler(
 	validator ReqValidator,
-	userRetriever db.Retriever[userTable.User],
+	userRetriever db.Retriever[usertable.User],
 	pwdComparator Comparator,
 	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,

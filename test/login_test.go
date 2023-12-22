@@ -13,7 +13,7 @@ import (
 
 	loginAPI "github.com/kxplxn/goteam/internal/user/login"
 	"github.com/kxplxn/goteam/pkg/assert"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -21,7 +21,7 @@ import (
 func TestLoginAPI(t *testing.T) {
 	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
-		userTable.NewRetriever(svcDynamo),
+		usertable.NewRetriever(svcDynamo),
 		loginAPI.NewPasswordComparator(),
 		token.EncodeAuth,
 		log.New(),

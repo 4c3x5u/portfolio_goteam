@@ -20,9 +20,9 @@ import (
 	registerAPI "github.com/kxplxn/goteam/internal/user/register"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/auth"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
+	"github.com/kxplxn/goteam/pkg/db/teamtable"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	lgcBoardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
 	lgcUserTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
@@ -80,7 +80,7 @@ func main() {
 				),
 				token.DecodeInvite,
 				registerAPI.NewPasswordHasher(),
-				userTable.NewInserter(svcDynamo),
+				usertable.NewInserter(svcDynamo),
 				token.EncodeAuth,
 				log,
 			),
@@ -90,7 +90,7 @@ func main() {
 	mux.Handle("/user/login", api.NewHandler(nil, map[string]api.MethodHandler{
 		http.MethodPost: loginAPI.NewPostHandler(
 			loginAPI.NewValidator(),
-			userTable.NewRetriever(svcDynamo),
+			usertable.NewRetriever(svcDynamo),
 			loginAPI.NewPasswordComparator(),
 			token.EncodeAuth,
 			log,
@@ -100,8 +100,8 @@ func main() {
 	mux.Handle("/team", api.NewHandler(nil, map[string]api.MethodHandler{
 		http.MethodGet: teamAPI.NewGetHandler(
 			token.DecodeAuth,
-			teamTable.NewRetriever(svcDynamo),
-			teamTable.NewInserter(svcDynamo),
+			teamtable.NewRetriever(svcDynamo),
+			teamtable.NewInserter(svcDynamo),
 			log,
 		),
 	}))
@@ -110,7 +110,7 @@ func main() {
 		http.MethodDelete: boardAPI.NewDeleteHandler(
 			token.DecodeAuth,
 			token.DecodeState,
-			teamTable.NewBoardDeleter(svcDynamo),
+			teamtable.NewBoardDeleter(svcDynamo),
 			log,
 		),
 		http.MethodPatch: boardAPI.NewPatchHandler(
@@ -118,7 +118,7 @@ func main() {
 			token.DecodeState,
 			boardAPI.NewIDValidator(),
 			boardAPI.NewNameValidator(),
-			teamTable.NewBoardUpdater(svcDynamo),
+			teamtable.NewBoardUpdater(svcDynamo),
 			log,
 		),
 	}))
@@ -145,7 +145,7 @@ func main() {
 				taskTitleValidator,
 				taskTitleValidator,
 				taskAPI.NewColNoValidator(),
-				taskTable.NewInserter(svcDynamo),
+				tasktable.NewInserter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -154,13 +154,13 @@ func main() {
 				token.DecodeState,
 				taskTitleValidator,
 				taskTitleValidator,
-				taskTable.NewUpdater(svcDynamo),
+				tasktable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				taskTable.NewDeleter(svcDynamo),
+				tasktable.NewDeleter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -173,13 +173,13 @@ func main() {
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
-				taskTable.NewMultiUpdater(svcDynamo),
+				tasktable.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
 				log,
 			),
 			http.MethodGet: tasksAPI.NewGetHandler(
 				token.DecodeAuth,
-				taskTable.NewMultiRetriever(svcDynamo),
+				tasktable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},

@@ -11,22 +11,22 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestGetHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
-	retriever := &db.FakeRetriever[teamTable.Team]{}
-	inserter := &db.FakeInserter[teamTable.Team]{}
+	retriever := &db.FakeRetriever[teamtable.Team]{}
+	inserter := &db.FakeInserter[teamtable.Team]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewGetHandler(decodeAuth.Func, retriever, inserter, log)
 
-	wantTeam := teamTable.Team{
+	wantTeam := teamtable.Team{
 		ID:      "teamid",
 		Members: []string{"memberone", "membertwo"},
-		Boards: []teamTable.Board{
+		Boards: []teamtable.Board{
 			{ID: "board1", Name: "boardone"},
 			{ID: "board2", Name: "boardtwo"},
 		},
@@ -38,7 +38,7 @@ func TestGetHandler(t *testing.T) {
 		errDecodeAuth error
 		authDecoded   token.Auth
 		errRetrieve   error
-		team          teamTable.Team
+		team          teamtable.Team
 		errInsert     error
 		wantStatus    int
 		assertFunc    func(*testing.T, *http.Response, string)
@@ -49,7 +49,7 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{},
 			errRetrieve:   nil,
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
@@ -60,7 +60,7 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: errors.New("decode auth failed"),
 			authDecoded:   token.Auth{},
 			errRetrieve:   nil,
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
@@ -71,7 +71,7 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{},
 			errRetrieve:   errors.New("retrieve failed"),
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("retrieve failed"),
@@ -86,7 +86,7 @@ func TestGetHandler(t *testing.T) {
 			errInsert:     nil,
 			wantStatus:    http.StatusOK,
 			assertFunc: func(t *testing.T, res *http.Response, _ string) {
-				var team teamTable.Team
+				var team teamtable.Team
 				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
 					t.Fatal(err)
 				}
@@ -106,7 +106,7 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{IsAdmin: false},
 			errRetrieve:   db.ErrNoItem,
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(t *testing.T, res *http.Response, _ string) {},
@@ -117,7 +117,7 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{IsAdmin: true},
 			errRetrieve:   db.ErrNoItem,
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     errors.New("insert failed"),
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("insert failed"),
@@ -128,11 +128,11 @@ func TestGetHandler(t *testing.T) {
 			errDecodeAuth: nil,
 			authDecoded:   token.Auth{IsAdmin: true, Username: "newuser"},
 			errRetrieve:   db.ErrNoItem,
-			team:          teamTable.Team{},
+			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusCreated,
 			assertFunc: func(t *testing.T, res *http.Response, _ string) {
-				var team teamTable.Team
+				var team teamtable.Team
 				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
 					t.Fatal(err)
 				}

@@ -17,7 +17,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -29,7 +29,7 @@ func TestBoardAPI(t *testing.T) {
 			http.MethodDelete: boardAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				teamTable.NewBoardDeleter(svcDynamo),
+				teamtable.NewBoardDeleter(svcDynamo),
 				log,
 			),
 			http.MethodPatch: boardAPI.NewPatchHandler(
@@ -37,7 +37,7 @@ func TestBoardAPI(t *testing.T) {
 				token.DecodeState,
 				boardAPI.NewIDValidator(),
 				boardAPI.NewNameValidator(),
-				teamTable.NewBoardUpdater(svcDynamo),
+				teamtable.NewBoardUpdater(svcDynamo),
 				log,
 			),
 		},
@@ -179,7 +179,7 @@ func TestBoardAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var team *teamTable.Team
+					var team *teamtable.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					assert.Nil(t.Fatal, err)
 
@@ -291,7 +291,7 @@ func TestBoardAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var team teamTable.Team
+					var team teamtable.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					assert.Nil(t.Fatal, err)
 

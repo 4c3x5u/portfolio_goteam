@@ -13,7 +13,7 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -25,7 +25,7 @@ func TestHandler(t *testing.T) {
 		userValidator = &fakeReqValidator{}
 		hasher        = &fakeHasher{}
 		decodeInvite  = &token.FakeDecode[token.Invite]{}
-		userInserter  = &db.FakeInserter[userTable.User]{}
+		userInserter  = &db.FakeInserter[usertable.User]{}
 		encodeAuth    = &token.FakeEncode[token.Auth]{}
 		log           = &pkgLog.FakeErrorer{}
 	)

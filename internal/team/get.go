@@ -8,28 +8,28 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // GetResp defines the body of GET team responses.
-type GetResp teamTable.Team
+type GetResp teamtable.Team
 
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // team route.
 type GetHandler struct {
 	decodeAuth token.DecodeFunc[token.Auth]
-	retriever  db.Retriever[teamTable.Team]
-	inserter   db.Inserter[teamTable.Team]
+	retriever  db.Retriever[teamtable.Team]
+	inserter   db.Inserter[teamtable.Team]
 	log        pkgLog.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
-	retriever db.Retriever[teamTable.Team],
-	inserter db.Inserter[teamTable.Team],
+	retriever db.Retriever[teamtable.Team],
+	inserter db.Inserter[teamtable.Team],
 	log pkgLog.Errorer,
 ) GetHandler {
 	return GetHandler{
@@ -71,11 +71,11 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		}
 
 		// create team
-		team = teamTable.NewTeam(
+		team = teamtable.NewTeam(
 			auth.TeamID,
 			[]string{auth.Username},
-			[]teamTable.Board{
-				teamTable.NewBoard(uuid.NewString(), "New Board"),
+			[]teamtable.Board{
+				teamtable.NewBoard(uuid.NewString(), "New Board"),
 			},
 		)
 

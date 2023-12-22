@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -37,7 +37,7 @@ type PostHandler struct {
 	titleValidator     validator.String
 	subtTitleValidator validator.String
 	colNoValidator     validator.Int
-	taskInserter       db.Inserter[taskTable.Task]
+	taskInserter       db.Inserter[tasktable.Task]
 	encodeState        token.EncodeFunc[token.State]
 	log                pkgLog.Errorer
 }
@@ -49,7 +49,7 @@ func NewPostHandler(
 	titleValidator validator.String,
 	subtTitleValidator validator.String,
 	colNoValidator validator.Int,
-	taskInserter db.Inserter[taskTable.Task],
+	taskInserter db.Inserter[tasktable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) *PostHandler {
@@ -206,7 +206,7 @@ func (h *PostHandler) Handle(
 	}
 
 	// validate subtasks
-	var subtasks []taskTable.Subtask
+	var subtasks []tasktable.Subtask
 	for _, title := range req.Subtasks {
 		if err := h.subtTitleValidator.Validate(title); err != nil {
 			var errMsg string
@@ -229,7 +229,7 @@ func (h *PostHandler) Handle(
 			}
 			return
 		}
-		subtasks = append(subtasks, taskTable.Subtask{
+		subtasks = append(subtasks, tasktable.Subtask{
 			Title: title, IsDone: false,
 		})
 	}
@@ -238,7 +238,7 @@ func (h *PostHandler) Handle(
 	// unlikely event that the generated UUID is a duplicate
 	id := uuid.NewString()
 	for tries := 0; tries < 3; tries++ {
-		if err = h.taskInserter.Insert(r.Context(), taskTable.NewTask(
+		if err = h.taskInserter.Insert(r.Context(), tasktable.NewTask(
 			auth.TeamID,
 			req.BoardID,
 			req.ColumnNumber,

@@ -15,7 +15,7 @@ import (
 
 	teamAPI "github.com/kxplxn/goteam/internal/team"
 	"github.com/kxplxn/goteam/pkg/assert"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )

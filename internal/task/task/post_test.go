@@ -12,7 +12,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -26,7 +26,7 @@ func TestPostHandler(t *testing.T) {
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
 	colNoValidator := &api.FakeIntValidator{}
-	taskInserter := &db.FakeInserter[taskTable.Task]{}
+	taskInserter := &db.FakeInserter[tasktable.Task]{}
 	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPostHandler(

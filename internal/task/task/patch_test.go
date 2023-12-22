@@ -12,7 +12,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -24,7 +24,7 @@ func TestPatchHandler(t *testing.T) {
 	decodeState := &token.FakeDecode[token.State]{}
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
-	taskUpdater := &db.FakeUpdater[taskTable.Task]{}
+	taskUpdater := &db.FakeUpdater[tasktable.Task]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPatchHandler(
 		decodeAuth.Func,

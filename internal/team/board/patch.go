@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/team"
+	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"

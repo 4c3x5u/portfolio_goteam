@@ -1,5 +1,6 @@
 // Package env contains code for reading, accessing, and validating environment
 // variables.
+// TODO: split into separate files/packages for each internal package.
 package api
 
 import (

@@ -11,18 +11,18 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestGetHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
-	retriever := &db.FakeRetriever[[]taskTable.Task]{}
+	retriever := &db.FakeRetriever[[]tasktable.Task]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewGetHandler(decodeAuth.Func, retriever, log)
 
-	someTasks := []taskTable.Task{
+	someTasks := []tasktable.Task{
 		{
 			TeamID:       "team1",
 			BoardID:      "board1",
@@ -31,7 +31,7 @@ func TestGetHandler(t *testing.T) {
 			Title:        "taskone",
 			Description:  "task one description",
 			Order:        1,
-			Subtasks: []taskTable.Subtask{
+			Subtasks: []tasktable.Subtask{
 				{Title: "subtaskone", IsDone: false},
 				{Title: "subtasktwo", IsDone: true},
 			},
@@ -44,7 +44,7 @@ func TestGetHandler(t *testing.T) {
 			Title:        "taskone",
 			Description:  "task one description",
 			Order:        3,
-			Subtasks: []taskTable.Subtask{
+			Subtasks: []tasktable.Subtask{
 				{Title: "subtaskone", IsDone: false},
 				{Title: "subtasktwo", IsDone: true},
 			},
@@ -56,7 +56,7 @@ func TestGetHandler(t *testing.T) {
 		authToken     string
 		errDecodeAuth error
 		errRetrieve   error
-		tasks         []taskTable.Task
+		tasks         []tasktable.Task
 		wantStatus    int
 		assertFunc    func(*testing.T, *http.Response, string)
 	}{
@@ -65,7 +65,7 @@ func TestGetHandler(t *testing.T) {
 			authToken:     "",
 			errDecodeAuth: nil,
 			errRetrieve:   nil,
-			tasks:         []taskTable.Task{},
+			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
@@ -74,7 +74,7 @@ func TestGetHandler(t *testing.T) {
 			authToken:     "nonempty",
 			errDecodeAuth: errors.New("decode auth failed"),
 			errRetrieve:   nil,
-			tasks:         []taskTable.Task{},
+			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusUnauthorized,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
@@ -83,7 +83,7 @@ func TestGetHandler(t *testing.T) {
 			authToken:     "nonempty",
 			errDecodeAuth: nil,
 			errRetrieve:   errors.New("retrieve failed"),
-			tasks:         []taskTable.Task{},
+			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    func(*testing.T, *http.Response, string) {},
 		},
@@ -95,7 +95,7 @@ func TestGetHandler(t *testing.T) {
 			tasks:         someTasks,
 			wantStatus:    http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
-				var tasks []taskTable.Task
+				var tasks []tasktable.Task
 				err := json.NewDecoder(r.Body).Decode(&tasks)
 				if err != nil {
 					t.Fatal(err)

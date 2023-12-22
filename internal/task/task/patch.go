@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -34,7 +34,7 @@ type PatchHandler struct {
 	decodeState        token.DecodeFunc[token.State]
 	titleValidator     validator.String
 	subtTitleValidator validator.String
-	taskUpdater        db.Updater[taskTable.Task]
+	taskUpdater        db.Updater[tasktable.Task]
 	log                pkgLog.Errorer
 }
 
@@ -44,7 +44,7 @@ func NewPatchHandler(
 	decodeState token.DecodeFunc[token.State],
 	taskTitleValidator validator.String,
 	subtaskTitleValidator validator.String,
-	taskUpdater db.Updater[taskTable.Task],
+	taskUpdater db.Updater[tasktable.Task],
 	log pkgLog.Errorer,
 ) *PatchHandler {
 	return &PatchHandler{
@@ -203,7 +203,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// validate subtask titles
-	var subtasks []taskTable.Subtask
+	var subtasks []tasktable.Subtask
 	for _, subtask := range reqBody.Subtasks {
 		if err := h.subtTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
@@ -228,12 +228,12 @@ func (h *PatchHandler) Handle(
 		}
 		subtasks = append(
 			subtasks,
-			taskTable.NewSubtask(subtask.Title, subtask.IsDone),
+			tasktable.NewSubtask(subtask.Title, subtask.IsDone),
 		)
 	}
 
 	// update task in task table
-	if err = h.taskUpdater.Update(r.Context(), taskTable.NewTask(
+	if err = h.taskUpdater.Update(r.Context(), tasktable.NewTask(
 		auth.TeamID,
 		boardID,
 		colNo,

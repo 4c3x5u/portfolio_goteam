@@ -14,7 +14,7 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -24,7 +24,7 @@ import (
 func TestPOSTHandler(t *testing.T) {
 	var (
 		validator        = &fakeReqValidator{}
-		userRetriever    = &db.FakeRetriever[userTable.User]{}
+		userRetriever    = &db.FakeRetriever[usertable.User]{}
 		passwordComparer = &fakeHashComparer{}
 		encodeAuthToken  = &token.FakeEncode[token.Auth]{}
 		log              = &pkgLog.FakeErrorer{}
@@ -39,7 +39,7 @@ func TestPOSTHandler(t *testing.T) {
 	for _, c := range []struct {
 		name             string
 		reqIsValid       bool
-		user             userTable.User
+		user             usertable.User
 		errRetrieveUser  error
 		errCompareHash   error
 		authToken        string
@@ -50,7 +50,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "InvalidRequest",
 			reqIsValid:       false,
-			user:             userTable.User{},
+			user:             usertable.User{},
 			errRetrieveUser:  nil,
 			errCompareHash:   nil,
 			authToken:        "",
@@ -61,7 +61,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "UserNotFound",
 			reqIsValid:       true,
-			user:             userTable.User{},
+			user:             usertable.User{},
 			errRetrieveUser:  db.ErrNoItem,
 			errCompareHash:   nil,
 			authToken:        "",
@@ -72,7 +72,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:             "UserSelectorError",
 			reqIsValid:       true,
-			user:             userTable.User{},
+			user:             usertable.User{},
 			errRetrieveUser:  errors.New("user selector error"),
 			errCompareHash:   nil,
 			authToken:        "",
@@ -83,7 +83,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "WrongPassword",
 			reqIsValid: true,
-			user: userTable.User{
+			user: usertable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errRetrieveUser:  nil,
@@ -96,7 +96,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "HashComparerError",
 			reqIsValid: true,
-			user: userTable.User{
+			user: usertable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errRetrieveUser:  nil,
@@ -109,7 +109,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "TokenGeneratorError",
 			reqIsValid: true,
-			user: userTable.User{
+			user: usertable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errRetrieveUser:  nil,
@@ -122,7 +122,7 @@ func TestPOSTHandler(t *testing.T) {
 		{
 			name:       "Success",
 			reqIsValid: true,
-			user: userTable.User{
+			user: usertable.User{
 				Username: "bob123", Password: []byte("$2a$ASasdflak$kajdsfh"),
 			},
 			errRetrieveUser:  nil,

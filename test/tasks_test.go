@@ -18,7 +18,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -31,14 +31,14 @@ func TestTasksAPI(t *testing.T) {
 			http.MethodGet: tasksAPI.NewGetHandler(
 				token.DecodeAuth,
 				// TODO: create tasks retriever
-				taskTable.NewMultiRetriever(svcDynamo),
+				tasktable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 			http.MethodPatch: tasksAPI.NewPatchHandler(
 				token.DecodeAuth,
 				token.DecodeState,
 				tasksAPI.NewColNoValidator(),
-				taskTable.NewMultiUpdater(svcDynamo),
+				tasktable.NewMultiUpdater(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -111,7 +111,7 @@ func TestTasksAPI(t *testing.T) {
 							Title:        "team 4 task 1",
 							Description:  "team 4 task 1 description",
 							Order:        1,
-							Subtasks: []taskTable.Subtask{
+							Subtasks: []tasktable.Subtask{
 								{Title: "team 4 subtask 1", IsDone: false},
 							},
 						},
@@ -123,7 +123,7 @@ func TestTasksAPI(t *testing.T) {
 							Title:        "team 4 task 2",
 							Description:  "team 4 task 2 description",
 							Order:        0,
-							Subtasks: []taskTable.Subtask{
+							Subtasks: []tasktable.Subtask{
 								{Title: "team 4 subtask 2", IsDone: true},
 							},
 						},
@@ -265,7 +265,7 @@ func TestTasksAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var task taskTable.Task
+					var task tasktable.Task
 					assert.Nil(t.Fatal, attributevalue.UnmarshalMap(
 						out.Item, &task,
 					))

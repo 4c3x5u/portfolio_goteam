@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	userTable "github.com/kxplxn/goteam/pkg/db/user"
+	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -42,7 +42,7 @@ type PostHandler struct {
 	reqValidator ReqValidator
 	hasher       Hasher
 	decodeInvite token.DecodeFunc[token.Invite]
-	userInserter db.Inserter[userTable.User]
+	userInserter db.Inserter[usertable.User]
 	encodeAuth   token.EncodeFunc[token.Auth]
 	log          pkgLog.Errorer
 }
@@ -52,7 +52,7 @@ func NewPostHandler(
 	userValidator ReqValidator,
 	decodeInvite token.DecodeFunc[token.Invite],
 	hasher Hasher,
-	userInserter db.Inserter[userTable.User],
+	userInserter db.Inserter[usertable.User],
 	encodeAuth token.EncodeFunc[token.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
@@ -125,7 +125,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// insert a new user into the user table
-	if err = h.userInserter.Insert(r.Context(), userTable.NewUser(
+	if err = h.userInserter.Insert(r.Context(), usertable.NewUser(
 		req.Username, pwdHash, isAdmin, teamID,
 	)); err == db.ErrDupKey {
 		w.WriteHeader(http.StatusBadRequest)

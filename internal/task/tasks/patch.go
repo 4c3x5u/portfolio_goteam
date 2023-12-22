@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
@@ -44,7 +44,7 @@ type PatchHandler struct {
 	decodeAuth     token.DecodeFunc[token.Auth]
 	decodeState    token.DecodeFunc[token.State]
 	colNoValidator validator.Int
-	tasksUpdater   db.Updater[[]taskTable.Task]
+	tasksUpdater   db.Updater[[]tasktable.Task]
 	encodeState    token.EncodeFunc[token.State]
 	log            pkgLog.Errorer
 }
@@ -54,7 +54,7 @@ func NewPatchHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
 	colNoValidator validator.Int,
-	tasksUpdater db.Updater[[]taskTable.Task],
+	tasksUpdater db.Updater[[]tasktable.Task],
 	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
 ) PatchHandler {
@@ -153,7 +153,7 @@ func (h PatchHandler) Handle(
 	}
 
 	// validate task access and column numbers
-	var tasks []taskTable.Task
+	var tasks []tasktable.Task
 	for _, t := range req {
 		var hasAccess bool
 		for _, sb := range state.Boards {
@@ -195,11 +195,11 @@ func (h PatchHandler) Handle(
 			return
 		}
 
-		var subtasks []taskTable.Subtask
+		var subtasks []tasktable.Subtask
 		for _, st := range t.Subt {
-			subtasks = append(subtasks, taskTable.NewSubtask(st.Title, st.IsDone))
+			subtasks = append(subtasks, tasktable.NewSubtask(st.Title, st.IsDone))
 		}
-		tasks = append(tasks, taskTable.NewTask(
+		tasks = append(tasks, tasktable.NewTask(
 			auth.TeamID,
 			t.BoardID,
 			t.ColNo,

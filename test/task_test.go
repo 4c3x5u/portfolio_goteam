@@ -19,7 +19,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
-	taskTable "github.com/kxplxn/goteam/pkg/db/task"
+	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
@@ -37,7 +37,7 @@ func TestTaskAPI(t *testing.T) {
 				titleValidator,
 				titleValidator,
 				taskAPI.NewColNoValidator(),
-				taskTable.NewInserter(svcDynamo),
+				tasktable.NewInserter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -46,13 +46,13 @@ func TestTaskAPI(t *testing.T) {
 				token.DecodeState,
 				titleValidator,
 				titleValidator,
-				taskTable.NewUpdater(svcDynamo),
+				tasktable.NewUpdater(svcDynamo),
 				log,
 			),
 			http.MethodDelete: taskAPI.NewDeleteHandler(
 				token.DecodeAuth,
 				token.DecodeState,
-				taskTable.NewDeleter(svcDynamo),
+				tasktable.NewDeleter(svcDynamo),
 				token.EncodeState,
 				log,
 			),
@@ -282,7 +282,7 @@ func TestTaskAPI(t *testing.T) {
 
 					var taskFound bool
 					for _, av := range out.Items {
-						var task taskTable.Task
+						var task tasktable.Task
 						err = attributevalue.UnmarshalMap(av, &task)
 						if err != nil {
 							t.Fatal(err)
@@ -468,7 +468,7 @@ func TestTaskAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var task taskTable.Task
+					var task tasktable.Task
 					err = attributevalue.UnmarshalMap(out.Item, &task)
 					assert.Nil(t.Fatal, err)
 
