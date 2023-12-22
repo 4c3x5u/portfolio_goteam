@@ -14,6 +14,9 @@ var (
 
 	// ErrDupKey means that the item already exists in the table.
 	ErrDupKey = errors.New("duplicate key")
+
+	// ErrTooManyItems means that the limit of items has been reached.
+	ErrLimitReached = errors.New("too many items")
 )
 
 // Retriever defines a type that can retrieve an item from a DynamoDB table.
