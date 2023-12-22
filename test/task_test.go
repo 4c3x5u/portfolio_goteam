@@ -18,7 +18,6 @@ import (
 	taskAPI "github.com/kxplxn/goteam/internal/task/task"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
@@ -28,69 +27,32 @@ func TestTaskAPI(t *testing.T) {
 	titleValidator := taskAPI.NewTitleValidator()
 	log := pkgLog.New()
 
-	sut := api.NewHandler(
-		auth.NewJWTValidator(jwtKey),
-		map[string]api.MethodHandler{
-			http.MethodPost: taskAPI.NewPostHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				titleValidator,
-				titleValidator,
-				taskAPI.NewColNoValidator(),
-				tasktable.NewInserter(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-			http.MethodPatch: taskAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				titleValidator,
-				titleValidator,
-				tasktable.NewUpdater(svcDynamo),
-				log,
-			),
-			http.MethodDelete: taskAPI.NewDeleteHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				tasktable.NewDeleter(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-		},
-	)
-
-	t.Run("Auth", func(t *testing.T) {
-		for _, c := range []struct {
-			name     string
-			authFunc func(*http.Request)
-		}{
-			// Auth Cases
-			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
-			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				for _, httpMethod := range []string{
-					http.MethodPost, http.MethodPatch, http.MethodDelete,
-				} {
-					t.Run(httpMethod, func(t *testing.T) {
-						req := httptest.NewRequest(httpMethod, "/", nil)
-						c.authFunc(req)
-						w := httptest.NewRecorder()
-
-						sut.ServeHTTP(w, req)
-						res := w.Result()
-
-						assert.Equal(t.Error,
-							res.StatusCode, http.StatusUnauthorized,
-						)
-
-						assert.Equal(t.Error,
-							res.Header.Values("WWW-Authenticate")[0], "Bearer",
-						)
-					})
-				}
-			})
-		}
+	sut := api.NewHandler(map[string]api.MethodHandler{
+		http.MethodPost: taskAPI.NewPostHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			titleValidator,
+			titleValidator,
+			taskAPI.NewColNoValidator(),
+			tasktable.NewInserter(db),
+			token.EncodeState,
+			log,
+		),
+		http.MethodPatch: taskAPI.NewPatchHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			titleValidator,
+			titleValidator,
+			tasktable.NewUpdater(db),
+			log,
+		),
+		http.MethodDelete: taskAPI.NewDeleteHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			tasktable.NewDeleter(db),
+			token.EncodeState,
+			log,
+		),
 	})
 
 	t.Run("POST", func(t *testing.T) {
@@ -260,11 +222,9 @@ func TestTaskAPI(t *testing.T) {
 					))
 					expr, err := expression.NewBuilder().
 						WithKeyCondition(keyEx).Build()
-					if err != nil {
-						t.Fatal(err)
-					}
+					assert.Nil(t.Fatal, err)
 
-					out, err := svcDynamo.Query(
+					out, err := db.Query(
 						context.Background(),
 						&dynamodb.QueryInput{
 							TableName: &taskTableName,
@@ -276,17 +236,13 @@ func TestTaskAPI(t *testing.T) {
 							KeyConditionExpression:    expr.KeyCondition(),
 						},
 					)
-					if err != nil {
-						t.Fatal("failed to get tasks:", err)
-					}
+					assert.Nil(t.Fatal, err)
 
 					var taskFound bool
 					for _, av := range out.Items {
 						var task tasktable.Task
 						err = attributevalue.UnmarshalMap(av, &task)
-						if err != nil {
-							t.Fatal(err)
-						}
+						assert.Nil(t.Fatal, err)
 
 						wantDescr := "Do something. Then, do something else."
 						if task.Description == wantDescr &&
@@ -450,7 +406,7 @@ func TestTaskAPI(t *testing.T) {
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					out, err := svcDynamo.GetItem(
+					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,
@@ -553,7 +509,7 @@ func TestTaskAPI(t *testing.T) {
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					out, err := svcDynamo.GetItem(
+					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,

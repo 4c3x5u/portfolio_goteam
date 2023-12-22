@@ -58,6 +58,27 @@ func TestBoardInserter(t *testing.T) {
 			wantErr:    db.ErrNoItem,
 		},
 		{
+			name:       "ErrDupKey",
+			errGetItem: nil,
+			outGetItem: &dynamodb.GetItemOutput{
+				Item: map[string]types.AttributeValue{
+					"Boards": &types.AttributeValueMemberL{
+						Value: []types.AttributeValue{
+							&types.AttributeValueMemberM{
+								Value: map[string]types.AttributeValue{
+									"ID": &types.AttributeValueMemberS{
+										Value: "board21",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			errPutItem: nil,
+			wantErr:    db.ErrDupKey,
+		},
+		{
 			name:       "ErrLimitReached",
 			errGetItem: nil,
 			outGetItem: &dynamodb.GetItemOutput{
@@ -112,7 +133,7 @@ func TestBoardInserter(t *testing.T) {
 			igetput.OutGet = c.outGetItem
 			igetput.ErrPut = c.errPutItem
 
-			err := sut.Insert(context.Background(), "", Board{})
+			err := sut.Insert(context.Background(), "", Board{ID: "board21"})
 
 			assert.Equal(t.Fatal, err, c.wantErr)
 		})

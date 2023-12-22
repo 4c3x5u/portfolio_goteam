@@ -53,8 +53,7 @@ func TestPostHandler(t *testing.T) {
 		errValidateTaskTitle error
 		errValidateSubtTitle error
 		errInsertTask        error
-		outStateToken        token.State
-		outStateEncoded      string
+		outStateToken        string
 		errEncodeState       error
 		wantStatus           int
 		assertFunc           func(*testing.T, *http.Response, string)
@@ -75,8 +74,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusUnauthorized,
 			assertFunc:           assert.OnResErr("Invalid auth token."),
@@ -94,8 +92,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -115,8 +112,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("State token not found."),
@@ -134,8 +130,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Invalid state token."),
@@ -155,8 +150,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -178,8 +172,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -204,8 +197,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrEmpty,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -230,8 +222,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrTooLong,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -256,8 +247,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrWrongFormat,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -284,8 +274,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrEmpty,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -312,8 +301,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrTooLong,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -340,8 +328,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrWrongFormat,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -366,8 +353,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        errors.New("failed to put task"),
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -392,8 +378,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "",
+			outStateToken:        "",
 			errEncodeState:       errors.New("encode state failed"),
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr("encode state failed"),
@@ -416,8 +401,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        token.State{},
-			outStateEncoded:      "foobarbazbang",
+			outStateToken:        "foobarbazbang",
 			errEncodeState:       nil,
 			wantStatus:           http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
@@ -437,7 +421,7 @@ func TestPostHandler(t *testing.T) {
 			titleValidator.Err = c.errValidateTaskTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskInserter.Err = c.errInsertTask
-			encodeState.Res = c.outStateEncoded
+			encodeState.Res = c.outStateToken
 			encodeState.Err = c.errEncodeState
 
 			req := httptest.NewRequest(

@@ -32,6 +32,20 @@ type FakeUpdater[T any] struct{ Err error }
 // Update discards params and returns FakeUpdater.Err.
 func (f *FakeUpdater[T]) Update(context.Context, T) error { return f.Err }
 
+// FakeDeleter is a test fake for Deleter.
+type FakeDeleter struct{ Err error }
+
+// Delete discards params and returns FakeDeleter.Err.
+func (f *FakeDeleter) Delete(context.Context, string) error { return f.Err }
+
+// FakeInserterDualKey is a test fake for InserterDualKey.
+type FakeInserterDualKey[T any] struct{ Err error }
+
+// Insert discards params and returns FakeInserterDualKey.Err.
+func (f *FakeInserterDualKey[T]) Insert(context.Context, string, T) error {
+	return f.Err
+}
+
 // FakeUpdaterDualKey is a test fake for UpdaterDualKey.
 type FakeUpdaterDualKey[T any] struct{ Err error }
 
@@ -39,12 +53,6 @@ type FakeUpdaterDualKey[T any] struct{ Err error }
 func (f *FakeUpdaterDualKey[T]) Update(context.Context, string, T) error {
 	return f.Err
 }
-
-// FakeDeleter is a test fake for Deleter.
-type FakeDeleter struct{ Err error }
-
-// Delete discards params and returns FakeDeleter.Err.
-func (f *FakeDeleter) Delete(context.Context, string) error { return f.Err }
 
 // FakeDeleterDualKey is a test fake for DeleterDualKey.
 type FakeDeleterDualKey struct{ Err error }

@@ -4,7 +4,6 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -17,14 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
-	"github.com/ory/dockertest"
-	"github.com/ory/dockertest/docker"
 )
 
-// svcDynamo is the DynamoDB client used by tests.
-// TODO: rename as db once the migration is complete
-var svcDynamo *dynamodb.Client
+var db *dynamodb.Client
 
 // used as a prefix to a uuid when creating test tables
 const (
@@ -37,21 +31,12 @@ const (
 var userTableName, teamTableName, taskTableName string
 
 func TestMain(m *testing.M) {
-	fmt.Println("setting up dynamodb test tables")
-	tearDownDynamoDB, err := setUpDynamoDB()
+	fmt.Println("setting up test tables")
+	tearDownTables, err := setUpTables()
+	defer tearDownTables()
 	if err != nil {
-		// must tear down here too as some tables might be created while others
-		// have failed
-		tearDownDynamoDB()
-		log.Fatalf("dynamodb setup failed: %s", err)
-	}
-	defer tearDownDynamoDB()
-
-	fmt.Println("setting up postgres test tables")
-	tearDownPostgres, err := setUpPostgres()
-	defer tearDownPostgres()
-	if err != nil {
-		log.Fatalf("postgres setup failed: %s", err)
+		log.Printf("test tables setup failed: %s", err)
+		return
 	}
 
 	// used in auth-related code to sign JWTs
@@ -59,8 +44,8 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// setUpDynamoDB sets up the test tables on DynamoDB.
-func setUpDynamoDB() (func() error, error) {
+// setUpTables sets up the test tables on DynamoDB.
+func setUpTables() (func() error, error) {
 	var tearDown func() error
 
 	// create dynamodb client
@@ -68,12 +53,12 @@ func setUpDynamoDB() (func() error, error) {
 	if err != nil {
 		return tearDownNothing, err
 	}
-	svcDynamo = dynamodb.NewFromConfig(cfg)
+	db = dynamodb.NewFromConfig(cfg)
 
 	// set up user table
 	userTableName = userTablePrefix + uuid.New().String()
 	tearDownUserTable, err := createTable(
-		svcDynamo, &userTableName, "Username", "",
+		db, &userTableName, "Username", "",
 	)
 	if err != nil {
 		return tearDownNothing, err
@@ -89,7 +74,7 @@ func setUpDynamoDB() (func() error, error) {
 
 	// set up team table
 	teamTableName = teamTablePrefix + uuid.New().String()
-	tearDownTeamTable, err := createTable(svcDynamo, &teamTableName, "ID", "")
+	tearDownTeamTable, err := createTable(db, &teamTableName, "ID", "")
 	if err != nil {
 		return tearDown, err
 	}
@@ -105,7 +90,7 @@ func setUpDynamoDB() (func() error, error) {
 	// set up team table
 	taskTableName = taskTablePrefix + uuid.New().String()
 	tearDownTaskTable, err := createTable(
-		svcDynamo, &taskTableName, "TeamID", "ID", "BoardID",
+		db, &taskTableName, "TeamID", "ID", "BoardID",
 	)
 	if err != nil {
 		return tearDown, err
@@ -120,12 +105,12 @@ func setUpDynamoDB() (func() error, error) {
 	}
 
 	// ensure all test tables are created
-	if err := allTablesActive(svcDynamo); err != nil {
+	if err := allTablesActive(db); err != nil {
 		return tearDown, err
 	}
 
 	// populate tables
-	_, err = svcDynamo.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+	_, err = db.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 		RequestItems: map[string][]types.WriteRequest{
 			userTableName: reqsWriteUser,
 			teamTableName: reqsWriteTeam,
@@ -279,70 +264,4 @@ func joinTeardowns(tearDowns ...func() error) func() error {
 		}
 		return jointErr
 	}
-}
-
-// TODO: remove once fully migrated to DynamoDB
-func setUpPostgres() (func() error, error) {
-	pool, err := dockertest.NewPool("")
-	if err != nil {
-		return tearDownNothing, fmt.Errorf("Could not construct pool: %s", err)
-	}
-	err = pool.Client.Ping()
-	if err != nil {
-		return tearDownNothing, fmt.Errorf("Could not connect to Docker: %s", err)
-	}
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "postgres",
-		Tag:        "14",
-		Env: []string{
-			"POSTGRES_USER=itestdb_usr",
-			"POSTGRES_PASSWORD=itestdb_pwd",
-			"POSTGRES_DB=itestdb",
-			"listen_addresses = '*'",
-		},
-	}, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-		config.RestartPolicy = docker.RestartPolicy{Name: "no"}
-	})
-	if err != nil {
-		return tearDownNothing, fmt.Errorf("Could not start resource: %s", err)
-	}
-	if err := resource.Expire(180); err != nil {
-		return tearDownNothing, fmt.Errorf("expire error: %s", err)
-	}
-
-	// Get the connection string to the database.
-	databaseURL := "postgres://itestdb_usr:itestdb_pwd@" +
-		resource.GetHostPort("5432/tcp") + "/itestdb?sslmode=disable"
-	log.Println("Connecting to database on url: ", databaseURL)
-
-	// Make sure the container and the database are healthy.
-	// IMPORTANT: if it's the first time creating the image, set the maxWait to
-	// something higher (e.g. 180 seconds).
-	pool.MaxWait = 15 * time.Second
-	if err = pool.Retry(func() error {
-		db, err = sql.Open("postgres", databaseURL)
-		if err != nil {
-			return err
-		}
-		return db.Ping()
-	}); err != nil {
-		return tearDownNothing, fmt.Errorf("Could not connect to docker: %s", err)
-	}
-
-	// Initialise the database with schema and tables.
-	qInitBytes, err := os.ReadFile("init.sql")
-	if err != nil {
-		// when ran with dlv, init file path differs so check
-		qInitBytes, err = os.ReadFile("test/api/init.sql")
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if _, err = db.Exec(string(qInitBytes)); err != nil {
-		log.Fatal("+++", err)
-	}
-
-	return func() error { return pool.Purge(resource) }, nil
 }

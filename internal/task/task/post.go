@@ -259,7 +259,7 @@ func (h *PostHandler) Handle(
 		return
 	}
 
-	// update state
+	// update, encode, and set state token
 	for _, b := range state.Boards {
 		if b.ID == req.BoardID {
 			b.Columns[req.ColumnNumber].Tasks = append(
@@ -268,8 +268,6 @@ func (h *PostHandler) Handle(
 			)
 		}
 	}
-
-	// encode state
 	exp := time.Now().Add(token.DefaultDuration).UTC()
 	tkState, err := h.encodeState(exp, state)
 	if err != nil {
@@ -277,8 +275,6 @@ func (h *PostHandler) Handle(
 		h.log.Error(err.Error())
 		return
 	}
-
-	// set state
 	http.SetCookie(w, &http.Cookie{
 		Name:     token.StateName,
 		Value:    tkState,

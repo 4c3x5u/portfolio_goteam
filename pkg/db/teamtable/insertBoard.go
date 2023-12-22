@@ -46,7 +46,19 @@ func (i BoardInserter) Insert(
 	}
 
 	// check there are boards to delete
-	if len(team.Boards) > 2 {
+	var dupKey bool
+	var count int
+	for _, b := range team.Boards {
+		if b.ID == board.ID {
+			dupKey = true
+			break
+		}
+		count++
+	}
+	if dupKey {
+		return db.ErrDupKey
+	}
+	if count > 2 {
 		return db.ErrLimitReached
 	}
 

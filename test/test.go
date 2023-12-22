@@ -5,34 +5,13 @@
 package api
 
 import (
-	"database/sql"
 	"net/http"
 )
-
-// db is the database connection pool used during integration testing.
-// It is set in main_test.go/TestMain.
-// TODO: remove once fully migrated to DynamoDB
-var db *sql.DB
 
 const (
 	// jwtKey is the JWT key used for signing and validating JWTs during
 	// integration testing.
 	jwtKey = "itest-jwt-key-0123456789qwerty"
-
-	// JWTs to be used for testing purposes
-	// TODO: remove
-	jwtTeam1Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMUF" +
-		"kbWluIn0.hdiH2HHc8QFT9VbkpfXKubtV5-mMIT__tmMmYZHMVeA"
-	jwtTeam1Member = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMU" +
-		"1lbWJlciJ9.uJbS6vSFZzH1Nfbbto3ega9COg9dMuo63iYHmMYJ6bc"
-	jwtTeam2Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMkF" +
-		"kbWluIn0.vjQ93bx9-LK7SZEmhuzISf-Mcf_-A2bZ6VbLn27THPY"
-	jwtTeam2Member = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtMk" +
-		"1lbWJlciJ9.g4FxHf1WupHGzzlvvi-8my1shFhpNuaWZKfJSV-Edxs"
-	jwtTeam3Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtM0F" +
-		"kbWluIn0.QHFI2okGYug7GNwMwwpwYyTtZkx53I-R-uNjlodCwTU"
-	jwtTeam4Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZWFtNEF" +
-		"kbWluIn0.BxguaMUSynY33m3CB3jsV-l4ZC0bTE8_8XJJ8VFNo3o"
 
 	tkTeam1Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6WyI" +
 		"5MTUzNjY2NC05NzQ5LTRkYmItYTQ3MC02ZTUyYWEzNTNhZTQiLCJmZGI4MjYzNy1mNm" +
@@ -54,6 +33,14 @@ const (
 		"LCJ0ZWFtSUQiOiI3NGM4MGFlNS02NGYzLTQyOTgtYThmZi00OGY4ZjkyMGM3ZDQiLCJ1" +
 		"c2VybmFtZSI6InRlYW0zQWRtaW4ifQ.eqPoE2WmFwzNgCatB9IUzyMmSRn0_t-VjIA2d" +
 		"WVN3vU"
+	tkTeam4Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0cnVl" +
+		"LCJ0ZWFtSUQiOiIzYzNlYzRlYS1hODUwLTRmYzUtYWFiMC0yNGU5ZTcyMjNiYmMiLCJ1" +
+		"c2VybmFtZSI6InRlYW00QWRtaW4ifQ.pmbrD7hCLsP5m_ePZHkEK-JbEQfPGbY1EOR24" +
+		"C2PsUA"
+	tkTeam4Member = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
+		"zZSwidGVhbUlEIjoiM2MzZWM0ZWEtYTg1MC00ZmM1LWFhYjAtMjRlOWU3MjIzYmJjIiw" +
+		"idXNlcm5hbWUiOiJ0ZWFtNE1lbWJlciJ9.UNjSqhfTpB_IQ68Le_ApwAKlh4lBoG7gDt" +
+		"N02CFKdLw"
 
 	tkEmptyState = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOltdfQ.g" +
 		"lA6vOsGSCUo4w2tsiAqyngpLelGOLA0cguBXnx-ans"
@@ -81,6 +68,12 @@ const (
 		"NzdkOGU1N2JlMSIsIm9yZGVyIjoxfV19XSwiaWQiOiJmMGM1ZDUyMS1jY2I1LTQ3Y2Mt" +
 		"YmE0MC0zMTNkZGI5MDExNjUifV19.ut1Ri0Y2bRwQwEe71KmSM_1_4ML4guJbInfsneX" +
 		"UNgQ"
+	tkTeam4State = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt7ImNv" +
+		"bHVtbnMiOlt7InRhc2tzIjpbeyJpZCI6IjVjY2Q3NTBkLTM3ODMtNDgzMi04OTFkLTAy" +
+		"NWYyNGE0OTQ0ZiIsIm9yZGVyIjowfSx7ImlkIjoiNTVlMjc1ZTQtZGU4MC00MjQxLWI3" +
+		"M2ItODhlNzg0ZDU1MjJiIiwib3JkZXIiOjF9XX1dLCJpZCI6ImNhNDdmYmVjLTI2OWUt" +
+		"NGVmNC1hNzRhLWJjZmJjZDU5OWZkNSJ9XX0.0m01PbRPDDBgC-dnZjqQeFdb5_leJtjA" +
+		"RjpWG9Px3vU"
 )
 
 // addCookieAuth is used in various test cases to authenticate the request

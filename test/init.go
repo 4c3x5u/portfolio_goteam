@@ -93,6 +93,20 @@ var reqsWriteUser = []types.WriteRequest{
 			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
 		},
 	}}},
+	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
+		"Username": &types.AttributeValueMemberS{Value: "team4Member"},
+		"Password": &types.AttributeValueMemberB{
+			Value: []byte(
+				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
+			),
+		},
+		"IsAdmin": &types.AttributeValueMemberBOOL{
+			Value: false,
+		},
+		"TeamID": &types.AttributeValueMemberS{
+			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+		},
+	}}},
 }
 
 // reqsWriteTeam are the requests sent to the team table to initialise it for
@@ -186,6 +200,7 @@ var reqsWriteTeam = []types.WriteRequest{
 		"Members": &types.AttributeValueMemberL{
 			Value: []types.AttributeValue{
 				&types.AttributeValueMemberS{Value: "team4Admin"},
+				&types.AttributeValueMemberS{Value: "team4Member"},
 			},
 		},
 		"Boards": &types.AttributeValueMemberL{

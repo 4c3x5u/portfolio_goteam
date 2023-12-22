@@ -18,19 +18,19 @@ import (
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
-func TestPatchHandler(t *testing.T) {
+func TestPostHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
-	idValidator := &api.FakeStringValidator{}
 	nameValidator := &api.FakeStringValidator{}
-	updater := &db.FakeUpdaterDualKey[teamtable.Board]{}
+	inserter := &db.FakeInserterDualKey[teamtable.Board]{}
+	encodeState := &token.FakeEncode[token.State]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPatchHandler(
+	sut := NewPostHandler(
 		decodeAuth.Func,
 		decodeState.Func,
-		idValidator,
 		nameValidator,
-		updater,
+		inserter,
+		encodeState.Func,
 		log,
 	)
 
@@ -42,10 +42,11 @@ func TestPatchHandler(t *testing.T) {
 		stateToken      string
 		errDecodeState  error
 		stateDecoded    token.State
-		errValidateID   error
 		errValidateName error
-		errUpdateBoard  error
-		wantStatus      int
+		boardUpdaterErr error
+		outStateToken   string
+		errEncodeState  error
+		wantStatusCode  int
 		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
@@ -56,10 +57,11 @@ func TestPatchHandler(t *testing.T) {
 			stateToken:      "",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   nil,
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusUnauthorized,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusUnauthorized,
 			assertFunc:      assert.OnResErr("Auth token not found."),
 		},
 		{
@@ -70,10 +72,11 @@ func TestPatchHandler(t *testing.T) {
 			stateToken:      "",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   nil,
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusUnauthorized,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusUnauthorized,
 			assertFunc:      assert.OnResErr("Invalid auth token."),
 		},
 		{
@@ -84,10 +87,11 @@ func TestPatchHandler(t *testing.T) {
 			stateToken:      "",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   nil,
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only team admins can edit boards.",
 			),
@@ -100,10 +104,11 @@ func TestPatchHandler(t *testing.T) {
 			stateToken:      "",
 			errDecodeState:  nil,
 			stateDecoded:    token.State{},
-			errValidateID:   nil,
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusForbidden,
 			assertFunc:      assert.OnResErr("State token not found."),
 		},
 		{
@@ -114,39 +119,31 @@ func TestPatchHandler(t *testing.T) {
 			stateToken:      "nonempty",
 			errDecodeState:  token.ErrInvalid,
 			stateDecoded:    token.State{},
-			errValidateID:   nil,
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusForbidden,
 			assertFunc:      assert.OnResErr("Invalid state token."),
 		},
 		{
-			name:            "IDEmpty",
+			name:            "LimitReached",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     token.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
-			errValidateID:   validator.ErrEmpty,
+			stateDecoded:    token.State{Boards: []token.Board{{}, {}, {}}},
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board ID cannot be empty."),
-		},
-		{
-			name:            "IDNotUUID",
-			authToken:       "nonempty",
-			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  nil,
-			stateDecoded:    token.State{},
-			errValidateID:   validator.ErrWrongFormat,
-			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board ID must be a UUID."),
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"You have already created the maximum amount of boards " +
+					"allowed per team. Please delete one of your boards to " +
+					"create a new one.",
+			),
 		},
 		{
 			name:           "NameEmpty",
@@ -158,10 +155,11 @@ func TestPatchHandler(t *testing.T) {
 			stateDecoded: token.State{Boards: []token.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
-			errValidateID:   nil,
 			errValidateName: validator.ErrEmpty,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusBadRequest,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusBadRequest,
 			assertFunc:      assert.OnResErr("Board name cannot be empty."),
 		},
 		{
@@ -174,27 +172,13 @@ func TestPatchHandler(t *testing.T) {
 			stateDecoded: token.State{Boards: []token.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
-			errValidateID:   nil,
 			errValidateName: validator.ErrTooLong,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusBadRequest,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
 				"Board name cannot be longer than 35 characters.",
-			),
-		},
-		{
-			name:            "NoAccess",
-			authToken:       "nonempty",
-			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  nil,
-			stateDecoded:    token.State{},
-			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
-			assertFunc: assert.OnResErr(
-				"You do not have access to this board.",
 			),
 		},
 		{
@@ -208,9 +192,15 @@ func TestPatchHandler(t *testing.T) {
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
-			errUpdateBoard:  db.ErrNoItem,
-			wantStatus:      http.StatusNotFound,
-			assertFunc:      assert.OnResErr("Board not found."),
+			boardUpdaterErr: db.ErrLimitReached,
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc: assert.OnResErr(
+				"You have already created the maximum amount of boards " +
+					"allowed per team. Please delete one of your boards to " +
+					"create a new one.",
+			),
 		},
 		{
 			name:           "BoardUpdaterErr",
@@ -223,9 +213,28 @@ func TestPatchHandler(t *testing.T) {
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
-			errUpdateBoard:  errors.New("update board failed"),
-			wantStatus:      http.StatusInternalServerError,
+			boardUpdaterErr: errors.New("update board failed"),
+			outStateToken:   "",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("update board failed"),
+		},
+		{
+			name:           "ErrEncodeState",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateName: nil,
+			boardUpdaterErr: nil,
+			outStateToken:   "",
+			errEncodeState:  errors.New("encode state failed"),
+			wantStatusCode:  http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("encode state failed"),
 		},
 		{
 			name:           "Success",
@@ -238,9 +247,16 @@ func TestPatchHandler(t *testing.T) {
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusOK,
-			assertFunc:      func(*testing.T, *http.Response, string) {},
+			boardUpdaterErr: nil,
+			outStateToken:   "foobarbazbang",
+			errEncodeState:  nil,
+			wantStatusCode:  http.StatusOK,
+			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
+				// assert on set state
+				ck := resp.Cookies()[0]
+				assert.Equal(t.Error, ck.Name, "state-token")
+				assert.Equal(t.Error, ck.Value, "foobarbazbang")
+			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -248,9 +264,10 @@ func TestPatchHandler(t *testing.T) {
 			decodeAuth.Res = c.authDecoded
 			decodeState.Err = c.errDecodeState
 			decodeState.Res = c.stateDecoded
-			idValidator.Err = c.errValidateID
 			nameValidator.Err = c.errValidateName
-			updater.Err = c.errUpdateBoard
+			inserter.Err = c.boardUpdaterErr
+			encodeState.Res = c.outStateToken
+			encodeState.Err = c.errEncodeState
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/", strings.NewReader(`{
@@ -273,7 +290,7 @@ func TestPatchHandler(t *testing.T) {
 			sut.Handle(w, r, "")
 			res := w.Result()
 
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
+			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 			c.assertFunc(t, res, log.InMessage)
 		})

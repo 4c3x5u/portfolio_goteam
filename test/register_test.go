@@ -33,7 +33,7 @@ func TestRegisterAPI(t *testing.T) {
 		),
 		token.DecodeInvite,
 		registerAPI.NewPasswordHasher(),
-		usertable.NewInserter(svcDynamo),
+		usertable.NewInserter(db),
 		token.EncodeAuth,
 		log.New(),
 	)
@@ -164,7 +164,7 @@ func TestRegisterAPI(t *testing.T) {
 			assertFunc: func(t *testing.T, res *http.Response, _ string) {
 				// might take some time for post to create user so tr once
 				// a second 5 times just in case.
-				out, err := svcDynamo.GetItem(
+				out, err := db.GetItem(
 					context.Background(), &dynamodb.GetItemInput{
 						TableName: &userTableName,
 						Key: map[string]types.AttributeValue{

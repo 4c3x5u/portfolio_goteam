@@ -34,19 +34,25 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
-// Updater defines a type that can update an item in a DynamoDB table using a
-// key separate from the T's ID field.
-type UpdaterDualKey[T any] interface {
-	Update(context.Context, string, T) error
-}
-
 // Deleter defines a type that can delete an item from a DynamoDB table.
 type Deleter interface {
 	Delete(context.Context, string) error
 }
 
+// InserterDualKey defines a type that can insert an item into a DynamoDB table
+// using an additional identifier separate to the T's ID field.
+type InserterDualKey[T any] interface {
+	Insert(context.Context, string, T) error
+}
+
+// Updater defines a type that can update an item in a DynamoDB table using an
+// additional identifier separate from the T's ID field.
+type UpdaterDualKey[T any] interface {
+	Update(context.Context, string, T) error
+}
+
 // DeleterDualKey defines a type that can delete an item from a DynamoDB table
-// using a partition and a sort key.
+// using two identifiers.
 type DeleterDualKey interface {
 	Delete(context.Context, string, string) error
 }

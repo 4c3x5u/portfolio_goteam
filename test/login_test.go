@@ -21,7 +21,7 @@ import (
 func TestLoginAPI(t *testing.T) {
 	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
-		usertable.NewRetriever(svcDynamo),
+		usertable.NewRetriever(db),
 		loginAPI.NewPasswordComparator(),
 		token.EncodeAuth,
 		log.New(),

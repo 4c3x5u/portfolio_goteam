@@ -17,7 +17,6 @@ import (
 	tasksAPI "github.com/kxplxn/goteam/internal/task/tasks"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
@@ -25,54 +24,20 @@ import (
 
 func TestTasksAPI(t *testing.T) {
 	log := pkgLog.New()
-	sut := api.NewHandler(
-		auth.NewJWTValidator(jwtKey),
-		map[string]api.MethodHandler{
-			http.MethodGet: tasksAPI.NewGetHandler(
-				token.DecodeAuth,
-				// TODO: create tasks retriever
-				tasktable.NewMultiRetriever(svcDynamo),
-				log,
-			),
-			http.MethodPatch: tasksAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				tasksAPI.NewColNoValidator(),
-				tasktable.NewMultiUpdater(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-		},
-	)
-
-	t.Run("Auth", func(t *testing.T) {
-		for _, c := range []struct {
-			name     string
-			authFunc func(*http.Request)
-		}{
-			// Auth Cases
-			{name: "HeaderEmpty", authFunc: func(*http.Request) {}},
-			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				t.Run(http.MethodPatch, func(t *testing.T) {
-					req := httptest.NewRequest(http.MethodPatch, "/", nil)
-					c.authFunc(req)
-					w := httptest.NewRecorder()
-
-					sut.ServeHTTP(w, req)
-					res := w.Result()
-
-					assert.Equal(t.Error,
-						res.StatusCode, http.StatusUnauthorized,
-					)
-
-					assert.Equal(t.Error,
-						res.Header.Values("WWW-Authenticate")[0], "Bearer",
-					)
-				})
-			})
-		}
+	sut := api.NewHandler(map[string]api.MethodHandler{
+		http.MethodGet: tasksAPI.NewGetHandler(
+			token.DecodeAuth,
+			tasktable.NewMultiRetriever(db),
+			log,
+		),
+		http.MethodPatch: tasksAPI.NewPatchHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			tasksAPI.NewColNoValidator(),
+			tasktable.NewMultiUpdater(db),
+			token.EncodeState,
+			log,
+		),
 	})
 
 	t.Run("GET", func(t *testing.T) {
@@ -247,7 +212,7 @@ func TestTasksAPI(t *testing.T) {
 				},
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					out, err := svcDynamo.GetItem(
+					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &taskTableName,

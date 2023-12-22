@@ -9,18 +9,16 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
 // correctly in all possible scenarios.
 func TestHandler(t *testing.T) {
-	authTokenValidator := &auth.FakeTokenValidator{}
 	postHandler := &FakeMethodHandler{}
 	deleteHandler := &FakeMethodHandler{}
 	patchHandler := &FakeMethodHandler{}
 	sut := NewHandler(
-		authTokenValidator,
 		map[string]MethodHandler{
 			http.MethodPost:   postHandler,
 			http.MethodDelete: deleteHandler,
@@ -56,38 +54,12 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
-	t.Run("InvalidAuthToken", func(t *testing.T) {
-		// Set pre-determinate return values for sut's dependencies.
-		authTokenValidator.Sub = ""
-
-		// Prepare request and response recorder.
-		r := httptest.NewRequest(http.MethodPost, "/", nil)
-		w := httptest.NewRecorder()
-
-		// Handle request with sut and get the result.
-		sut.ServeHTTP(w, r)
-		res := w.Result()
-
-		// Assert on the status code.
-		assert.Equal(t.Error, res.StatusCode, http.StatusUnauthorized)
-
-		// Assert the WWW-Authenticate header was set correctly
-		assert.Equal(t.Error,
-			w.Result().Header.Get("WWW-Authenticate"), "Bearer",
-		)
-	})
-
-	t.Run("Success", func(t *testing.T) {
+	t.Run("OK", func(t *testing.T) {
 		for httpMethod, methodHandler := range sut.methodHandlers {
 			t.Run(httpMethod, func(t *testing.T) {
-				wantSub := "somesub"
-
-				// Set pre-determinate return values for sut's dependencies.
-				authTokenValidator.Sub = wantSub
-
 				// Prepare request and response recorder.
 				r := httptest.NewRequest(httpMethod, "/", nil)
-				r.AddCookie(&http.Cookie{Name: auth.CookieName, Value: ""})
+				r.AddCookie(&http.Cookie{Name: token.AuthName, Value: ""})
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.
@@ -100,7 +72,6 @@ func TestHandler(t *testing.T) {
 				fakeMethodHandler := methodHandler.(*FakeMethodHandler)
 				assert.Equal(t.Error, fakeMethodHandler.InResponseWriter, w)
 				assert.Equal(t.Error, fakeMethodHandler.InReq, r)
-				assert.Equal(t.Error, fakeMethodHandler.InSub, wantSub)
 			})
 		}
 	})

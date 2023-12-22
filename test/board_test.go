@@ -16,157 +16,301 @@ import (
 	boardAPI "github.com/kxplxn/goteam/internal/team/board"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/auth"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestBoardAPI(t *testing.T) {
+	nameValidator := boardAPI.NewNameValidator()
 	log := pkgLog.New()
-	sut := api.NewHandler(
-		auth.NewJWTValidator(jwtKey), map[string]api.MethodHandler{
-			http.MethodDelete: boardAPI.NewDeleteHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				teamtable.NewBoardDeleter(svcDynamo),
-				log,
-			),
-			http.MethodPatch: boardAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				boardAPI.NewIDValidator(),
-				boardAPI.NewNameValidator(),
-				teamtable.NewBoardUpdater(svcDynamo),
-				log,
-			),
-		},
-	)
+	sut := api.NewHandler(map[string]api.MethodHandler{
+		http.MethodPost: boardAPI.NewPostHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			nameValidator,
+			teamtable.NewBoardInserter(db),
+			token.EncodeState,
+			log,
+		),
+		http.MethodDelete: boardAPI.NewDeleteHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			teamtable.NewBoardDeleter(db),
+			log,
+		),
+		http.MethodPatch: boardAPI.NewPatchHandler(
+			token.DecodeAuth,
+			token.DecodeState,
+			boardAPI.NewIDValidator(),
+			nameValidator,
+			teamtable.NewBoardUpdater(db),
+			log,
+		),
+	})
 
-	t.Run("PATCH", func(t *testing.T) {
+	t.Run("POST", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
-			id         string
-			boardName  string
 			authFunc   func(*http.Request)
-			statusCode int
+			boardName  string
+			wantStatus int
 			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
 				name:       "NoAuth",
-				id:         "",
 				boardName:  "",
 				authFunc:   func(*http.Request) {},
-				statusCode: http.StatusUnauthorized,
+				wantStatus: http.StatusUnauthorized,
 				assertFunc: assert.OnResErr("Auth token not found."),
 			},
 			{
 				name:       "InvalidAuth",
-				id:         "",
 				boardName:  "",
 				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
-				statusCode: http.StatusUnauthorized,
+				wantStatus: http.StatusUnauthorized,
 				assertFunc: assert.OnResErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
-				id:         "",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam1Member),
-				statusCode: http.StatusForbidden,
+				authFunc:   addCookieAuth(tkTeam4Member),
+				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"Only team admins can edit boards.",
 				),
 			},
 			{
 				name:       "NoState",
-				id:         "",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam1Admin),
-				statusCode: http.StatusForbidden,
+				authFunc:   addCookieAuth(tkTeam4Admin),
+				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnResErr("State token not found."),
 			},
 			{
 				name:      "InvalidState",
-				id:        "",
+				boardName: "",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam4Admin)(r)
+					addCookieState("asdkljfhaskldfjhasdklf")(r)
+				},
+				wantStatus: http.StatusForbidden,
+				assertFunc: assert.OnResErr("Invalid state token."),
+			},
+			{
+				name: "EmptyBoardName",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam4Admin)(r)
+					addCookieState(tkTeam4State)(r)
+				},
+				boardName:  "",
+				wantStatus: http.StatusBadRequest,
+				assertFunc: assert.OnResErr("Board name cannot be empty."),
+			},
+			{
+				name: "TooLongBoardName",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam4Admin)(r)
+					addCookieState(tkTeam4State)(r)
+				},
+				boardName:  "A Board Whose Name Is Just Too Long!",
+				wantStatus: http.StatusBadRequest,
+				assertFunc: assert.OnResErr(
+					"Board name cannot be longer than 35 characters.",
+				),
+			},
+			{
+				name: "LimitReached",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam1Admin)(r)
+					addCookieState(tkTeam1State)(r)
+				},
+				boardName:  "bob123's new board",
+				wantStatus: http.StatusBadRequest,
+				assertFunc: assert.OnResErr(
+					"You have already created the maximum amount of boards " +
+						"allowed per team. Please delete one of your boards " +
+						"to create a new one.",
+				),
+			},
+			{
+				name: "OK",
+				authFunc: func(r *http.Request) {
+					addCookieAuth(tkTeam4Admin)(r)
+					addCookieState(tkTeam4State)(r)
+				},
+				boardName:  "Team 4 Board 1",
+				wantStatus: http.StatusOK,
+				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+					out, err := db.GetItem(context.Background(), &dynamodb.GetItemInput{
+						TableName: &teamTableName,
+						Key: map[string]types.AttributeValue{
+							"ID": &types.AttributeValueMemberS{
+								Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+							},
+						},
+					})
+					assert.Nil(t.Fatal, err)
+
+					var team *teamtable.Team
+					err = attributevalue.UnmarshalMap(out.Item, &team)
+					assert.Nil(t.Fatal, err)
+
+					var found bool
+					for _, b := range team.Boards {
+						if b.Name == "Team 4 Board 1" {
+							found = true
+							break
+						}
+					}
+					assert.True(t.Error, found)
+				},
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(
+					http.MethodPost, "/team/board", strings.NewReader(`{
+                        "name": "`+c.boardName+`"
+                    }`),
+				)
+				c.authFunc(r)
+
+				sut.ServeHTTP(w, r)
+				res := w.Result()
+
+				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
+
+				// run case-specific assertions
+				c.assertFunc(t, res, "")
+			})
+		}
+	})
+
+	t.Run("PATCH", func(t *testing.T) {
+		for _, c := range []struct {
+			name       string
+			boardID    string
+			boardName  string
+			authFunc   func(*http.Request)
+			wantStatus int
+			assertFunc func(*testing.T, *http.Response, string)
+		}{
+			{
+				name:       "NoAuth",
+				boardID:    "",
+				boardName:  "",
+				authFunc:   func(*http.Request) {},
+				wantStatus: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr("Auth token not found."),
+			},
+			{
+				name:       "InvalidAuth",
+				boardID:    "",
+				boardName:  "",
+				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
+				wantStatus: http.StatusUnauthorized,
+				assertFunc: assert.OnResErr("Invalid auth token."),
+			},
+			{
+				name:       "NotAdmin",
+				boardID:    "",
+				boardName:  "",
+				authFunc:   addCookieAuth(tkTeam1Member),
+				wantStatus: http.StatusForbidden,
+				assertFunc: assert.OnResErr(
+					"Only team admins can edit boards.",
+				),
+			},
+			{
+				name:       "NoState",
+				boardID:    "",
+				boardName:  "",
+				authFunc:   addCookieAuth(tkTeam1Admin),
+				wantStatus: http.StatusForbidden,
+				assertFunc: assert.OnResErr("State token not found."),
+			},
+			{
+				name:      "InvalidState",
+				boardID:   "",
 				boardName: "",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState("asdkljfhaskldfjhasdklf")(r)
 				},
-				statusCode: http.StatusForbidden,
+				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnResErr("Invalid state token."),
 			},
 			{
 				name:      "IDEmpty",
-				id:        "",
+				boardID:   "",
 				boardName: "",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam1State)(r)
 				},
-				statusCode: http.StatusBadRequest,
+				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID cannot be empty."),
 			},
 			{
 				name:      "IDNotUUID",
-				id:        "askdfjhas",
+				boardID:   "askdfjhas",
 				boardName: "",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam1State)(r)
 				},
-				statusCode: http.StatusBadRequest,
+				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board ID must be a UUID."),
 			},
 			{
 				name:      "BoardNameEmpty",
-				id:        "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam1State)(r)
 				},
-				statusCode: http.StatusBadRequest,
+				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnResErr("Board name cannot be empty."),
 			},
 			{
 				name:      "BoardNameTooLong",
-				id:        "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "A Board Whose Name Is Just Too Long!",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam1State)(r)
 				},
-				statusCode: http.StatusBadRequest,
+				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnResErr(
 					"Board name cannot be longer than 35 characters.",
 				),
 			},
 			{
 				name:      "ErrNoAccess",
-				id:        "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "New Board Name",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam3State)(r)
 				},
-				statusCode: http.StatusForbidden,
+				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnResErr(
 					"You do not have access to this board.",
 				),
 			},
 			{
-				name:      "Success",
-				id:        "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				name:      "OK",
+				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "New Board Name",
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
 					addCookieState(tkTeam1State)(r)
 				},
-				statusCode: http.StatusOK,
+				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					out, err := svcDynamo.GetItem(
+					out, err := db.GetItem(
 						context.Background(), &dynamodb.GetItemInput{
 							TableName: &teamTableName,
 							Key: map[string]types.AttributeValue{
@@ -201,7 +345,7 @@ func TestBoardAPI(t *testing.T) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(
 					http.MethodPatch, "/team/board", strings.NewReader(`{
-                        "id": "`+c.id+`",
+                        "id": "`+c.boardID+`",
                         "name": "`+c.boardName+`"
                     }`),
 				)
@@ -210,7 +354,7 @@ func TestBoardAPI(t *testing.T) {
 				sut.ServeHTTP(w, r)
 				res := w.Result()
 
-				assert.Equal(t.Error, res.StatusCode, c.statusCode)
+				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 				c.assertFunc(t, res, "")
 			})
@@ -278,7 +422,7 @@ func TestBoardAPI(t *testing.T) {
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
-					out, err := svcDynamo.GetItem(context.Background(),
+					out, err := db.GetItem(context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &teamTableName,
 							Key: map[string]types.AttributeValue{
@@ -311,7 +455,7 @@ func TestBoardAPI(t *testing.T) {
 
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
-				// Run case-specific assertions.
+				// run case-specific assertions
 				c.assertFunc(t)
 			})
 		}

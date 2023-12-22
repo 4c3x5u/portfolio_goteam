@@ -23,8 +23,8 @@ import (
 func TestTeamAPI(t *testing.T) {
 	handler := teamAPI.NewGetHandler(
 		token.DecodeAuth,
-		teamTable.NewRetriever(svcDynamo),
-		teamTable.NewInserter(svcDynamo),
+		teamTable.NewRetriever(db),
+		teamTable.NewInserter(db),
 		pkgLog.New(),
 	)
 
@@ -121,7 +121,7 @@ func TestTeamAPI(t *testing.T) {
 					assert.Equal(t.Error, resp.Boards[0].Name, wantBoardName)
 
 					// asssert on db
-					out, err := svcDynamo.GetItem(
+					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &teamTableName,

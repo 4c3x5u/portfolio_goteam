@@ -73,7 +73,7 @@ func (h DeleteHandler) Handle(
 		return
 	}
 
-	// decode auth token
+	// decode state token
 	state, err := h.decodeState(ckState.Value)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)

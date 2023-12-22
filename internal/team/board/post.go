@@ -4,54 +4,59 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
+	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
-// PatchReq defines the body of PATCH board requests.
-type PatchReq teamTable.Board
+// PostReq defines the body of POST board requests.
+type PostReq struct {
+	Name string `json:"name"`
+}
 
-// PatchResp defines the body of PATCH board responses.
-type PatchResp struct {
+// PostResp defines the body of POST board responses.
+type PostResp struct {
 	Error string `json:"error,omitempty"`
 }
 
-// PatchHandler can be used to handle PATCH board requests.
-type PatchHandler struct {
+// DeleteHandler is an api.MethodHandler that can be used to handle POST board
+// requests.
+type PostHandler struct {
 	decodeAuth    token.DecodeFunc[token.Auth]
 	decodeState   token.DecodeFunc[token.State]
-	idValidator   validator.String
 	nameValidator validator.String
-	boardUpdater  db.UpdaterDualKey[teamTable.Board]
+	inserter      db.InserterDualKey[teamtable.Board]
+	encodeState   token.EncodeFunc[token.State]
 	log           pkgLog.Errorer
 }
 
-// DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
-// requests.
-func NewPatchHandler(
+// NewPostHandler creates and returns a new PostHandler.
+func NewPostHandler(
 	decodeAuth token.DecodeFunc[token.Auth],
 	decodeState token.DecodeFunc[token.State],
-	idValidator validator.String,
 	nameValidator validator.String,
-	boardUpdater db.UpdaterDualKey[teamTable.Board],
+	inserter db.InserterDualKey[teamtable.Board],
+	encodeState token.EncodeFunc[token.State],
 	log pkgLog.Errorer,
-) *PatchHandler {
-	return &PatchHandler{
+) *PostHandler {
+	return &PostHandler{
 		decodeAuth:    decodeAuth,
 		decodeState:   decodeState,
-		idValidator:   idValidator,
 		nameValidator: nameValidator,
-		boardUpdater:  boardUpdater,
+		inserter:      inserter,
+		encodeState:   encodeState,
 		log:           log,
 	}
 }
 
-// Handle handles PATCH board requests.
-func (h *PatchHandler) Handle(
+// Handle handles DELETE board requests.
+func (h PostHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
@@ -126,28 +131,23 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// decode board
-	var req PatchReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+	// check if the user's team already has 3 boards
+	if len(state.Boards) > 2 {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			PostResp{Error: msgLimitReached},
+		); err != nil {
+			h.log.Error(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 		return
 	}
 
-	// validate board ID
-	if err := h.idValidator.Validate(req.ID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		var msg string
-		if errors.Is(err, validator.ErrEmpty) {
-			msg = "Board ID cannot be empty."
-		} else if errors.Is(err, validator.ErrWrongFormat) {
-			msg = "Board ID must be a UUID."
-		}
-
-		if err = json.NewEncoder(w).Encode(PatchResp{Error: msg}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
+	// get and validate board name
+	var req PostReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if err := h.nameValidator.Validate(req.Name); err != nil {
@@ -159,49 +159,67 @@ func (h *PatchHandler) Handle(
 			msg = "Board name cannot be longer than 35 characters."
 		}
 
-		if err := json.NewEncoder(w).Encode(
-			PatchResp{Error: msg},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+		if err = json.NewEncoder(w).Encode(PostResp{Error: msg}); err != nil {
 			h.log.Error(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// validate board access
-	var hasAccess bool
-	for _, b := range state.Boards {
-		if b.ID == req.ID {
-			hasAccess = true
-			break
-		}
-	}
-	if !hasAccess {
-		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(
-			PatchResp{Error: "You do not have access to this board."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+	// insert the board into the team's boards in the team table - retry up to 3
+	// times for the unlikely event that the generated UUID is a duplicate
+	id := uuid.NewString()
+	for i := 0; i < 3; i++ {
+		if err = h.inserter.Insert(r.Context(), auth.TeamID, teamtable.Board{
+			ID:   id,
+			Name: req.Name,
+		}); errors.Is(err, db.ErrDupKey) {
+			id = uuid.NewString()
+			continue
+		} else if errors.Is(err, db.ErrLimitReached) {
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(
+				PostResp{Error: msgLimitReached},
+			); err != nil {
+				h.log.Error(err.Error())
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			return
+		} else if err != nil {
 			h.log.Error(err.Error())
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
-		return
 	}
 
-	// update the board for the team
-	if err := h.boardUpdater.Update(
-		r.Context(), auth.TeamID, teamTable.Board(req),
-	); errors.Is(err, db.ErrNoItem) {
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(
-			PatchResp{Error: "Board not found."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	} else if err != nil {
+	// update, encode, and set state token
+	state.Boards = append(state.Boards, token.Board{
+		ID: id, Columns: []token.Column{
+			{Tasks: []token.Task{}},
+			{Tasks: []token.Task{}},
+			{Tasks: []token.Task{}},
+			{Tasks: []token.Task{}},
+		},
+	})
+	exp := time.Now().Add(token.DefaultDuration).UTC()
+	tkState, err := h.encodeState(exp, state)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     token.StateName,
+		Value:    tkState,
+		Expires:  exp,
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	})
+
 }
+
+// msgLimitReached is the error message written into PostResp when the user's
+// team already has 3 boards.
+const msgLimitReached = "You have already created the maximum amount of " +
+	"boards allowed per team. Please delete one of your boards to create a " +
+	"new one."
