@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
+	lgcBoardAPI "github.com/kxplxn/goteam/internal/board"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"

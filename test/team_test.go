@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	teamAPI "github.com/kxplxn/goteam/internal/api/team"
+	teamAPI "github.com/kxplxn/goteam/internal/team"
 	"github.com/kxplxn/goteam/pkg/assert"
 	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
