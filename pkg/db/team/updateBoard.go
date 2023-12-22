@@ -14,24 +14,19 @@ import (
 
 // BoardUpdater is a type that can be used to update an item in a team's
 // boards.
-type BoardUpdater struct {
-	iget db.DynamoItemGetter
-	iput db.DynamoItemPutter
-}
+type BoardUpdater struct{ igetput db.DynamoItemGetPutter }
 
 // NewBoardUpdater creates and returns a new BoardUpdater.
-func NewBoardUpdater(
-	iget db.DynamoItemGetter, iput db.DynamoItemPutter,
-) BoardDeleter {
-	return BoardDeleter{iget: iget, iput: iput}
+func NewBoardUpdater(igetput db.DynamoItemGetPutter) BoardUpdater {
+	return BoardUpdater{igetput: igetput}
 }
 
 // Update updates a board in the boards of the team with the given ID.
-func (d BoardDeleter) Update(
+func (d BoardUpdater) Update(
 	ctx context.Context, teamID string, board Board,
 ) error {
 	// get the existing team as-is
-	out, err := d.iget.GetItem(ctx, &dynamodb.GetItemInput{
+	out, err := d.igetput.GetItem(ctx, &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: teamID},
 		},
@@ -75,7 +70,7 @@ func (d BoardDeleter) Update(
 	}
 
 	// update the team based on the new team
-	_, err = d.iput.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = d.igetput.PutItem(ctx, &dynamodb.PutItemInput{
 		Item:      newItem,
 		TableName: aws.String(os.Getenv(tableName)),
 	})

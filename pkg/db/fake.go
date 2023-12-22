@@ -24,25 +24,33 @@ func (f *FakeRetriever[T]) Retrieve(context.Context, string) (T, error) {
 type FakeInserter[T any] struct{ Err error }
 
 // Insert discards params and returns FakeInserter.Err.
-func (f *FakeInserter[T]) Insert(_ context.Context, _ T) error { return f.Err }
+func (f *FakeInserter[T]) Insert(context.Context, T) error { return f.Err }
 
 // FakeUpdater is a test fake for Updater.
 type FakeUpdater[T any] struct{ Err error }
 
 // Update discards params and returns FakeUpdater.Err.
-func (f *FakeUpdater[T]) Update(_ context.Context, _ T) error { return f.Err }
+func (f *FakeUpdater[T]) Update(context.Context, T) error { return f.Err }
+
+// FakeUpdaterDualKey is a test fake for UpdaterDualKey.
+type FakeUpdaterDualKey[T any] struct{ Err error }
+
+// Update discards params and returns FakeUpdaterDualKey.Err.
+func (f *FakeUpdaterDualKey[T]) Update(context.Context, string, T) error {
+	return f.Err
+}
 
 // FakeDeleter is a test fake for Deleter.
 type FakeDeleter struct{ Err error }
 
 // Delete discards params and returns FakeDeleter.Err.
-func (f *FakeDeleter) Delete(_ context.Context, _ string) error { return f.Err }
+func (f *FakeDeleter) Delete(context.Context, string) error { return f.Err }
 
 // FakeDeleterDualKey is a test fake for DeleterDualKey.
 type FakeDeleterDualKey struct{ Err error }
 
 // Delete discards params and returns FakeDeleterDualKey.Err.
-func (f *FakeDeleterDualKey) Delete(_ context.Context, _, _ string) error {
+func (f *FakeDeleterDualKey) Delete(context.Context, string, string) error {
 	return f.Err
 }
 
@@ -50,6 +58,14 @@ func (f *FakeDeleterDualKey) Delete(_ context.Context, _, _ string) error {
 type FakeDynamoItemGetter struct {
 	Out *dynamodb.GetItemOutput
 	Err error
+}
+
+// GetItem discards the input parameters and returns Out and Err fields set on
+// FakeDynamoItemGetter.
+func (f *FakeDynamoItemGetter) GetItem(
+	context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
+) (*dynamodb.GetItemOutput, error) {
+	return f.Out, f.Err
 }
 
 // FakeDynamoQueryer is a test fake for DynamoQueryer.
@@ -63,14 +79,6 @@ type FakeDynamoQueryer struct {
 func (f *FakeDynamoQueryer) Query(
 	context.Context, *dynamodb.QueryInput, ...func(*dynamodb.Options),
 ) (*dynamodb.QueryOutput, error) {
-	return f.Out, f.Err
-}
-
-// GetItem discards the input parameters and returns Out and Err fields set on
-// FakeDynamoItemGetter.
-func (f *FakeDynamoItemGetter) GetItem(
-	context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
-) (*dynamodb.GetItemOutput, error) {
 	return f.Out, f.Err
 }
 
@@ -116,4 +124,28 @@ func (f *FakeDynamoTransactWriter) TransactWriteItems(
 	...func(*dynamodb.Options),
 ) (*dynamodb.TransactWriteItemsOutput, error) {
 	return f.Out, f.Err
+}
+
+// FakeDynamoItemGetPutter is a test fake for DynamoItemGetPutter.
+type FakeDynamoItemGetPutter struct {
+	OutGet *dynamodb.GetItemOutput
+	ErrGet error
+	OutPut *dynamodb.PutItemOutput
+	ErrPut error
+}
+
+// GetItem discards the input parameters and returns OutGet and ErrGet fields
+// set on FakeDynamoItemGetPutter.
+func (f *FakeDynamoItemGetPutter) GetItem(
+	context.Context, *dynamodb.GetItemInput, ...func(*dynamodb.Options),
+) (*dynamodb.GetItemOutput, error) {
+	return f.OutGet, f.ErrGet
+}
+
+// PutItem discards the input parameters and returns OutPut and ErrPut fields
+// set on FakeDynamoItemGetPutter.
+func (f *FakeDynamoItemGetPutter) PutItem(
+	context.Context, *dynamodb.PutItemInput, ...func(*dynamodb.Options),
+) (*dynamodb.PutItemOutput, error) {
+	return f.OutPut, f.ErrPut
 }

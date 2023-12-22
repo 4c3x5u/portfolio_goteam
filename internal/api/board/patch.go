@@ -1,110 +1,168 @@
 package board
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/kxplxn/goteam/internal/api"
-	"github.com/kxplxn/goteam/pkg/legacydb"
-	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
+	"github.com/kxplxn/goteam/pkg/db"
+	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
-// PATCHReq defines the body of PATCH board requests.
-type PATCHReq struct {
-	Name string `json:"name"`
-}
+// PatchReq defines the body of PATCH board requests.
+type PatchReq teamTable.Board
 
-// PATCHResp defines the body of PATCH board responses.
-type PATCHResp struct {
+// PatchResp defines the body of PATCH board responses.
+type PatchResp struct {
 	Error string `json:"error,omitempty"`
 }
 
-type PATCHHandler struct {
-	userSelector  legacydb.Selector[userTable.Record]
+// PatchHandler can be used to handle PATCH board requests.
+type PatchHandler struct {
+	decodeAuth    token.DecodeFunc[token.Auth]
+	decodeState   token.DecodeFunc[token.State]
 	idValidator   api.StringValidator
 	nameValidator api.StringValidator
-	boardSelector legacydb.Selector[boardTable.Record]
-	boardUpdater  legacydb.Updater[string]
+	boardUpdater  db.UpdaterDualKey[teamTable.Board]
 	log           pkgLog.Errorer
 }
 
-func NewPATCHHandler(
-	userSelector legacydb.Selector[userTable.Record],
+// DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
+// requests.
+func NewPatchHandler(
+	decodeAuth token.DecodeFunc[token.Auth],
+	decodeState token.DecodeFunc[token.State],
 	idValidator api.StringValidator,
 	nameValidator api.StringValidator,
-	boardSelector legacydb.Selector[boardTable.Record],
-	boardUpdater legacydb.Updater[string],
+	boardUpdater db.UpdaterDualKey[teamTable.Board],
 	log pkgLog.Errorer,
-) *PATCHHandler {
-	return &PATCHHandler{
-		userSelector:  userSelector,
+) *PatchHandler {
+	return &PatchHandler{
+		decodeAuth:    decodeAuth,
+		decodeState:   decodeState,
 		idValidator:   idValidator,
 		nameValidator: nameValidator,
-		boardSelector: boardSelector,
 		boardUpdater:  boardUpdater,
 		log:           log,
 	}
 }
 
-func (h *PATCHHandler) Handle(
+// Handle handles PATCH board requests.
+func (h *PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
-	// Validate that the user is a team admin.
-	user, err := h.userSelector.Select(username)
-	if errors.Is(err, sql.ErrNoRows) {
+	// get auth token
+	ckAuth, err := r.Cookie(token.AuthName)
+	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Username is not recognised."},
+			PatchResp{Error: "Auth token not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
-	}
-	if err != nil {
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	if !user.IsAdmin {
+
+	// decode auth token
+	auth, err := h.decodeAuth(ckAuth.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		if err := json.NewEncoder(w).Encode(
+			PatchResp{Error: "Invalid auth token."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
+
+	// validate user is admin
+	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Only team admins can edit the board."},
-		); err != nil {
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Only team admins can edit boards.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+			return
+		}
+	}
+
+	// get state token
+	ckState, err := r.Cookie(token.StateName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "State token not found.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err.Error())
+		return
+	}
+
+	// decode state token
+	state, err := h.decodeState(ckState.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "Invalid state token.",
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
 		}
 		return
 	}
 
-	// Retrieve and validate the board ID.
-	boardID := r.URL.Query().Get("id")
-	if err := h.idValidator.Validate(boardID); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: err.Error()},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
-		}
-		return
-	}
-
-	// Retrieve and validate the new board name.
-	var req PATCHReq
+	// decode board
+	var req PatchReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
+
+	// validate board ID
+	if err := h.idValidator.Validate(req.ID); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		var msg string
+		if errors.Is(err, ErrEmpty) {
+			msg = "Board ID cannot be empty."
+		} else if errors.Is(err, ErrNotUUID) {
+			msg = "Board ID must be a UUID."
+		}
+
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: msg,
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	}
 	if err := h.nameValidator.Validate(req.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		var msg string
+		if errors.Is(err, ErrEmpty) {
+			msg = "Board name cannot be empty."
+		} else if errors.Is(err, ErrTooLong) {
+			msg = "Board name cannot be longer than 35 characters."
+		}
+
 		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: err.Error()},
+			PatchResp{Error: msg},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -112,28 +170,18 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// Validate that the board exists in the database and that it belongs to the
-	// team that the user is the admin of.
-	board, err := h.boardSelector.Select(boardID)
-	if errors.Is(err, sql.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: "Board not found."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+	// validate board access
+	var hasAccess bool
+	for _, b := range state.Boards {
+		if b.ID == req.ID {
+			hasAccess = true
+			break
 		}
-		return
 	}
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
-		return
-	}
-	if board.TeamID != user.TeamID {
+	if !hasAccess {
 		w.WriteHeader(http.StatusForbidden)
 		if err := json.NewEncoder(w).Encode(
-			PATCHResp{Error: "You do not have access to this board."},
+			PatchResp{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err.Error())
@@ -141,16 +189,21 @@ func (h *PATCHHandler) Handle(
 		return
 	}
 
-	// Update the name of the board in the database. Note that 500 is returned
-	// any error including sql.ErrNoRows. Because even in that case,
-	// something else must have gone wrong since we have already validated that
-	// a board with this ID exists.
-	if err := h.boardUpdater.Update(boardID, req.Name); err != nil {
+	// update the board for the team
+	if err := h.boardUpdater.Update(
+		r.Context(), auth.TeamID, teamTable.Board(req),
+	); errors.Is(err, db.ErrNoItem) {
+		w.WriteHeader(http.StatusNotFound)
+		if err := json.NewEncoder(w).Encode(
+			PatchResp{Error: "Board not found."},
+		); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err.Error())
+		}
+		return
+	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-
-	// All went well. Return 200.
-	w.WriteHeader(http.StatusOK)
 }

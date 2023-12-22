@@ -31,6 +31,12 @@ type Updater[T any] interface {
 	Update(context.Context, T) error
 }
 
+// Updater defines a type that can update an item in a DynamoDB table using a
+// key separate from the T's ID field.
+type UpdaterDualKey[T any] interface {
+	Update(context.Context, string, T) error
+}
+
 // Deleter defines a type that can delete an item from a DynamoDB table.
 type Deleter interface {
 	Delete(context.Context, string) error
@@ -87,4 +93,12 @@ type DynamoTransactWriter interface {
 		*dynamodb.TransactWriteItemsInput,
 		...func(*dynamodb.Options),
 	) (*dynamodb.TransactWriteItemsOutput, error)
+}
+
+// DynamoItemGetter defines a type that can be used to get and put an item
+// from/to a DynamoDB table. It is used to dependency-inject the DynamoDB client
+// into some deleters and putters that operate in an item's internal fields.
+type DynamoItemGetPutter interface {
+	DynamoItemGetter
+	DynamoItemPutter
 }

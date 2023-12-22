@@ -8,78 +8,64 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 )
 
-// TestNameValidator tests the Validate method of NameValidator to assert that
-// it returns the correct error message based on board name it's given.
 func TestNameValidator(t *testing.T) {
 	sut := NewNameValidator()
 
-	msgEmpty := "Board name cannot be empty."
-
 	for _, c := range []struct {
-		name       string
-		boardName  string
-		wantErrMsg string
+		name      string
+		boardName string
+		wantErr   error
 	}{
 		{
-			name:       "Empty",
-			boardName:  "",
-			wantErrMsg: msgEmpty,
+			name:      "Empty",
+			boardName: "",
+			wantErr:   ErrEmpty,
 		},
 		{
-			name:       "TooLong",
-			boardName:  "boardyboardsyboardkyboardishboardxyz",
-			wantErrMsg: "Board name cannot be longer than 35 characters.",
+			name:      "TooLong",
+			boardName: "boardyboardsyboardkyboardishboardxyz",
+			wantErr:   ErrTooLong,
 		},
 		{
-			name:       "OK",
-			boardName:  "My Board",
-			wantErrMsg: "",
+			name:      "OK",
+			boardName: "My Board",
+			wantErr:   nil,
 		},
 	} {
 		err := sut.Validate(c.boardName)
 
-		if c.wantErrMsg == "" {
-			assert.Nil(t.Error, err)
-		} else {
-			assert.Equal(t.Error, err.Error(), c.wantErrMsg)
-		}
+		assert.ErrIs(t.Error, err, c.wantErr)
 	}
 }
 
-// TestIDValidator tests the Validate method of IDValidator to assert
-// that it returns the correct error message based on the board ID it's given.
 func TestIDValidator(t *testing.T) {
 	sut := NewIDValidator()
 
 	for _, c := range []struct {
-		name       string
-		boardID    string
-		wantErrMsg string
+		name    string
+		boardID string
+		wantErr error
 	}{
 		{
-			name:       "Nil",
-			boardID:    "",
-			wantErrMsg: "Board ID cannot be empty.",
+			name:    "Empty",
+			boardID: "",
+			wantErr: ErrEmpty,
 		},
 		{
-			name:       "NotInt",
-			boardID:    "My Board",
-			wantErrMsg: "Board ID must be an integer.",
+			name:    "NotUUID",
+			boardID: "21",
+			wantErr: ErrNotUUID,
 		},
 		{
-			name:       "Success",
-			boardID:    "12",
-			wantErrMsg: "",
+			name:    "Success",
+			boardID: "97377e55-5a2a-4172-bf5d-354b40aa2735",
+			wantErr: nil,
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			err := sut.Validate(c.boardID)
 
-			if c.wantErrMsg == "" {
-				assert.Nil(t.Error, err)
-			} else {
-				assert.Equal(t.Error, err.Error(), c.wantErrMsg)
-			}
+			assert.ErrIs(t.Error, err, c.wantErr)
 		})
 	}
 }

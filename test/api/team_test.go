@@ -62,7 +62,7 @@ func TestTeamAPI(t *testing.T) {
 							},
 							{
 								ID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-								Name: "Team 1 Board 2",
+								Name: "New Board Name",
 							},
 							{
 								ID:   "1559a33c-54c5-42c8-8e5f-fe096f7760fa",

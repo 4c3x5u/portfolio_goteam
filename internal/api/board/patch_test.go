@@ -3,7 +3,6 @@
 package board
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -12,191 +11,282 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/legacydb"
+	"github.com/kxplxn/goteam/pkg/db"
+	teamTable "github.com/kxplxn/goteam/pkg/db/team"
 	boardTable "github.com/kxplxn/goteam/pkg/legacydb/board"
-	userTable "github.com/kxplxn/goteam/pkg/legacydb/user"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestPATCHHandler tests the Handle method of PATCHHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPATCHHandler(t *testing.T) {
-	userSelector := &userTable.FakeSelector{}
+	decodeAuth := &token.FakeDecode[token.Auth]{}
+	decodeState := &token.FakeDecode[token.State]{}
 	idValidator := &api.FakeStringValidator{}
 	nameValidator := &api.FakeStringValidator{}
-	boardSelector := &boardTable.FakeSelector{}
-	boardUpdater := &legacydb.FakeUpdater{}
+	updater := &db.FakeUpdaterDualKey[teamTable.Board]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewPATCHHandler(
-		userSelector,
+	sut := NewPatchHandler(
+		decodeAuth.Func,
+		decodeState.Func,
 		idValidator,
 		nameValidator,
-		boardSelector,
-		boardUpdater,
+		updater,
 		log,
 	)
 
 	for _, c := range []struct {
-		name             string
-		user             userTable.Record
-		selectUserErr    error
-		idValidatorErr   error
-		nameValidatorErr error
-		board            boardTable.Record
-		boardSelectorErr error
-		boardUpdaterErr  error
-		wantStatusCode   int
-		assertFunc       func(*testing.T, *http.Response, string)
+		name            string
+		authToken       string
+		errDecodeAuth   error
+		authDecoded     token.Auth
+		stateToken      string
+		errDecodeState  error
+		stateDecoded    token.State
+		errValidateID   error
+		errValidateName error
+		board           boardTable.Record
+		boardUpdaterErr error
+		wantStatusCode  int
+		assertFunc      func(*testing.T, *http.Response, string)
 	}{
 		{
-			name:             "UserNotRecognised",
-			user:             userTable.Record{},
-			selectUserErr:    sql.ErrNoRows,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusUnauthorized,
-			assertFunc:       assert.OnResErr("Username is not recognised."),
+			name:            "NoAuth",
+			authToken:       "",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{},
+			stateToken:      "",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   nil,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusUnauthorized,
+			assertFunc:      assert.OnResErr("Auth token not found."),
 		},
 		{
-			name:             "UserSelectorErr",
-			user:             userTable.Record{},
-			selectUserErr:    sql.ErrConnDone,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
+			name:            "InvalidAuth",
+			authToken:       "nonempty",
+			errDecodeAuth:   token.ErrInvalid,
+			authDecoded:     token.Auth{},
+			stateToken:      "",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   nil,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusUnauthorized,
+			assertFunc:      assert.OnResErr("Invalid auth token."),
 		},
 		{
-			name:             "NotAdmin",
-			user:             userTable.Record{IsAdmin: false, TeamID: 1},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{TeamID: 1},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusForbidden,
+			name:            "NotAdmin",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: false},
+			stateToken:      "",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   nil,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
-				"Only team admins can edit the board.",
+				"Only team admins can edit boards.",
 			),
 		},
 		{
-			name:             "IDValidatorErr",
-			user:             userTable.Record{IsAdmin: true},
-			selectUserErr:    nil,
-			idValidatorErr:   errors.New("Board ID cannot be empty."),
-			nameValidatorErr: nil,
-			board:            boardTable.Record{},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusBadRequest,
+			name:            "NoState",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: true},
+			stateToken:      "",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   nil,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusForbidden,
+			assertFunc:      assert.OnResErr("State token not found."),
+		},
+		{
+			name:            "InvalidState",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: true},
+			stateToken:      "nonempty",
+			errDecodeState:  token.ErrInvalid,
+			stateDecoded:    token.State{},
+			errValidateID:   nil,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusForbidden,
+			assertFunc:      assert.OnResErr("Invalid state token."),
+		},
+		{
+			name:            "IDEmpty",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: true},
+			stateToken:      "nonempty",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   ErrEmpty,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("Board ID cannot be empty."),
+		},
+		{
+			name:            "IDNotUUID",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: true},
+			stateToken:      "nonempty",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateID:   ErrNotUUID,
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("Board ID must be a UUID."),
+		},
+		{
+			name:           "NameEmpty",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateID:   nil,
+			errValidateName: ErrEmpty,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusBadRequest,
+			assertFunc:      assert.OnResErr("Board name cannot be empty."),
+		},
+		{
+			name:           "NameTooLong",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateID:   nil,
+			errValidateName: ErrTooLong,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
-				"Board ID cannot be empty.",
+				"Board name cannot be longer than 35 characters.",
 			),
 		},
 		{
-			name:             "NameValidatorErr",
-			user:             userTable.Record{IsAdmin: true},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: errors.New("Board name cannot be empty."),
-			board:            boardTable.Record{},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
-				"Board name cannot be empty.",
-			),
-		},
-		{
-			name:             "BoardNotFound",
-			user:             userTable.Record{IsAdmin: true},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{},
-			boardSelectorErr: sql.ErrNoRows,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusNotFound,
-			assertFunc:       assert.OnResErr("Board not found."),
-		},
-		{
-			name:             "BoardSelectorErr",
-			user:             userTable.Record{IsAdmin: true},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{},
-			boardSelectorErr: sql.ErrConnDone,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrConnDone.Error(),
-			),
-		},
-		{
-			name:             "WrongTeamID",
-			user:             userTable.Record{IsAdmin: true, TeamID: 2},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{TeamID: 1},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusForbidden,
+			name:            "NoAccess",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     token.Auth{IsAdmin: true},
+			stateToken:      "nonempty",
+			errDecodeState:  nil,
+			stateDecoded:    token.State{},
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"You do not have access to this board.",
 			),
 		},
 		{
-			name:             "BoardUpdaterErr",
-			user:             userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{TeamID: 1},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  sql.ErrNoRows,
-			wantStatusCode:   http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				sql.ErrNoRows.Error(),
-			),
+			name:           "BoardNotFound",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: db.ErrNoItem,
+			wantStatusCode:  http.StatusNotFound,
+			assertFunc:      assert.OnResErr("Board not found."),
 		},
 		{
-			name:             "Success",
-			user:             userTable.Record{IsAdmin: true, TeamID: 1},
-			selectUserErr:    nil,
-			idValidatorErr:   nil,
-			nameValidatorErr: nil,
-			board:            boardTable.Record{TeamID: 1},
-			boardSelectorErr: nil,
-			boardUpdaterErr:  nil,
-			wantStatusCode:   http.StatusOK,
-			assertFunc: func(*testing.T, *http.Response, string) {
-			},
+			name:           "BoardUpdaterErr",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: errors.New("update board failed"),
+			wantStatusCode:  http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("update board failed"),
+		},
+		{
+			name:           "Success",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded: token.State{Boards: []token.Board{
+				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
+			}},
+			errValidateName: nil,
+			board:           boardTable.Record{},
+			boardUpdaterErr: nil,
+			wantStatusCode:  http.StatusOK,
+			assertFunc:      func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			userSelector.Rec = c.user
-			userSelector.Err = c.selectUserErr
-			idValidator.Err = c.idValidatorErr
-			nameValidator.Err = c.nameValidatorErr
-			boardSelector.Board = c.board
-			boardSelector.Err = c.boardSelectorErr
-			boardUpdater.Err = c.boardUpdaterErr
+			decodeAuth.Err = c.errDecodeAuth
+			decodeAuth.Res = c.authDecoded
+			decodeState.Err = c.errDecodeState
+			decodeState.Res = c.stateDecoded
+			idValidator.Err = c.errValidateID
+			nameValidator.Err = c.errValidateName
+			updater.Err = c.boardUpdaterErr
 
-			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()
+			r := httptest.NewRequest("", "/", strings.NewReader(`{
+                "id": "c193d6ba-ebfe-45fe-80d9-00b545690b4b"
+            }`))
 
-			sut.Handle(w, req, "")
+			if c.authToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  token.AuthName,
+					Value: c.authToken,
+				})
+			}
+			if c.stateToken != "" {
+				r.AddCookie(&http.Cookie{
+					Name:  token.StateName,
+					Value: c.stateToken,
+				})
+			}
+
+			sut.Handle(w, r, "")
 			res := w.Result()
 
 			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)

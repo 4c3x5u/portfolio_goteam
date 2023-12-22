@@ -14,16 +14,11 @@ import (
 
 // BoardDeleter is a type that can be used to delete an item from a team's
 // boards.
-type BoardDeleter struct {
-	iget db.DynamoItemGetter
-	iput db.DynamoItemPutter
-}
+type BoardDeleter struct{ igetput db.DynamoItemGetPutter }
 
 // NewBoardDeleter creates and returns a new BoardDeleter.
-func NewBoardDeleter(
-	iget db.DynamoItemGetter, iput db.DynamoItemPutter,
-) BoardDeleter {
-	return BoardDeleter{iget: iget, iput: iput}
+func NewBoardDeleter(igetput db.DynamoItemGetPutter) BoardDeleter {
+	return BoardDeleter{igetput: igetput}
 }
 
 // Delete deletes the board with the given ID from the team with the given ID.
@@ -31,7 +26,7 @@ func (d BoardDeleter) Delete(
 	ctx context.Context, teamID string, boardID string,
 ) error {
 	// get the existing team as-is
-	out, err := d.iget.GetItem(ctx, &dynamodb.GetItemInput{
+	out, err := d.igetput.GetItem(ctx, &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: teamID},
 		},
@@ -87,7 +82,7 @@ func (d BoardDeleter) Delete(
 	}
 
 	// update the team based on the new team
-	_, err = d.iput.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = d.igetput.PutItem(ctx, &dynamodb.PutItemInput{
 		Item:      newItem,
 		TableName: aws.String(os.Getenv(tableName)),
 	})

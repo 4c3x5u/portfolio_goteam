@@ -17,18 +17,6 @@ func (f *FakeSelector) Select(_ string) (Record, error) {
 	return f.Board, f.Err
 }
 
-// FakeSelectorRecursive is a test fake for Selector[RecursiveRecord].
-type FakeSelectorRecursive struct {
-	Err error
-	Rec RecursiveRecord
-}
-
-// Select implements the Selector[RecursiveRecord] interface on
-// FakeRecursiveSelector.
-func (f *FakeSelectorRecursive) Select(_ string) (RecursiveRecord, error) {
-	return f.Rec, f.Err
-}
-
 // FakeSelectorByTeamID is a test fake for dbaccess.Selector[[]Record].
 type FakeSelectorByTeamID struct {
 	Recs []Record

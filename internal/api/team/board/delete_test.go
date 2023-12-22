@@ -23,9 +23,6 @@ func TestDELETEHandler(t *testing.T) {
 	log := &pkgLog.FakeErrorer{}
 	sut := NewDeleteHandler(decodeAuth.Func, decodeState.Func, deleter, log)
 
-	// Used on cases where no case-specific assertions are required.
-	emptyAssertFunc := func(*testing.T, *http.Response, string) {}
-
 	for _, c := range []struct {
 		name           string
 		boardID        string
@@ -41,7 +38,7 @@ func TestDELETEHandler(t *testing.T) {
 	}{
 		{
 			name:           "NoAuth",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
+			boardID:        "",
 			authToken:      "",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{},
@@ -50,11 +47,11 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusUnauthorized,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "InvalidAuth",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
+			boardID:        "",
 			authToken:      "nonempty",
 			errDecodeAuth:  token.ErrInvalid,
 			authDecoded:    token.Auth{},
@@ -63,11 +60,11 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusUnauthorized,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "NotAdmin",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
+			boardID:        "",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: false},
@@ -76,11 +73,11 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "NoState",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
+			boardID:        "",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
@@ -89,11 +86,11 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "InvalidState",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
+			boardID:        "",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    token.Auth{IsAdmin: true},
@@ -102,10 +99,10 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
-			name:           "NoID",
+			name:           "EmptyID",
 			boardID:        "",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
@@ -115,7 +112,20 @@ func TestDELETEHandler(t *testing.T) {
 			stateDecoded:   token.State{},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
+		},
+		{
+			name:           "InvalidID",
+			boardID:        "adksfjahsd",
+			authToken:      "nonempty",
+			errDecodeAuth:  nil,
+			authDecoded:    token.Auth{IsAdmin: true},
+			stateToken:     "nonempty",
+			errDecodeState: nil,
+			stateDecoded:   token.State{},
+			deleteBoardErr: nil,
+			wantStatusCode: http.StatusBadRequest,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "NoAccess",
@@ -125,10 +135,10 @@ func TestDELETEHandler(t *testing.T) {
 			authDecoded:    token.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded:   token.State{Boards: []token.Board{{ID: "3"}}},
+			stateDecoded:   token.State{Boards: []token.Board{{ID: "adsjkhf"}}},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 		{
 			name:           "DeleteErr",
@@ -158,7 +168,7 @@ func TestDELETEHandler(t *testing.T) {
 			}},
 			deleteBoardErr: nil,
 			wantStatusCode: http.StatusOK,
-			assertFunc:     emptyAssertFunc,
+			assertFunc:     func(*testing.T, *http.Response, string) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

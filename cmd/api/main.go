@@ -111,16 +111,13 @@ func main() {
 		http.MethodDelete: boardAPI.NewDeleteHandler(
 			token.DecodeAuth,
 			token.DecodeState,
-			teamTable.NewBoardDeleter(svcDynamo, svcDynamo),
+			teamTable.NewBoardDeleter(svcDynamo),
 			log,
 		),
 	}))
 
 	// TODO: remove once fully migrated to DynamoDB
-	boardIDValidator := lgcBoardAPI.NewIDValidator()
 	boardNameValidator := lgcBoardAPI.NewNameValidator()
-	boardSelector := lgcBoardTable.NewSelector(db)
-	boardInserter := lgcBoardTable.NewInserter(db)
 	mux.Handle("/board", api.NewHandler(
 		jwtValidator,
 		map[string]api.MethodHandler{
@@ -128,15 +125,15 @@ func main() {
 				userSelector,
 				boardNameValidator,
 				lgcBoardTable.NewCounter(db),
-				boardInserter,
+				lgcBoardTable.NewInserter(db),
 				log,
 			),
-			http.MethodPatch: lgcBoardAPI.NewPATCHHandler(
-				userSelector,
-				boardIDValidator,
+			http.MethodPatch: lgcBoardAPI.NewPatchHandler(
+				token.DecodeAuth,
+				token.DecodeState,
+				lgcBoardAPI.NewIDValidator(),
 				boardNameValidator,
-				boardSelector,
-				lgcBoardTable.NewUpdater(db),
+				teamTable.NewBoardUpdater(svcDynamo),
 				log,
 			),
 		},

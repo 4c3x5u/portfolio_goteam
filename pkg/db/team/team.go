@@ -7,7 +7,7 @@ const tableName = "DYNAMODB_TABLE_TEAM"
 
 // Team defines the team entity - the primary entity of team domain.
 type Team struct {
-	ID      string   //guid
+	ID      string   //uuid
 	Members []string //usernames
 	Boards  []Board
 }
@@ -19,8 +19,8 @@ func NewTeam(id string, members []string, boards []Board) Team {
 
 // Board defines the board entity which a team may own one/many of.
 type Board struct {
-	ID   string //guid
-	Name string
+	ID   string `json:"id"` //uuid
+	Name string `json:"name"`
 }
 
 // NewBoard creates and returns a new board.

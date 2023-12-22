@@ -34,7 +34,7 @@ func NewDeleteHandler(
 	}
 }
 
-// Handle handles the DELETE requests sent to the board route.
+// Handle handles DELETE board requests.
 func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {

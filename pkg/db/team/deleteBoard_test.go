@@ -1,3 +1,5 @@
+//go:build utest
+
 package team
 
 import (
@@ -13,9 +15,8 @@ import (
 )
 
 func TestBoardDeleter(t *testing.T) {
-	iget := &db.FakeDynamoItemGetter{}
-	iput := &db.FakeDynamoItemPutter{}
-	sut := NewBoardDeleter(iget, iput)
+	igetput := &db.FakeDynamoItemGetPutter{}
+	sut := NewBoardDeleter(igetput)
 
 	errA := errors.New("failed")
 	itemA := map[string]types.AttributeValue{
@@ -85,9 +86,9 @@ func TestBoardDeleter(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			iget.Err = c.errGetItem
-			iget.Out = c.outGetItem
-			iput.Err = c.errPutItem
+			igetput.ErrGet = c.errGetItem
+			igetput.OutGet = c.outGetItem
+			igetput.ErrPut = c.errPutItem
 
 			err := sut.Delete(context.Background(), "", "boardID")
 

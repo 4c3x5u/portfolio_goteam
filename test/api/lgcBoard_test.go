@@ -22,8 +22,6 @@ func TestLegacyBoardAPI(t *testing.T) {
 	userSelector := lgcUserTable.NewSelector(db)
 	boardInserter := lgcBoardTable.NewInserter(db)
 	nameValidator := lgcBoardAPI.NewNameValidator()
-	idValidator := lgcBoardAPI.NewIDValidator()
-	boardSelector := lgcBoardTable.NewSelector(db)
 	log := pkgLog.New()
 	sut := api.NewHandler(
 		auth.NewJWTValidator(jwtKey),
@@ -33,14 +31,6 @@ func TestLegacyBoardAPI(t *testing.T) {
 				nameValidator,
 				lgcBoardTable.NewCounter(db),
 				boardInserter,
-				log,
-			),
-			http.MethodPatch: lgcBoardAPI.NewPATCHHandler(
-				userSelector,
-				idValidator,
-				nameValidator,
-				boardSelector,
-				lgcBoardTable.NewUpdater(db),
 				log,
 			),
 		},
@@ -56,25 +46,21 @@ func TestLegacyBoardAPI(t *testing.T) {
 			{name: "HeaderInvalid", authFunc: addCookieAuth("asdfasldfkjasd")},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				for _, method := range []string{
-					http.MethodPost, http.MethodPatch,
-				} {
-					t.Run(method, func(t *testing.T) {
-						req := httptest.NewRequest(method, "/board", nil)
-						c.authFunc(req)
-						w := httptest.NewRecorder()
+				t.Run("POST", func(t *testing.T) {
+					req := httptest.NewRequest(http.MethodPost, "/board", nil)
+					c.authFunc(req)
+					w := httptest.NewRecorder()
 
-						sut.ServeHTTP(w, req)
-						res := w.Result()
+					sut.ServeHTTP(w, req)
+					res := w.Result()
 
-						assert.Equal(t.Error,
-							res.StatusCode, http.StatusUnauthorized,
-						)
-						assert.Equal(t.Error,
-							res.Header.Values("WWW-Authenticate")[0], "Bearer",
-						)
-					})
-				}
+					assert.Equal(t.Error,
+						res.StatusCode, http.StatusUnauthorized,
+					)
+					assert.Equal(t.Error,
+						res.Header.Values("WWW-Authenticate")[0], "Bearer",
+					)
+				})
 			})
 		}
 	})
@@ -101,16 +87,14 @@ func TestLegacyBoardAPI(t *testing.T) {
 				authFunc:       addCookieAuth(jwtTeam1Admin),
 				boardName:      "",
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Board name cannot be empty."),
+				assertFunc:     assert.OnResErr("input is empty"),
 			},
 			{
 				name:           "TooLongBoardName",
 				authFunc:       addCookieAuth(jwtTeam1Admin),
 				boardName:      "A Board Whose Name Is Just Too Long!",
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
-					"Board name cannot be longer than 35 characters.",
-				),
+				assertFunc:     assert.OnResErr("input is too long"),
 			},
 			{
 				name:           "TooManyBoards",
@@ -184,110 +168,6 @@ func TestLegacyBoardAPI(t *testing.T) {
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 				// Run case-specific assertions.
-				c.assertFunc(t, res, "")
-			})
-		}
-	})
-
-	t.Run("PATCH", func(t *testing.T) {
-		for _, c := range []struct {
-			name       string
-			id         string
-			boardName  string
-			authFunc   func(*http.Request)
-			statusCode int
-			assertFunc func(*testing.T, *http.Response, string)
-		}{
-			{
-				name:       "NotAdmin",
-				id:         "1",
-				boardName:  "New Board Name",
-				authFunc:   addCookieAuth(jwtTeam1Member),
-				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
-					"Only team admins can edit the board.",
-				),
-			},
-			{
-				name:       "IDEmpty",
-				id:         "",
-				boardName:  "",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board ID cannot be empty."),
-			},
-			{
-				name:       "IDNotInt",
-				id:         "A",
-				boardName:  "",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board ID must be an integer."),
-			},
-			{
-				name:       "BoardNameEmpty",
-				id:         "2",
-				boardName:  "",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board name cannot be empty."),
-			},
-			{
-				name:       "BoardNameTooLong",
-				id:         "2",
-				boardName:  "A Board Whose Name Is Just Too Long!",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
-					"Board name cannot be longer than 35 characters.",
-				),
-			},
-			{
-				name:       "BoardNotFound",
-				id:         "1001",
-				boardName:  "New Board Name",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusNotFound,
-				assertFunc: assert.OnResErr("Board not found."),
-			},
-			{
-				name:       "Success",
-				id:         "2",
-				boardName:  "New Board Name",
-				authFunc:   addCookieAuth(jwtTeam1Admin),
-				statusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					var boardName string
-					err := db.QueryRow(
-						"SELECT name FROM app.board WHERE id = 2",
-					).Scan(&boardName)
-					if err != nil {
-						t.Fatal(err)
-					}
-					if boardName != "New Board Name" {
-						t.Error("Board name was not updated.")
-					}
-				},
-			},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				reqBody, err := json.Marshal(map[string]string{
-					"name": c.boardName,
-				})
-				if err != nil {
-					t.Fatal(err)
-				}
-				req := httptest.NewRequest(
-					http.MethodPatch, "/?id="+c.id, bytes.NewReader(reqBody),
-				)
-				c.authFunc(req)
-				w := httptest.NewRecorder()
-
-				sut.ServeHTTP(w, req)
-				res := w.Result()
-
-				assert.Equal(t.Error, res.StatusCode, c.statusCode)
-
 				c.assertFunc(t, res, "")
 			})
 		}

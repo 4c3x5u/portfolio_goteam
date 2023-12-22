@@ -2,7 +2,21 @@ package board
 
 import (
 	"errors"
-	"strconv"
+
+	"github.com/google/uuid"
+)
+
+var (
+	// ErrEmpty is returned from Validate methods when the given input is empty.
+	ErrEmpty = errors.New("input is empty")
+
+	// ErrTooLong is returned from NameValidator.Validate when the given
+	// board name is longer than 35 characters.
+	ErrTooLong = errors.New("input is too long")
+
+	// ErrNotUUID is returned from IDValidator.Validate when the given board ID
+	// is not a valid UUID.
+	ErrNotUUID = errors.New("input is not a UUID")
 )
 
 // NameValidator can be used to validate a board name.
@@ -14,10 +28,10 @@ func NewNameValidator() NameValidator { return NameValidator{} }
 // Validate validates a given board name.
 func (b NameValidator) Validate(boardName string) error {
 	if boardName == "" {
-		return errors.New("Board name cannot be empty.")
+		return ErrEmpty
 	}
 	if len(boardName) > 35 {
-		return errors.New("Board name cannot be longer than 35 characters.")
+		return ErrTooLong
 	}
 	return nil
 }
@@ -31,10 +45,10 @@ func NewIDValidator() IDValidator { return IDValidator{} }
 // Validate validates a given board ID.
 func (i IDValidator) Validate(boardID string) error {
 	if boardID == "" {
-		return errors.New("Board ID cannot be empty.")
+		return ErrEmpty
 	}
-	if _, err := strconv.Atoi(boardID); err != nil {
-		return errors.New("Board ID must be an integer.")
+	if _, err := uuid.Parse(boardID); err != nil {
+		return ErrNotUUID
 	}
 	return nil
 }
