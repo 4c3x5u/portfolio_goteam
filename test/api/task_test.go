@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/kxplxn/goteam/internal/api"
-	taskAPI "github.com/kxplxn/goteam/internal/api/tasks/task"
+	taskAPI "github.com/kxplxn/goteam/internal/api/task/task"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/auth"
 	taskTable "github.com/kxplxn/goteam/pkg/db/task"

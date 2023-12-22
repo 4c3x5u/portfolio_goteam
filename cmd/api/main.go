@@ -13,8 +13,8 @@ import (
 
 	"github.com/kxplxn/goteam/internal/api"
 	lgcBoardAPI "github.com/kxplxn/goteam/internal/api/board"
-	tasksAPI "github.com/kxplxn/goteam/internal/api/tasks"
-	taskAPI "github.com/kxplxn/goteam/internal/api/tasks/task"
+	taskAPI "github.com/kxplxn/goteam/internal/api/task/task"
+	tasksAPI "github.com/kxplxn/goteam/internal/api/task/tasks"
 	teamAPI "github.com/kxplxn/goteam/internal/api/team"
 	boardAPI "github.com/kxplxn/goteam/internal/api/team/board"
 	loginAPI "github.com/kxplxn/goteam/internal/api/user/login"
@@ -72,8 +72,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/user/register", api.NewHandler(
-		nil,
-		map[string]api.MethodHandler{
+		nil, map[string]api.MethodHandler{
 			http.MethodPost: registerAPI.NewPostHandler(
 				registerAPI.NewUserValidator(
 					registerAPI.NewUsernameValidator(),
@@ -126,8 +125,7 @@ func main() {
 
 	// TODO: remove once fully migrated to DynamoDB
 	mux.Handle("/board", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
+		jwtValidator, map[string]api.MethodHandler{
 			http.MethodPost: lgcBoardAPI.NewPOSTHandler(
 				userSelector,
 				lgcBoardAPI.NewNameValidator(),
@@ -139,28 +137,8 @@ func main() {
 	))
 
 	taskTitleValidator := taskAPI.NewTitleValidator()
-	mux.Handle("/tasks", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
-			http.MethodPatch: tasksAPI.NewPatchHandler(
-				token.DecodeAuth,
-				token.DecodeState,
-				tasksAPI.NewColNoValidator(),
-				taskTable.NewMultiUpdater(svcDynamo),
-				token.EncodeState,
-				log,
-			),
-			http.MethodGet: tasksAPI.NewGetHandler(
-				token.DecodeAuth,
-				taskTable.NewMultiRetriever(svcDynamo),
-				log,
-			),
-		},
-	))
-
-	mux.Handle("/tasks/task", api.NewHandler(
-		jwtValidator,
-		map[string]api.MethodHandler{
+	mux.Handle("/task", api.NewHandler(
+		jwtValidator, map[string]api.MethodHandler{
 			http.MethodPost: taskAPI.NewPostHandler(
 				token.DecodeAuth,
 				token.DecodeState,
@@ -184,6 +162,24 @@ func main() {
 				token.DecodeState,
 				taskTable.NewDeleter(svcDynamo),
 				token.EncodeState,
+				log,
+			),
+		},
+	))
+
+	mux.Handle("/tasks", api.NewHandler(
+		jwtValidator, map[string]api.MethodHandler{
+			http.MethodPatch: tasksAPI.NewPatchHandler(
+				token.DecodeAuth,
+				token.DecodeState,
+				tasksAPI.NewColNoValidator(),
+				taskTable.NewMultiUpdater(svcDynamo),
+				token.EncodeState,
+				log,
+			),
+			http.MethodGet: tasksAPI.NewGetHandler(
+				token.DecodeAuth,
+				taskTable.NewMultiRetriever(svcDynamo),
 				log,
 			),
 		},
