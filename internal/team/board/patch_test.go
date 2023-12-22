@@ -19,9 +19,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
-// TestPATCHHandler tests the Handle method of PATCHHandler to assert that it
-// behaves correctly in all possible scenarios.
-func TestPATCHHandler(t *testing.T) {
+func TestPatchHandler(t *testing.T) {
 	decodeAuth := &token.FakeDecode[token.Auth]{}
 	decodeState := &token.FakeDecode[token.State]{}
 	idValidator := &api.FakeStringValidator{}
