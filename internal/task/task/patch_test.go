@@ -11,24 +11,24 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestPatchHandler tests the PATCH handler.
 func TestPatchHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
-	decodeState := &token.FakeDecode[token.State]{}
+	decodeAuth := &cookie.FakeDecoder[cookie.Auth]{}
+	decodeState := &cookie.FakeDecoder[cookie.State]{}
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
 	taskUpdater := &db.FakeUpdater[tasktable.Task]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPatchHandler(
-		decodeAuth.Func,
-		decodeState.Func,
+		decodeAuth,
+		decodeState,
 		titleValidator,
 		subtTitleValidator,
 		taskUpdater,
@@ -38,10 +38,10 @@ func TestPatchHandler(t *testing.T) {
 	for _, c := range []struct {
 		name                 string
 		authToken            string
-		authDecoded          token.Auth
+		authDecoded          cookie.Auth
 		errDecodeAuth        error
 		stateToken           string
-		stateDecoded         token.State
+		stateDecoded         cookie.State
 		errDecodeState       error
 		errValidateTitle     error
 		errValidateSubtTitle error
@@ -52,10 +52,10 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "NoAuth",
 			authToken:            "",
-			authDecoded:          token.Auth{},
+			authDecoded:          cookie.Auth{},
 			errDecodeAuth:        nil,
 			stateToken:           "",
-			stateDecoded:         token.State{},
+			stateDecoded:         cookie.State{},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
@@ -66,10 +66,10 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "ErrDecodeAuth",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{},
-			errDecodeAuth:        token.ErrInvalid,
+			authDecoded:          cookie.Auth{},
+			errDecodeAuth:        cookie.ErrInvalid,
 			stateToken:           "",
-			stateDecoded:         token.State{},
+			stateDecoded:         cookie.State{},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
@@ -80,10 +80,10 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "NotAdmin",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: false},
+			authDecoded:          cookie.Auth{IsAdmin: false},
 			errDecodeAuth:        nil,
 			stateToken:           "",
-			stateDecoded:         token.State{},
+			stateDecoded:         cookie.State{},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
@@ -96,10 +96,10 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "NoState",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
+			authDecoded:          cookie.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
 			stateToken:           "",
-			stateDecoded:         token.State{},
+			stateDecoded:         cookie.State{},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
@@ -110,11 +110,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "ErrDecodeState",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
+			authDecoded:          cookie.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
 			stateToken:           "nonempty",
-			stateDecoded:         token.State{},
-			errDecodeState:       token.ErrInvalid,
+			stateDecoded:         cookie.State{},
+			errDecodeState:       cookie.ErrInvalid,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
@@ -125,10 +125,10 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:                 "TaskIDInvalid",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
+			authDecoded:          cookie.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
 			stateToken:           "nonempty",
-			stateDecoded:         token.State{},
+			stateDecoded:         cookie.State{},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
 			errValidateSubtTitle: nil,
@@ -139,11 +139,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "TaskTitleEmpty",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     validator.ErrEmpty,
@@ -157,11 +157,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "TaskTitleTooLong",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     validator.ErrTooLong,
@@ -175,11 +175,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "TaskTitleErr",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     validator.ErrWrongFormat,
@@ -193,11 +193,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "SubtaskTitleEmpty",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -211,11 +211,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "SubtaskTitleTooLong",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -229,11 +229,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "SubtaskTitleErr",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -247,11 +247,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "TaskNotFound",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -263,11 +263,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "TaskUpdaterErr",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -279,11 +279,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:          "Success",
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true, TeamID: "21"},
+			authDecoded:   cookie.Auth{IsAdmin: true, TeamID: "21"},
 			errDecodeAuth: nil,
 			stateToken:    "nonempty",
-			stateDecoded: token.State{Boards: []token.Board{{
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "qwerty"}}}}},
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "qwerty"}}}}},
 			}},
 			errDecodeState:       nil,
 			errValidateTitle:     nil,
@@ -301,6 +301,8 @@ func TestPatchHandler(t *testing.T) {
 			titleValidator.Err = c.errValidateTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskUpdater.Err = c.taskUpdaterErr
+
+			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/?id=qwerty", strings.NewReader(`{
 				"column":      0,
 				"title":       "",
@@ -319,8 +321,6 @@ func TestPatchHandler(t *testing.T) {
 					Value: c.stateToken,
 				})
 			}
-
-			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")
 

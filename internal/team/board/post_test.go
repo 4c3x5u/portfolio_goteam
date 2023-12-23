@@ -11,26 +11,26 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 func TestPostHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
-	decodeState := &token.FakeDecode[token.State]{}
+	decodeAuth := &cookie.FakeDecoder[cookie.Auth]{}
+	decodeState := &cookie.FakeDecoder[cookie.State]{}
 	nameValidator := &api.FakeStringValidator{}
 	inserter := &db.FakeInserterDualKey[teamtable.Board]{}
-	encodeState := &token.FakeEncode[token.State]{}
+	encodeState := &cookie.FakeEncoder[cookie.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPostHandler(
-		decodeAuth.Func,
-		decodeState.Func,
+		decodeAuth,
+		decodeState,
 		nameValidator,
 		inserter,
-		encodeState.Func,
+		encodeState,
 		log,
 	)
 
@@ -38,13 +38,13 @@ func TestPostHandler(t *testing.T) {
 		name            string
 		authToken       string
 		errDecodeAuth   error
-		authDecoded     token.Auth
+		authDecoded     cookie.Auth
 		stateToken      string
 		errDecodeState  error
-		stateDecoded    token.State
+		stateDecoded    cookie.State
 		errValidateName error
 		boardUpdaterErr error
-		outStateToken   string
+		outStateToken   http.Cookie
 		errEncodeState  error
 		wantStatusCode  int
 		assertFunc      func(*testing.T, *http.Response, string)
@@ -53,13 +53,13 @@ func TestPostHandler(t *testing.T) {
 			name:            "NoAuth",
 			authToken:       "",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{},
+			authDecoded:     cookie.Auth{},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusUnauthorized,
 			assertFunc:      assert.OnResErr("Auth token not found."),
@@ -67,14 +67,14 @@ func TestPostHandler(t *testing.T) {
 		{
 			name:            "InvalidAuth",
 			authToken:       "nonempty",
-			errDecodeAuth:   token.ErrInvalid,
-			authDecoded:     token.Auth{},
+			errDecodeAuth:   cookie.ErrInvalid,
+			authDecoded:     cookie.Auth{},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusUnauthorized,
 			assertFunc:      assert.OnResErr("Invalid auth token."),
@@ -83,13 +83,13 @@ func TestPostHandler(t *testing.T) {
 			name:            "NotAdmin",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: false},
+			authDecoded:     cookie.Auth{IsAdmin: false},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -100,13 +100,13 @@ func TestPostHandler(t *testing.T) {
 			name:            "NoState",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc:      assert.OnResErr("State token not found."),
@@ -115,13 +115,13 @@ func TestPostHandler(t *testing.T) {
 			name:            "InvalidState",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
-			errDecodeState:  token.ErrInvalid,
-			stateDecoded:    token.State{},
+			errDecodeState:  cookie.ErrInvalid,
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
 			assertFunc:      assert.OnResErr("Invalid state token."),
@@ -130,13 +130,13 @@ func TestPostHandler(t *testing.T) {
 			name:            "LimitReached",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{Boards: []token.Board{{}, {}, {}}},
+			stateDecoded:    cookie.State{Boards: []cookie.Board{{}, {}, {}}},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -149,15 +149,15 @@ func TestPostHandler(t *testing.T) {
 			name:           "NameEmpty",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: validator.ErrEmpty,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
 			assertFunc:      assert.OnResErr("Board name cannot be empty."),
@@ -166,15 +166,15 @@ func TestPostHandler(t *testing.T) {
 			name:           "NameTooLong",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: validator.ErrTooLong,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -185,15 +185,15 @@ func TestPostHandler(t *testing.T) {
 			name:           "BoardNotFound",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
 			boardUpdaterErr: db.ErrLimitReached,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -206,15 +206,15 @@ func TestPostHandler(t *testing.T) {
 			name:           "BoardUpdaterErr",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
 			boardUpdaterErr: errors.New("update board failed"),
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("update board failed"),
@@ -223,15 +223,15 @@ func TestPostHandler(t *testing.T) {
 			name:           "ErrEncodeState",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "",
+			outStateToken:   http.Cookie{},
 			errEncodeState:  errors.New("encode state failed"),
 			wantStatusCode:  http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("encode state failed"),
@@ -240,22 +240,21 @@ func TestPostHandler(t *testing.T) {
 			name:           "Success",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
 			boardUpdaterErr: nil,
-			outStateToken:   "foobarbazbang",
+			outStateToken:   http.Cookie{Name: "foo", Value: "bar"},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
-				// assert on set state
 				ck := resp.Cookies()[0]
-				assert.Equal(t.Error, ck.Name, "state-token")
-				assert.Equal(t.Error, ck.Value, "foobarbazbang")
+				assert.Equal(t.Error, ck.Name, "foo")
+				assert.Equal(t.Error, ck.Value, "bar")
 			},
 		},
 	} {
@@ -276,13 +275,13 @@ func TestPostHandler(t *testing.T) {
 
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
-					Name:  token.AuthName,
+					Name:  "auth-token",
 					Value: c.authToken,
 				})
 			}
 			if c.stateToken != "" {
 				r.AddCookie(&http.Cookie{
-					Name:  token.StateName,
+					Name:  "state-token",
 					Value: c.stateToken,
 				})
 			}

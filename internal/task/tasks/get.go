@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // GetResp defines the body of GET tasks responses.
@@ -17,31 +17,31 @@ type GetResp []tasktable.Task
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // tasks route.
 type GetHandler struct {
-	decodeAuth token.DecodeFunc[token.Auth]
-	retriever  db.Retriever[[]tasktable.Task]
-	log        pkgLog.Errorer
+	authDecoder cookie.Decoder[cookie.Auth]
+	retriever   db.Retriever[[]tasktable.Task]
+	log         pkgLog.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
+	authDecoder cookie.Decoder[cookie.Auth],
 	retriever db.Retriever[[]tasktable.Task],
 	log pkgLog.Errorer,
 ) GetHandler {
-	return GetHandler{decodeAuth: decodeAuth, retriever: retriever, log: log}
+	return GetHandler{authDecoder: authDecoder, retriever: retriever, log: log}
 }
 
 // Handle handles GET requests sent to the tasks route.
 func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return

@@ -9,13 +9,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it
@@ -24,18 +23,13 @@ func TestHandler(t *testing.T) {
 	var (
 		userValidator = &fakeReqValidator{}
 		hasher        = &fakeHasher{}
-		decodeInvite  = &token.FakeDecode[token.Invite]{}
+		inviteDecoder = &cookie.FakeDecoder[cookie.Invite]{}
 		userInserter  = &db.FakeInserter[usertable.User]{}
-		encodeAuth    = &token.FakeEncode[token.Auth]{}
+		authEncoder   = &cookie.FakeEncoder[cookie.Auth]{}
 		log           = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPostHandler(
-		userValidator,
-		decodeInvite.Func,
-		hasher,
-		userInserter,
-		encodeAuth.Func,
-		log,
+		userValidator, inviteDecoder, hasher, userInserter, authEncoder, log,
 	)
 
 	// Used in status 400 cases to assert on validation errors.
@@ -78,12 +72,12 @@ func TestHandler(t *testing.T) {
 		req             PostReq
 		errValidate     ValidationErrs
 		inviteToken     string
-		inviteDecoded   token.Invite
+		inviteDecoded   cookie.Invite
 		errDecodeInvite error
 		pwdHash         []byte
 		errHash         error
 		errInsertUser   error
-		authToken       string
+		authToken       http.Cookie
 		errEncodeAuth   error
 		wantStatus      int
 		assertFunc      func(*testing.T, *http.Response, string)
@@ -95,12 +89,12 @@ func TestHandler(t *testing.T) {
 				Username: []string{idTooLong}, Password: []string{pwdNoDigit},
 			},
 			inviteToken:     "",
-			inviteDecoded:   token.Invite{},
+			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: nil,
 			pwdHash:         nil,
 			errHash:         nil,
 			errInsertUser:   nil,
-			authToken:       "",
+			authToken:       http.Cookie{},
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
@@ -115,12 +109,12 @@ func TestHandler(t *testing.T) {
 			req:             PostReq{},
 			errValidate:     ValidationErrs{},
 			inviteToken:     "someinvitetoken",
-			inviteDecoded:   token.Invite{},
+			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: errors.New("an error"),
 			pwdHash:         nil,
 			errHash:         nil,
 			errInsertUser:   nil,
-			authToken:       "",
+			authToken:       http.Cookie{},
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
 			assertFunc:      assertOnResErr("Invalid invite token."),
@@ -130,12 +124,12 @@ func TestHandler(t *testing.T) {
 			req:             PostReq{},
 			errValidate:     ValidationErrs{},
 			inviteToken:     "",
-			inviteDecoded:   token.Invite{},
+			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: nil,
 			pwdHash:         nil,
 			errHash:         nil,
 			errInsertUser:   db.ErrDupKey,
-			authToken:       "",
+			authToken:       http.Cookie{},
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
@@ -149,11 +143,11 @@ func TestHandler(t *testing.T) {
 			req:           validReqBody,
 			errValidate:   ValidationErrs{},
 			inviteToken:   "",
-			inviteDecoded: token.Invite{},
+			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       errors.New("hasher error"),
 			errInsertUser: nil,
-			authToken:     "",
+			authToken:     http.Cookie{},
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("hasher error"),
@@ -163,11 +157,11 @@ func TestHandler(t *testing.T) {
 			req:           PostReq{},
 			errValidate:   ValidationErrs{},
 			inviteToken:   "",
-			inviteDecoded: token.Invite{},
+			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
 			errInsertUser: db.ErrDupKey,
-			authToken:     "",
+			authToken:     http.Cookie{},
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusBadRequest,
 			assertFunc: assertOnErrsValidate(
@@ -181,11 +175,11 @@ func TestHandler(t *testing.T) {
 			req:           validReqBody,
 			errValidate:   ValidationErrs{},
 			inviteToken:   "",
-			inviteDecoded: token.Invite{},
+			inviteDecoded: cookie.Invite{},
 			errInsertUser: errors.New("failed to put user"),
 			pwdHash:       nil,
 			errHash:       nil,
-			authToken:     "",
+			authToken:     http.Cookie{},
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc:    assert.OnLoggedErr("failed to put user"),
@@ -195,11 +189,11 @@ func TestHandler(t *testing.T) {
 			req:           validReqBody,
 			errValidate:   ValidationErrs{},
 			inviteToken:   "",
-			inviteDecoded: token.Invite{},
+			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
 			errInsertUser: nil,
-			authToken:     "",
+			authToken:     http.Cookie{},
 			errEncodeAuth: errors.New("error encoding auth token"),
 			wantStatus:    http.StatusInternalServerError,
 			assertFunc: assertOnResErr(
@@ -217,44 +211,26 @@ func TestHandler(t *testing.T) {
 			errInsertUser: nil,
 			pwdHash:       nil,
 			errHash:       nil,
-			authToken:     "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			authToken:     http.Cookie{Name: "foo", Value: "bar"},
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(
-				t *testing.T, r *http.Response, _ string,
-			) {
-				authTokenFound := false
-				for _, ck := range r.Cookies() {
-					if ck.Name == "auth-token" {
-						authTokenFound = true
-						assert.Equal(t.Error,
-							ck.Value, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-						)
-						assert.True(t.Error,
-							ck.Expires.Unix() > time.Now().Unix(),
-						)
-						assert.True(t.Error, ck.Secure)
-						assert.Equal(t.Error,
-							ck.SameSite, http.SameSiteNoneMode,
-						)
-					}
-				}
-				if !authTokenFound {
-					t.Errorf("auth token was not found")
-				}
+			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+				ck := r.Cookies()[0]
+				assert.Equal(t.Error, ck.Name, "foo")
+				assert.Equal(t.Error, ck.Value, "bar")
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			// Set pre-determinate return values for sut's dependencies.
 			userValidator.validationErrs = c.errValidate
-			decodeInvite.Res = c.inviteDecoded
-			decodeInvite.Err = c.errDecodeInvite
+			inviteDecoder.Res = c.inviteDecoded
+			inviteDecoder.Err = c.errDecodeInvite
 			hasher.hash = c.pwdHash
 			hasher.err = c.errHash
 			userInserter.Err = c.errInsertUser
-			encodeAuth.Res = c.authToken
-			encodeAuth.Err = c.errEncodeAuth
+			authEncoder.Res = c.authToken
+			authEncoder.Err = c.errEncodeAuth
 
 			// Prepare request and response recorder.
 			reqBody, err := json.Marshal(c.req)
@@ -268,7 +244,7 @@ func TestHandler(t *testing.T) {
 			)
 			if c.inviteToken != "" {
 				req.AddCookie(&http.Cookie{
-					Name:     token.InviteName,
+					Name:     cookie.InviteName,
 					Value:    c.inviteToken,
 					SameSite: http.SameSiteNoneMode,
 					Secure:   true,

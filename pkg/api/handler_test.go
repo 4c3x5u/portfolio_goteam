@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/token"
+	"github.com/kxplxn/goteam/pkg/cookie"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
@@ -59,7 +59,7 @@ func TestHandler(t *testing.T) {
 			t.Run(httpMethod, func(t *testing.T) {
 				// Prepare request and response recorder.
 				r := httptest.NewRequest(httpMethod, "/", nil)
-				r.AddCookie(&http.Cookie{Name: token.AuthName, Value: ""})
+				r.AddCookie(&http.Cookie{Name: cookie.AuthName, Value: ""})
 				w := httptest.NewRecorder()
 
 				// Handle request with sut and get the result.

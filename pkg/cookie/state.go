@@ -1,7 +1,7 @@
-package token
+package cookie
 
 import (
-	"os"
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -46,25 +46,56 @@ type Task struct {
 // NewTask creates and returns a new Task.
 func NewTask(id string, order int) Task { return Task{ID: id, Order: order} }
 
-// EncodeAuth encodes an Auth into a JWT string.
-func EncodeState(exp time.Time, state State) (string, error) {
+// StateEncoder defines a type that can be used to encode an state token.
+type StateEncoder struct {
+	key []byte
+	dur time.Duration
+}
+
+// NewStateEncoder creates and returns a new StateEncoder.
+func NewStateEncoder(jwtKey []byte, duration time.Duration) StateEncoder {
+	return StateEncoder{key: jwtKey, dur: duration}
+}
+
+// Encode encodes an State into a JWT string.
+func (e StateEncoder) Encode(state State) (http.Cookie, error) {
+	exp := time.Now().Add(e.dur)
+
 	tk, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"boards": state.Boards,
 		"exp":    exp.Unix(),
-	}).SignedString([]byte(os.Getenv(keyName)))
-	return tk, err
+	}).SignedString(e.key)
+	if err != nil {
+		return http.Cookie{}, err
+	}
+
+	return http.Cookie{
+		Name:     AuthName,
+		Value:    tk,
+		Expires:  exp.UTC(),
+		SameSite: http.SameSiteNoneMode,
+		Secure:   true,
+	}, nil
 }
 
-// Decode validates and decodes a raw JWT string into an Auth.
-func DecodeState(raw string) (State, error) {
-	if raw == "" {
+// StateDecoder defines a type that can be used to decode an state token.
+type StateDecoder struct{ key []byte }
+
+// NewStateDecoder creates and returns a new StateDecoder.
+func NewStateDecoder(jwtKey []byte) StateDecoder {
+	return StateDecoder{key: jwtKey}
+}
+
+// Decode validates and decodes a raw JWT string into an State.
+func (d StateDecoder) Decode(ck http.Cookie) (State, error) {
+	if ck.Value == "" {
 		return State{}, ErrInvalid
 	}
 
 	claims := jwt.MapClaims{}
 	if _, err := jwt.ParseWithClaims(
-		raw, &claims, func(token *jwt.Token) (any, error) {
-			return []byte(os.Getenv(keyName)), nil
+		ck.Value, &claims, func(token *jwt.Token) (any, error) {
+			return d.key, nil
 		},
 	); err != nil {
 		return State{}, err

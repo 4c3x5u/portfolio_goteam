@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -22,8 +22,8 @@ type PatchResp struct {
 
 // PatchHandler can be used to handle PATCH board requests.
 type PatchHandler struct {
-	decodeAuth    token.DecodeFunc[token.Auth]
-	decodeState   token.DecodeFunc[token.State]
+	authDecoder   cookie.Decoder[cookie.Auth]
+	stateDecoder  cookie.Decoder[cookie.State]
 	idValidator   validator.String
 	nameValidator validator.String
 	boardUpdater  db.UpdaterDualKey[teamTable.Board]
@@ -33,16 +33,16 @@ type PatchHandler struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 func NewPatchHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
-	decodeState token.DecodeFunc[token.State],
+	authDecoder cookie.Decoder[cookie.Auth],
+	stateDecoder cookie.Decoder[cookie.State],
 	idValidator validator.String,
 	nameValidator validator.String,
 	boardUpdater db.UpdaterDualKey[teamTable.Board],
 	log pkgLog.Errorer,
 ) *PatchHandler {
 	return &PatchHandler{
-		decodeAuth:    decodeAuth,
-		decodeState:   decodeState,
+		authDecoder:   authDecoder,
+		stateDecoder:  stateDecoder,
 		idValidator:   idValidator,
 		nameValidator: nameValidator,
 		boardUpdater:  boardUpdater,
@@ -55,7 +55,7 @@ func (h *PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
@@ -72,7 +72,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
@@ -97,7 +97,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// get state token
-	ckState, err := r.Cookie(token.StateName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -114,7 +114,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// decode state token
-	state, err := h.decodeState(ckState.Value)
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(PatchResp{

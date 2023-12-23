@@ -20,7 +20,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestTaskAPI(t *testing.T) {
@@ -29,28 +28,28 @@ func TestTaskAPI(t *testing.T) {
 
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskAPI.NewPostHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			titleValidator,
 			titleValidator,
 			taskAPI.NewColNoValidator(),
 			tasktable.NewInserter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: taskAPI.NewPatchHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			titleValidator,
 			titleValidator,
 			tasktable.NewUpdater(db),
 			log,
 		),
 		http.MethodDelete: taskAPI.NewDeleteHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			tasktable.NewDeleter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 	})

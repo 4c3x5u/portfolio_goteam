@@ -5,31 +5,34 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
 // requests.
 type DeleteHandler struct {
-	decodeAuth   token.DecodeFunc[token.Auth]
-	decodeState  token.DecodeFunc[token.State]
+	authDecoder  cookie.Decoder[cookie.Auth]
+	stateDecoder cookie.Decoder[cookie.State]
 	boardDeleter db.DeleterDualKey
+	stateEncoder cookie.Encoder[cookie.State]
 	log          pkgLog.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DeleteHandler.
 func NewDeleteHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
-	decodeState token.DecodeFunc[token.State],
+	authDecoder cookie.Decoder[cookie.Auth],
+	stateDecoder cookie.Decoder[cookie.State],
 	boardDeleter db.DeleterDualKey,
+	stateEncoder cookie.Encoder[cookie.State],
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
-		decodeAuth:   decodeAuth,
-		decodeState:  decodeState,
+		authDecoder:  authDecoder,
+		stateDecoder: stateDecoder,
 		boardDeleter: boardDeleter,
+		stateEncoder: stateEncoder,
 		log:          log,
 	}
 }
@@ -39,7 +42,7 @@ func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -50,7 +53,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
@@ -63,7 +66,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// get state token
-	ckState, err := r.Cookie(token.StateName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -74,7 +77,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// decode state token
-	state, err := h.decodeState(ckState.Value)
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		return
@@ -89,16 +92,19 @@ func (h DeleteHandler) Handle(
 
 	// check if the user has access to the board
 	var hasAccess bool
+	var newBoards []cookie.Board
 	for _, b := range state.Boards {
 		if b.ID == id {
 			hasAccess = true
-			break
+			continue
 		}
+		newBoards = append(newBoards, b)
 	}
 	if !hasAccess {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	state.Boards = newBoards
 
 	// delete the board
 	if err = h.boardDeleter.Delete(r.Context(), auth.TeamID, id); err != nil {
@@ -106,4 +112,13 @@ func (h DeleteHandler) Handle(
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// encode the new state
+	outCkState, err := h.stateEncoder.Encode(state)
+	if err != nil {
+		h.log.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &outCkState)
 }

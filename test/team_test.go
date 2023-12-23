@@ -17,12 +17,11 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestTeamAPI(t *testing.T) {
 	handler := teamAPI.NewGetHandler(
-		token.DecodeAuth,
+		authDecoder,
 		teamTable.NewRetriever(db),
 		teamTable.NewInserter(db),
 		pkgLog.New(),

@@ -1,9 +1,9 @@
 //go:build utest
 
-package token
+package cookie
 
 import (
-	"os"
+	"net/http"
 	"testing"
 	"time"
 
@@ -13,9 +13,7 @@ import (
 )
 
 func TestState(t *testing.T) {
-	if err := os.Setenv(keyName, "signkey"); err != nil {
-		t.Fatal("failed to set key env var", err)
-	}
+	key := []byte("signkey")
 	boards := []Board{
 		NewBoard("boardid", []Column{NewColumn([]Task{
 			NewTask("taskid", 2),
@@ -23,17 +21,26 @@ func TestState(t *testing.T) {
 	}
 
 	t.Run("Encode", func(t *testing.T) {
-		expiry := time.Now().Add(1 * time.Hour)
+		sut := NewStateEncoder(key, 1*time.Hour)
 
-		token, err := EncodeState(expiry, NewState(boards))
+		ck, err := sut.Encode(NewState(boards))
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		assert.Nil(t.Fatal, ck.Valid())
+		assert.Equal(t.Error, ck.Name, AuthName)
+		assert.Equal(t.Error, ck.SameSite, http.SameSiteNoneMode)
+		assert.True(t.Error, ck.Secure)
+		assert.True(t.Error,
+			ck.Expires.UTC().After(time.Now().Add(59*time.Minute).UTC()))
+		assert.True(t.Error,
+			ck.Expires.UTC().Before(time.Now().Add(61*time.Minute).UTC()))
+
 		claims := jwt.MapClaims{}
-		if _, err = jwt.ParseWithClaims(token, &claims,
-			func(token *jwt.Token) (any, error) {
-				return []byte(os.Getenv(keyName)), nil
+		if _, err = jwt.ParseWithClaims(
+			ck.Value, &claims, func(token *jwt.Token) (any, error) {
+				return key, nil
 			},
 		); err != nil {
 			t.Error(err)
@@ -59,9 +66,20 @@ func TestState(t *testing.T) {
 			taOrder := int(ta["order"].(float64))
 			assert.Equal(t.Error, taOrder, boards[0].Columns[0].Tasks[0].Order)
 		}
+
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) >
+				time.Now().Add(59*time.Minute).Unix(),
+		)
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) <
+				time.Now().Add(61*time.Minute).Unix(),
+		)
 	})
 
 	t.Run("Decode", func(t *testing.T) {
+		sut := NewStateDecoder(key)
+
 		for _, c := range []struct {
 			name       string
 			token      string
@@ -102,7 +120,7 @@ func TestState(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				st, err := DecodeState(c.token)
+				st, err := sut.Decode(http.Cookie{Value: c.token})
 
 				assert.ErrIs(t.Fatal, err, c.wantErr)
 

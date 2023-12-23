@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -28,29 +27,29 @@ type PostResp struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle POST board
 // requests.
 type PostHandler struct {
-	decodeAuth    token.DecodeFunc[token.Auth]
-	decodeState   token.DecodeFunc[token.State]
+	authDecoder   cookie.Decoder[cookie.Auth]
+	stateDecoder  cookie.Decoder[cookie.State]
 	nameValidator validator.String
 	inserter      db.InserterDualKey[teamtable.Board]
-	encodeState   token.EncodeFunc[token.State]
+	stateEncoder  cookie.Encoder[cookie.State]
 	log           pkgLog.Errorer
 }
 
 // NewPostHandler creates and returns a new PostHandler.
 func NewPostHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
-	decodeState token.DecodeFunc[token.State],
+	authDecoder cookie.Decoder[cookie.Auth],
+	stateDecoder cookie.Decoder[cookie.State],
 	nameValidator validator.String,
 	inserter db.InserterDualKey[teamtable.Board],
-	encodeState token.EncodeFunc[token.State],
+	stateEncoder cookie.Encoder[cookie.State],
 	log pkgLog.Errorer,
 ) *PostHandler {
 	return &PostHandler{
-		decodeAuth:    decodeAuth,
-		decodeState:   decodeState,
+		authDecoder:   authDecoder,
+		stateDecoder:  stateDecoder,
 		nameValidator: nameValidator,
 		inserter:      inserter,
-		encodeState:   encodeState,
+		stateEncoder:  stateEncoder,
 		log:           log,
 	}
 }
@@ -60,7 +59,7 @@ func (h PostHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
@@ -77,7 +76,7 @@ func (h PostHandler) Handle(
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err := json.NewEncoder(w).Encode(
@@ -102,7 +101,7 @@ func (h PostHandler) Handle(
 	}
 
 	// get state token
-	ckState, err := r.Cookie(token.StateName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -119,7 +118,7 @@ func (h PostHandler) Handle(
 	}
 
 	// decode state token
-	state, err := h.decodeState(ckState.Value)
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -193,28 +192,21 @@ func (h PostHandler) Handle(
 	}
 
 	// update, encode, and set state token
-	state.Boards = append(state.Boards, token.Board{
-		ID: id, Columns: []token.Column{
-			{Tasks: []token.Task{}},
-			{Tasks: []token.Task{}},
-			{Tasks: []token.Task{}},
-			{Tasks: []token.Task{}},
+	state.Boards = append(state.Boards, cookie.Board{
+		ID: id, Columns: []cookie.Column{
+			{Tasks: []cookie.Task{}},
+			{Tasks: []cookie.Task{}},
+			{Tasks: []cookie.Task{}},
+			{Tasks: []cookie.Task{}},
 		},
 	})
-	exp := time.Now().Add(token.DefaultDuration).UTC()
-	tkState, err := h.encodeState(exp, state)
+	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     token.StateName,
-		Value:    tkState,
-		Expires:  exp,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-	})
+	http.SetCookie(w, &outCkState)
 
 }
 

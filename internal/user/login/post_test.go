@@ -8,15 +8,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
@@ -26,11 +25,11 @@ func TestPOSTHandler(t *testing.T) {
 		validator        = &fakeReqValidator{}
 		userRetriever    = &db.FakeRetriever[usertable.User]{}
 		passwordComparer = &fakeHashComparer{}
-		encodeAuthToken  = &token.FakeEncode[token.Auth]{}
+		authEncoder      = &cookie.FakeEncoder[cookie.Auth]{}
 		log              = &pkgLog.FakeErrorer{}
 	)
 	sut := NewPostHandler(
-		validator, userRetriever, passwordComparer, encodeAuthToken.Func, log,
+		validator, userRetriever, passwordComparer, authEncoder, log,
 	)
 
 	// Used on cases where no case-specific assertions are required.
@@ -42,7 +41,7 @@ func TestPOSTHandler(t *testing.T) {
 		user             usertable.User
 		errRetrieveUser  error
 		errCompareHash   error
-		authToken        string
+		authToken        http.Cookie
 		errGenerateToken error
 		wantStatus       int
 		assertFunc       func(*testing.T, *http.Response, string)
@@ -53,7 +52,7 @@ func TestPOSTHandler(t *testing.T) {
 			user:             usertable.User{},
 			errRetrieveUser:  nil,
 			errCompareHash:   nil,
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assertNone,
@@ -64,7 +63,7 @@ func TestPOSTHandler(t *testing.T) {
 			user:             usertable.User{},
 			errRetrieveUser:  db.ErrNoItem,
 			errCompareHash:   nil,
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assertNone,
@@ -75,7 +74,7 @@ func TestPOSTHandler(t *testing.T) {
 			user:             usertable.User{},
 			errRetrieveUser:  errors.New("user selector error"),
 			errCompareHash:   nil,
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusInternalServerError,
 			assertFunc:       assert.OnLoggedErr("user selector error"),
@@ -88,7 +87,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			errRetrieveUser:  nil,
 			errCompareHash:   bcrypt.ErrMismatchedHashAndPassword,
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assertNone,
@@ -101,7 +100,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			errRetrieveUser:  nil,
 			errCompareHash:   errors.New("hash comparer error"),
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusInternalServerError,
 			assertFunc:       assert.OnLoggedErr("hash comparer error"),
@@ -114,7 +113,7 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			errRetrieveUser:  nil,
 			errCompareHash:   nil,
-			authToken:        "",
+			authToken:        http.Cookie{},
 			errGenerateToken: errors.New("token generator error"),
 			wantStatus:       http.StatusInternalServerError,
 			assertFunc:       assert.OnLoggedErr("token generator error"),
@@ -127,29 +126,13 @@ func TestPOSTHandler(t *testing.T) {
 			},
 			errRetrieveUser:  nil,
 			errCompareHash:   nil,
-			authToken:        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+			authToken:        http.Cookie{Name: "foo", Value: "bar"},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
-				authTokenFound := false
-				for _, ck := range r.Cookies() {
-					if ck.Name == "auth-token" {
-						authTokenFound = true
-						assert.Equal(t.Error,
-							ck.Value, "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-						)
-						assert.True(t.Error,
-							ck.Expires.Unix() > time.Now().Unix(),
-						)
-						assert.True(t.Error, ck.Secure)
-						assert.Equal(t.Error,
-							ck.SameSite, http.SameSiteNoneMode,
-						)
-					}
-				}
-				if !authTokenFound {
-					t.Errorf("auth token was not found")
-				}
+				ck := r.Cookies()[0]
+				assert.Equal(t.Error, ck.Name, "foo")
+				assert.Equal(t.Error, ck.Value, "bar")
 			},
 		},
 	} {
@@ -159,8 +142,8 @@ func TestPOSTHandler(t *testing.T) {
 			userRetriever.Res = c.user
 			userRetriever.Err = c.errRetrieveUser
 			passwordComparer.err = c.errCompareHash
-			encodeAuthToken.Res = c.authToken
-			encodeAuthToken.Err = c.errGenerateToken
+			authEncoder.Res = c.authToken
+			authEncoder.Err = c.errGenerateToken
 
 			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()

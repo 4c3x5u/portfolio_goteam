@@ -22,7 +22,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	"github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestRegisterAPI(t *testing.T) {
@@ -31,10 +30,10 @@ func TestRegisterAPI(t *testing.T) {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		token.DecodeInvite,
+		inviteDecoder,
 		registerAPI.NewPasswordHasher(),
 		usertable.NewInserter(db),
-		token.EncodeAuth,
+		authEncoder,
 		log.New(),
 	)
 

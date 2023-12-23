@@ -1,8 +1,9 @@
 //go:build utest
 
-package token
+package cookie
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -12,31 +13,49 @@ import (
 )
 
 func TestInvite(t *testing.T) {
-	signKey := []byte("signkey")
+	key := []byte("signkey")
 	teamID := "teamid"
 
 	t.Run("Encode", func(t *testing.T) {
-		expiry := time.Now().Add(1 * time.Hour)
+		sut := NewInviteEncoder(key, 1*time.Hour)
 
-		token, err := EncodeInvite(expiry, NewInvite(teamID))
+		ck, err := sut.Encode(NewInvite(teamID))
 		if err != nil {
 			t.Fatal(err)
 		}
 
+		assert.Nil(t.Fatal, ck.Valid())
+		assert.Equal(t.Error, ck.Name, AuthName)
+		assert.Equal(t.Error, ck.SameSite, http.SameSiteNoneMode)
+		assert.True(t.Error, ck.Secure)
+		assert.True(t.Error,
+			ck.Expires.UTC().After(time.Now().Add(59*time.Minute).UTC()))
+		assert.True(t.Error,
+			ck.Expires.UTC().Before(time.Now().Add(61*time.Minute).UTC()))
+
 		claims := jwt.MapClaims{}
 		if _, err = jwt.ParseWithClaims(
-			token,
-			&claims,
-			func(token *jwt.Token) (any, error) { return []byte(signKey), nil },
+			ck.Value, &claims, func(token *jwt.Token) (any, error) {
+				return key, nil
+			},
 		); err != nil {
 			t.Error(err)
 		}
 
 		assert.Equal(t.Error, claims["teamID"].(string), teamID)
-		assert.Equal(t.Error, claims["exp"].(float64), float64(expiry.Unix()))
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) >
+				time.Now().Add(59*time.Minute).Unix(),
+		)
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) <
+				time.Now().Add(61*time.Minute).Unix(),
+		)
 	})
 
 	t.Run("Decode", func(t *testing.T) {
+		sut := NewInviteDecoder(key)
+
 		for _, c := range []struct {
 			name       string
 			token      string
@@ -75,7 +94,7 @@ func TestInvite(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				inv, err := DecodeInvite(c.token)
+				inv, err := sut.Decode(http.Cookie{Value: c.token})
 
 				assert.ErrIs(t.Error, err, c.wantErr)
 				assert.Equal(t.Error, inv.TeamID, c.wantTeamID)

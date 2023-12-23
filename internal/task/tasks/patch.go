@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -41,29 +40,29 @@ type PatchResp struct {
 // PatchHandler is an api.MethodHandler that can be used to handle PATCH
 // requests sent to the tasks route.
 type PatchHandler struct {
-	decodeAuth     token.DecodeFunc[token.Auth]
-	decodeState    token.DecodeFunc[token.State]
+	authDecoder    cookie.Decoder[cookie.Auth]
+	stateDecoder   cookie.Decoder[cookie.State]
 	colNoValidator validator.Int
 	tasksUpdater   db.Updater[[]tasktable.Task]
-	encodeState    token.EncodeFunc[token.State]
+	stateEncoder   cookie.Encoder[cookie.State]
 	log            pkgLog.Errorer
 }
 
 // NewPatchHandler creates and returns a new PATCHHandler.
 func NewPatchHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
-	decodeState token.DecodeFunc[token.State],
+	authDecoder cookie.Decoder[cookie.Auth],
+	stateDecoder cookie.Decoder[cookie.State],
 	colNoValidator validator.Int,
 	tasksUpdater db.Updater[[]tasktable.Task],
-	encodeState token.EncodeFunc[token.State],
+	stateEncoder cookie.Encoder[cookie.State],
 	log pkgLog.Errorer,
 ) PatchHandler {
 	return PatchHandler{
-		decodeAuth:     decodeAuth,
-		decodeState:    decodeState,
+		authDecoder:    authDecoder,
+		stateDecoder:   stateDecoder,
 		colNoValidator: colNoValidator,
 		tasksUpdater:   tasksUpdater,
-		encodeState:    encodeState,
+		stateEncoder:   stateEncoder,
 		log:            log,
 	}
 }
@@ -73,7 +72,7 @@ func (h PatchHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		if encodeErr := json.NewEncoder(w).Encode(PatchResp{
@@ -90,7 +89,7 @@ func (h PatchHandler) Handle(
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -115,7 +114,7 @@ func (h PatchHandler) Handle(
 	}
 
 	// get state token
-	ckState, err := r.Cookie(token.StateName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -132,7 +131,7 @@ func (h PatchHandler) Handle(
 	}
 
 	// decode state token
-	state, err := h.decodeState(ckState.Value)
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(PatchResp{
@@ -232,33 +231,26 @@ func (h PatchHandler) Handle(
 	// generate new state
 	// FIXME: this is wrong but don't fix it for now because I'm going to
 	//        replace state tokens with signed-IDs soon
-	var boards []token.Board
+	var boards []cookie.Board
 	for _, stB := range state.Boards {
-		var columns []token.Column
+		var columns []cookie.Column
 		for _, stC := range stB.Columns {
-			var tasks []token.Task
+			var tasks []cookie.Task
 			for _, stT := range stC.Tasks {
 				tasks = append(tasks, stT)
 			}
-			columns = append(columns, token.NewColumn(tasks))
+			columns = append(columns, cookie.NewColumn(tasks))
 		}
-		boards = append(boards, token.NewBoard(stB.ID, columns))
+		boards = append(boards, cookie.NewBoard(stB.ID, columns))
 	}
-	newState := token.NewState(boards)
+	newState := cookie.NewState(boards)
 
 	// encode state into cookie
-	exp := time.Now().Add(token.DefaultDuration).UTC()
-	tkState, err := h.encodeState(exp, newState)
+	outCkState, err := h.stateEncoder.Encode(newState)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     token.StateName,
-		Value:    tkState,
-		Expires:  exp,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-	})
+	http.SetCookie(w, &outCkState)
 }

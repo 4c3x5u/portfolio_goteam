@@ -11,25 +11,25 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestPatchHandler(t *testing.T) {
-	decodeAuth := token.FakeDecode[token.Auth]{}
-	decodeState := token.FakeDecode[token.State]{}
+	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
+	stateDecoder := &cookie.FakeDecoder[cookie.State]{}
 	colNoVdtor := &api.FakeIntValidator{}
 	tasksUpdater := &db.FakeUpdater[[]tasktable.Task]{}
-	encodeState := token.FakeEncode[token.State]{}
+	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPatchHandler(
-		decodeAuth.Func,
-		decodeState.Func,
+		authDecoder,
+		stateDecoder,
 		colNoVdtor,
 		tasksUpdater,
-		encodeState.Func,
+		stateEncoder,
 		log,
 	)
 
@@ -37,14 +37,14 @@ func TestPatchHandler(t *testing.T) {
 		name             string
 		authToken        string
 		errDecodeAuth    error
-		authDecoded      token.Auth
+		authDecoded      cookie.Auth
 		stateToken       string
 		errDecodeState   error
-		stateDecoded     token.State
+		stateDecoded     cookie.State
 		errValidateColNo error
 		errUpdateTasks   error
 		errEncodeState   error
-		outState         string
+		outState         http.Cookie
 		wantStatus       int
 		assertFunc       func(*testing.T, *http.Response, string)
 	}{
@@ -52,14 +52,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "NoAuth",
 			authToken:        "",
 			errDecodeAuth:    nil,
-			authDecoded:      token.Auth{},
+			authDecoded:      cookie.Auth{},
 			stateToken:       "",
 			errDecodeState:   nil,
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusUnauthorized,
 			assertFunc:       assert.OnResErr("Auth token not found."),
 		},
@@ -67,14 +67,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "ErrDecodeAuth",
 			authToken:        "nonempty",
 			errDecodeAuth:    errors.New("decode auth failed"),
-			authDecoded:      token.Auth{},
+			authDecoded:      cookie.Auth{},
 			stateToken:       "",
 			errDecodeState:   nil,
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusUnauthorized,
 			assertFunc:       assert.OnResErr("Invalid auth token."),
 		},
@@ -82,14 +82,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "NotAdmin",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
-			authDecoded:      token.Auth{IsAdmin: false},
+			authDecoded:      cookie.Auth{IsAdmin: false},
 			stateToken:       "",
 			errDecodeState:   nil,
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusForbidden,
 			assertFunc: assert.OnResErr(
 				"Only team admins can edit tasks.",
@@ -99,14 +99,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "NoState",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
-			authDecoded:      token.Auth{IsAdmin: true},
+			authDecoded:      cookie.Auth{IsAdmin: true},
 			stateToken:       "",
 			errDecodeState:   nil,
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("State token not found."),
 		},
@@ -114,14 +114,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "ErrDecodeState",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
-			authDecoded:      token.Auth{IsAdmin: true},
+			authDecoded:      cookie.Auth{IsAdmin: true},
 			stateToken:       "nonempty",
 			errDecodeState:   errors.New("decode state failed"),
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid state token."),
 		},
@@ -129,14 +129,14 @@ func TestPatchHandler(t *testing.T) {
 			name:             "NoAccess",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
-			authDecoded:      token.Auth{IsAdmin: true},
+			authDecoded:      cookie.Auth{IsAdmin: true},
 			stateToken:       "nonempty",
 			errDecodeState:   nil,
-			stateDecoded:     token.State{},
+			stateDecoded:     cookie.State{},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid task ID."),
 		},
@@ -144,17 +144,17 @@ func TestPatchHandler(t *testing.T) {
 			name:           "ColNoInvalid",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{{
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID:      "1",
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: errors.New("err validate column number"),
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
 			assertFunc:       assert.OnResErr("Invalid column number."),
 		},
@@ -162,17 +162,17 @@ func TestPatchHandler(t *testing.T) {
 			name:           "TaskNotFound",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{{
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID:      "1",
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
 			errUpdateTasks:   db.ErrNoItem,
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusNotFound,
 			assertFunc:       assert.OnResErr("Task not found."),
 		},
@@ -180,17 +180,17 @@ func TestPatchHandler(t *testing.T) {
 			name:           "ErrUpdateTasks",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{{
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID:      "1",
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
 			errUpdateTasks:   errors.New("update tasks failed"),
 			errEncodeState:   nil,
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusInternalServerError,
 			assertFunc:       assert.OnLoggedErr("update tasks failed"),
 		},
@@ -198,17 +198,17 @@ func TestPatchHandler(t *testing.T) {
 			name:           "ErrEncodeState",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{{
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID:      "1",
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   errors.New("encode state failed"),
-			outState:         "",
+			outState:         http.Cookie{},
 			wantStatus:       http.StatusInternalServerError,
 			assertFunc:       assert.OnLoggedErr("encode state failed"),
 		},
@@ -216,34 +216,34 @@ func TestPatchHandler(t *testing.T) {
 			name:           "OK",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true, TeamID: "1"},
+			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{{
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID:      "1",
-				Columns: []token.Column{{Tasks: []token.Task{{ID: "taskid"}}}},
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{ID: "taskid"}}}},
 			}}},
 			errValidateColNo: nil,
 			errUpdateTasks:   nil,
 			errEncodeState:   nil,
-			outState:         "aklsdjhfalks",
+			outState:         http.Cookie{Name: "foo", Value: "bar"},
 			wantStatus:       http.StatusOK,
 			assertFunc: func(t *testing.T, r *http.Response, _ string) {
 				ck := r.Cookies()[0]
-				assert.Equal(t.Error, ck.Name, "state-token")
-				assert.Equal(t.Error, ck.Value, "aklsdjhfalks")
+				assert.Equal(t.Error, ck.Name, "foo")
+				assert.Equal(t.Error, ck.Value, "bar")
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Res = c.authDecoded
-			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Res = c.stateDecoded
-			decodeState.Err = c.errDecodeState
+			authDecoder.Res = c.authDecoded
+			authDecoder.Err = c.errDecodeAuth
+			stateDecoder.Res = c.stateDecoded
+			stateDecoder.Err = c.errDecodeState
 			colNoVdtor.Err = c.errValidateColNo
 			tasksUpdater.Err = c.errUpdateTasks
-			encodeState.Err = c.errEncodeState
-			encodeState.Res = c.outState
+			stateEncoder.Err = c.errEncodeState
+			stateEncoder.Res = c.outState
 
 			// Prepare request and response recorder.
 			r := httptest.NewRequest("", "/", strings.NewReader(`[{

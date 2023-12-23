@@ -1,30 +1,30 @@
-package token
+package cookie
 
 import (
-	"time"
+	"net/http"
 )
 
 // FakeDecode has a Func method that can be used as a test fake for DecodeFunc.
-type FakeDecode[T any] struct {
+type FakeDecoder[T any] struct {
 	Res T
 	Err error
 }
 
 // Func discards the input parameters and returns FakeDecode's Res and
 // Err field values.
-func (f *FakeDecode[T]) Func(_ string) (T, error) {
+func (f *FakeDecoder[T]) Decode(http.Cookie) (T, error) {
 	return f.Res, f.Err
 }
 
 // FakeEncodeAuth has a Func method that can be used as a test fake for
 // DecodeInvite.
-type FakeEncode[T any] struct {
-	Res string
+type FakeEncoder[T any] struct {
+	Res http.Cookie
 	Err error
 }
 
 // Func discards the input parameters and returns FakeEncodeAuth's Res and
 // Err field values.
-func (f *FakeEncode[T]) Func(_ time.Time, _ T) (string, error) {
+func (f *FakeEncoder[T]) Encode(T) (http.Cookie, error) {
 	return f.Res, f.Err
 }

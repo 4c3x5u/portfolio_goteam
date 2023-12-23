@@ -4,14 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // PostReq defines the body of POST login requests.
@@ -25,7 +24,7 @@ type PostHandler struct {
 	validator     ReqValidator
 	userRetriever db.Retriever[usertable.User]
 	pwdComparator Comparator
-	encodeAuth    token.EncodeFunc[token.Auth]
+	authEncoder   cookie.Encoder[cookie.Auth]
 	log           pkgLog.Errorer
 }
 
@@ -34,14 +33,14 @@ func NewPostHandler(
 	validator ReqValidator,
 	userRetriever db.Retriever[usertable.User],
 	pwdComparator Comparator,
-	encodeAuth token.EncodeFunc[token.Auth],
+	encodeAuth cookie.Encoder[cookie.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
 	return PostHandler{
 		validator:     validator,
 		userRetriever: userRetriever,
 		pwdComparator: pwdComparator,
-		encodeAuth:    encodeAuth,
+		authEncoder:   encodeAuth,
 		log:           log,
 	}
 }
@@ -86,8 +85,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// encode a new auth token
-	exp := time.Now().Add(token.DefaultDuration).UTC()
-	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
+	ckAuth, err := h.authEncoder.Encode(cookie.NewAuth(
 		user.Username, user.IsAdmin, user.TeamID,
 	))
 	if err != nil {
@@ -97,11 +95,5 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// set auth token in cookie
-	http.SetCookie(w, &http.Cookie{
-		Name:     token.AuthName,
-		Value:    tkAuth,
-		Expires:  exp,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-	})
+	http.SetCookie(w, &ckAuth)
 }

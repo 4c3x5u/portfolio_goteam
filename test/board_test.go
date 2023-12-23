@@ -18,7 +18,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestBoardAPI(t *testing.T) {
@@ -26,22 +25,23 @@ func TestBoardAPI(t *testing.T) {
 	log := pkgLog.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardAPI.NewPostHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			nameValidator,
 			teamtable.NewBoardInserter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 		http.MethodDelete: boardAPI.NewDeleteHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			teamtable.NewBoardDeleter(db),
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: boardAPI.NewPatchHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			boardAPI.NewIDValidator(),
 			nameValidator,
 			teamtable.NewBoardUpdater(db),

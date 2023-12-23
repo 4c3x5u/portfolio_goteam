@@ -11,23 +11,23 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 func TestPatchHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
-	decodeState := &token.FakeDecode[token.State]{}
+	decodeAuth := &cookie.FakeDecoder[cookie.Auth]{}
+	decodeState := &cookie.FakeDecoder[cookie.State]{}
 	idValidator := &api.FakeStringValidator{}
 	nameValidator := &api.FakeStringValidator{}
 	updater := &db.FakeUpdaterDualKey[teamtable.Board]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPatchHandler(
-		decodeAuth.Func,
-		decodeState.Func,
+		decodeAuth,
+		decodeState,
 		idValidator,
 		nameValidator,
 		updater,
@@ -38,10 +38,10 @@ func TestPatchHandler(t *testing.T) {
 		name            string
 		authToken       string
 		errDecodeAuth   error
-		authDecoded     token.Auth
+		authDecoded     cookie.Auth
 		stateToken      string
 		errDecodeState  error
-		stateDecoded    token.State
+		stateDecoded    cookie.State
 		errValidateID   error
 		errValidateName error
 		errUpdateBoard  error
@@ -52,10 +52,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "NoAuth",
 			authToken:       "",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{},
+			authDecoded:     cookie.Auth{},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -65,11 +65,11 @@ func TestPatchHandler(t *testing.T) {
 		{
 			name:            "InvalidAuth",
 			authToken:       "nonempty",
-			errDecodeAuth:   token.ErrInvalid,
-			authDecoded:     token.Auth{},
+			errDecodeAuth:   cookie.ErrInvalid,
+			authDecoded:     cookie.Auth{},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -80,10 +80,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "NotAdmin",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: false},
+			authDecoded:     cookie.Auth{IsAdmin: false},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -96,10 +96,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "NoState",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -110,10 +110,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "InvalidState",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
-			errDecodeState:  token.ErrInvalid,
-			stateDecoded:    token.State{},
+			errDecodeState:  cookie.ErrInvalid,
+			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -124,10 +124,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "IDEmpty",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   validator.ErrEmpty,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -138,10 +138,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "IDNotUUID",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateID:   validator.ErrWrongFormat,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -152,10 +152,10 @@ func TestPatchHandler(t *testing.T) {
 			name:           "NameEmpty",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateID:   nil,
@@ -168,10 +168,10 @@ func TestPatchHandler(t *testing.T) {
 			name:           "NameTooLong",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateID:   nil,
@@ -186,10 +186,10 @@ func TestPatchHandler(t *testing.T) {
 			name:            "NoAccess",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     token.Auth{IsAdmin: true},
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			stateToken:      "nonempty",
 			errDecodeState:  nil,
-			stateDecoded:    token.State{},
+			stateDecoded:    cookie.State{},
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusForbidden,
@@ -201,10 +201,10 @@ func TestPatchHandler(t *testing.T) {
 			name:           "BoardNotFound",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
@@ -216,10 +216,10 @@ func TestPatchHandler(t *testing.T) {
 			name:           "BoardUpdaterErr",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
@@ -231,10 +231,10 @@ func TestPatchHandler(t *testing.T) {
 			name:           "Success",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    token.Auth{IsAdmin: true},
+			authDecoded:    cookie.Auth{IsAdmin: true},
 			stateToken:     "nonempty",
 			errDecodeState: nil,
-			stateDecoded: token.State{Boards: []token.Board{
+			stateDecoded: cookie.State{Boards: []cookie.Board{
 				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
 			}},
 			errValidateName: nil,
@@ -259,13 +259,13 @@ func TestPatchHandler(t *testing.T) {
 
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
-					Name:  token.AuthName,
+					Name:  cookie.AuthName,
 					Value: c.authToken,
 				})
 			}
 			if c.stateToken != "" {
 				r.AddCookie(&http.Cookie{
-					Name:  token.StateName,
+					Name:  cookie.StateName,
 					Value: c.stateToken,
 				})
 			}

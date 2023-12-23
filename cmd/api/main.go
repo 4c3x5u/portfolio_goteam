@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -16,11 +17,28 @@ import (
 	loginAPI "github.com/kxplxn/goteam/internal/user/login"
 	registerAPI "github.com/kxplxn/goteam/internal/user/register"
 	"github.com/kxplxn/goteam/pkg/api"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
+)
+
+const (
+	// envServePort is the name of the environment variable used for setting the port
+	// to run the server on.
+	envServePort = "SERVE_PORT"
+
+	// envAWSRegion is the name of the environment variable used for determining
+	// the AWS region to connect to for DynamoDB.
+	envAWSRegion = "AWS_REGION"
+
+	// envJWTKey is the name of the environment variable used for signing JWTs.
+	envJWTKey = "JWT_KEY"
+
+	// envClientOrigin is the name of the environment variable used to set up CORS
+	// with the client app.
+	envClientOrigin = "CLIENT_ORIGIN"
 )
 
 func main() {
@@ -34,21 +52,46 @@ func main() {
 		os.Exit(1)
 	}
 
-	// ensure that the necessary environment vars were set
-	env := api.NewEnv()
-	if err := env.Validate(); err != nil {
-		log.Fatal(err.Error())
-		os.Exit(2)
+	// get environment variables
+	var (
+		port         = os.Getenv(envServePort)
+		awsRegion    = os.Getenv(envAWSRegion)
+		jwtKey       = os.Getenv(envJWTKey)
+		clientOrigin = os.Getenv(envClientOrigin)
+	)
+
+	// check all environment variables were set
+	errPostfix := " was empty"
+	switch "" {
+	case port:
+		log.Error(envServePort + errPostfix)
+	case awsRegion:
+		log.Error(envAWSRegion + errPostfix)
+	case jwtKey:
+		log.Error(envJWTKey + errPostfix)
+	case clientOrigin:
+		log.Error(envClientOrigin + errPostfix)
 	}
 
 	// create DynamoDB client
 	dbCfg, err := config.LoadDefaultConfig(
-		context.Background(), config.WithRegion(os.Getenv("AWS_REGION")),
+		context.Background(), config.WithRegion(awsRegion),
 	)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	db := dynamodb.NewFromConfig(dbCfg)
+
+	// create JWT encoders and decoders
+	key := []byte(jwtKey)
+	dur := 1 * time.Hour
+	var (
+		authEncoder   = cookie.NewAuthEncoder(key, dur)
+		authDecoder   = cookie.NewAuthDecoder(key)
+		stateEncoder  = cookie.NewStateEncoder(key, dur)
+		stateDecoder  = cookie.NewStateDecoder(key)
+		inviteDecoder = cookie.NewInviteDecoder(key)
+	)
 
 	// register handlers for HTTP routes
 	mux := http.NewServeMux()
@@ -59,10 +102,10 @@ func main() {
 				registerAPI.NewUsernameValidator(),
 				registerAPI.NewPasswordValidator(),
 			),
-			token.DecodeInvite,
+			inviteDecoder,
 			registerAPI.NewPasswordHasher(),
 			usertable.NewInserter(db),
-			token.EncodeAuth,
+			authEncoder,
 			log,
 		),
 	}))
@@ -72,14 +115,14 @@ func main() {
 			loginAPI.NewValidator(),
 			usertable.NewRetriever(db),
 			loginAPI.NewPasswordComparator(),
-			token.EncodeAuth,
+			authEncoder,
 			log,
 		),
 	}))
 
 	mux.Handle("/team", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: teamAPI.NewGetHandler(
-			token.DecodeAuth,
+			authDecoder,
 			teamtable.NewRetriever(db),
 			teamtable.NewInserter(db),
 			log,
@@ -88,25 +131,26 @@ func main() {
 
 	mux.Handle("/team/board", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardAPI.NewPostHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			boardAPI.NewNameValidator(),
 			teamtable.NewBoardInserter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: boardAPI.NewPatchHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			boardAPI.NewIDValidator(),
 			boardAPI.NewNameValidator(),
 			teamtable.NewBoardUpdater(db),
 			log,
 		),
 		http.MethodDelete: boardAPI.NewDeleteHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			teamtable.NewBoardDeleter(db),
+			stateEncoder,
 			log,
 		),
 	}))
@@ -114,28 +158,28 @@ func main() {
 	taskTitleValidator := taskAPI.NewTitleValidator()
 	mux.Handle("/task", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskAPI.NewPostHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			taskTitleValidator,
 			taskTitleValidator,
 			taskAPI.NewColNoValidator(),
 			tasktable.NewInserter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: taskAPI.NewPatchHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			taskTitleValidator,
 			taskTitleValidator,
 			tasktable.NewUpdater(db),
 			log,
 		),
 		http.MethodDelete: taskAPI.NewDeleteHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			tasktable.NewDeleter(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 	},
@@ -143,15 +187,15 @@ func main() {
 
 	mux.Handle("/tasks", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPatch: tasksAPI.NewPatchHandler(
-			token.DecodeAuth,
-			token.DecodeState,
+			authDecoder,
+			stateDecoder,
 			tasksAPI.NewColNoValidator(),
 			tasktable.NewMultiUpdater(db),
-			token.EncodeState,
+			stateEncoder,
 			log,
 		),
 		http.MethodGet: tasksAPI.NewGetHandler(
-			token.DecodeAuth,
+			authDecoder,
 			tasktable.NewMultiRetriever(db),
 			log,
 		),
@@ -159,8 +203,8 @@ func main() {
 	))
 
 	// serve the registered routes
-	log.Info("running server at port " + env.Port)
-	if err := http.ListenAndServe(":"+env.Port, mux); err != nil {
+	log.Info("running server at port " + port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err.Error())
 		os.Exit(5)
 	}

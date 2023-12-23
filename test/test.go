@@ -6,13 +6,27 @@ package api
 
 import (
 	"net/http"
+	"time"
+
+	"github.com/kxplxn/goteam/pkg/cookie"
+)
+
+var (
+	// jwtKey is the JWT key used for signing and validating JWTs during
+	// integration testing.
+	jwtKey = []byte("itest-jwt-key-0123456789qwerty")
+
+	dur = 1 * time.Hour
+
+	authEncoder   = cookie.NewAuthEncoder(jwtKey, dur)
+	authDecoder   = cookie.NewAuthDecoder(jwtKey)
+	stateEncoder  = cookie.NewStateEncoder(jwtKey, dur)
+	stateDecoder  = cookie.NewStateDecoder(jwtKey)
+	inviteEncoder = cookie.NewInviteEncoder(jwtKey, dur)
+	inviteDecoder = cookie.NewInviteDecoder(jwtKey)
 )
 
 const (
-	// jwtKey is the JWT key used for signing and validating JWTs during
-	// integration testing.
-	jwtKey = "itest-jwt-key-0123456789qwerty"
-
 	tkTeam1Admin = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6WyI" +
 		"5MTUzNjY2NC05NzQ5LTRkYmItYTQ3MC02ZTUyYWEzNTNhZTQiLCJmZGI4MjYzNy1mNm" +
 		"E1LTRkNTUtOWRjMy05ZjYwMDYxZTYzMmYiLCIxNTU5YTMzYy01NGM1LTQyYzgtOGU1Z" +

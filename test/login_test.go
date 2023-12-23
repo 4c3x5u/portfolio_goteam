@@ -15,7 +15,6 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	"github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestLoginAPI(t *testing.T) {
@@ -23,7 +22,7 @@ func TestLoginAPI(t *testing.T) {
 		loginAPI.NewValidator(),
 		usertable.NewRetriever(db),
 		loginAPI.NewPasswordComparator(),
-		token.EncodeAuth,
+		authEncoder,
 		log.New(),
 	)
 

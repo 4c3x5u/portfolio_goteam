@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // DeleteResp defines the body of DELETE task responses.
@@ -19,27 +18,27 @@ type DeleteResp struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE
 // requests made to the task route.
 type DeleteHandler struct {
-	decodeAuth  token.DecodeFunc[token.Auth]
-	decodeState token.DecodeFunc[token.State]
-	taskDeleter db.DeleterDualKey
-	encodeState token.EncodeFunc[token.State]
-	log         pkgLog.Errorer
+	authDecoder  cookie.Decoder[cookie.Auth]
+	stateDecoder cookie.Decoder[cookie.State]
+	taskDeleter  db.DeleterDualKey
+	stateEncoder cookie.Encoder[cookie.State]
+	log          pkgLog.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DELETEHandler.
 func NewDeleteHandler(
-	decodeAuth token.DecodeFunc[token.Auth],
-	decodeState token.DecodeFunc[token.State],
+	authDecoder cookie.Decoder[cookie.Auth],
+	stateDecoder cookie.Decoder[cookie.State],
 	taskDeleter db.DeleterDualKey,
-	encodeState token.EncodeFunc[token.State],
+	stateEncoder cookie.Encoder[cookie.State],
 	log pkgLog.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
-		decodeAuth:  decodeAuth,
-		decodeState: decodeState,
-		taskDeleter: taskDeleter,
-		encodeState: encodeState,
-		log:         log,
+		authDecoder:  authDecoder,
+		stateDecoder: stateDecoder,
+		taskDeleter:  taskDeleter,
+		stateEncoder: stateEncoder,
+		log:          log,
 	}
 }
 
@@ -48,7 +47,7 @@ func (h DeleteHandler) Handle(
 	w http.ResponseWriter, r *http.Request, username string,
 ) {
 	// get auth token
-	ckAuth, err := r.Cookie(token.AuthName)
+	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
@@ -65,7 +64,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// decode auth token
-	auth, err := h.decodeAuth(ckAuth.Value)
+	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
@@ -90,7 +89,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// get state token
-	ckState, err := r.Cookie(token.StateName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusBadRequest)
 		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
@@ -107,7 +106,7 @@ func (h DeleteHandler) Handle(
 	}
 
 	// decode state token
-	state, err := h.decodeState(ckState.Value)
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		if err = json.NewEncoder(w).Encode(DeleteResp{
@@ -170,7 +169,7 @@ func (h DeleteHandler) Handle(
 	// update state
 	for _, b := range state.Boards {
 		for _, c := range b.Columns {
-			var tasks []token.Task
+			var tasks []cookie.Task
 			for _, t := range c.Tasks {
 				if t.ID != id {
 					tasks = append(tasks, t)
@@ -181,18 +180,13 @@ func (h DeleteHandler) Handle(
 	}
 
 	// encode state into cookie
-	exp := time.Now().Add(token.DefaultDuration).UTC()
-	tkState, err := h.encodeState(exp, state)
+	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err.Error())
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     token.StateName,
-		Value:    tkState,
-		Expires:  exp,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-	})
+
+	// set state cookie
+	http.SetCookie(w, &outCkState)
 }

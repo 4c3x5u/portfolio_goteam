@@ -10,18 +10,18 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestGetHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
+	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	retriever := &db.FakeRetriever[teamtable.Team]{}
 	inserter := &db.FakeInserter[teamtable.Team]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewGetHandler(decodeAuth.Func, retriever, inserter, log)
+	sut := NewGetHandler(authDecoder, retriever, inserter, log)
 
 	wantTeam := teamtable.Team{
 		ID:      "teamid",
@@ -36,7 +36,7 @@ func TestGetHandler(t *testing.T) {
 		name          string
 		auth          string
 		errDecodeAuth error
-		authDecoded   token.Auth
+		authDecoded   cookie.Auth
 		errRetrieve   error
 		team          teamtable.Team
 		errInsert     error
@@ -47,7 +47,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "NoAuth",
 			auth:          "",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{},
+			authDecoded:   cookie.Auth{},
 			errRetrieve:   nil,
 			team:          teamtable.Team{},
 			errInsert:     nil,
@@ -58,7 +58,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "InvalidAuth",
 			auth:          "nonempty",
 			errDecodeAuth: errors.New("decode auth failed"),
-			authDecoded:   token.Auth{},
+			authDecoded:   cookie.Auth{},
 			errRetrieve:   nil,
 			team:          teamtable.Team{},
 			errInsert:     nil,
@@ -69,7 +69,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "ErrRetrieve",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{},
+			authDecoded:   cookie.Auth{},
 			errRetrieve:   errors.New("retrieve failed"),
 			team:          teamtable.Team{},
 			errInsert:     nil,
@@ -80,7 +80,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "OK",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{},
+			authDecoded:   cookie.Auth{},
 			errRetrieve:   nil,
 			team:          wantTeam,
 			errInsert:     nil,
@@ -104,7 +104,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "NotAdmin",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{IsAdmin: false},
+			authDecoded:   cookie.Auth{IsAdmin: false},
 			errRetrieve:   db.ErrNoItem,
 			team:          teamtable.Team{},
 			errInsert:     nil,
@@ -115,7 +115,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "ErrInsert",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errRetrieve:   db.ErrNoItem,
 			team:          teamtable.Team{},
 			errInsert:     errors.New("insert failed"),
@@ -126,7 +126,7 @@ func TestGetHandler(t *testing.T) {
 			name:          "Created",
 			auth:          "nonempty",
 			errDecodeAuth: nil,
-			authDecoded:   token.Auth{IsAdmin: true, Username: "newuser"},
+			authDecoded:   cookie.Auth{IsAdmin: true, Username: "newuser"},
 			errRetrieve:   db.ErrNoItem,
 			team:          teamtable.Team{},
 			errInsert:     nil,
@@ -144,8 +144,8 @@ func TestGetHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Err = c.errDecodeAuth
-			decodeAuth.Res = c.authDecoded
+			authDecoder.Err = c.errDecodeAuth
+			authDecoder.Res = c.authDecoded
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.team
 			inserter.Err = c.errInsert

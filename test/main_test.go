@@ -39,8 +39,6 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	// used in auth-related code to sign JWTs
-	os.Setenv("JWTKEY", jwtKey)
 	m.Run()
 }
 

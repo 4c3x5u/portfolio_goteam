@@ -3,14 +3,13 @@ package register
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 // PostReq defines the body of POST register requests.
@@ -39,30 +38,30 @@ func (e ValidationErrs) Any() bool {
 // PostHandler is a api.MethodHandler that can be used to handle POST register
 // requests.
 type PostHandler struct {
-	reqValidator ReqValidator
-	hasher       Hasher
-	decodeInvite token.DecodeFunc[token.Invite]
-	userInserter db.Inserter[usertable.User]
-	encodeAuth   token.EncodeFunc[token.Auth]
-	log          pkgLog.Errorer
+	reqValidator  ReqValidator
+	hasher        Hasher
+	inviteDecoder cookie.Decoder[cookie.Invite]
+	userInserter  db.Inserter[usertable.User]
+	authEncoder   cookie.Encoder[cookie.Auth]
+	log           pkgLog.Errorer
 }
 
 // NewPostHandler creates and returns a new HandlerPost.
 func NewPostHandler(
 	userValidator ReqValidator,
-	decodeInvite token.DecodeFunc[token.Invite],
+	inviteDecoder cookie.Decoder[cookie.Invite],
 	hasher Hasher,
 	userInserter db.Inserter[usertable.User],
-	encodeAuth token.EncodeFunc[token.Auth],
+	authEncoder cookie.Encoder[cookie.Auth],
 	log pkgLog.Errorer,
 ) PostHandler {
 	return PostHandler{
-		reqValidator: userValidator,
-		hasher:       hasher,
-		decodeInvite: decodeInvite,
-		userInserter: userInserter,
-		encodeAuth:   encodeAuth,
-		log:          log,
+		reqValidator:  userValidator,
+		hasher:        hasher,
+		inviteDecoder: inviteDecoder,
+		userInserter:  userInserter,
+		authEncoder:   authEncoder,
+		log:           log,
 	}
 }
 
@@ -90,7 +89,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// determine teamID and isAdmin based on invite token.
-	ck, err := r.Cookie(token.InviteName)
+	ckInvite, err := r.Cookie(cookie.InviteName)
 	var teamID string
 	var isAdmin bool
 	if err == http.ErrNoCookie {
@@ -101,7 +100,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else {
-		invite, err := h.decodeInvite(ck.Value)
+		invite, err := h.inviteDecoder.Decode(*ckInvite)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(
@@ -145,10 +144,9 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// generate an auth token
-	exp := time.Now().Add(token.DefaultDuration).UTC()
-	tkAuth, err := h.encodeAuth(exp, token.NewAuth(
-		req.Username, isAdmin, teamID,
-	))
+	ckAuth, err := h.authEncoder.Encode(
+		cookie.NewAuth(req.Username, isAdmin, teamID),
+	)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		if err := json.NewEncoder(w).Encode(
@@ -163,13 +161,6 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		return
 	}
 
-	// set auth cookie and respond OK
-	http.SetCookie(w, &http.Cookie{
-		Name:     token.AuthName,
-		Value:    tkAuth,
-		Expires:  exp,
-		SameSite: http.SameSiteNoneMode,
-		Secure:   true,
-	})
-	w.WriteHeader(http.StatusOK)
+	// set auth cookie
+	http.SetCookie(w, &ckAuth)
 }

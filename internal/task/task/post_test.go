@@ -11,32 +11,32 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // TestPostHandler tests the Handle method of PostHandler to assert that it
 // behaves correctly in all possible scenarios.
 func TestPostHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
-	decodeState := &token.FakeDecode[token.State]{}
+	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
+	stateDecoder := &cookie.FakeDecoder[cookie.State]{}
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
 	colNoValidator := &api.FakeIntValidator{}
 	taskInserter := &db.FakeInserter[tasktable.Task]{}
-	encodeState := &token.FakeEncode[token.State]{}
+	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
 	log := &pkgLog.FakeErrorer{}
 	sut := NewPostHandler(
-		decodeAuth.Func,
-		decodeState.Func,
+		authDecoder,
+		stateDecoder,
 		titleValidator,
 		subtTitleValidator,
 		colNoValidator,
 		taskInserter,
-		encodeState.Func,
+		stateEncoder,
 		log,
 	)
 
@@ -44,16 +44,16 @@ func TestPostHandler(t *testing.T) {
 		name                 string
 		reqBody              string
 		authToken            string
-		authDecoded          token.Auth
+		authDecoded          cookie.Auth
 		errDecodeAuth        error
 		inStateToken         string
-		inStateDecoded       token.State
+		inStateDecoded       cookie.State
 		errDecodeInState     error
 		errValidateColNo     error
 		errValidateTaskTitle error
 		errValidateSubtTitle error
 		errInsertTask        error
-		outStateToken        string
+		outState             http.Cookie
 		errEncodeState       error
 		wantStatus           int
 		assertFunc           func(*testing.T, *http.Response, string)
@@ -66,15 +66,15 @@ func TestPostHandler(t *testing.T) {
 		{
 			name:                 "InvalidAuth",
 			authToken:            "nonempty",
-			errDecodeAuth:        token.ErrInvalid,
+			errDecodeAuth:        cookie.ErrInvalid,
 			inStateToken:         "",
-			inStateDecoded:       token.State{},
+			inStateDecoded:       cookie.State{},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusUnauthorized,
 			assertFunc:           assert.OnResErr("Invalid auth token."),
@@ -83,16 +83,16 @@ func TestPostHandler(t *testing.T) {
 			name:                 "NotAdmin",
 			reqBody:              "",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{},
+			authDecoded:          cookie.Auth{},
 			errDecodeAuth:        nil,
 			inStateToken:         "",
-			inStateDecoded:       token.State{},
+			inStateDecoded:       cookie.State{},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -103,16 +103,16 @@ func TestPostHandler(t *testing.T) {
 			name:                 "NoState",
 			reqBody:              "",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
+			authDecoded:          cookie.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
 			inStateToken:         "",
-			inStateDecoded:       token.State{},
+			inStateDecoded:       cookie.State{},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("State token not found."),
@@ -121,16 +121,16 @@ func TestPostHandler(t *testing.T) {
 			name:                 "InvalidState",
 			reqBody:              "",
 			authToken:            "nonempty",
-			authDecoded:          token.Auth{IsAdmin: true},
+			authDecoded:          cookie.Auth{IsAdmin: true},
 			errDecodeAuth:        nil,
 			inStateToken:         "nonempty",
-			inStateDecoded:       token.State{},
-			errDecodeInState:     token.ErrInvalid,
+			inStateDecoded:       cookie.State{},
+			errDecodeInState:     cookie.ErrInvalid,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc:           assert.OnResErr("Invalid state token."),
@@ -139,18 +139,18 @@ func TestPostHandler(t *testing.T) {
 			name:          "ColNoOutOfBounds",
 			reqBody:       `{"board": "boardid"}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{
-				Boards: []token.Board{{ID: "boardid"}},
+			inStateDecoded: cookie.State{
+				Boards: []cookie.Board{{ID: "boardid"}},
 			},
 			errDecodeInState:     nil,
 			errValidateColNo:     validator.ErrOutOfBounds,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -161,18 +161,18 @@ func TestPostHandler(t *testing.T) {
 			name:          "NoBoardAccess",
 			reqBody:       `{"board": "boardid"}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{
-				Boards: []token.Board{{ID: "foo"}},
+			inStateDecoded: cookie.State{
+				Boards: []cookie.Board{{ID: "foo"}},
 			},
 			errDecodeInState:     nil,
 			errValidateColNo:     nil,
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusForbidden,
 			assertFunc: assert.OnResErr(
@@ -183,12 +183,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "TaskTitleEmpty",
 			reqBody:       `{"board": "boardid", "column": 0}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -197,7 +197,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrEmpty,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -208,12 +208,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "TaskTitleTooLong",
 			reqBody:       `{"board": "boardid", "column": 0}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -222,7 +222,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrTooLong,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -233,12 +233,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "TaskTitleUnexpectedErr",
 			reqBody:       `{"board": "boardid", "column": 0}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -247,7 +247,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: validator.ErrWrongFormat,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -260,12 +260,12 @@ func TestPostHandler(t *testing.T) {
                 "board": "boardid", "column": 0, "subtasks": ["foo"]
             }`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -274,7 +274,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrEmpty,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -287,12 +287,12 @@ func TestPostHandler(t *testing.T) {
                 "board": "boardid", "column": 0, "subtasks": ["foo"]
             }`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -301,7 +301,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrTooLong,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnResErr(
@@ -314,12 +314,12 @@ func TestPostHandler(t *testing.T) {
                 "board": "boardid", "column": 0, "subtasks": ["foo"]
             }`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -328,7 +328,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: validator.ErrWrongFormat,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -339,12 +339,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "ErrPutTask",
 			reqBody:       `{"board": "boardid", "column": 0}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -353,7 +353,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        errors.New("failed to put task"),
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc: assert.OnLoggedErr(
@@ -364,12 +364,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "ErrEncodeState",
 			reqBody:       `{"board": "boardid", "column": 0}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -378,7 +378,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "",
+			outState:             http.Cookie{},
 			errEncodeState:       errors.New("encode state failed"),
 			wantStatus:           http.StatusInternalServerError,
 			assertFunc:           assert.OnLoggedErr("encode state failed"),
@@ -387,12 +387,12 @@ func TestPostHandler(t *testing.T) {
 			name:          "OK",
 			reqBody:       `{"board": "boardid"}`,
 			authToken:     "nonempty",
-			authDecoded:   token.Auth{IsAdmin: true},
+			authDecoded:   cookie.Auth{IsAdmin: true},
 			errDecodeAuth: nil,
 			inStateToken:  "nonempty",
-			inStateDecoded: token.State{Boards: []token.Board{{
+			inStateDecoded: cookie.State{Boards: []cookie.Board{{
 				ID: "boardid",
-				Columns: []token.Column{{Tasks: []token.Task{{
+				Columns: []cookie.Column{{Tasks: []cookie.Task{{
 					ID: "taskid", Order: 0,
 				}}}},
 			}}},
@@ -401,28 +401,27 @@ func TestPostHandler(t *testing.T) {
 			errValidateTaskTitle: nil,
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
-			outStateToken:        "foobarbazbang",
+			outState:             http.Cookie{Name: "foo", Value: "bar"},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
-				// assert on set state
-				ck := resp.Cookies()[0]
-				assert.Equal(t.Error, ck.Name, "state-token")
-				assert.Equal(t.Error, ck.Value, "foobarbazbang")
+				ckState := resp.Cookies()[0]
+				assert.Equal(t.Error, ckState.Name, "foo")
+				assert.Equal(t.Error, ckState.Value, "bar")
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Res = c.authDecoded
-			decodeAuth.Err = c.errDecodeAuth
-			decodeState.Res = c.inStateDecoded
-			decodeState.Err = c.errDecodeInState
+			authDecoder.Res = c.authDecoded
+			authDecoder.Err = c.errDecodeAuth
+			stateDecoder.Res = c.inStateDecoded
+			stateDecoder.Err = c.errDecodeInState
 			colNoValidator.Err = c.errValidateColNo
 			titleValidator.Err = c.errValidateTaskTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskInserter.Err = c.errInsertTask
-			encodeState.Res = c.outStateToken
-			encodeState.Err = c.errEncodeState
+			stateEncoder.Res = c.outState
+			stateEncoder.Err = c.errEncodeState
 
 			req := httptest.NewRequest(
 				http.MethodPost, "/", bytes.NewReader([]byte(c.reqBody)),

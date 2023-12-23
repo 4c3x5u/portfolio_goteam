@@ -1,9 +1,9 @@
 //go:build utest
 
-package token
+package cookie
 
 import (
-	"os"
+	"net/http"
 	"testing"
 	"time"
 
@@ -13,38 +13,51 @@ import (
 )
 
 func TestAuth(t *testing.T) {
-	if err := os.Setenv(keyName, "signkey"); err != nil {
-		t.Fatal("failed to set key env var", err)
-	}
+	key := []byte("signkey")
 	username := "bob123"
 	isAdmin := true
 	teamID := "teamid"
 
 	t.Run("Encode", func(t *testing.T) {
-		expiry := time.Now().Add(1 * time.Hour)
+		dur := 1 * time.Hour
+		sut := NewAuthEncoder(key, dur)
 
-		token, err := EncodeAuth(expiry, NewAuth(username, isAdmin, teamID))
-		if err != nil {
-			t.Fatal(err)
-		}
+		ck, err := sut.Encode(NewAuth(username, isAdmin, teamID))
+		assert.Nil(t.Fatal, err)
+
+		assert.Nil(t.Fatal, ck.Valid())
+		assert.Equal(t.Error, ck.Name, AuthName)
+		assert.Equal(t.Error, ck.SameSite, http.SameSiteNoneMode)
+		assert.True(t.Error, ck.Secure)
+		assert.True(t.Error,
+			ck.Expires.UTC().After(time.Now().Add(59*time.Minute).UTC()))
+		assert.True(t.Error,
+			ck.Expires.UTC().Before(time.Now().Add(61*time.Minute).UTC()))
 
 		claims := jwt.MapClaims{}
-		if _, err = jwt.ParseWithClaims(
-			token,
-			&claims,
-			func(token *jwt.Token) (any, error) {
-				return []byte(os.Getenv(keyName)), nil
+		_, err = jwt.ParseWithClaims(
+			ck.Value, &claims, func(token *jwt.Token) (any, error) {
+				return key, nil
 			},
-		); err != nil {
-			t.Error(err)
-		}
+		)
+		assert.Nil(t.Fatal, err)
 
 		assert.Equal(t.Error, claims["username"].(string), username)
 		assert.Equal(t.Error, claims["isAdmin"].(bool), isAdmin)
 		assert.Equal(t.Error, claims["teamID"].(string), teamID)
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) >
+				time.Now().Add(59*time.Minute).Unix(),
+		)
+		assert.True(t.Error,
+			int64(claims["exp"].(float64)) <
+				time.Now().Add(61*time.Minute).Unix(),
+		)
 	})
 
 	t.Run("Decode", func(t *testing.T) {
+		sut := NewAuthDecoder(key)
+
 		for _, c := range []struct {
 			name         string
 			token        string
@@ -83,8 +96,11 @@ func TestAuth(t *testing.T) {
 				wantErr:      jwt.ErrTokenExpired,
 			},
 			{
-				name:         "Success",
-				token:        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6WyJib2FyZDEiLCJib2FyZDIiXSwiaXNBZG1pbiI6dHJ1ZSwidGVhbUlEIjoidGVhbWlkIiwidXNlcm5hbWUiOiJib2IxMjMifQ.4uS5-QGd3Gj2I5Jm2-dnq-1-_3IqcBepLBdzPjjfRuM",
+				name: "Success",
+				token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6" +
+					"WyJib2FyZDEiLCJib2FyZDIiXSwiaXNBZG1pbiI6dHJ1ZSwidGVhbUlE" +
+					"IjoidGVhbWlkIiwidXNlcm5hbWUiOiJib2IxMjMifQ.4uS5-QGd3Gj2I" +
+					"5Jm2-dnq-1-_3IqcBepLBdzPjjfRuM",
 				wantUsername: username,
 				wantIsAdmin:  isAdmin,
 				wantTeamID:   teamID,
@@ -92,12 +108,12 @@ func TestAuth(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				inv, err := DecodeAuth(c.token)
+				auth, err := sut.Decode(http.Cookie{Value: c.token})
 
 				assert.ErrIs(t.Error, err, c.wantErr)
-				assert.Equal(t.Error, inv.Username, c.wantUsername)
-				assert.Equal(t.Error, inv.IsAdmin, c.wantIsAdmin)
-				assert.Equal(t.Error, inv.TeamID, c.wantTeamID)
+				assert.Equal(t.Error, auth.Username, c.wantUsername)
+				assert.Equal(t.Error, auth.IsAdmin, c.wantIsAdmin)
+				assert.Equal(t.Error, auth.TeamID, c.wantTeamID)
 			})
 		}
 

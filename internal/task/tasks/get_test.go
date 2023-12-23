@@ -10,17 +10,17 @@ import (
 	"testing"
 
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	pkgLog "github.com/kxplxn/goteam/pkg/log"
-	"github.com/kxplxn/goteam/pkg/token"
 )
 
 func TestGetHandler(t *testing.T) {
-	decodeAuth := &token.FakeDecode[token.Auth]{}
+	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	retriever := &db.FakeRetriever[[]tasktable.Task]{}
 	log := &pkgLog.FakeErrorer{}
-	sut := NewGetHandler(decodeAuth.Func, retriever, log)
+	sut := NewGetHandler(authDecoder, retriever, log)
 
 	someTasks := []tasktable.Task{
 		{
@@ -131,7 +131,7 @@ func TestGetHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			decodeAuth.Err = c.errDecodeAuth
+			authDecoder.Err = c.errDecodeAuth
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.tasks
 
