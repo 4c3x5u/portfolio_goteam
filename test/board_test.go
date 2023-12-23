@@ -17,12 +17,12 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestBoardAPI(t *testing.T) {
 	nameValidator := boardAPI.NewNameValidator()
-	log := pkgLog.New()
+	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardAPI.NewPostHandler(
 			authDecoder,

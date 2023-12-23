@@ -7,7 +7,7 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
@@ -17,7 +17,7 @@ type DeleteHandler struct {
 	stateDecoder cookie.Decoder[cookie.State]
 	boardDeleter db.DeleterDualKey
 	stateEncoder cookie.Encoder[cookie.State]
-	log          pkgLog.Errorer
+	log          log.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DeleteHandler.
@@ -26,7 +26,7 @@ func NewDeleteHandler(
 	stateDecoder cookie.Decoder[cookie.State],
 	boardDeleter db.DeleterDualKey,
 	stateEncoder cookie.Encoder[cookie.State],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
 		authDecoder:  authDecoder,

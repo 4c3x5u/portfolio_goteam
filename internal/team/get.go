@@ -10,7 +10,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // GetResp defines the body of GET team responses.
@@ -22,7 +22,7 @@ type GetHandler struct {
 	authDecoder cookie.Decoder[cookie.Auth]
 	retriever   db.Retriever[teamtable.Team]
 	inserter    db.Inserter[teamtable.Team]
-	log         pkgLog.Errorer
+	log         log.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
@@ -30,7 +30,7 @@ func NewGetHandler(
 	decodeAuth cookie.Decoder[cookie.Auth],
 	retriever db.Retriever[teamtable.Team],
 	inserter db.Inserter[teamtable.Team],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) GetHandler {
 	return GetHandler{
 		authDecoder: decodeAuth,

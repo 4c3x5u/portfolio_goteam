@@ -14,7 +14,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -25,7 +25,7 @@ func TestPatchHandler(t *testing.T) {
 	titleValidator := &api.FakeStringValidator{}
 	subtTitleValidator := &api.FakeStringValidator{}
 	taskUpdater := &db.FakeUpdater[tasktable.Task]{}
-	log := &pkgLog.FakeErrorer{}
+	log := &log.FakeErrorer{}
 	sut := NewPatchHandler(
 		decodeAuth,
 		decodeState,

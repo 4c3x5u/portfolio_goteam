@@ -16,7 +16,7 @@ import (
 	teamAPI "github.com/kxplxn/goteam/internal/team"
 	"github.com/kxplxn/goteam/pkg/assert"
 	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestTeamAPI(t *testing.T) {
@@ -24,7 +24,7 @@ func TestTeamAPI(t *testing.T) {
 		authDecoder,
 		teamTable.NewRetriever(db),
 		teamTable.NewInserter(db),
-		pkgLog.New(),
+		log.New(),
 	)
 
 	t.Run("GET", func(t *testing.T) {

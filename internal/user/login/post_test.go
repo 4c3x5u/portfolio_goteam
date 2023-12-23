@@ -15,7 +15,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // TestHandler tests the ServeHTTP method of Handler to assert that it behaves
@@ -26,7 +26,7 @@ func TestPOSTHandler(t *testing.T) {
 		userRetriever    = &db.FakeRetriever[usertable.User]{}
 		passwordComparer = &fakeHashComparer{}
 		authEncoder      = &cookie.FakeEncoder[cookie.Auth]{}
-		log              = &pkgLog.FakeErrorer{}
+		log              = &log.FakeErrorer{}
 	)
 	sut := NewPostHandler(
 		validator, userRetriever, passwordComparer, authEncoder, log,

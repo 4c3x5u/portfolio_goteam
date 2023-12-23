@@ -14,7 +14,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -28,7 +28,7 @@ func TestPostHandler(t *testing.T) {
 	colNoValidator := &api.FakeIntValidator{}
 	taskInserter := &db.FakeInserter[tasktable.Task]{}
 	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
-	log := &pkgLog.FakeErrorer{}
+	log := &log.FakeErrorer{}
 	sut := NewPostHandler(
 		authDecoder,
 		stateDecoder,

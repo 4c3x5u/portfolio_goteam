@@ -21,7 +21,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 const (
@@ -43,7 +43,7 @@ const (
 
 func main() {
 	// create a logger
-	log := pkgLog.New()
+	log := log.New()
 
 	// load environment variables
 	err := godotenv.Load()

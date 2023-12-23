@@ -69,10 +69,10 @@ func True(logErr func(...any), got bool) {
 // message and returns a function that takes in:
 //   - *testing.T to be able to either call Fatal or Error,
 //   - *http.Response to read the response body,
-//   - *pkgLog.FakeErrorer to match the signature of OnLoggedErr so that it can
+//   - string to match the signature of OnLoggedErr so that it can
 //     be used interchangeably with it in table-driven tests.
 //
-// This two-step function call is necessary to be able to use it effectively in
+// This two-step function cal is for being able to initialise it before use in
 // table-driven tests.
 func OnResErr(
 	wantErrMsg string,
@@ -92,9 +92,9 @@ func OnResErr(
 //   - *testing.T to be able to either call Fatal or Error,
 //   - *http.Response to match the signature of OnResErr so that it can be used
 //     interchangeably with it in table-driven tests,
-//   - *pkgLog.FakeErrorer to check what error was logged.
+//   - string to check what error was logged.
 //
-// This two-step function call is necessary to be able to use it effectively in
+// This two-step function cal is for being able to initialise it before use in
 // table-driven tests.
 func OnLoggedErr(wantErrMsg string) func(*testing.T, *http.Response, string) {
 	return func(t *testing.T, _ *http.Response, loggedErr string) {

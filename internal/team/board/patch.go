@@ -8,7 +8,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -27,7 +27,7 @@ type PatchHandler struct {
 	idValidator   validator.String
 	nameValidator validator.String
 	boardUpdater  db.UpdaterDualKey[teamTable.Board]
-	log           pkgLog.Errorer
+	log           log.Errorer
 }
 
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE board
@@ -38,7 +38,7 @@ func NewPatchHandler(
 	idValidator validator.String,
 	nameValidator validator.String,
 	boardUpdater db.UpdaterDualKey[teamTable.Board],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) *PatchHandler {
 	return &PatchHandler{
 		authDecoder:   authDecoder,

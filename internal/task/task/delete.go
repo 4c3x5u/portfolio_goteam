@@ -7,7 +7,7 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // DeleteResp defines the body of DELETE task responses.
@@ -22,7 +22,7 @@ type DeleteHandler struct {
 	stateDecoder cookie.Decoder[cookie.State]
 	taskDeleter  db.DeleterDualKey
 	stateEncoder cookie.Encoder[cookie.State]
-	log          pkgLog.Errorer
+	log          log.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DELETEHandler.
@@ -31,7 +31,7 @@ func NewDeleteHandler(
 	stateDecoder cookie.Decoder[cookie.State],
 	taskDeleter db.DeleterDualKey,
 	stateEncoder cookie.Encoder[cookie.State],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
 		authDecoder:  authDecoder,

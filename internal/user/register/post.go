@@ -9,7 +9,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // PostReq defines the body of POST register requests.
@@ -43,7 +43,7 @@ type PostHandler struct {
 	inviteDecoder cookie.Decoder[cookie.Invite]
 	userInserter  db.Inserter[usertable.User]
 	authEncoder   cookie.Encoder[cookie.Auth]
-	log           pkgLog.Errorer
+	log           log.Errorer
 }
 
 // NewPostHandler creates and returns a new HandlerPost.
@@ -53,7 +53,7 @@ func NewPostHandler(
 	hasher Hasher,
 	userInserter db.Inserter[usertable.User],
 	authEncoder cookie.Encoder[cookie.Auth],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) PostHandler {
 	return PostHandler{
 		reqValidator:  userValidator,

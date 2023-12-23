@@ -11,7 +11,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // TestDeleteHandler tests the Handle method of DeleteHandler to assert that it
@@ -21,7 +21,7 @@ func TestDeleteHandler(t *testing.T) {
 	stateDecoder := &cookie.FakeDecoder[cookie.State]{}
 	taskDeleter := &db.FakeDeleterDualKey{}
 	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
-	log := &pkgLog.FakeErrorer{}
+	log := &log.FakeErrorer{}
 	sut := NewDeleteHandler(
 		authDecoder,
 		stateDecoder,

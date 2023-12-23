@@ -10,7 +10,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -38,7 +38,7 @@ type PostHandler struct {
 	colNoValidator     validator.Int
 	taskInserter       db.Inserter[tasktable.Task]
 	stateEncoder       cookie.Encoder[cookie.State]
-	log                pkgLog.Errorer
+	log                log.Errorer
 }
 
 // NewPostHandler creates and returns a new POSTHandler.
@@ -50,7 +50,7 @@ func NewPostHandler(
 	colNoValidator validator.Int,
 	taskInserter db.Inserter[tasktable.Task],
 	stateEncoder cookie.Encoder[cookie.State],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) *PostHandler {
 	return &PostHandler{
 		authDecoder:        authDecoder,

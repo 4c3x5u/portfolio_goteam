@@ -8,7 +8,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
@@ -45,7 +45,7 @@ type PatchHandler struct {
 	colNoValidator validator.Int
 	tasksUpdater   db.Updater[[]tasktable.Task]
 	stateEncoder   cookie.Encoder[cookie.State]
-	log            pkgLog.Errorer
+	log            log.Errorer
 }
 
 // NewPatchHandler creates and returns a new PATCHHandler.
@@ -55,7 +55,7 @@ func NewPatchHandler(
 	colNoValidator validator.Int,
 	tasksUpdater db.Updater[[]tasktable.Task],
 	stateEncoder cookie.Encoder[cookie.State],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) PatchHandler {
 	return PatchHandler{
 		authDecoder:    authDecoder,

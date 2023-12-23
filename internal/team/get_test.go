@@ -13,14 +13,14 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/teamtable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestGetHandler(t *testing.T) {
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	retriever := &db.FakeRetriever[teamtable.Team]{}
 	inserter := &db.FakeInserter[teamtable.Team]{}
-	log := &pkgLog.FakeErrorer{}
+	log := &log.FakeErrorer{}
 	sut := NewGetHandler(authDecoder, retriever, inserter, log)
 
 	wantTeam := teamtable.Team{

@@ -10,7 +10,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // PostReq defines the body of POST login requests.
@@ -25,7 +25,7 @@ type PostHandler struct {
 	userRetriever db.Retriever[usertable.User]
 	pwdComparator Comparator
 	authEncoder   cookie.Encoder[cookie.Auth]
-	log           pkgLog.Errorer
+	logAs         log.Errorer
 }
 
 // NewPostHandler creates and returns a new Handler.
@@ -34,14 +34,14 @@ func NewPostHandler(
 	userRetriever db.Retriever[usertable.User],
 	pwdComparator Comparator,
 	encodeAuth cookie.Encoder[cookie.Auth],
-	log pkgLog.Errorer,
+	logAs log.Errorer,
 ) PostHandler {
 	return PostHandler{
 		validator:     validator,
 		userRetriever: userRetriever,
 		pwdComparator: pwdComparator,
 		authEncoder:   encodeAuth,
-		log:           log,
+		logAs:         logAs,
 	}
 }
 
@@ -50,7 +50,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Read and validate request body.
 	req := PostReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Error(err.Error())
+		h.logAs.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -66,7 +66,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		h.log.Error(err.Error())
+		h.logAs.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -79,7 +79,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	} else if err != nil {
-		h.log.Error(err.Error())
+		h.logAs.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -89,7 +89,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		user.Username, user.IsAdmin, user.TeamID,
 	))
 	if err != nil {
-		h.log.Error(err.Error())
+		h.logAs.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

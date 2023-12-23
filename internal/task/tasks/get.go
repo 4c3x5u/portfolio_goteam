@@ -8,7 +8,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 // GetResp defines the body of GET tasks responses.
@@ -19,14 +19,14 @@ type GetResp []tasktable.Task
 type GetHandler struct {
 	authDecoder cookie.Decoder[cookie.Auth]
 	retriever   db.Retriever[[]tasktable.Task]
-	log         pkgLog.Errorer
+	log         log.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
 	retriever db.Retriever[[]tasktable.Task],
-	log pkgLog.Errorer,
+	log log.Errorer,
 ) GetHandler {
 	return GetHandler{authDecoder: authDecoder, retriever: retriever, log: log}
 }

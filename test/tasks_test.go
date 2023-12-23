@@ -18,11 +18,11 @@ import (
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/tasktable"
-	pkgLog "github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestTasksAPI(t *testing.T) {
-	log := pkgLog.New()
+	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksAPI.NewGetHandler(
 			authDecoder,
