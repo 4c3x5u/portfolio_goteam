@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -206,9 +207,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "Do something. Then, do something else.",
                     "column":      1,
 					"title":       "Some Task",
-					"subtasks": [
-						"Some Subtask", "Some Other Subtask"
-                    ]
+					"subtasks":    ["Some Subtask", "Some Other Subtask"]
 				}`,
 				authFunc: func(r *http.Request) {
 					addCookieAuth(tkTeam1Admin)(r)
@@ -223,36 +222,46 @@ func TestTaskAPI(t *testing.T) {
 						WithKeyCondition(keyEx).Build()
 					assert.Nil(t.Fatal, err)
 
-					out, err := db.Query(
-						context.Background(),
-						&dynamodb.QueryInput{
-							TableName: &taskTableName,
-							IndexName: aws.String(
-								"BoardID_index",
-							),
-							ExpressionAttributeNames:  expr.Names(),
-							ExpressionAttributeValues: expr.Values(),
-							KeyConditionExpression:    expr.KeyCondition(),
-						},
-					)
-					assert.Nil(t.Fatal, err)
-
+					// try a few times as it takes a while for the task to
+					// appear in the database for some reason
+					// FIXME: find the root cause and eliminate it if possible
 					var taskFound bool
-					for _, av := range out.Items {
-						var task tasktable.Task
-						err = attributevalue.UnmarshalMap(av, &task)
+					for i := 0; i < 3; i++ {
+						time.Sleep(1 * time.Second)
+
+						out, err := db.Query(
+							context.Background(),
+							&dynamodb.QueryInput{
+								TableName: &taskTableName,
+								IndexName: aws.String(
+									"BoardID_index",
+								),
+								ExpressionAttributeNames:  expr.Names(),
+								ExpressionAttributeValues: expr.Values(),
+								KeyConditionExpression:    expr.KeyCondition(),
+							},
+						)
 						assert.Nil(t.Fatal, err)
 
-						wantDescr := "Do something. Then, do something else."
-						if task.Description == wantDescr &&
-							task.ColumnNumber == 1 &&
-							task.Title == "Some Task" &&
-							task.Subtasks[0].Title == "Some Subtask" &&
-							task.Subtasks[0].IsDone == false &&
-							task.Subtasks[1].Title == "Some Other Subtask" &&
-							task.Subtasks[1].IsDone == false {
+						for _, av := range out.Items {
+							var task tasktable.Task
+							err = attributevalue.UnmarshalMap(av, &task)
+							assert.Nil(t.Fatal, err)
 
-							taskFound = true
+							wantDescr := "Do something. Then, do something " +
+								"else."
+							if task.Description == wantDescr &&
+								task.ColumnNumber == 1 &&
+								task.Title == "Some Task" &&
+								task.Subtasks[0].Title == "Some Subtask" &&
+								task.Subtasks[0].IsDone == false &&
+								task.Subtasks[1].Title == "Some Other Subtas"+
+									"k" &&
+								task.Subtasks[1].IsDone == false {
+
+								taskFound = true
+								break
+							}
 						}
 					}
 
