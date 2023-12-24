@@ -3,7 +3,7 @@ package tasktbl
 
 // tableName is the name of the environment variable to retrieve the task
 // table's name from.
-const tableName = "DYNAMODB_TABLE_TASK"
+const tableName = "TASK_TABLE_NAME"
 
 // Task defines the task entity - the primary entity of task domain.
 type Task struct {

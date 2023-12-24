@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	// envServePort is the name of the environment variable used for setting the port
-	// to run the server on.
-	envServePort = "TASK_SERVICE_PORT"
+	// envSvcPort is the name of the environment variable used for setting the
+	// port to run the task service on.
+	envSvcPort = "TASK_SERVICE_PORT"
 
 	// envAWSRegion is the name of the environment variable used for determining
 	// the AWS region to connect to for DynamoDB.
@@ -48,7 +48,7 @@ func main() {
 
 	// get environment variables
 	var (
-		port         = os.Getenv(envServePort)
+		port         = os.Getenv(envSvcPort)
 		awsRegion    = os.Getenv(envAWSRegion)
 		jwtKey       = os.Getenv(envJWTKey)
 		clientOrigin = os.Getenv(envClientOrigin)
@@ -58,7 +58,7 @@ func main() {
 	errPostfix := " was empty"
 	switch "" {
 	case port:
-		log.Error(envServePort + errPostfix)
+		log.Error(envSvcPort + errPostfix)
 	case awsRegion:
 		log.Error(envAWSRegion + errPostfix)
 	case jwtKey:

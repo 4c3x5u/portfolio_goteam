@@ -10,8 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/joho/godotenv"
 
-	loginAPI "github.com/kxplxn/goteam/internal/usersvc/loginapi"
-	registerAPI "github.com/kxplxn/goteam/internal/usersvc/registerapi"
+	"github.com/kxplxn/goteam/internal/usersvc/loginapi"
+	"github.com/kxplxn/goteam/internal/usersvc/registerapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
@@ -88,13 +88,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/user/register", api.NewHandler(map[string]api.MethodHandler{
-		http.MethodPost: registerAPI.NewPostHandler(
-			registerAPI.NewUserValidator(
-				registerAPI.NewUsernameValidator(),
-				registerAPI.NewPasswordValidator(),
+		http.MethodPost: registerapi.NewPostHandler(
+			registerapi.NewUserValidator(
+				registerapi.NewUsernameValidator(),
+				registerapi.NewPasswordValidator(),
 			),
 			inviteDecoder,
-			registerAPI.NewPasswordHasher(),
+			registerapi.NewPasswordHasher(),
 			usertbl.NewInserter(db),
 			authEncoder,
 			log,
@@ -102,10 +102,10 @@ func main() {
 	}))
 
 	mux.Handle("/user/login", api.NewHandler(map[string]api.MethodHandler{
-		http.MethodPost: loginAPI.NewPostHandler(
-			loginAPI.NewValidator(),
+		http.MethodPost: loginapi.NewPostHandler(
+			loginapi.NewValidator(),
 			usertbl.NewRetriever(db),
-			loginAPI.NewPasswordComparator(),
+			loginapi.NewPasswordComparator(),
 			authEncoder,
 			log,
 		),

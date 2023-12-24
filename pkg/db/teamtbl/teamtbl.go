@@ -3,7 +3,7 @@ package teamtbl
 
 // tableName is the name of the environment variable to retrieve the team
 // table's name from.
-const tableName = "DYNAMODB_TABLE_TEAM"
+const tableName = "TEAM_TABLE_NAME"
 
 // Team defines the team entity - the primary entity of team domain.
 type Team struct {

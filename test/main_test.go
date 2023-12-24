@@ -64,7 +64,7 @@ func setUpTables() (func() error, error) {
 	tearDown = tearDownUserTable
 
 	// set environvar for user putter & getter to read the table name from
-	if err := os.Setenv("DYNAMODB_TABLE_USER", userTableName); err != nil {
+	if err := os.Setenv("USER_TABLE_NAME", userTableName); err != nil {
 		if err != nil {
 			return tearDown, err
 		}
@@ -79,7 +79,7 @@ func setUpTables() (func() error, error) {
 	tearDown = joinTeardowns(tearDown, tearDownTeamTable)
 
 	// set environvar for team putter & getter to read the table name from
-	if err := os.Setenv("DYNAMODB_TABLE_TEAM", teamTableName); err != nil {
+	if err := os.Setenv("TEAM_TABLE_NAME", teamTableName); err != nil {
 		if err != nil {
 			return tearDown, err
 		}
@@ -96,7 +96,7 @@ func setUpTables() (func() error, error) {
 	tearDown = joinTeardowns(tearDown, tearDownTaskTable)
 
 	// set environvar for task putter & getter to read the table name from
-	if err := os.Setenv("DYNAMODB_TABLE_TASK", taskTableName); err != nil {
+	if err := os.Setenv("TASK_TABLE_NAME", taskTableName); err != nil {
 		if err != nil {
 			return tearDown, err
 		}

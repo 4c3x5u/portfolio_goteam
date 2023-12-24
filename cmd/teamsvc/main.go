@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	// envServePort is the name of the environment variable used for setting
+	// envSvcPort is the name of the environment variable used for setting
 	// the port to run the team service on.
-	envServePort = "TEAM_SERVICE_PORT"
+	envSvcPort = "TEAM_SERVICE_PORT"
 
 	// envAWSRegion is the name of the environment variable used for determining
 	// the AWS region to connect to for DynamoDB.
@@ -48,7 +48,7 @@ func main() {
 
 	// get environment variables
 	var (
-		port         = os.Getenv(envServePort)
+		svcPort      = os.Getenv(envSvcPort)
 		awsRegion    = os.Getenv(envAWSRegion)
 		jwtKey       = os.Getenv(envJWTKey)
 		clientOrigin = os.Getenv(envClientOrigin)
@@ -57,8 +57,8 @@ func main() {
 	// check all environment variables were set
 	errPostfix := " was empty"
 	switch "" {
-	case port:
-		log.Error(envServePort + errPostfix)
+	case svcPort:
+		log.Error(envSvcPort + errPostfix)
 	case awsRegion:
 		log.Error(envAWSRegion + errPostfix)
 	case jwtKey:
@@ -124,8 +124,8 @@ func main() {
 	}))
 
 	// serve the registered routes
-	log.Info("running team service on port ", port)
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	log.Info("running team service on port ", svcPort)
+	if err := http.ListenAndServe(":"+svcPort, mux); err != nil {
 		log.Fatal(err)
 		os.Exit(5)
 	}
