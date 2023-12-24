@@ -94,9 +94,9 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			tasks:         someTasks,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var tasks []tasktbl.Task
-				err := json.NewDecoder(r.Body).Decode(&tasks)
+				err := json.NewDecoder(resp.Body).Decode(&tasks)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -134,21 +134,19 @@ func TestGetHandler(t *testing.T) {
 			authDecoder.Err = c.errDecodeAuth
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.tasks
-
+			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name: "auth-token", Value: c.authToken,
 				})
 			}
-			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")
 
-			res := w.Result()
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

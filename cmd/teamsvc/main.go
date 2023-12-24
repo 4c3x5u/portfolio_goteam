@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	// envSvcPort is the name of the environment variable used for setting
-	// the port to run the team service on.
-	envSvcPort = "TEAM_SERVICE_PORT"
+	// envPort is the name of the environment variable used for setting the port
+	// to run the team service on.
+	envPort = "TEAM_SERVICE_PORT"
 
 	// envAWSRegion is the name of the environment variable used for determining
 	// the AWS region to connect to for DynamoDB.
@@ -30,8 +30,8 @@ const (
 	// envJWTKey is the name of the environment variable used for signing JWTs.
 	envJWTKey = "JWT_KEY"
 
-	// envClientOrigin is the name of the environment variable used to set up CORS
-	// with the client app.
+	// envClientOrigin is the name of the environment variable used to set up
+	// CORS with the client app.
 	envClientOrigin = "CLIENT_ORIGIN"
 )
 
@@ -42,29 +42,29 @@ func main() {
 	// load environment variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
+		return
 	}
 
 	// get environment variables
 	var (
-		svcPort      = os.Getenv(envSvcPort)
+		port         = os.Getenv(envPort)
 		awsRegion    = os.Getenv(envAWSRegion)
 		jwtKey       = os.Getenv(envJWTKey)
 		clientOrigin = os.Getenv(envClientOrigin)
 	)
 
 	// check all environment variables were set
-	errPostfix := " was empty"
+	errPostfix := "was empty"
 	switch "" {
-	case svcPort:
-		log.Error(envSvcPort + errPostfix)
+	case port:
+		log.Error(envPort, errPostfix)
 	case awsRegion:
-		log.Error(envAWSRegion + errPostfix)
+		log.Error(envAWSRegion, errPostfix)
 	case jwtKey:
-		log.Error(envJWTKey + errPostfix)
+		log.Error(envJWTKey, errPostfix)
 	case clientOrigin:
-		log.Error(envClientOrigin + errPostfix)
+		log.Error(envClientOrigin, errPostfix)
 	}
 
 	// create DynamoDB client
@@ -124,9 +124,9 @@ func main() {
 	}))
 
 	// serve the registered routes
-	log.Info("running team service on port ", svcPort)
-	if err := http.ListenAndServe(":"+svcPort, mux); err != nil {
+	log.Info("running team service on port", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
-		os.Exit(5)
+		return
 	}
 }

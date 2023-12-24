@@ -218,7 +218,6 @@ func TestDELETEHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			// Set pre-determinate return values for sut's dependencies.
 			authDecoder.Err = c.errDecodeAuth
 			authDecoder.Res = c.authDecoded
 			stateDecoder.Err = c.errDecodeState
@@ -226,8 +225,7 @@ func TestDELETEHandler(t *testing.T) {
 			deleter.Err = c.deleteBoardErr
 			stateEncoder.Err = c.errEncodeState
 			stateEncoder.Res = c.outState
-
-			// Prepare request and response recorder.
+			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPost, "/?id="+c.boardID, nil)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
@@ -241,17 +239,12 @@ func TestDELETEHandler(t *testing.T) {
 					Value: c.authToken,
 				})
 			}
-			w := httptest.NewRecorder()
 
-			// Handle request with sut and get the result.
 			sut.Handle(w, r, "")
-			res := w.Result()
 
-			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
-			// Run case-specific assertions.
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

@@ -61,7 +61,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusUnauthorized,
-			assertFunc:           assert.OnResErr("Auth token not found."),
+			assertFunc:           assert.OnRespErr("Auth token not found."),
 		},
 		{
 			name:                 "ErrDecodeAuth",
@@ -75,7 +75,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusUnauthorized,
-			assertFunc:           assert.OnResErr("Invalid auth token."),
+			assertFunc:           assert.OnRespErr("Invalid auth token."),
 		},
 		{
 			name:                 "NotAdmin",
@@ -89,7 +89,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Only team admins can edit tasks.",
 			),
 		},
@@ -105,7 +105,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc:           assert.OnResErr("State token not found."),
+			assertFunc:           assert.OnRespErr("State token not found."),
 		},
 		{
 			name:                 "ErrDecodeState",
@@ -119,7 +119,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc:           assert.OnResErr("Invalid state token."),
+			assertFunc:           assert.OnRespErr("Invalid state token."),
 		},
 		// task id is invalid when it is not found in state
 		{
@@ -134,7 +134,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc:           assert.OnResErr("Invalid task ID."),
+			assertFunc:           assert.OnRespErr("Invalid task ID."),
 		},
 		{
 			name:          "TaskTitleEmpty",
@@ -150,7 +150,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Task title cannot be empty.",
 			),
 		},
@@ -168,7 +168,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Task title cannot be longer than 50 characters.",
 			),
 		},
@@ -204,7 +204,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: validator.ErrEmpty,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Subtask title cannot be empty.",
 			),
 		},
@@ -222,7 +222,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: validator.ErrTooLong,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Subtask title cannot be longer than 50 characters.",
 			),
 		},
@@ -258,7 +258,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       db.ErrNoItem,
 			wantStatusCode:       http.StatusNotFound,
-			assertFunc:           assert.OnResErr("Task not found."),
+			assertFunc:           assert.OnRespErr("Task not found."),
 		},
 		{
 			name:          "TaskUpdaterErr",
@@ -301,7 +301,6 @@ func TestPatchHandler(t *testing.T) {
 			titleValidator.Err = c.errValidateTitle
 			subtTitleValidator.Err = c.errValidateSubtTitle
 			taskUpdater.Err = c.taskUpdaterErr
-
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/?id=qwerty", strings.NewReader(`{
 				"column":      0,
@@ -324,9 +323,9 @@ func TestPatchHandler(t *testing.T) {
 
 			sut.Handle(w, r, "")
 
-			res := w.Result()
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

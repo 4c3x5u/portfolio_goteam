@@ -85,9 +85,9 @@ func TestGetHandler(t *testing.T) {
 			team:          wantTeam,
 			errInsert:     nil,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(t *testing.T, res *http.Response, _ []any) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var team teamtbl.Team
-				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
+				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
 					t.Fatal(err)
 				}
 
@@ -109,7 +109,7 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtbl.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(t *testing.T, res *http.Response, _ []any) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "ErrInsert",
@@ -131,9 +131,10 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtbl.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusCreated,
-			assertFunc: func(t *testing.T, res *http.Response, _ []any) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var team teamtbl.Team
-				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
+
+				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
 					t.Fatal(err)
 				}
 
@@ -149,20 +150,17 @@ func TestGetHandler(t *testing.T) {
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.team
 			inserter.Err = c.errInsert
-
+			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if c.auth != "" {
 				r.AddCookie(&http.Cookie{Name: "auth-token", Value: c.auth})
 			}
-			w := httptest.NewRecorder()
 
 			sut.Handle(w, r, "")
 
-			res := w.Result()
-
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

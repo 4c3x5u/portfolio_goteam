@@ -126,34 +126,28 @@ func TestPOSTHandler(t *testing.T) {
 			authToken:        http.Cookie{Name: "foo", Value: "bar"},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
-				ck := r.Cookies()[0]
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				ck := resp.Cookies()[0]
 				assert.Equal(t.Error, ck.Name, "foo")
 				assert.Equal(t.Error, ck.Value, "bar")
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			// Set pre-determinate return values for sut's dependencies.
 			validator.isValid = c.reqIsValid
 			userRetriever.Res = c.user
 			userRetriever.Err = c.errRetrieveUser
 			passwordComparer.err = c.errCompareHash
 			authEncoder.Res = c.authToken
 			authEncoder.Err = c.errGenerateToken
-
-			req := httptest.NewRequest("", "/", strings.NewReader("{}"))
 			w := httptest.NewRecorder()
+			r := httptest.NewRequest("", "/", strings.NewReader("{}"))
 
-			// Handle request with sut and get the result.
-			sut.Handle(w, req, "")
-			res := w.Result()
+			sut.Handle(w, r, "")
 
-			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-			// Run case-specific assertions.
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

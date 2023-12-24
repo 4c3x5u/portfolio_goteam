@@ -48,7 +48,7 @@ func NewPostHandler(
 // ServeHTTP responds to requests made to the login route.
 func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// Read and validate request body.
-	req := PostReq{}
+	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)

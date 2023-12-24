@@ -50,7 +50,7 @@ func TestTeamAPI(t *testing.T) {
 				name:       "OK",
 				authFunc:   addCookieAuth(tkTeam1Member),
 				wantStatus: http.StatusOK,
-				assertFunc: func(t *testing.T, r *http.Response) {
+				assertFunc: func(t *testing.T, resp *http.Response) {
 					wantResp := teamapi.GetResp{
 						ID:      "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
 						Members: []string{"team1Admin", "team1Member"},
@@ -70,18 +70,22 @@ func TestTeamAPI(t *testing.T) {
 						},
 					}
 
-					var resp teamapi.GetResp
-					err := json.NewDecoder(r.Body).Decode(&resp)
+					var respBody teamapi.GetResp
+					err := json.NewDecoder(resp.Body).Decode(&respBody)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					assert.Equal(t.Error, resp.ID, wantResp.ID)
-					assert.AllEqual(t.Error, resp.Members, wantResp.Members)
-					assert.Equal(t.Error, len(resp.Boards), len(wantResp.Boards))
+					assert.Equal(t.Error, respBody.ID, wantResp.ID)
+					assert.AllEqual(t.Error,
+						respBody.Members, wantResp.Members,
+					)
+					assert.Equal(t.Error,
+						len(respBody.Boards), len(wantResp.Boards),
+					)
 					for i, b := range wantResp.Boards {
-						assert.Equal(t.Error, resp.Boards[i].ID, b.ID)
-						assert.Equal(t.Error, resp.Boards[i].Name, b.Name)
+						assert.Equal(t.Error, respBody.Boards[i].ID, b.ID)
+						assert.Equal(t.Error, respBody.Boards[i].Name, b.Name)
 					}
 				},
 			},
@@ -93,7 +97,7 @@ func TestTeamAPI(t *testing.T) {
 						"zZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I",
 				),
 				wantStatus: http.StatusUnauthorized,
-				assertFunc: func(t *testing.T, r *http.Response) {},
+				assertFunc: func(*testing.T, *http.Response) {},
 			},
 			{
 				name: "Created",
@@ -104,20 +108,20 @@ func TestTeamAPI(t *testing.T) {
 						"rzU_3yxOi2bNXRLuyxgzbUnEftITcIFMz2jCb8",
 				),
 				wantStatus: http.StatusCreated,
-				assertFunc: func(t *testing.T, r *http.Response) {
+				assertFunc: func(t *testing.T, resp *http.Response) {
 					wantMembers := []string{"newuser"}
 					wantBoardLen := 1
 					wantBoardName := "New Board"
 
-					// assert on response
-					var resp teamapi.GetResp
-					err := json.NewDecoder(r.Body).Decode(&resp)
+					// assert on response body
+					var respBody teamapi.GetResp
+					err := json.NewDecoder(resp.Body).Decode(&respBody)
 					if err != nil {
 						t.Fatal(err)
 					}
-					assert.AllEqual(t.Error, resp.Members, wantMembers)
-					assert.Equal(t.Error, len(resp.Boards), wantBoardLen)
-					assert.Equal(t.Error, resp.Boards[0].Name, wantBoardName)
+					assert.AllEqual(t.Error, respBody.Members, wantMembers)
+					assert.Equal(t.Error, len(respBody.Boards), wantBoardLen)
+					assert.Equal(t.Error, respBody.Boards[0].Name, wantBoardName)
 
 					// asssert on db
 					out, err := db.GetItem(
@@ -126,7 +130,7 @@ func TestTeamAPI(t *testing.T) {
 							TableName: &teamTableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
-									Value: resp.ID,
+									Value: respBody.ID,
 								},
 							},
 						},
@@ -149,13 +153,12 @@ func TestTeamAPI(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "/team", nil)
 				c.authFunc(r)
 				w := httptest.NewRecorder()
+
 				handler.Handle(w, r, "")
 
-				res := w.Result()
-
-				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-				c.assertFunc(t, res)
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+				c.assertFunc(t, resp)
 			})
 		}
 	})

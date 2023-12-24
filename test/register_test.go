@@ -3,11 +3,11 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -41,19 +41,19 @@ func TestRegisterAPI(t *testing.T) {
 	assertOnValidationErrs := func(
 		wantUsernameErrs, wantPasswordErrs []string,
 	) func(*testing.T, *http.Response, string) {
-		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody registerAPI.PostResp
-			if err := json.NewDecoder(res.Body).Decode(
-				&resBody,
+		return func(t *testing.T, resp *http.Response, _ string) {
+			var respBody registerAPI.PostResp
+			if err := json.NewDecoder(resp.Body).Decode(
+				&respBody,
 			); err != nil {
 				t.Fatal(err)
 			}
 			assert.AllEqual(t.Error,
-				resBody.ValidationErrs.Username,
+				respBody.ValidationErrs.Username,
 				wantUsernameErrs,
 			)
 			assert.AllEqual(t.Error,
-				resBody.ValidationErrs.Password,
+				respBody.ValidationErrs.Password,
 				wantPasswordErrs,
 			)
 		}
@@ -62,12 +62,12 @@ func TestRegisterAPI(t *testing.T) {
 	assertOnResErr := func(
 		wantErrMsg string,
 	) func(*testing.T, *http.Response, string) {
-		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody registerAPI.PostResp
-			if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
+		return func(t *testing.T, resp *http.Response, _ string) {
+			var respBody registerAPI.PostResp
+			if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
 				t.Fatal(err)
 			}
-			assert.Equal(t.Error, resBody.Err, wantErrMsg)
+			assert.Equal(t.Error, respBody.Err, wantErrMsg)
 		}
 	}
 
@@ -160,7 +160,7 @@ func TestRegisterAPI(t *testing.T) {
 			password:       "Myp4ssw0rd!",
 			inviteToken:    "",
 			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
 				// might take some time for post to create user so tr once
 				// a second 5 times just in case.
 				out, err := db.GetItem(
@@ -188,7 +188,7 @@ func TestRegisterAPI(t *testing.T) {
 
 				// assert that the returned JWT is valid and has the correct
 				// subject
-				cookie := res.Cookies()[0]
+				cookie := resp.Cookies()[0]
 				assert.True(t.Error, cookie.Secure)
 				assert.Equal(t.Error, cookie.SameSite, http.SameSiteNoneMode)
 				claims := jwt.MapClaims{}
@@ -218,29 +218,23 @@ func TestRegisterAPI(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			reqBody, err := json.Marshal(map[string]string{
-				"username": c.username,
-				"password": c.password,
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req := httptest.NewRequest(
-				http.MethodPost, "/", bytes.NewReader(reqBody),
-			)
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
+                "username": "`+c.username+`",
+                "password": "`+c.password+`"
+            }`))
 			if c.inviteToken != "" {
-				req.AddCookie(&http.Cookie{
+				r.AddCookie(&http.Cookie{
 					Name:  "invite-token",
 					Value: c.inviteToken,
 				})
 			}
-			w := httptest.NewRecorder()
 
-			sut.Handle(w, req, "")
+			sut.Handle(w, r, "")
 
-			res := w.Result()
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-			c.assertFunc(t, res, "")
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+			c.assertFunc(t, resp, "")
 		})
 	}
 }

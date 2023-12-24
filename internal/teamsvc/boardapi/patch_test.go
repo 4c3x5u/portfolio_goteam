@@ -60,7 +60,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusUnauthorized,
-			assertFunc:      assert.OnResErr("Auth token not found."),
+			assertFunc:      assert.OnRespErr("Auth token not found."),
 		},
 		{
 			name:            "InvalidAuth",
@@ -74,7 +74,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusUnauthorized,
-			assertFunc:      assert.OnResErr("Invalid auth token."),
+			assertFunc:      assert.OnRespErr("Invalid auth token."),
 		},
 		{
 			name:            "NotAdmin",
@@ -88,7 +88,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Only team admins can edit boards.",
 			),
 		},
@@ -104,7 +104,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusForbidden,
-			assertFunc:      assert.OnResErr("State token not found."),
+			assertFunc:      assert.OnRespErr("State token not found."),
 		},
 		{
 			name:            "InvalidState",
@@ -118,7 +118,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusForbidden,
-			assertFunc:      assert.OnResErr("Invalid state token."),
+			assertFunc:      assert.OnRespErr("Invalid state token."),
 		},
 		{
 			name:            "IDEmpty",
@@ -132,7 +132,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board ID cannot be empty."),
+			assertFunc:      assert.OnRespErr("Board ID cannot be empty."),
 		},
 		{
 			name:            "IDNotUUID",
@@ -146,7 +146,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board ID must be a UUID."),
+			assertFunc:      assert.OnRespErr("Board ID must be a UUID."),
 		},
 		{
 			name:           "NameEmpty",
@@ -162,7 +162,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: validator.ErrEmpty,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board name cannot be empty."),
+			assertFunc:      assert.OnRespErr("Board name cannot be empty."),
 		},
 		{
 			name:           "NameTooLong",
@@ -178,7 +178,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: validator.ErrTooLong,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Board name cannot be longer than 35 characters.",
 			),
 		},
@@ -193,7 +193,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"You do not have access to this board.",
 			),
 		},
@@ -210,7 +210,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  db.ErrNoItem,
 			wantStatus:      http.StatusNotFound,
-			assertFunc:      assert.OnResErr("Board not found."),
+			assertFunc:      assert.OnRespErr("Board not found."),
 		},
 		{
 			name:           "BoardUpdaterErr",
@@ -251,12 +251,10 @@ func TestPatchHandler(t *testing.T) {
 			idValidator.Err = c.errValidateID
 			nameValidator.Err = c.errValidateName
 			updater.Err = c.errUpdateBoard
-
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/", strings.NewReader(`{
                 "id": "c193d6ba-ebfe-45fe-80d9-00b545690b4b"
             }`))
-
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  cookie.AuthName,
@@ -271,11 +269,10 @@ func TestPatchHandler(t *testing.T) {
 			}
 
 			sut.Handle(w, r, "")
-			res := w.Result()
 
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

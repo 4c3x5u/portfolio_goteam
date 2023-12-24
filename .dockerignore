@@ -1,5 +1,0 @@
-.gitignore
-readme.md
-.env-template
-itest/
-*_test.go

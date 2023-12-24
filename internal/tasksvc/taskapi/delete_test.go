@@ -56,7 +56,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusUnauthorized,
-			assertFunc:     assert.OnResErr("Auth token not found."),
+			assertFunc:     assert.OnRespErr("Auth token not found."),
 		},
 		{
 			name:           "ErrDecodeAuth",
@@ -70,7 +70,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusUnauthorized,
-			assertFunc:     assert.OnResErr("Invalid auth token."),
+			assertFunc:     assert.OnRespErr("Invalid auth token."),
 		},
 		{
 			name:           "NotAdmin",
@@ -84,7 +84,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Only team admins can delete tasks.",
 			),
 		},
@@ -100,7 +100,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusBadRequest,
-			assertFunc:     assert.OnResErr("State token not found."),
+			assertFunc:     assert.OnRespErr("State token not found."),
 		},
 		{
 			name:           "ErrDecodeState",
@@ -114,7 +114,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusBadRequest,
-			assertFunc:     assert.OnResErr("Invalid state token."),
+			assertFunc:     assert.OnRespErr("Invalid state token."),
 		},
 		// if the ID is not found in state, it's invalid
 		{
@@ -129,7 +129,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusBadRequest,
-			assertFunc:     assert.OnResErr("Invalid task ID."),
+			assertFunc:     assert.OnRespErr("Invalid task ID."),
 		},
 		{
 			name:           "NotFound",
@@ -147,7 +147,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatus:     http.StatusNotFound,
-			assertFunc:     assert.OnResErr("Task not found."),
+			assertFunc:     assert.OnRespErr("Task not found."),
 		},
 		{
 			name:           "ErrDeleteTask",

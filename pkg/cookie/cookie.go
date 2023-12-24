@@ -1,4 +1,5 @@
-// Package token contains code for generating, validating, and decoding JWTs.
+// Package cookie contains code for generating, validating, and decoding JWTs
+// into/from http cookies.
 package cookie
 
 import (
@@ -12,5 +13,5 @@ type Encoder[T any] interface{ Encode(T) (http.Cookie, error) }
 // Decoder defines a type that can be used to decode a JWT.
 type Decoder[T any] interface{ Decode(http.Cookie) (T, error) }
 
-// ErrInvalid means that the given token was invalid.
-var ErrInvalid = errors.New("invalid token")
+// ErrInvalid means that the given cookie was invalid.
+var ErrInvalid = errors.New("invalid cookie")

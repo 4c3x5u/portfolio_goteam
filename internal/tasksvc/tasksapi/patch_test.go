@@ -61,7 +61,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusUnauthorized,
-			assertFunc:       assert.OnResErr("Auth token not found."),
+			assertFunc:       assert.OnRespErr("Auth token not found."),
 		},
 		{
 			name:             "ErrDecodeAuth",
@@ -76,7 +76,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusUnauthorized,
-			assertFunc:       assert.OnResErr("Invalid auth token."),
+			assertFunc:       assert.OnRespErr("Invalid auth token."),
 		},
 		{
 			name:             "NotAdmin",
@@ -91,7 +91,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Only team admins can edit tasks.",
 			),
 		},
@@ -108,7 +108,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assert.OnResErr("State token not found."),
+			assertFunc:       assert.OnRespErr("State token not found."),
 		},
 		{
 			name:             "ErrDecodeState",
@@ -123,7 +123,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assert.OnResErr("Invalid state token."),
+			assertFunc:       assert.OnRespErr("Invalid state token."),
 		},
 		{
 			name:             "NoAccess",
@@ -138,7 +138,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assert.OnResErr("Invalid task ID."),
+			assertFunc:       assert.OnRespErr("Invalid task ID."),
 		},
 		{
 			name:           "ColNoInvalid",
@@ -156,7 +156,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assert.OnResErr("Invalid column number."),
+			assertFunc:       assert.OnRespErr("Invalid column number."),
 		},
 		{
 			name:           "TaskNotFound",
@@ -174,7 +174,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{},
 			wantStatus:       http.StatusNotFound,
-			assertFunc:       assert.OnResErr("Task not found."),
+			assertFunc:       assert.OnRespErr("Task not found."),
 		},
 		{
 			name:           "ErrUpdateTasks",
@@ -228,8 +228,8 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{Name: "foo", Value: "bar"},
 			wantStatus:       http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
-				ck := r.Cookies()[0]
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				ck := resp.Cookies()[0]
 				assert.Equal(t.Error, ck.Name, "foo")
 				assert.Equal(t.Error, ck.Value, "bar")
 			},
@@ -244,8 +244,7 @@ func TestPatchHandler(t *testing.T) {
 			tasksUpdater.Err = c.errUpdateTasks
 			stateEncoder.Err = c.errEncodeState
 			stateEncoder.Res = c.outState
-
-			// Prepare request and response recorder.
+			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/", strings.NewReader(`[{
                 "id": "taskid",
                 "order": 3,
@@ -261,17 +260,12 @@ func TestPatchHandler(t *testing.T) {
 					Name: "state-token", Value: c.stateToken,
 				})
 			}
-			w := httptest.NewRecorder()
 
-			// Handle request with sut and get the result.
 			sut.Handle(w, r, "")
-			res := w.Result()
 
-			// Assert on the status code.
-			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-			// Run case-specific assertions.
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

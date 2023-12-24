@@ -62,7 +62,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusUnauthorized,
-			assertFunc:      assert.OnResErr("Auth token not found."),
+			assertFunc:      assert.OnRespErr("Auth token not found."),
 		},
 		{
 			name:            "InvalidAuth",
@@ -77,7 +77,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusUnauthorized,
-			assertFunc:      assert.OnResErr("Invalid auth token."),
+			assertFunc:      assert.OnRespErr("Invalid auth token."),
 		},
 		{
 			name:            "NotAdmin",
@@ -92,7 +92,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Only team admins can edit boards.",
 			),
 		},
@@ -109,7 +109,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
-			assertFunc:      assert.OnResErr("State token not found."),
+			assertFunc:      assert.OnRespErr("State token not found."),
 		},
 		{
 			name:            "InvalidState",
@@ -124,7 +124,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusForbidden,
-			assertFunc:      assert.OnResErr("Invalid state token."),
+			assertFunc:      assert.OnRespErr("Invalid state token."),
 		},
 		{
 			name:            "LimitReached",
@@ -139,7 +139,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"You have already created the maximum amount of boards " +
 					"allowed per team. Please delete one of your boards to " +
 					"create a new one.",
@@ -160,7 +160,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
-			assertFunc:      assert.OnResErr("Board name cannot be empty."),
+			assertFunc:      assert.OnRespErr("Board name cannot be empty."),
 		},
 		{
 			name:           "NameTooLong",
@@ -177,7 +177,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"Board name cannot be longer than 35 characters.",
 			),
 		},
@@ -196,7 +196,7 @@ func TestPostHandler(t *testing.T) {
 			outStateToken:   http.Cookie{},
 			errEncodeState:  nil,
 			wantStatusCode:  http.StatusBadRequest,
-			assertFunc: assert.OnResErr(
+			assertFunc: assert.OnRespErr(
 				"You have already created the maximum amount of boards " +
 					"allowed per team. Please delete one of your boards to " +
 					"create a new one.",
@@ -267,12 +267,10 @@ func TestPostHandler(t *testing.T) {
 			inserter.Err = c.boardUpdaterErr
 			encodeState.Res = c.outStateToken
 			encodeState.Err = c.errEncodeState
-
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest("", "/", strings.NewReader(`{
                 "id": "c193d6ba-ebfe-45fe-80d9-00b545690b4b"
             }`))
-
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  "auth-token",
@@ -287,11 +285,10 @@ func TestPostHandler(t *testing.T) {
 			}
 
 			sut.Handle(w, r, "")
-			res := w.Result()
 
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
-			c.assertFunc(t, res, log.Args)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

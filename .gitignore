@@ -164,4 +164,7 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 
+# go-build-generated files
+main
+
 # End of https://www.toptal.com/developers/gitignore/api/go,node

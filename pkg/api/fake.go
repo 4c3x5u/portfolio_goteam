@@ -7,7 +7,7 @@ import (
 // FakeMethodHandler is a test fake for MethodHandler.
 type FakeMethodHandler struct {
 	InResponseWriter http.ResponseWriter
-	InReq            *http.Request
+	InR              *http.Request
 	InSub            string
 }
 
@@ -17,7 +17,7 @@ type FakeMethodHandler struct {
 func (f *FakeMethodHandler) Handle(
 	w http.ResponseWriter, r *http.Request, sub string,
 ) {
-	f.InResponseWriter, f.InReq, f.InSub = w, r, sub
+	f.InResponseWriter, f.InR, f.InSub = w, r, sub
 }
 
 // FakeStringValidator is a test fake for StringValidator.

@@ -68,21 +68,21 @@ func TestTaskAPI(t *testing.T) {
 				reqBody:        `{}`,
 				authFunc:       func(*http.Request) {},
 				wantStatusCode: http.StatusUnauthorized,
-				assertFunc:     assert.OnResErr("Auth token not found."),
+				assertFunc:     assert.OnRespErr("Auth token not found."),
 			},
 			{
 				name:           "InvalidAuth",
 				reqBody:        `{}`,
 				authFunc:       addCookieAuth("asdfkjldfs"),
 				wantStatusCode: http.StatusUnauthorized,
-				assertFunc:     assert.OnResErr("Invalid auth token."),
+				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				reqBody:        `{}`,
 				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Only team admins can create tasks.",
 				),
 			},
@@ -91,7 +91,7 @@ func TestTaskAPI(t *testing.T) {
 				reqBody:        `{}`,
 				authFunc:       addCookieAuth(tkTeam1Admin),
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"State token not found.",
 				),
 			},
@@ -103,7 +103,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState("ksadjfhaskdf")(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Invalid state token."),
+				assertFunc:     assert.OnRespErr("Invalid state token."),
 			},
 			{
 				name: "ColNoOutOfBounds",
@@ -116,7 +116,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Column number out of bounds.",
 				),
 			},
@@ -128,7 +128,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"You do not have access to this board.",
 				),
 			},
@@ -144,7 +144,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task title cannot be empty."),
+				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
 			{
 				name: "TaskTitleTooLong",
@@ -158,7 +158,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Task title cannot be longer than 50 characters.",
 				),
 			},
@@ -175,7 +175,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be empty.",
 				),
 			},
@@ -194,7 +194,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be longer than 50 characters.",
 				),
 			},
@@ -271,17 +271,17 @@ func TestTaskAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest(
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(
 					http.MethodPost, "/tasks/task", strings.NewReader(c.reqBody),
 				)
-				c.authFunc(req)
-				w := httptest.NewRecorder()
+				c.authFunc(r)
 
-				sut.ServeHTTP(w, req)
+				sut.ServeHTTP(w, r)
 
-				res := w.Result()
-				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})
@@ -305,7 +305,7 @@ func TestTaskAPI(t *testing.T) {
 				}`,
 				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Only team admins can edit tasks.",
 				),
 			},
@@ -322,7 +322,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Invalid task ID."),
+				assertFunc:     assert.OnRespErr("Invalid task ID."),
 			},
 			{
 				name:   "TaskTitleEmpty",
@@ -337,7 +337,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Task title cannot be empty."),
+				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
 			{
 				name:   "TaskTitleTooLong",
@@ -352,7 +352,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Task title cannot be longer than 50 characters.",
 				),
 			},
@@ -369,7 +369,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be empty.",
 				),
 			},
@@ -388,7 +388,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be longer than 50 characters.",
 				),
 			},
@@ -451,19 +451,19 @@ func TestTaskAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest(
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(
 					http.MethodPatch,
 					"/tasks/task?id="+c.taskID,
 					strings.NewReader(c.reqBody),
 				)
-				c.authFunc(req)
-				w := httptest.NewRecorder()
+				c.authFunc(r)
 
-				sut.ServeHTTP(w, req)
+				sut.ServeHTTP(w, r)
 
-				res := w.Result()
-				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})
@@ -481,21 +481,21 @@ func TestTaskAPI(t *testing.T) {
 				id:             "",
 				authFunc:       func(*http.Request) {},
 				wantStatusCode: http.StatusUnauthorized,
-				assertFunc:     assert.OnResErr("Auth token not found."),
+				assertFunc:     assert.OnRespErr("Auth token not found."),
 			},
 			{
 				name:           "InvalidAuth",
 				id:             "",
 				authFunc:       addCookieAuth("asdfasdf"),
 				wantStatusCode: http.StatusUnauthorized,
-				assertFunc:     assert.OnResErr("Invalid auth token."),
+				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				id:             "",
 				authFunc:       addCookieAuth(tkTeam1Member),
 				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Only team admins can delete tasks.",
 				),
 			},
@@ -507,7 +507,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnResErr("Invalid task ID."),
+				assertFunc:     assert.OnRespErr("Invalid task ID."),
 			},
 			{
 				name: "OK",
@@ -540,17 +540,17 @@ func TestTaskAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
 				r := httptest.NewRequest(
 					http.MethodDelete, "/tasks/task?id="+c.id, nil,
 				)
 				c.authFunc(r)
-				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, r)
 
-				res := w.Result()
-				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})

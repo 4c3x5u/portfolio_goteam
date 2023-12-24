@@ -62,21 +62,21 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   func(*http.Request) {},
 				wantStatus: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Auth token not found."),
+				assertFunc: assert.OnRespErr("Auth token not found."),
 			},
 			{
 				name:       "InvalidAuth",
 				boardName:  "",
 				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
 				wantStatus: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Invalid auth token."),
+				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
 				boardName:  "",
 				authFunc:   addCookieAuth(tkTeam4Member),
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Only team admins can edit boards.",
 				),
 			},
@@ -85,7 +85,7 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   addCookieAuth(tkTeam4Admin),
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr("State token not found."),
+				assertFunc: assert.OnRespErr("State token not found."),
 			},
 			{
 				name:      "InvalidState",
@@ -95,7 +95,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState("asdkljfhaskldfjhasdklf")(r)
 				},
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr("Invalid state token."),
+				assertFunc: assert.OnRespErr("Invalid state token."),
 			},
 			{
 				name: "EmptyBoardName",
@@ -105,7 +105,7 @@ func TestBoardAPI(t *testing.T) {
 				},
 				boardName:  "",
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board name cannot be empty."),
+				assertFunc: assert.OnRespErr("Board name cannot be empty."),
 			},
 			{
 				name: "TooLongBoardName",
@@ -115,7 +115,7 @@ func TestBoardAPI(t *testing.T) {
 				},
 				boardName:  "A Board Whose Name Is Just Too Long!",
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Board name cannot be longer than 35 characters.",
 				),
 			},
@@ -127,7 +127,7 @@ func TestBoardAPI(t *testing.T) {
 				},
 				boardName:  "bob123's new board",
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"You have already created the maximum amount of boards " +
 						"allowed per team. Please delete one of your boards " +
 						"to create a new one.",
@@ -180,12 +180,10 @@ func TestBoardAPI(t *testing.T) {
 				c.authFunc(r)
 
 				sut.ServeHTTP(w, r)
-				res := w.Result()
 
-				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-				// run case-specific assertions
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})
@@ -205,7 +203,7 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   func(*http.Request) {},
 				wantStatus: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Auth token not found."),
+				assertFunc: assert.OnRespErr("Auth token not found."),
 			},
 			{
 				name:       "InvalidAuth",
@@ -213,7 +211,7 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
 				wantStatus: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Invalid auth token."),
+				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
@@ -221,7 +219,7 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   addCookieAuth(tkTeam1Member),
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Only team admins can edit boards.",
 				),
 			},
@@ -231,7 +229,7 @@ func TestBoardAPI(t *testing.T) {
 				boardName:  "",
 				authFunc:   addCookieAuth(tkTeam1Admin),
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr("State token not found."),
+				assertFunc: assert.OnRespErr("State token not found."),
 			},
 			{
 				name:      "InvalidState",
@@ -242,7 +240,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState("asdkljfhaskldfjhasdklf")(r)
 				},
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr("Invalid state token."),
+				assertFunc: assert.OnRespErr("Invalid state token."),
 			},
 			{
 				name:      "IDEmpty",
@@ -253,7 +251,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board ID cannot be empty."),
+				assertFunc: assert.OnRespErr("Board ID cannot be empty."),
 			},
 			{
 				name:      "IDNotUUID",
@@ -264,7 +262,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board ID must be a UUID."),
+				assertFunc: assert.OnRespErr("Board ID must be a UUID."),
 			},
 			{
 				name:      "BoardNameEmpty",
@@ -275,7 +273,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Board name cannot be empty."),
+				assertFunc: assert.OnRespErr("Board name cannot be empty."),
 			},
 			{
 				name:      "BoardNameTooLong",
@@ -286,7 +284,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatus: http.StatusBadRequest,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"Board name cannot be longer than 35 characters.",
 				),
 			},
@@ -299,7 +297,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam3State)(r)
 				},
 				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnResErr(
+				assertFunc: assert.OnRespErr(
 					"You do not have access to this board.",
 				),
 			},
@@ -355,11 +353,10 @@ func TestBoardAPI(t *testing.T) {
 				c.authFunc(r)
 
 				sut.ServeHTTP(w, r)
-				res := w.Result()
 
-				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
-
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})
@@ -447,18 +444,16 @@ func TestBoardAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
+				w := httptest.NewRecorder()
 				r := httptest.NewRequest(
 					http.MethodDelete, "/team/board?id="+c.id, nil,
 				)
 				c.authFunc(r)
-				w := httptest.NewRecorder()
 
 				sut.ServeHTTP(w, r)
-				res := w.Result()
 
-				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
-				// run case-specific assertions
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
 				c.assertFunc(t)
 			})
 		}

@@ -3,10 +3,9 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -66,8 +65,8 @@ func TestLoginAPI(t *testing.T) {
 			username:       "team1Member",
 			password:       "P4ssw@rd123",
 			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, res *http.Response) {
-				ckAuth := res.Cookies()[0]
+			assertFunc: func(t *testing.T, resp *http.Response) {
+				ckAuth := resp.Cookies()[0]
 
 				assert.True(t.Error, ckAuth.Secure)
 				assert.Equal(t.Error, ckAuth.SameSite, http.SameSiteNoneMode)
@@ -108,26 +107,19 @@ func TestLoginAPI(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			reqBody, err := json.Marshal(map[string]string{
-				"username": c.username,
-				"password": c.password,
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			req := httptest.NewRequest(
-				http.MethodPost, "/", bytes.NewReader(reqBody),
-			)
 			w := httptest.NewRecorder()
+			r := httptest.NewRequest(
+				http.MethodPost, "/", strings.NewReader(`{
+                    "username": "`+c.username+`",
+                    "password": "`+c.password+`"
+                }`),
+			)
 
-			sut.Handle(w, req, "")
+			sut.Handle(w, r, "")
 
-			res := w.Result()
-
-			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-
-			// Run case-specific assertions.
-			c.assertFunc(t, res)
+			resp := w.Result()
+			assert.Equal(t.Error, resp.StatusCode, c.wantStatusCode)
+			c.assertFunc(t, resp)
 		})
 	}
 }

@@ -30,8 +30,8 @@ const (
 	// envJWTKey is the name of the environment variable used for signing JWTs.
 	envJWTKey = "JWT_KEY"
 
-	// envClientOrigin is the name of the environment variable used to set up CORS
-	// with the client app.
+	// envClientOrigin is the name of the environment variable used to set up
+	// CORS with the client app.
 	envClientOrigin = "CLIENT_ORIGIN"
 )
 
@@ -42,8 +42,8 @@ func main() {
 	// load environment variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+		log.Fatal(err)
+		return
 	}
 
 	// get environment variables
@@ -55,16 +55,16 @@ func main() {
 	)
 
 	// check all environment variables were set
-	errPostfix := " was empty"
+	errPostfix := "was empty"
 	switch "" {
 	case port:
-		log.Error(envSvcPort + errPostfix)
+		log.Error(envSvcPort, errPostfix)
 	case awsRegion:
-		log.Error(envAWSRegion + errPostfix)
+		log.Error(envAWSRegion, errPostfix)
 	case jwtKey:
-		log.Error(envJWTKey + errPostfix)
+		log.Error(envJWTKey, errPostfix)
 	case clientOrigin:
-		log.Error(envClientOrigin + errPostfix)
+		log.Error(envClientOrigin, errPostfix)
 	}
 
 	// create DynamoDB client
@@ -87,7 +87,7 @@ func main() {
 	// register handlers for HTTP routes
 	mux := http.NewServeMux()
 
-	mux.Handle("/user/register", api.NewHandler(map[string]api.MethodHandler{
+	mux.Handle("/register", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: registerapi.NewPostHandler(
 			registerapi.NewUserValidator(
 				registerapi.NewUsernameValidator(),
@@ -101,7 +101,7 @@ func main() {
 		),
 	}))
 
-	mux.Handle("/user/login", api.NewHandler(map[string]api.MethodHandler{
+	mux.Handle("/login", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: loginapi.NewPostHandler(
 			loginapi.NewValidator(),
 			usertbl.NewRetriever(db),
@@ -115,6 +115,6 @@ func main() {
 	log.Info("running user service on port", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
-		os.Exit(5)
+		return
 	}
 }

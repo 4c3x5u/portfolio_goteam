@@ -65,43 +65,49 @@ func TestTasksAPI(t *testing.T) {
 						"OvcdaHsziQzAcQA7DP5PB74HyxNV8HpbowA7goZUI",
 				),
 				statusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, r *http.Response, _ string) {
+				assertFunc: func(t *testing.T, resp *http.Response, _ string) {
 					wantResp := tasksapi.GetResp{
 						{
-							TeamID:       "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-							BoardID:      "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+							TeamID: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bb" +
+								"c",
+							BoardID: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd" +
+								"5",
 							ColumnNumber: 0,
-							ID:           "55e275e4-de80-4241-b73b-88e784d5522b",
-							Title:        "team 4 task 1",
-							Description:  "team 4 task 1 description",
-							Order:        1,
+							ID: "55e275e4-de80-4241-b73b-88e784d5522" +
+								"b",
+							Title:       "team 4 task 1",
+							Description: "team 4 task 1 description",
+							Order:       1,
 							Subtasks: []tasktbl.Subtask{
 								{Title: "team 4 subtask 1", IsDone: false},
 							},
 						},
 						{
-							TeamID:       "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-							BoardID:      "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+							TeamID: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bb" +
+								"c",
+							BoardID: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd" +
+								"5",
 							ColumnNumber: 0,
-							ID:           "5ccd750d-3783-4832-891d-025f24a4944f",
-							Title:        "team 4 task 2",
-							Description:  "team 4 task 2 description",
-							Order:        0,
+							ID: "5ccd750d-3783-4832-891d-025f24a4944" +
+								"f",
+							Title:       "team 4 task 2",
+							Description: "team 4 task 2 description",
+							Order:       0,
 							Subtasks: []tasktbl.Subtask{
 								{Title: "team 4 subtask 2", IsDone: true},
 							},
 						},
 					}
 
-					var resp tasksapi.GetResp
-					err := json.NewDecoder(r.Body).Decode(&resp)
+					var respBody tasksapi.GetResp
+					err := json.NewDecoder(resp.Body).Decode(&respBody)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					assert.Equal(t.Error, len(resp), len(wantResp))
+					assert.Equal(t.Error, len(respBody), len(wantResp))
 					for i, wt := range wantResp {
-						task := resp[i]
+						task := respBody[i]
 						assert.Equal(t.Error, task.TeamID, wt.TeamID)
 						assert.Equal(t.Error, task.BoardID, wt.BoardID)
 						assert.Equal(t.Error,
@@ -127,14 +133,14 @@ func TestTasksAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest(http.MethodGet, "/tasks", nil)
-				c.authFunc(req)
 				w := httptest.NewRecorder()
+				r := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+				c.authFunc(r)
 
-				sut.ServeHTTP(w, req)
-				res := w.Result()
+				sut.ServeHTTP(w, r)
+				resp := w.Result()
 
-				assert.Equal(t.Error, res.StatusCode, c.statusCode)
+				assert.Equal(t.Error, resp.StatusCode, c.statusCode)
 			})
 		}
 	})
@@ -152,28 +158,30 @@ func TestTasksAPI(t *testing.T) {
 				reqBody:    `[]`,
 				authFunc:   func(*http.Request) {},
 				statusCode: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Auth token not found."),
+				assertFunc: assert.OnRespErr("Auth token not found."),
 			},
 			{
 				name:       "InvalidAuth",
 				reqBody:    `[]`,
 				authFunc:   addCookieAuth("asdfjkahsd"),
 				statusCode: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr("Invalid auth token."),
+				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
 				reqBody:    `[]`,
 				authFunc:   addCookieAuth(tkTeam1Member),
 				statusCode: http.StatusForbidden,
-				assertFunc: assert.OnResErr("Only team admins can edit tasks."),
+				assertFunc: assert.OnRespErr(
+					"Only team admins can edit tasks.",
+				),
 			},
 			{
 				name:       "NoState",
 				reqBody:    `[]`,
 				authFunc:   addCookieAuth(tkTeam1Admin),
 				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("State token not found."),
+				assertFunc: assert.OnRespErr("State token not found."),
 			},
 			{
 				name:    "InvalidState",
@@ -183,7 +191,7 @@ func TestTasksAPI(t *testing.T) {
 					addCookieState("askdjfhasdlfk")(r)
 				},
 				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Invalid state token."),
+				assertFunc: assert.OnRespErr("Invalid state token."),
 			},
 			{
 				name:    "InvalidTaskID",
@@ -193,7 +201,7 @@ func TestTasksAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnResErr("Invalid task ID."),
+				assertFunc: assert.OnRespErr("Invalid task ID."),
 			},
 			{
 				name: "Success",
@@ -248,18 +256,17 @@ func TestTasksAPI(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				req := httptest.NewRequest(
+				w := httptest.NewRecorder()
+				r := httptest.NewRequest(
 					http.MethodPatch, "/tasks", strings.NewReader(c.reqBody),
 				)
-				c.authFunc(req)
-				w := httptest.NewRecorder()
+				c.authFunc(r)
 
-				sut.ServeHTTP(w, req)
-				res := w.Result()
+				sut.ServeHTTP(w, r)
 
-				assert.Equal(t.Error, res.StatusCode, c.statusCode)
-
-				c.assertFunc(t, res, []any{})
+				resp := w.Result()
+				assert.Equal(t.Error, resp.StatusCode, c.statusCode)
+				c.assertFunc(t, resp, []any{})
 			})
 		}
 	})

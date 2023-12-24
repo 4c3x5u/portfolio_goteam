@@ -69,10 +69,10 @@ func TestUserValidator(t *testing.T) {
 			fakeIDValidator.errs = c.usernameErrs
 			fakePasswordValidator.errs = c.passwordErrs
 
-			res := sut.Validate(c.reqBody)
+			errs := sut.Validate(c.reqBody)
 
-			assert.AllEqual(t.Error, res.Username, c.usernameErrs)
-			assert.AllEqual(t.Error, res.Password, c.passwordErrs)
+			assert.AllEqual(t.Error, errs.Username, c.usernameErrs)
+			assert.AllEqual(t.Error, errs.Password, c.passwordErrs)
 		})
 	}
 }
