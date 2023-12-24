@@ -58,7 +58,7 @@ func TestGetHandler(t *testing.T) {
 		errRetrieve   error
 		tasks         []tasktable.Task
 		wantStatus    int
-		assertFunc    func(*testing.T, *http.Response, string)
+		assertFunc    func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:          "NoAuth",
@@ -67,7 +67,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "InvalidAuth",
@@ -76,7 +76,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "ErrRetrieve",
@@ -85,7 +85,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   errors.New("retrieve failed"),
 			tasks:         []tasktable.Task{},
 			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "OKSome",
@@ -94,7 +94,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:   nil,
 			tasks:         someTasks,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
 				var tasks []tasktable.Task
 				err := json.NewDecoder(r.Body).Decode(&tasks)
 				if err != nil {
@@ -148,7 +148,7 @@ func TestGetHandler(t *testing.T) {
 			res := w.Result()
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
-			c.assertFunc(t, res, "")
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

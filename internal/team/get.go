@@ -88,7 +88,7 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 				team.Boards[0].ID = uuid.NewString()
 			} else if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 				return
 			} else {
 				break
@@ -99,14 +99,14 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		w.WriteHeader(http.StatusCreated)
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
 	// encode team
 	if err = json.NewEncoder(w).Encode(GetResp(team)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 }

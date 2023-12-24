@@ -76,12 +76,12 @@ func (h *PostHandler) Handle(
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (h *PostHandler) Handle(
 			Error: "Invalid auth token.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -105,7 +105,7 @@ func (h *PostHandler) Handle(
 			Error: "Only team admins can create tasks.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -118,7 +118,7 @@ func (h *PostHandler) Handle(
 			Error: "State token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -131,7 +131,7 @@ func (h *PostHandler) Handle(
 			Error: "Invalid state token.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -140,7 +140,7 @@ func (h *PostHandler) Handle(
 	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *PostHandler) Handle(
 			Error: "Column number out of bounds.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -175,7 +175,7 @@ func (h *PostHandler) Handle(
 			Error: "You do not have access to this board.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -190,7 +190,7 @@ func (h *PostHandler) Handle(
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 
@@ -199,7 +199,7 @@ func (h *PostHandler) Handle(
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -215,7 +215,7 @@ func (h *PostHandler) Handle(
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 				return
 			}
 
@@ -224,7 +224,7 @@ func (h *PostHandler) Handle(
 				Error: errMsg,
 			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 			}
 			return
 		}
@@ -254,7 +254,7 @@ func (h *PostHandler) Handle(
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -270,7 +270,7 @@ func (h *PostHandler) Handle(
 	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 	http.SetCookie(w, &outCkState)

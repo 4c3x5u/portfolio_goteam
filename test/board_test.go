@@ -55,7 +55,7 @@ func TestBoardAPI(t *testing.T) {
 			authFunc   func(*http.Request)
 			boardName  string
 			wantStatus int
-			assertFunc func(*testing.T, *http.Response, string)
+			assertFunc func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:       "NoAuth",
@@ -141,15 +141,18 @@ func TestBoardAPI(t *testing.T) {
 				},
 				boardName:  "Team 4 Board 1",
 				wantStatus: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
-					out, err := db.GetItem(context.Background(), &dynamodb.GetItemInput{
-						TableName: &teamTableName,
-						Key: map[string]types.AttributeValue{
-							"ID": &types.AttributeValueMemberS{
-								Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
+					out, err := db.GetItem(
+						context.Background(), &dynamodb.GetItemInput{
+							TableName: &teamTableName,
+							Key: map[string]types.AttributeValue{
+								"ID": &types.AttributeValueMemberS{
+									Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223" +
+										"bbc",
+								},
 							},
 						},
-					})
+					)
 					assert.Nil(t.Fatal, err)
 
 					var team *teamtable.Team
@@ -182,7 +185,7 @@ func TestBoardAPI(t *testing.T) {
 				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 				// run case-specific assertions
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})
@@ -194,7 +197,7 @@ func TestBoardAPI(t *testing.T) {
 			boardName  string
 			authFunc   func(*http.Request)
 			wantStatus int
-			assertFunc func(*testing.T, *http.Response, string)
+			assertFunc func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:       "NoAuth",
@@ -309,7 +312,7 @@ func TestBoardAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatus: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(), &dynamodb.GetItemInput{
 							TableName: &teamTableName,
@@ -356,7 +359,7 @@ func TestBoardAPI(t *testing.T) {
 
 				assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})

@@ -47,7 +47,7 @@ func TestPatchHandler(t *testing.T) {
 		errValidateSubtTitle error
 		taskUpdaterErr       error
 		wantStatusCode       int
-		assertFunc           func(*testing.T, *http.Response, string)
+		assertFunc           func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:                 "NoAuth",
@@ -290,7 +290,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			taskUpdaterErr:       nil,
 			wantStatusCode:       http.StatusOK,
-			assertFunc:           func(*testing.T, *http.Response, string) {},
+			assertFunc:           func(*testing.T, *http.Response, []any) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -326,7 +326,7 @@ func TestPatchHandler(t *testing.T) {
 
 			res := w.Result()
 			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

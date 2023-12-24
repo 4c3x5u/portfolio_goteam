@@ -70,7 +70,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// decode request
 	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -83,7 +83,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 			PostResp{ValidationErrs: vdtErrs},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -96,7 +96,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		teamID = uuid.NewString()
 		isAdmin = true
 	} else if err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	} else {
@@ -107,7 +107,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 				PostResp{Err: "Invalid invite token."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 			}
 			return
 		}
@@ -118,7 +118,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// hash password
 	pwdHash, err := h.hasher.Hash(req.Password)
 	if err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -134,11 +134,11 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 			}},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -156,7 +156,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 					"registered with.",
 			},
 		); err != nil {
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}

@@ -15,7 +15,7 @@ func TestLog(t *testing.T) {
 
 	for _, c := range []struct {
 		name    string
-		logFunc func(string)
+		logFunc func(...any)
 		msg     string
 		wantLog string
 	}{

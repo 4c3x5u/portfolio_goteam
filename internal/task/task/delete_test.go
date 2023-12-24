@@ -42,7 +42,7 @@ func TestDeleteHandler(t *testing.T) {
 		errEncodeState error
 		outState       http.Cookie
 		wantStatus     int
-		assertFunc     func(*testing.T, *http.Response, string)
+		assertFunc     func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:           "NoAuth",
@@ -201,7 +201,7 @@ func TestDeleteHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{Name: "foo", Value: "bar"},
 			wantStatus:     http.StatusOK,
-			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				ckState := resp.Cookies()[0]
 				assert.Equal(t.Error, ckState.Name, "foo")
 				assert.Equal(t.Error, ckState.Value, "bar")
@@ -238,7 +238,7 @@ func TestDeleteHandler(t *testing.T) {
 
 			assert.Equal(t.Error, resp.StatusCode, c.wantStatus)
 
-			c.assertFunc(t, resp, log.InMessage)
+			c.assertFunc(t, resp, log.Args)
 		})
 	}
 }

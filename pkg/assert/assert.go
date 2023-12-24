@@ -76,13 +76,13 @@ func True(logErr func(...any), got bool) {
 // table-driven tests.
 func OnResErr(
 	wantErrMsg string,
-) func(*testing.T, *http.Response, string) {
-	return func(t *testing.T, res *http.Response, _ string) {
-		var resBody map[string]string
+) func(*testing.T, *http.Response, []any) {
+	return func(t *testing.T, res *http.Response, _ []any) {
+		var resBody map[string]any
 		if err := json.NewDecoder(res.Body).Decode(&resBody); err != nil {
 			t.Fatal(err)
 		}
-		Equal(t.Error, resBody["error"], wantErrMsg)
+		Equal(t.Error, resBody["error"].(string), wantErrMsg)
 	}
 }
 
@@ -96,8 +96,8 @@ func OnResErr(
 //
 // This two-step function cal is for being able to initialise it before use in
 // table-driven tests.
-func OnLoggedErr(wantErrMsg string) func(*testing.T, *http.Response, string) {
-	return func(t *testing.T, _ *http.Response, loggedErr string) {
-		Equal(t.Error, loggedErr, wantErrMsg)
+func OnLoggedErr(wantErrMsg string) func(*testing.T, *http.Response, []any) {
+	return func(t *testing.T, _ *http.Response, logArgs []any) {
+		Equal(t.Error, fmt.Sprint(logArgs...), wantErrMsg)
 	}
 }

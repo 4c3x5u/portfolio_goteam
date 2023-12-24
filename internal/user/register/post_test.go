@@ -35,8 +35,8 @@ func TestHandler(t *testing.T) {
 	// Used in status 400 cases to assert on validation errors.
 	assertOnErrsValidate := func(
 		wantValidationErrs ValidationErrs,
-	) func(*testing.T, *http.Response, string) {
-		return func(t *testing.T, r *http.Response, _ string) {
+	) func(*testing.T, *http.Response, []any) {
+		return func(t *testing.T, r *http.Response, _ []any) {
 			resBody := &PostResp{}
 			if err := json.NewDecoder(r.Body).Decode(&resBody); err != nil {
 				t.Fatal(err)
@@ -49,20 +49,6 @@ func TestHandler(t *testing.T) {
 			assert.AllEqual(t.Error,
 				resBody.ValidationErrs.Password, wantValidationErrs.Password,
 			)
-		}
-	}
-
-	assertOnResErr := func(
-		wantErrMsg string,
-	) func(*testing.T, *http.Response, string) {
-		return func(t *testing.T, res *http.Response, _ string) {
-			var resBody PostResp
-			if err := json.NewDecoder(
-				res.Body,
-			).Decode(&resBody); err != nil {
-				t.Fatal(err)
-			}
-			assert.Equal(t.Error, resBody.Err, wantErrMsg)
 		}
 	}
 
@@ -80,7 +66,7 @@ func TestHandler(t *testing.T) {
 		authToken       http.Cookie
 		errEncodeAuth   error
 		wantStatus      int
-		assertFunc      func(*testing.T, *http.Response, string)
+		assertFunc      func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name: "ErrsValidate",
@@ -117,7 +103,7 @@ func TestHandler(t *testing.T) {
 			authToken:       http.Cookie{},
 			errEncodeAuth:   nil,
 			wantStatus:      http.StatusBadRequest,
-			assertFunc:      assertOnResErr("Invalid invite token."),
+			assertFunc:      assert.OnResErr("Invalid invite token."),
 		},
 		{
 			name:            "ErrUsnTaken",
@@ -196,7 +182,7 @@ func TestHandler(t *testing.T) {
 			authToken:     http.Cookie{},
 			errEncodeAuth: errors.New("error encoding auth token"),
 			wantStatus:    http.StatusInternalServerError,
-			assertFunc: assertOnResErr(
+			assertFunc: assert.OnResErr(
 				"You have been registered successfully but something went " +
 					"wrong. Please log in using the credentials you " +
 					"registered with.",
@@ -214,7 +200,7 @@ func TestHandler(t *testing.T) {
 			authToken:     http.Cookie{Name: "foo", Value: "bar"},
 			errEncodeAuth: nil,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
 				ck := r.Cookies()[0]
 				assert.Equal(t.Error, ck.Name, "foo")
 				assert.Equal(t.Error, ck.Value, "bar")
@@ -260,7 +246,7 @@ func TestHandler(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

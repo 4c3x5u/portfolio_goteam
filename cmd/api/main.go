@@ -48,7 +48,7 @@ func main() {
 	// load environment variables
 	err := godotenv.Load()
 	if err != nil {
-		log.Error(err.Error())
+		log.Error(err)
 		os.Exit(1)
 	}
 
@@ -78,7 +78,7 @@ func main() {
 		context.Background(), config.WithRegion(awsRegion),
 	)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 	}
 	db := dynamodb.NewFromConfig(dbCfg)
 
@@ -205,7 +205,7 @@ func main() {
 	// serve the registered routes
 	log.Info("running server at port " + port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		log.Fatal(err.Error())
+		log.Fatal(err)
 		os.Exit(5)
 	}
 }

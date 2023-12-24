@@ -46,7 +46,7 @@ func TestPatchHandler(t *testing.T) {
 		errEncodeState   error
 		outState         http.Cookie
 		wantStatus       int
-		assertFunc       func(*testing.T, *http.Response, string)
+		assertFunc       func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:             "NoAuth",
@@ -228,7 +228,7 @@ func TestPatchHandler(t *testing.T) {
 			errEncodeState:   nil,
 			outState:         http.Cookie{Name: "foo", Value: "bar"},
 			wantStatus:       http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
 				ck := r.Cookies()[0]
 				assert.Equal(t.Error, ck.Name, "foo")
 				assert.Equal(t.Error, ck.Value, "bar")
@@ -271,7 +271,7 @@ func TestPatchHandler(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions.
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

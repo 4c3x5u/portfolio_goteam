@@ -62,12 +62,12 @@ func (h *PatchHandler) Handle(
 			PatchResp{Error: "Auth token not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -79,7 +79,7 @@ func (h *PatchHandler) Handle(
 			PatchResp{Error: "Invalid auth token."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -91,7 +91,7 @@ func (h *PatchHandler) Handle(
 			Error: "Only team admins can edit boards.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -104,12 +104,12 @@ func (h *PatchHandler) Handle(
 			Error: "State token not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -121,7 +121,7 @@ func (h *PatchHandler) Handle(
 			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -130,7 +130,7 @@ func (h *PatchHandler) Handle(
 	var req PatchReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (h *PatchHandler) Handle(
 
 		if err = json.NewEncoder(w).Encode(PatchResp{Error: msg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -163,7 +163,7 @@ func (h *PatchHandler) Handle(
 			PatchResp{Error: msg},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -182,7 +182,7 @@ func (h *PatchHandler) Handle(
 			PatchResp{Error: "You do not have access to this board."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -196,12 +196,12 @@ func (h *PatchHandler) Handle(
 			PatchResp{Error: "Board not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 }

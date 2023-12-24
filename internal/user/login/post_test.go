@@ -32,9 +32,6 @@ func TestPOSTHandler(t *testing.T) {
 		validator, userRetriever, passwordComparer, authEncoder, log,
 	)
 
-	// Used on cases where no case-specific assertions are required.
-	assertNone := func(*testing.T, *http.Response, string) {}
-
 	for _, c := range []struct {
 		name             string
 		reqIsValid       bool
@@ -44,7 +41,7 @@ func TestPOSTHandler(t *testing.T) {
 		authToken        http.Cookie
 		errGenerateToken error
 		wantStatus       int
-		assertFunc       func(*testing.T, *http.Response, string)
+		assertFunc       func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:             "InvalidRequest",
@@ -55,7 +52,7 @@ func TestPOSTHandler(t *testing.T) {
 			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assertNone,
+			assertFunc:       func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:             "UserNotFound",
@@ -66,7 +63,7 @@ func TestPOSTHandler(t *testing.T) {
 			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assertNone,
+			assertFunc:       func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:             "UserSelectorError",
@@ -90,7 +87,7 @@ func TestPOSTHandler(t *testing.T) {
 			authToken:        http.Cookie{},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusBadRequest,
-			assertFunc:       assertNone,
+			assertFunc:       func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:       "HashComparerError",
@@ -129,7 +126,7 @@ func TestPOSTHandler(t *testing.T) {
 			authToken:        http.Cookie{Name: "foo", Value: "bar"},
 			errGenerateToken: nil,
 			wantStatus:       http.StatusOK,
-			assertFunc: func(t *testing.T, r *http.Response, _ string) {
+			assertFunc: func(t *testing.T, r *http.Response, _ []any) {
 				ck := r.Cookies()[0]
 				assert.Equal(t.Error, ck.Name, "foo")
 				assert.Equal(t.Error, ck.Value, "bar")
@@ -156,7 +153,7 @@ func TestPOSTHandler(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
 			// Run case-specific assertions.
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

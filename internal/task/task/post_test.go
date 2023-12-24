@@ -56,7 +56,7 @@ func TestPostHandler(t *testing.T) {
 		outState             http.Cookie
 		errEncodeState       error
 		wantStatus           int
-		assertFunc           func(*testing.T, *http.Response, string)
+		assertFunc           func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:       "NoAuth",
@@ -404,7 +404,7 @@ func TestPostHandler(t *testing.T) {
 			outState:             http.Cookie{Name: "foo", Value: "bar"},
 			errEncodeState:       nil,
 			wantStatus:           http.StatusOK,
-			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				ckState := resp.Cookies()[0]
 				assert.Equal(t.Error, ckState.Name, "foo")
 				assert.Equal(t.Error, ckState.Value, "bar")
@@ -444,7 +444,7 @@ func TestPostHandler(t *testing.T) {
 
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
-			c.assertFunc(t, w.Result(), log.InMessage)
+			c.assertFunc(t, w.Result(), log.Args)
 		})
 	}
 }

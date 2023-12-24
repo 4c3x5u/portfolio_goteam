@@ -48,7 +48,7 @@ func (h DeleteHandler) Handle(
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h DeleteHandler) Handle(
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h DeleteHandler) Handle(
 
 	// delete the board
 	if err = h.boardDeleter.Delete(r.Context(), auth.TeamID, id); err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -116,7 +116,7 @@ func (h DeleteHandler) Handle(
 	// encode the new state
 	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

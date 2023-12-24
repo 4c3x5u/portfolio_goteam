@@ -66,12 +66,12 @@ func (h PostHandler) Handle(
 			PatchResp{Error: "Auth token not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (h PostHandler) Handle(
 			PatchResp{Error: "Invalid auth token."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -95,7 +95,7 @@ func (h PostHandler) Handle(
 			Error: "Only team admins can edit boards.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -108,12 +108,12 @@ func (h PostHandler) Handle(
 			Error: "State token not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h PostHandler) Handle(
 			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -136,7 +136,7 @@ func (h PostHandler) Handle(
 		if err := json.NewEncoder(w).Encode(
 			PostResp{Error: msgLimitReached},
 		); err != nil {
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -145,7 +145,7 @@ func (h PostHandler) Handle(
 	// get and validate board name
 	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -159,7 +159,7 @@ func (h PostHandler) Handle(
 		}
 
 		if err = json.NewEncoder(w).Encode(PostResp{Error: msg}); err != nil {
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 		return
@@ -180,12 +180,12 @@ func (h PostHandler) Handle(
 			if err := json.NewEncoder(w).Encode(
 				PostResp{Error: msgLimitReached},
 			); err != nil {
-				h.log.Error(err.Error())
+				h.log.Error(err)
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 			return
 		} else if err != nil {
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -203,7 +203,7 @@ func (h PostHandler) Handle(
 	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 	http.SetCookie(w, &outCkState)

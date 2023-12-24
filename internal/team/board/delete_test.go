@@ -39,7 +39,7 @@ func TestDELETEHandler(t *testing.T) {
 		errEncodeState error
 		outState       http.Cookie
 		wantStatusCode int
-		assertFunc     func(*testing.T, *http.Response, string)
+		assertFunc     func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:           "NoAuth",
@@ -54,7 +54,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusUnauthorized,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "InvalidAuth",
@@ -69,7 +69,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusUnauthorized,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "NotAdmin",
@@ -84,7 +84,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "NoState",
@@ -99,7 +99,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "InvalidState",
@@ -114,7 +114,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "EmptyID",
@@ -129,7 +129,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "InvalidID",
@@ -144,7 +144,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusBadRequest,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "NoAccess",
@@ -159,7 +159,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{},
 			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, string) {},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:           "DeleteErr",
@@ -210,7 +210,7 @@ func TestDELETEHandler(t *testing.T) {
 			errEncodeState: nil,
 			outState:       http.Cookie{Name: "foo", Value: "bar"},
 			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				ckState := resp.Cookies()[0]
 				assert.Equal(t.Error, ckState.Name, "foo")
 				assert.Equal(t.Error, ckState.Value, "bar")
@@ -251,7 +251,7 @@ func TestDELETEHandler(t *testing.T) {
 			assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
 
 			// Run case-specific assertions.
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

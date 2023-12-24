@@ -61,16 +61,14 @@ func TestTaskAPI(t *testing.T) {
 			reqBody        string
 			authFunc       func(*http.Request)
 			wantStatusCode int
-			assertFunc     func(*testing.T, *http.Response, string)
+			assertFunc     func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:           "NoAuth",
 				reqBody:        `{}`,
 				authFunc:       func(*http.Request) {},
 				wantStatusCode: http.StatusUnauthorized,
-				assertFunc: assert.OnResErr(
-					"Auth token not found.",
-				),
+				assertFunc:     assert.OnResErr("Auth token not found."),
 			},
 			{
 				name:           "InvalidAuth",
@@ -214,21 +212,22 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					keyEx := expression.Key("BoardID").Equal(expression.Value(
 						"91536664-9749-4dbb-a470-6e52aa353ae4",
 					))
 					expr, err := expression.NewBuilder().
 						WithKeyCondition(keyEx).Build()
 					assert.Nil(t.Fatal, err)
+					time.Sleep(1 * time.Second)
 
 					// try a few times as it takes a while for the task to
 					// appear in the database for some reason
 					// FIXME: find the root cause and eliminate it if possible
+					//        OR just make the switch to a DynamoDB instance on
+					//        Docker for local testing...
 					var taskFound bool
 					for i := 0; i < 3; i++ {
-						time.Sleep(1 * time.Second)
-
 						out, err := db.Query(
 							context.Background(),
 							&dynamodb.QueryInput{
@@ -263,6 +262,8 @@ func TestTaskAPI(t *testing.T) {
 								break
 							}
 						}
+
+						time.Sleep(2 * time.Second)
 					}
 
 					assert.True(t.Fatal, taskFound)
@@ -280,7 +281,7 @@ func TestTaskAPI(t *testing.T) {
 
 				res := w.Result()
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})
@@ -292,7 +293,7 @@ func TestTaskAPI(t *testing.T) {
 			reqBody        string
 			authFunc       func(*http.Request)
 			wantStatusCode int
-			assertFunc     func(*testing.T, *http.Response, string)
+			assertFunc     func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:   "NotAdmin",
@@ -413,7 +414,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
@@ -462,7 +463,7 @@ func TestTaskAPI(t *testing.T) {
 
 				res := w.Result()
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})
@@ -473,7 +474,7 @@ func TestTaskAPI(t *testing.T) {
 			id             string
 			authFunc       func(*http.Request)
 			wantStatusCode int
-			assertFunc     func(*testing.T, *http.Response, string)
+			assertFunc     func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:           "NoAuth",
@@ -516,7 +517,7 @@ func TestTaskAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				wantStatusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
@@ -549,7 +550,7 @@ func TestTaskAPI(t *testing.T) {
 
 				res := w.Result()
 				assert.Equal(t.Error, res.StatusCode, c.wantStatusCode)
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})

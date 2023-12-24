@@ -54,12 +54,12 @@ func (h DeleteHandler) Handle(
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (h DeleteHandler) Handle(
 			Error: "Invalid auth token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -83,7 +83,7 @@ func (h DeleteHandler) Handle(
 			Error: "Only team admins can delete tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -96,12 +96,12 @@ func (h DeleteHandler) Handle(
 			Error: "State token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h DeleteHandler) Handle(
 			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -143,7 +143,7 @@ func (h DeleteHandler) Handle(
 			Error: "Invalid task ID.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -157,12 +157,12 @@ func (h DeleteHandler) Handle(
 			Error: "Task not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -183,7 +183,7 @@ func (h DeleteHandler) Handle(
 	outCkState, err := h.stateEncoder.Encode(state)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 

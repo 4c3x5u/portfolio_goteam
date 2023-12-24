@@ -79,12 +79,12 @@ func (h PatchHandler) Handle(
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -96,7 +96,7 @@ func (h PatchHandler) Handle(
 			Error: "Invalid auth token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -108,7 +108,7 @@ func (h PatchHandler) Handle(
 			Error: "Only team admins can edit tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 	}
@@ -121,12 +121,12 @@ func (h PatchHandler) Handle(
 			Error: "State token not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -138,7 +138,7 @@ func (h PatchHandler) Handle(
 			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -147,7 +147,7 @@ func (h PatchHandler) Handle(
 	var req PatchReq
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -178,7 +178,7 @@ func (h PatchHandler) Handle(
 				PatchResp{Error: "Invalid task ID."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 			}
 			return
 		}
@@ -189,7 +189,7 @@ func (h PatchHandler) Handle(
 				PatchResp{Error: "Invalid column number."},
 			); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 			}
 			return
 		}
@@ -219,12 +219,12 @@ func (h PatchHandler) Handle(
 			PatchResp{Error: "Task not found."},
 		); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -249,7 +249,7 @@ func (h PatchHandler) Handle(
 	outCkState, err := h.stateEncoder.Encode(newState)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 	http.SetCookie(w, &outCkState)

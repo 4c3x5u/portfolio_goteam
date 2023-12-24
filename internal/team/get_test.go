@@ -41,7 +41,7 @@ func TestGetHandler(t *testing.T) {
 		team          teamtable.Team
 		errInsert     error
 		wantStatus    int
-		assertFunc    func(*testing.T, *http.Response, string)
+		assertFunc    func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:          "NoAuth",
@@ -52,7 +52,7 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "InvalidAuth",
@@ -63,7 +63,7 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, string) {},
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:          "ErrRetrieve",
@@ -85,7 +85,7 @@ func TestGetHandler(t *testing.T) {
 			team:          wantTeam,
 			errInsert:     nil,
 			wantStatus:    http.StatusOK,
-			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+			assertFunc: func(t *testing.T, res *http.Response, _ []any) {
 				var team teamtable.Team
 				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
 					t.Fatal(err)
@@ -109,7 +109,7 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(t *testing.T, res *http.Response, _ string) {},
+			assertFunc:    func(t *testing.T, res *http.Response, _ []any) {},
 		},
 		{
 			name:          "ErrInsert",
@@ -131,7 +131,7 @@ func TestGetHandler(t *testing.T) {
 			team:          teamtable.Team{},
 			errInsert:     nil,
 			wantStatus:    http.StatusCreated,
-			assertFunc: func(t *testing.T, res *http.Response, _ string) {
+			assertFunc: func(t *testing.T, res *http.Response, _ []any) {
 				var team teamtable.Team
 				if err := json.NewDecoder(res.Body).Decode(&team); err != nil {
 					t.Fatal(err)
@@ -162,7 +162,7 @@ func TestGetHandler(t *testing.T) {
 
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

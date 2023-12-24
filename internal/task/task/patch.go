@@ -69,12 +69,12 @@ func (h *PatchHandler) Handle(
 			Error: "Auth token not found.",
 		}); encodeErr != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (h *PatchHandler) Handle(
 			Error: "Invalid auth token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -98,7 +98,7 @@ func (h *PatchHandler) Handle(
 			Error: "Only team admins can edit tasks.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -111,12 +111,12 @@ func (h *PatchHandler) Handle(
 			Error: "State token not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -128,7 +128,7 @@ func (h *PatchHandler) Handle(
 			Error: "Invalid state token.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -166,7 +166,7 @@ func (h *PatchHandler) Handle(
 			Error: "Invalid task ID.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -175,7 +175,7 @@ func (h *PatchHandler) Handle(
 	var reqBody PatchReq
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (h *PatchHandler) Handle(
 			errMsg = "Task title cannot be longer than 50 characters."
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 			return
 		}
 
@@ -197,7 +197,7 @@ func (h *PatchHandler) Handle(
 			Error: errMsg,
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 	}
@@ -213,7 +213,7 @@ func (h *PatchHandler) Handle(
 				errMsg = "Subtask title cannot be longer than 50 characters."
 			} else {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 				return
 			}
 
@@ -222,7 +222,7 @@ func (h *PatchHandler) Handle(
 				Error: errMsg,
 			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err.Error())
+				h.log.Error(err)
 			}
 			return
 		}
@@ -248,13 +248,13 @@ func (h *PatchHandler) Handle(
 			Error: "Task not found.",
 		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err.Error())
+			h.log.Error(err)
 		}
 		return
 
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 

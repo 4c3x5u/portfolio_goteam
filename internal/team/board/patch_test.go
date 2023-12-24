@@ -46,7 +46,7 @@ func TestPatchHandler(t *testing.T) {
 		errValidateName error
 		errUpdateBoard  error
 		wantStatus      int
-		assertFunc      func(*testing.T, *http.Response, string)
+		assertFunc      func(*testing.T, *http.Response, []any)
 	}{
 		{
 			name:            "NoAuth",
@@ -240,7 +240,7 @@ func TestPatchHandler(t *testing.T) {
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusOK,
-			assertFunc:      func(*testing.T, *http.Response, string) {},
+			assertFunc:      func(*testing.T, *http.Response, []any) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -275,7 +275,7 @@ func TestPatchHandler(t *testing.T) {
 
 			assert.Equal(t.Error, res.StatusCode, c.wantStatus)
 
-			c.assertFunc(t, res, log.InMessage)
+			c.assertFunc(t, res, log.Args)
 		})
 	}
 }

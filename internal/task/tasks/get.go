@@ -60,7 +60,7 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	// write response
 	if err = json.NewEncoder(w).Encode(tasks); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err.Error())
+		h.log.Error(err)
 		return
 	}
 }

@@ -145,7 +145,7 @@ func TestTasksAPI(t *testing.T) {
 			reqBody    string
 			authFunc   func(*http.Request)
 			statusCode int
-			assertFunc func(*testing.T, *http.Response, string)
+			assertFunc func(*testing.T, *http.Response, []any)
 		}{
 			{
 				name:       "NoAuth",
@@ -210,7 +210,7 @@ func TestTasksAPI(t *testing.T) {
 					addCookieState(tkTeam1State)(r)
 				},
 				statusCode: http.StatusOK,
-				assertFunc: func(t *testing.T, _ *http.Response, _ string) {
+				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
@@ -259,7 +259,7 @@ func TestTasksAPI(t *testing.T) {
 
 				assert.Equal(t.Error, res.StatusCode, c.statusCode)
 
-				c.assertFunc(t, res, "")
+				c.assertFunc(t, res, []any{})
 			})
 		}
 	})
