@@ -18,9 +18,9 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	registerAPI "github.com/kxplxn/goteam/internal/user/register"
+	registerAPI "github.com/kxplxn/goteam/internal/usersvc/registerapi"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/db/usertable"
+	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
@@ -32,7 +32,7 @@ func TestRegisterAPI(t *testing.T) {
 		),
 		inviteDecoder,
 		registerAPI.NewPasswordHasher(),
-		usertable.NewInserter(db),
+		usertbl.NewInserter(db),
 		authEncoder,
 		log.New(),
 	)
@@ -174,7 +174,7 @@ func TestRegisterAPI(t *testing.T) {
 					},
 				)
 
-				var user usertable.User
+				var user usertbl.User
 				attributevalue.UnmarshalMap(out.Item, &user)
 
 				if err != nil {

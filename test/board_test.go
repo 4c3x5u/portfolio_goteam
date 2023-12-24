@@ -13,38 +13,38 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	boardAPI "github.com/kxplxn/goteam/internal/team/board"
+	"github.com/kxplxn/goteam/internal/teamsvc/boardapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/db/teamtable"
+	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestBoardAPI(t *testing.T) {
-	nameValidator := boardAPI.NewNameValidator()
+	nameValidator := boardapi.NewNameValidator()
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
-		http.MethodPost: boardAPI.NewPostHandler(
+		http.MethodPost: boardapi.NewPostHandler(
 			authDecoder,
 			stateDecoder,
 			nameValidator,
-			teamtable.NewBoardInserter(db),
+			teamtbl.NewBoardInserter(db),
 			stateEncoder,
 			log,
 		),
-		http.MethodDelete: boardAPI.NewDeleteHandler(
+		http.MethodDelete: boardapi.NewDeleteHandler(
 			authDecoder,
 			stateDecoder,
-			teamtable.NewBoardDeleter(db),
+			teamtbl.NewBoardDeleter(db),
 			stateEncoder,
 			log,
 		),
-		http.MethodPatch: boardAPI.NewPatchHandler(
+		http.MethodPatch: boardapi.NewPatchHandler(
 			authDecoder,
 			stateDecoder,
-			boardAPI.NewIDValidator(),
+			boardapi.NewIDValidator(),
 			nameValidator,
-			teamtable.NewBoardUpdater(db),
+			teamtbl.NewBoardUpdater(db),
 			log,
 		),
 	})
@@ -155,7 +155,7 @@ func TestBoardAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var team *teamtable.Team
+					var team *teamtbl.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					assert.Nil(t.Fatal, err)
 
@@ -326,7 +326,7 @@ func TestBoardAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var team *teamtable.Team
+					var team *teamtbl.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					assert.Nil(t.Fatal, err)
 
@@ -438,7 +438,7 @@ func TestBoardAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var team teamtable.Team
+					var team teamtbl.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					assert.Nil(t.Fatal, err)
 

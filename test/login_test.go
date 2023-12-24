@@ -11,16 +11,16 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 
-	loginAPI "github.com/kxplxn/goteam/internal/user/login"
+	loginAPI "github.com/kxplxn/goteam/internal/usersvc/loginapi"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/db/usertable"
+	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestLoginAPI(t *testing.T) {
 	sut := loginAPI.NewPostHandler(
 		loginAPI.NewValidator(),
-		usertable.NewRetriever(db),
+		usertbl.NewRetriever(db),
 		loginAPI.NewPasswordComparator(),
 		authEncoder,
 		log.New(),

@@ -13,17 +13,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	teamAPI "github.com/kxplxn/goteam/internal/team"
+	"github.com/kxplxn/goteam/internal/teamsvc/teamapi"
 	"github.com/kxplxn/goteam/pkg/assert"
-	teamTable "github.com/kxplxn/goteam/pkg/db/teamtable"
+	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestTeamAPI(t *testing.T) {
-	handler := teamAPI.NewGetHandler(
+	handler := teamapi.NewGetHandler(
 		authDecoder,
-		teamTable.NewRetriever(db),
-		teamTable.NewInserter(db),
+		teamtbl.NewRetriever(db),
+		teamtbl.NewInserter(db),
 		log.New(),
 	)
 
@@ -51,10 +51,10 @@ func TestTeamAPI(t *testing.T) {
 				authFunc:   addCookieAuth(tkTeam1Member),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, r *http.Response) {
-					wantResp := teamAPI.GetResp{
+					wantResp := teamapi.GetResp{
 						ID:      "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
 						Members: []string{"team1Admin", "team1Member"},
-						Boards: []teamTable.Board{
+						Boards: []teamtbl.Board{
 							{
 								ID:   "91536664-9749-4dbb-a470-6e52aa353ae4",
 								Name: "Team 1 Board 1",
@@ -70,7 +70,7 @@ func TestTeamAPI(t *testing.T) {
 						},
 					}
 
-					var resp teamAPI.GetResp
+					var resp teamapi.GetResp
 					err := json.NewDecoder(r.Body).Decode(&resp)
 					if err != nil {
 						t.Fatal(err)
@@ -110,7 +110,7 @@ func TestTeamAPI(t *testing.T) {
 					wantBoardName := "New Board"
 
 					// assert on response
-					var resp teamAPI.GetResp
+					var resp teamapi.GetResp
 					err := json.NewDecoder(r.Body).Decode(&resp)
 					if err != nil {
 						t.Fatal(err)
@@ -134,7 +134,7 @@ func TestTeamAPI(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					var team teamTable.Team
+					var team teamtbl.Team
 					err = attributevalue.UnmarshalMap(out.Item, &team)
 					if err != nil {
 						t.Fatal(err)

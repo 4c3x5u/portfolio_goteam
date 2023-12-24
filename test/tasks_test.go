@@ -14,26 +14,26 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	tasksAPI "github.com/kxplxn/goteam/internal/task/tasks"
+	"github.com/kxplxn/goteam/internal/tasksvc/tasksapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/db/tasktable"
+	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestTasksAPI(t *testing.T) {
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
-		http.MethodGet: tasksAPI.NewGetHandler(
+		http.MethodGet: tasksapi.NewGetHandler(
 			authDecoder,
-			tasktable.NewMultiRetriever(db),
+			tasktbl.NewMultiRetriever(db),
 			log,
 		),
-		http.MethodPatch: tasksAPI.NewPatchHandler(
+		http.MethodPatch: tasksapi.NewPatchHandler(
 			authDecoder,
 			stateDecoder,
-			tasksAPI.NewColNoValidator(),
-			tasktable.NewMultiUpdater(db),
+			tasksapi.NewColNoValidator(),
+			tasktbl.NewMultiUpdater(db),
 			stateEncoder,
 			log,
 		),
@@ -66,7 +66,7 @@ func TestTasksAPI(t *testing.T) {
 				),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, r *http.Response, _ string) {
-					wantResp := tasksAPI.GetResp{
+					wantResp := tasksapi.GetResp{
 						{
 							TeamID:       "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
 							BoardID:      "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
@@ -75,7 +75,7 @@ func TestTasksAPI(t *testing.T) {
 							Title:        "team 4 task 1",
 							Description:  "team 4 task 1 description",
 							Order:        1,
-							Subtasks: []tasktable.Subtask{
+							Subtasks: []tasktbl.Subtask{
 								{Title: "team 4 subtask 1", IsDone: false},
 							},
 						},
@@ -87,13 +87,13 @@ func TestTasksAPI(t *testing.T) {
 							Title:        "team 4 task 2",
 							Description:  "team 4 task 2 description",
 							Order:        0,
-							Subtasks: []tasktable.Subtask{
+							Subtasks: []tasktbl.Subtask{
 								{Title: "team 4 subtask 2", IsDone: true},
 							},
 						},
 					}
 
-					var resp tasksAPI.GetResp
+					var resp tasksapi.GetResp
 					err := json.NewDecoder(r.Body).Decode(&resp)
 					if err != nil {
 						t.Fatal(err)
@@ -229,7 +229,7 @@ func TestTasksAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var task tasktable.Task
+					var task tasktbl.Task
 					assert.Nil(t.Fatal, attributevalue.UnmarshalMap(
 						out.Item, &task,
 					))

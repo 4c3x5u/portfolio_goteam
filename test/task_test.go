@@ -16,40 +16,40 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
-	taskAPI "github.com/kxplxn/goteam/internal/task/task"
+	"github.com/kxplxn/goteam/internal/tasksvc/taskapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
-	"github.com/kxplxn/goteam/pkg/db/tasktable"
+	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
 func TestTaskAPI(t *testing.T) {
-	titleValidator := taskAPI.NewTitleValidator()
+	titleValidator := taskapi.NewTitleValidator()
 	log := log.New()
 
 	sut := api.NewHandler(map[string]api.MethodHandler{
-		http.MethodPost: taskAPI.NewPostHandler(
+		http.MethodPost: taskapi.NewPostHandler(
 			authDecoder,
 			stateDecoder,
 			titleValidator,
 			titleValidator,
-			taskAPI.NewColNoValidator(),
-			tasktable.NewInserter(db),
+			taskapi.NewColNoValidator(),
+			tasktbl.NewInserter(db),
 			stateEncoder,
 			log,
 		),
-		http.MethodPatch: taskAPI.NewPatchHandler(
+		http.MethodPatch: taskapi.NewPatchHandler(
 			authDecoder,
 			stateDecoder,
 			titleValidator,
 			titleValidator,
-			tasktable.NewUpdater(db),
+			tasktbl.NewUpdater(db),
 			log,
 		),
-		http.MethodDelete: taskAPI.NewDeleteHandler(
+		http.MethodDelete: taskapi.NewDeleteHandler(
 			authDecoder,
 			stateDecoder,
-			tasktable.NewDeleter(db),
+			tasktbl.NewDeleter(db),
 			stateEncoder,
 			log,
 		),
@@ -243,7 +243,7 @@ func TestTaskAPI(t *testing.T) {
 						assert.Nil(t.Fatal, err)
 
 						for _, av := range out.Items {
-							var task tasktable.Task
+							var task tasktbl.Task
 							err = attributevalue.UnmarshalMap(av, &task)
 							assert.Nil(t.Fatal, err)
 
@@ -433,7 +433,7 @@ func TestTaskAPI(t *testing.T) {
 					)
 					assert.Nil(t.Fatal, err)
 
-					var task tasktable.Task
+					var task tasktbl.Task
 					err = attributevalue.UnmarshalMap(out.Item, &task)
 					assert.Nil(t.Fatal, err)
 

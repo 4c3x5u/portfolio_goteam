@@ -39,7 +39,7 @@ func NewHandler(methodHandlers map[string]MethodHandler) Handler {
 
 // ServeHTTP responds to HTTP requests.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Add CORS headers.
+	// add CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", os.Getenv("CLIENTORIGIN"))
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Add("Access-Control-Allow-Credentials", "true")
@@ -48,12 +48,13 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		allowedMethods = append(allowedMethods, method)
 	}
 	w.Header().Add(AllowedMethods(allowedMethods))
-	// If method OPTIONS, return with set headers.
+
+	// if method is OPTIONS, return now with set headers
 	if r.Method == http.MethodOptions {
 		return
 	}
 
-	// Find the MethodHandler for the HTTP method of the received request.
+	// find the method handler for the HTTP method of the received request
 	for method, methodHandler := range h.methodHandlers {
 		if r.Method == method {
 			var username string
@@ -64,7 +65,6 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// This path of execution means no MethodHandler was found in
-	// h.methodHandlers for the HTTP method of the request.
+	// if no method handler was found, respond with 405
 	w.WriteHeader(http.StatusMethodNotAllowed)
 }
