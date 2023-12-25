@@ -15,6 +15,7 @@ import (
 
 	"github.com/kxplxn/goteam/internal/teamsvc/teamapi"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/test"
@@ -22,9 +23,9 @@ import (
 
 func TestTeamAPI(t *testing.T) {
 	handler := teamapi.NewGetHandler(
-		test.AuthDecoder,
-		teamtbl.NewRetriever(db),
-		teamtbl.NewInserter(db),
+		cookie.NewAuthDecoder(test.JWTKey),
+		teamtbl.NewRetriever(test.DB()),
+		teamtbl.NewInserter(test.DB()),
 		log.New(),
 	)
 
@@ -43,13 +44,13 @@ func TestTeamAPI(t *testing.T) {
 			},
 			{
 				name:       "InvalidAuth",
-				authFunc:   test.AddAuthCk("asdfasdf"),
+				authFunc:   test.AddAuthCookie("asdfasdf"),
 				wantStatus: http.StatusUnauthorized,
 				assertFunc: func(*testing.T, *http.Response) {},
 			},
 			{
 				name:       "OK",
-				authFunc:   test.AddAuthCk(test.T1MemberToken),
+				authFunc:   test.AddAuthCookie(test.T1MemberToken),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response) {
 					wantResp := teamapi.GetResp{
@@ -93,7 +94,7 @@ func TestTeamAPI(t *testing.T) {
 			// refer to comments in implementation for the below tests
 			{
 				name: "NotAdmin",
-				authFunc: test.AddAuthCk(
+				authFunc: test.AddAuthCookie(
 					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
 						"zZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I",
 				),
@@ -102,7 +103,7 @@ func TestTeamAPI(t *testing.T) {
 			},
 			{
 				name: "Created",
-				authFunc: test.AddAuthCk(
+				authFunc: test.AddAuthCookie(
 					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0cn" +
 						"VlLCJ0ZWFtSUQiOiJkNWRjYTliYy1iYzk4LTQ3YjQtYjhiNy05Z" +
 						"jAxODEzZGE1NzEiLCJ1c2VybmFtZSI6Im5ld3VzZXIifQ.lCjQi" +
@@ -125,7 +126,7 @@ func TestTeamAPI(t *testing.T) {
 					assert.Equal(t.Error, respBody.Boards[0].Name, wantBoardName)
 
 					// asssert on db
-					out, err := db.GetItem(
+					out, err := test.DB().GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &tableName,

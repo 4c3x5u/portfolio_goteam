@@ -7,22 +7,24 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 
-	loginAPI "github.com/kxplxn/goteam/internal/usersvc/loginapi"
+	"github.com/kxplxn/goteam/internal/usersvc/loginapi"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/test"
 )
 
 func TestLoginAPI(t *testing.T) {
-	sut := loginAPI.NewPostHandler(
-		loginAPI.NewValidator(),
-		usertbl.NewRetriever(db),
-		loginAPI.NewPasswordComparator(),
-		test.AuthEncoder,
+	sut := loginapi.NewPostHandler(
+		loginapi.NewValidator(),
+		usertbl.NewRetriever(test.DB()),
+		loginapi.NewPasswordComparator(),
+		cookie.NewAuthEncoder(test.JWTKey, 1*time.Hour),
 		log.New(),
 	)
 

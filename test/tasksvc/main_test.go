@@ -3,32 +3,25 @@
 package tasksvc
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/test"
 )
 
-// used as a prefix to a uuid when creating test table
-const testTablePrefix = "goteam-test-task-"
-
-var (
-	db        *dynamodb.Client
-	tableName string
-)
+// tableName is the name of the task table used in the integration tests.
+var tableName = "goteam-test-task-" + uuid.New().String()
 
 // TestMain sets up the test tables in DynamoDB and runs the tests.
 func TestMain(m *testing.M) {
 	fmt.Println("setting up task table")
-	tearDown, err := setUpTestTable()
+	tearDown, err := test.SetUpTestTable(
+		"TASK_TABLE_NAME", tableName, writeReqs, "TeamID", "ID", "BoardID",
+	)
 	defer tearDown()
 	if err != nil {
 		log.Println("set up task failed:", err)
@@ -38,52 +31,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// setUpTestTable sets up the test table in DynamoDB.
-func setUpTestTable() (func() error, error) {
-	// create dynamodb client
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	db = dynamodb.NewFromConfig(cfg)
-
-	// set up team table
-	tableName = testTablePrefix + uuid.New().String()
-	tearDown, err := test.CreateTable(
-		db, &tableName, "TeamID", "ID", "BoardID",
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// set environvar for task putter & getter to read the table name from
-	if err := os.Setenv("TASK_TABLE_NAME", tableName); err != nil {
-		if err != nil {
-			return tearDown, err
-		}
-	}
-
-	// ensure all test tables are created
-	if err := test.EnsureTableActive(db, tableName); err != nil {
-		return tearDown, err
-	}
-
-	// populate tables
-	_, err = db.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]types.WriteRequest{
-			tableName: writeReqs,
-		},
-	})
-	if err != nil {
-		return tearDown, err
-	}
-
-	// return the teardown function for tables created
-	return tearDown, nil
-}
-
-// reqsWriteTask are the requests sent to the task table to initialise it for
-// test use.
+// writeReqs are the requests sent to the test table to initialise it for tests.
 var writeReqs = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"TeamID": &types.AttributeValueMemberS{

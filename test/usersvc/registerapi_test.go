@@ -18,23 +18,24 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
-	registerAPI "github.com/kxplxn/goteam/internal/usersvc/registerapi"
+	"github.com/kxplxn/goteam/internal/usersvc/registerapi"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/test"
 )
 
 func TestRegisterAPI(t *testing.T) {
-	sut := registerAPI.NewPostHandler(
-		registerAPI.NewUserValidator(
-			registerAPI.NewUsernameValidator(),
-			registerAPI.NewPasswordValidator(),
+	sut := registerapi.NewPostHandler(
+		registerapi.NewUserValidator(
+			registerapi.NewUsernameValidator(),
+			registerapi.NewPasswordValidator(),
 		),
-		test.InviteDecoder,
-		registerAPI.NewPasswordHasher(),
-		usertbl.NewInserter(db),
-		test.AuthEncoder,
+		cookie.NewInviteDecoder(test.JWTKey),
+		registerapi.NewPasswordHasher(),
+		usertbl.NewInserter(test.DB()),
+		cookie.NewAuthEncoder(test.JWTKey, 1*time.Hour),
 		log.New(),
 	)
 
@@ -43,19 +44,17 @@ func TestRegisterAPI(t *testing.T) {
 		wantUsernameErrs, wantPasswordErrs []string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, resp *http.Response, _ string) {
-			var respBody registerAPI.PostResp
+			var respBody registerapi.PostResp
 			if err := json.NewDecoder(resp.Body).Decode(
 				&respBody,
 			); err != nil {
 				t.Fatal(err)
 			}
 			assert.AllEqual(t.Error,
-				respBody.ValidationErrs.Username,
-				wantUsernameErrs,
+				respBody.ValidationErrs.Username, wantUsernameErrs,
 			)
 			assert.AllEqual(t.Error,
-				respBody.ValidationErrs.Password,
-				wantPasswordErrs,
+				respBody.ValidationErrs.Password, wantPasswordErrs,
 			)
 		}
 	}
@@ -64,7 +63,7 @@ func TestRegisterAPI(t *testing.T) {
 		wantErrMsg string,
 	) func(*testing.T, *http.Response, string) {
 		return func(t *testing.T, resp *http.Response, _ string) {
-			var respBody registerAPI.PostResp
+			var respBody registerapi.PostResp
 			if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
 				t.Fatal(err)
 			}
@@ -164,7 +163,7 @@ func TestRegisterAPI(t *testing.T) {
 			assertFunc: func(t *testing.T, resp *http.Response, _ string) {
 				// might take some time for post to create user so tr once
 				// a second 5 times just in case.
-				out, err := db.GetItem(
+				out, err := test.DB().GetItem(
 					context.Background(), &dynamodb.GetItemInput{
 						TableName: &tableName,
 						Key: map[string]types.AttributeValue{

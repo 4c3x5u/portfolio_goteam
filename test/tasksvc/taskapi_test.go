@@ -19,39 +19,42 @@ import (
 	"github.com/kxplxn/goteam/internal/tasksvc/taskapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/test"
 )
 
 func TestTaskAPI(t *testing.T) {
+	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
+	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
+	stateEncoder := cookie.NewStateEncoder(test.JWTKey, 1*time.Hour)
 	titleValidator := taskapi.NewTitleValidator()
 	log := log.New()
-
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskapi.NewPostHandler(
-			test.AuthDecoder,
-			test.StateDecoder,
+			authDecoder,
+			stateDecoder,
 			titleValidator,
 			titleValidator,
 			taskapi.NewColNoValidator(),
-			tasktbl.NewInserter(db),
-			test.StateEncoder,
+			tasktbl.NewInserter(test.DB()),
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(
-			test.AuthDecoder,
-			test.StateDecoder,
+			authDecoder,
+			stateDecoder,
 			titleValidator,
 			titleValidator,
-			tasktbl.NewUpdater(db),
+			tasktbl.NewUpdater(test.DB()),
 			log,
 		),
 		http.MethodDelete: taskapi.NewDeleteHandler(
-			test.AuthDecoder,
-			test.StateDecoder,
-			tasktbl.NewDeleter(db),
-			test.StateEncoder,
+			authDecoder,
+			stateDecoder,
+			tasktbl.NewDeleter(test.DB()),
+			stateEncoder,
 			log,
 		),
 	})
@@ -74,14 +77,14 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "InvalidAuth",
 				reqBody:        `{}`,
-				authFunc:       test.AddAuthCk("asdfkjldfs"),
+				authFunc:       test.AddAuthCookie("asdfkjldfs"),
 				wantStatusCode: http.StatusUnauthorized,
 				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				reqBody:        `{}`,
-				authFunc:       test.AddAuthCk(test.T1MemberToken),
+				authFunc:       test.AddAuthCookie(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can create tasks.",
@@ -90,7 +93,7 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "NoState",
 				reqBody:        `{}`,
-				authFunc:       test.AddAuthCk(test.T1AdminToken),
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"State token not found.",
@@ -100,8 +103,8 @@ func TestTaskAPI(t *testing.T) {
 				name:    "InvalidState",
 				reqBody: `{}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk("ksadjfhaskdf")(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie("ksadjfhaskdf")(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid state token."),
@@ -113,8 +116,8 @@ func TestTaskAPI(t *testing.T) {
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4"
                 }`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -125,8 +128,8 @@ func TestTaskAPI(t *testing.T) {
 				name:    "NoAccess",
 				reqBody: `{}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
@@ -141,8 +144,8 @@ func TestTaskAPI(t *testing.T) {
 					"title":  ""
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
@@ -155,8 +158,8 @@ func TestTaskAPI(t *testing.T) {
 					"title":  "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -172,8 +175,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks": [""]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -191,8 +194,8 @@ func TestTaskAPI(t *testing.T) {
                     ]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -209,8 +212,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    ["Some Subtask", "Some Other Subtask"]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
@@ -229,7 +232,7 @@ func TestTaskAPI(t *testing.T) {
 					//        Docker for local testing...
 					var taskFound bool
 					for i := 0; i < 3; i++ {
-						out, err := db.Query(
+						out, err := test.DB().Query(
 							context.Background(),
 							&dynamodb.QueryInput{
 								TableName: &tableName,
@@ -304,7 +307,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "",
 					"subtasks":    [{"title": "Some Subtask"}]
 				}`,
-				authFunc:       test.AddAuthCk(test.T1MemberToken),
+				authFunc:       test.AddAuthCookie(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit tasks.",
@@ -319,8 +322,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid task ID."),
@@ -334,8 +337,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
@@ -349,8 +352,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -366,8 +369,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    [{"title": ""}]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -385,8 +388,8 @@ func TestTaskAPI(t *testing.T) {
 					}]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -411,12 +414,12 @@ func TestTaskAPI(t *testing.T) {
                     ]
 				}`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
-					out, err := db.GetItem(
+					out, err := test.DB().GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &tableName,
@@ -487,14 +490,14 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "InvalidAuth",
 				id:             "",
-				authFunc:       test.AddAuthCk("asdfasdf"),
+				authFunc:       test.AddAuthCookie("asdfasdf"),
 				wantStatusCode: http.StatusUnauthorized,
 				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				id:             "",
-				authFunc:       test.AddAuthCk(test.T1MemberToken),
+				authFunc:       test.AddAuthCookie(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can delete tasks.",
@@ -504,8 +507,8 @@ func TestTaskAPI(t *testing.T) {
 				name: "InvalidID",
 				id:   "1001",
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid task ID."),
@@ -514,12 +517,12 @@ func TestTaskAPI(t *testing.T) {
 				name: "OK",
 				id:   "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
-					out, err := db.GetItem(
+					out, err := test.DB().GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &tableName,

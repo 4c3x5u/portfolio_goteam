@@ -5,32 +5,16 @@
 package test
 
 import (
-	"context"
-	"fmt"
-	"net/http"
-	"time"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-
-	"github.com/kxplxn/goteam/pkg/cookie"
 )
 
-var (
-	// JWTKey is the JWT key used for signing and validating JWTs during
-	// integration testing.
-	JWTKey = []byte("itest-jwt-key-0123456789qwerty")
+// db is the DynamoDB client used in integration tests.
+var db *dynamodb.Client
 
-	dur = 1 * time.Hour
+// JWTKey is the key used to sign/validate JWTs in integration tests.
+var JWTKey = []byte("itest-jwt-key-0123456789qwerty")
 
-	AuthEncoder   = cookie.NewAuthEncoder(JWTKey, dur)
-	AuthDecoder   = cookie.NewAuthDecoder(JWTKey)
-	StateEncoder  = cookie.NewStateEncoder(JWTKey, dur)
-	StateDecoder  = cookie.NewStateDecoder(JWTKey)
-	InviteDecoder = cookie.NewInviteDecoder(JWTKey)
-)
-
+// JWTs used in integration tests.
 const (
 	T1AdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZElEcyI6WyI" +
 		"5MTUzNjY2NC05NzQ5LTRkYmItYTQ3MC02ZTUyYWEzNTNhZTQiLCJmZGI4MjYzNy1mNm" +
@@ -94,119 +78,3 @@ const (
 		"NGVmNC1hNzRhLWJjZmJjZDU5OWZkNSJ9XX0.0m01PbRPDDBgC-dnZjqQeFdb5_leJtjA" +
 		"RjpWG9Px3vU"
 )
-
-// AddAuthCk is used in various test cases to authenticate the request being
-// sent to a handler.
-func AddAuthCk(token string) func(*http.Request) {
-	return func(r *http.Request) {
-		r.AddCookie(&http.Cookie{Name: "auth-token", Value: token})
-	}
-}
-
-// AddStateCk adds the given token as the state cookie value to the request.
-func AddStateCk(token string) func(*http.Request) {
-	return func(r *http.Request) {
-		r.AddCookie(&http.Cookie{Name: "state-token", Value: token})
-	}
-}
-
-// CreateTable creates a DynamoDB table with the given name, and given sort and
-// partition keys.
-func CreateTable(
-	svc *dynamodb.Client,
-	name *string,
-	partKey string,
-	sortKey string,
-	secINames ...string,
-) (func() error, error) {
-	attrDefs := []types.AttributeDefinition{
-		{AttributeName: &partKey, AttributeType: types.ScalarAttributeTypeS},
-	}
-
-	var secIs []types.GlobalSecondaryIndex
-	for _, iname := range secINames {
-		attrDefs = append(attrDefs, types.AttributeDefinition{
-			AttributeName: &iname, AttributeType: types.ScalarAttributeTypeS,
-		})
-
-		secIs = append(secIs, types.GlobalSecondaryIndex{
-			IndexName: aws.String(iname + "_index"),
-			KeySchema: []types.KeySchemaElement{
-				{AttributeName: &iname, KeyType: types.KeyTypeHash},
-				{AttributeName: &partKey, KeyType: types.KeyTypeRange},
-			},
-			Projection: &types.Projection{
-				ProjectionType: types.ProjectionTypeAll,
-			},
-			ProvisionedThroughput: &types.ProvisionedThroughput{
-				ReadCapacityUnits:  aws.Int64(25),
-				WriteCapacityUnits: aws.Int64(25),
-			},
-		})
-	}
-
-	keySchema := []types.KeySchemaElement{
-		{AttributeName: &partKey, KeyType: types.KeyTypeHash},
-	}
-	if sortKey != "" {
-		attrDefs = append(attrDefs, types.AttributeDefinition{
-			AttributeName: &sortKey, AttributeType: types.ScalarAttributeTypeS,
-		})
-		keySchema = append(keySchema, types.KeySchemaElement{
-			AttributeName: &sortKey, KeyType: types.KeyTypeRange,
-		})
-	}
-
-	_, err := svc.CreateTable(context.TODO(), &dynamodb.CreateTableInput{
-		TableName:            name,
-		AttributeDefinitions: attrDefs,
-		KeySchema:            keySchema,
-		BillingMode:          types.BillingModeProvisioned,
-		ProvisionedThroughput: &types.ProvisionedThroughput{
-			ReadCapacityUnits:  aws.Int64(25),
-			WriteCapacityUnits: aws.Int64(25),
-		},
-		GlobalSecondaryIndexes: secIs,
-	})
-	if err != nil {
-		return TearDownNone, err
-	}
-
-	// create user table teardown function
-	return func() error {
-		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
-			TableName: name,
-		})
-		return nil
-	}, nil
-}
-
-// EnsureTableActive checks whether the test table is created and its status is
-// "ACTIVE" every 500 milliseconds until it is true.
-func EnsureTableActive(svc *dynamodb.Client, tableName string) error {
-	fmt.Println("ensuring all test tables are active")
-	var teamTableActive bool
-	for {
-		if !teamTableActive {
-			resp, err := svc.DescribeTable(
-				context.TODO(), &dynamodb.DescribeTableInput{
-					TableName: &tableName,
-				},
-			)
-			if err != nil {
-				return err
-			}
-			if resp.Table.TableStatus == types.TableStatusActive {
-				teamTableActive = true
-			}
-		} else {
-			break
-		}
-
-		time.Sleep(500 * time.Millisecond)
-	}
-	return nil
-}
-
-// TearDownNone is returned when there is nothing to tear down.
-func TearDownNone() error { return nil }

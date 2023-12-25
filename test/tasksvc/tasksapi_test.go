@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -17,25 +18,27 @@ import (
 	"github.com/kxplxn/goteam/internal/tasksvc/tasksapi"
 	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
+	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/test"
 )
 
 func TestTasksAPI(t *testing.T) {
+	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksapi.NewGetHandler(
-			test.AuthDecoder,
-			tasktbl.NewMultiRetriever(db),
+			authDecoder,
+			tasktbl.NewMultiRetriever(test.DB()),
 			log,
 		),
 		http.MethodPatch: tasksapi.NewPatchHandler(
-			test.AuthDecoder,
-			test.StateDecoder,
+			authDecoder,
+			cookie.NewStateDecoder(test.JWTKey),
 			tasksapi.NewColNoValidator(),
-			tasktbl.NewMultiUpdater(db),
-			test.StateEncoder,
+			tasktbl.NewMultiUpdater(test.DB()),
+			cookie.NewStateEncoder(test.JWTKey, 1*time.Hour),
 			log,
 		),
 	})
@@ -54,12 +57,12 @@ func TestTasksAPI(t *testing.T) {
 			},
 			{
 				name:       "InvalidAuth",
-				authFunc:   test.AddAuthCk("asdkjlfhass"),
+				authFunc:   test.AddAuthCookie("asdkjlfhass"),
 				statusCode: http.StatusUnauthorized,
 			},
 			{
 				name: "OK",
-				authFunc: test.AddAuthCk(
+				authFunc: test.AddAuthCookie(
 					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
 						"zZSwidGVhbUlEIjoiM2MzZWM0ZWEtYTg1MC00ZmM1LWFhYjAtMjR" +
 						"lOWU3MjIzYmJjIiwidXNlcm5hbWUiOiJ0ZWFtNG1lbWJlciJ9.SN" +
@@ -164,14 +167,14 @@ func TestTasksAPI(t *testing.T) {
 			{
 				name:       "InvalidAuth",
 				reqBody:    `[]`,
-				authFunc:   test.AddAuthCk("asdfjkahsd"),
+				authFunc:   test.AddAuthCookie("asdfjkahsd"),
 				statusCode: http.StatusUnauthorized,
 				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
 				reqBody:    `[]`,
-				authFunc:   test.AddAuthCk(test.T1MemberToken),
+				authFunc:   test.AddAuthCookie(test.T1MemberToken),
 				statusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit tasks.",
@@ -180,7 +183,7 @@ func TestTasksAPI(t *testing.T) {
 			{
 				name:       "NoState",
 				reqBody:    `[]`,
-				authFunc:   test.AddAuthCk(test.T1AdminToken),
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("State token not found."),
 			},
@@ -188,8 +191,8 @@ func TestTasksAPI(t *testing.T) {
 				name:    "InvalidState",
 				reqBody: `[]`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk("askdjfhasdlfk")(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie("askdjfhasdlfk")(r)
 				},
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Invalid state token."),
@@ -198,8 +201,8 @@ func TestTasksAPI(t *testing.T) {
 				name:    "InvalidTaskID",
 				reqBody: `[{"id": "0"}]`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				statusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Invalid task ID."),
@@ -215,12 +218,12 @@ func TestTasksAPI(t *testing.T) {
                     "column": 2
                 }]`,
 				authFunc: func(r *http.Request) {
-					test.AddAuthCk(test.T1AdminToken)(r)
-					test.AddStateCk(test.T1StateToken)(r)
+					test.AddAuthCookie(test.T1AdminToken)(r)
+					test.AddStateCookie(test.T1StateToken)(r)
 				},
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
-					out, err := db.GetItem(
+					out, err := test.DB().GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
 							TableName: &tableName,

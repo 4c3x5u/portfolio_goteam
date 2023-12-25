@@ -3,31 +3,25 @@
 package test
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/test"
 )
 
-// used as a prefix to a uuid when creating test tables
-const testTablePrefix = "goteam-test-user-"
+// tableName is the name of the user table used in the integration tests.
+var tableName = "goteam-test-user-" + uuid.New().String()
 
-var (
-	db        *dynamodb.Client
-	tableName string
-)
-
+// TestMain sets up the test table in DynamoDB and runs the tests.
 func TestMain(m *testing.M) {
 	fmt.Println("setting up user table")
-	tearDownTables, err := setUpTables()
+	tearDownTables, err := test.SetUpTestTable(
+		"USER_TABLE_NAME", tableName, writeReqs, "Username", "",
+	)
 	defer tearDownTables()
 	if err != nil {
 		log.Println("set up user table failed:", err)
@@ -37,52 +31,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// setUpTables sets up the test tables on DynamoDB.
-func setUpTables() (func() error, error) {
-	// create dynamodb client
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return test.TearDownNone, err
-	}
-	db = dynamodb.NewFromConfig(cfg)
-
-	// set up user table
-	tableName = testTablePrefix + uuid.New().String()
-	tearDown, err := test.CreateTable(
-		db, &tableName, "Username", "",
-	)
-	if err != nil {
-		return test.TearDownNone, err
-	}
-
-	// set environvar for user putter & getter to read the table name from
-	if err := os.Setenv("USER_TABLE_NAME", tableName); err != nil {
-		if err != nil {
-			return tearDown, err
-		}
-	}
-
-	// ensure all test tables are created
-	if err := test.EnsureTableActive(db, tableName); err != nil {
-		return tearDown, err
-	}
-
-	// populate tables
-	_, err = db.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]types.WriteRequest{
-			tableName: writeReqs,
-		},
-	})
-	if err != nil {
-		return tearDown, err
-	}
-
-	// return the teardown function for tables created
-	return tearDown, nil
-}
-
-// writeReqs are the requests sent to the user table to initialise it for test
-// use.
+// writeReqs are the requests sent to the test table to initialise it for tests.
 var writeReqs = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"Username": &types.AttributeValueMemberS{Value: "team1Admin"},

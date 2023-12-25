@@ -3,33 +3,25 @@
 package test
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/test"
 )
 
-var (
-	db        *dynamodb.Client
-	tableName string
-)
+// tableName is the name of the team table used in the integration tests.
+var tableName = "goteam-test-team-" + uuid.New().String()
 
-// used as a prefix to a uuid when creating test tables
-const (
-	testTablePrefix = "goteam-test-team-"
-)
-
+// TestMain sets up the test table in DynamoDB and runs the tests.
 func TestMain(m *testing.M) {
 	fmt.Println("setting up team table")
-	tearDownTables, err := setUpTestTable()
+	tearDownTables, err := test.SetUpTestTable(
+		"TEAM_TABLE_NAME", tableName, writeReqs, "ID", "",
+	)
 	if err != nil {
 		log.Println("set up team table failed:", err)
 		return
@@ -39,50 +31,7 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-// setUpTestTable sets up the test tables on DynamoDB.
-func setUpTestTable() (func() error, error) {
-	// create dynamodb client
-	cfg, err := config.LoadDefaultConfig(context.Background())
-	if err != nil {
-		return test.TearDownNone, err
-	}
-	db = dynamodb.NewFromConfig(cfg)
-
-	// set up team table
-	tableName = testTablePrefix + uuid.New().String()
-	tearDownTable, err := test.CreateTable(db, &tableName, "ID", "")
-	if err != nil {
-		return tearDownTable, err
-	}
-
-	// set environvar for team putter & getter to read the table name from
-	if err := os.Setenv("TEAM_TABLE_NAME", tableName); err != nil {
-		if err != nil {
-			return tearDownTable, err
-		}
-	}
-
-	// ensure all test tables are created
-	if err := test.EnsureTableActive(db, tableName); err != nil {
-		return tearDownTable, err
-	}
-
-	// populate tables
-	_, err = db.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
-		RequestItems: map[string][]types.WriteRequest{
-			tableName: writeReqs,
-		},
-	})
-	if err != nil {
-		return tearDownTable, err
-	}
-
-	// return the teardown function for tables created
-	return tearDownTable, nil
-}
-
-// writeReqs are the requests sent to the team table to initialise it for test
-// use.
+// writeReqs are the requests sent to the test table to initialise it for tests.
 var writeReqs = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"ID": &types.AttributeValueMemberS{
