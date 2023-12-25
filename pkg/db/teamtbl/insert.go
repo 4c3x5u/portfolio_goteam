@@ -14,11 +14,11 @@ import (
 )
 
 // Inserter can be used to insert a new team into the team table.
-type Inserter struct{ ItemPutter db.DynamoItemPutter }
+type Inserter struct{ iput db.DynamoItemPutter }
 
 // NewInserter creates and returns a new Inserter.
-func NewInserter(ip db.DynamoItemPutter) Inserter {
-	return Inserter{ItemPutter: ip}
+func NewInserter(iput db.DynamoItemPutter) Inserter {
+	return Inserter{iput: iput}
 }
 
 // Insert inserts a new team into the team table.
@@ -28,7 +28,7 @@ func (i Inserter) Insert(ctx context.Context, team Team) error {
 		return err
 	}
 
-	_, err = i.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = i.iput.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(ID)"),

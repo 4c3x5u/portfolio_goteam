@@ -14,10 +14,10 @@ import (
 )
 
 // Updater can be used to update a team in the team table.
-type Updater struct{ ItemPutter db.DynamoItemPutter }
+type Updater struct{ iput db.DynamoItemPutter }
 
 // NewUpdater creates and returns a new Updater.
-func NewUpdater(ip db.DynamoItemPutter) Updater { return Updater{ItemPutter: ip} }
+func NewUpdater(iput db.DynamoItemPutter) Updater { return Updater{iput: iput} }
 
 // Update updates a team in the team table.
 func (p Updater) Update(ctx context.Context, team Team) error {
@@ -26,7 +26,7 @@ func (p Updater) Update(ctx context.Context, team Team) error {
 		return err
 	}
 
-	_, err = p.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = p.iput.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_exists(ID)"),

@@ -14,11 +14,11 @@ import (
 )
 
 // MultiUpdater can be used to update multiple tasks in the task table at once.
-type MultiUpdater struct{ TransactWriter db.DynamoTransactWriter }
+type MultiUpdater struct{ tw db.DynamoTransactWriter }
 
 // NewMultiUpdater creates and returns a new MultiUpdater.
 func NewMultiUpdater(tw db.DynamoTransactWriter) MultiUpdater {
-	return MultiUpdater{TransactWriter: tw}
+	return MultiUpdater{tw: tw}
 }
 
 // Update updates multiple tasks in the task table at once.
@@ -40,7 +40,7 @@ func (u MultiUpdater) Update(ctx context.Context, tasks []Task) error {
 		}
 	}
 
-	_, err := u.TransactWriter.TransactWriteItems(
+	_, err := u.tw.TransactWriteItems(
 		ctx,
 		&dynamodb.TransactWriteItemsInput{TransactItems: items},
 	)

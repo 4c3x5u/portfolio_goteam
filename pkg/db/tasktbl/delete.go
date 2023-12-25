@@ -13,16 +13,16 @@ import (
 )
 
 // Deleter can be used to retrieve by ID a task from the task table.
-type Deleter struct{ ItemDeleter db.DynamoItemDeleter }
+type Deleter struct{ idel db.DynamoItemDeleter }
 
 // NewDeleter creates and returns a new Getter.
-func NewDeleter(d db.DynamoItemDeleter) Deleter {
-	return Deleter{ItemDeleter: d}
+func NewDeleter(idel db.DynamoItemDeleter) Deleter {
+	return Deleter{idel: idel}
 }
 
 // Retrieve retrieves by ID a task from the task table.
 func (r Deleter) Delete(ctx context.Context, teamID, taskID string) error {
-	_, err := r.ItemDeleter.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+	_, err := r.idel.DeleteItem(ctx, &dynamodb.DeleteItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
 			"TeamID": &types.AttributeValueMemberS{Value: teamID},

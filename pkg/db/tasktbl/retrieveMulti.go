@@ -14,11 +14,11 @@ import (
 
 // MultiRetriever can be used to retrieve all tasks for a team from the task
 // table.
-type MultiRetriever struct{ Queryer db.DynamoQueryer }
+type MultiRetriever struct{ queryer db.DynamoQueryer }
 
 // NewMultiRetriever creates and returns a new MultiRetriever.
-func NewMultiRetriever(dq db.DynamoQueryer) MultiRetriever {
-	return MultiRetriever{Queryer: dq}
+func NewMultiRetriever(queryer db.DynamoQueryer) MultiRetriever {
+	return MultiRetriever{queryer: queryer}
 }
 
 // Retrieve retrieves all tasks for a team from the task table.
@@ -31,7 +31,7 @@ func (r MultiRetriever) Retrieve(
 		return nil, err
 	}
 
-	out, err := r.Queryer.Query(ctx, &dynamodb.QueryInput{
+	out, err := r.queryer.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(os.Getenv(tableName)),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),

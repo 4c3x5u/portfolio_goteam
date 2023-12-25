@@ -13,16 +13,16 @@ import (
 )
 
 // Retriever can be used to retrieve by ID a task from the task table.
-type Retriever struct{ ItemGetter db.DynamoItemGetter }
+type Retriever struct{ iget db.DynamoItemGetter }
 
 // NewRetriever creates and returns a new Getter.
-func NewRetriever(ig db.DynamoItemGetter) Retriever {
-	return Retriever{ItemGetter: ig}
+func NewRetriever(iget db.DynamoItemGetter) Retriever {
+	return Retriever{iget: iget}
 }
 
 // Retrieve retrieves by ID a task from the task table.
 func (r Retriever) Retrieve(ctx context.Context, id string) (Task, error) {
-	out, err := r.ItemGetter.GetItem(ctx, &dynamodb.GetItemInput{
+	out, err := r.iget.GetItem(ctx, &dynamodb.GetItemInput{
 		TableName: aws.String(os.Getenv(tableName)),
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{Value: id},

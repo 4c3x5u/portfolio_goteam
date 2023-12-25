@@ -14,11 +14,11 @@ import (
 )
 
 // Inserter can be used to insert a new task into the task table.
-type Inserter struct{ ItemPutter db.DynamoItemPutter }
+type Inserter struct{ iput db.DynamoItemPutter }
 
 // NewInserter creates and returns a new Inserter.
-func NewInserter(ip db.DynamoItemPutter) Inserter {
-	return Inserter{ItemPutter: ip}
+func NewInserter(iput db.DynamoItemPutter) Inserter {
+	return Inserter{iput: iput}
 }
 
 // Insert inserts a new task into the task table.
@@ -28,7 +28,7 @@ func (u Inserter) Insert(ctx context.Context, task Task) error {
 		return err
 	}
 
-	_, err = u.ItemPutter.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = u.iput.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName:           aws.String(os.Getenv(tableName)),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(ID)"),
