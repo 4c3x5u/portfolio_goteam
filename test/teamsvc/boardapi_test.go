@@ -1,6 +1,6 @@
 //go:build itest
 
-package api
+package test
 
 import (
 	"context"
@@ -18,6 +18,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/test"
 )
 
 func TestBoardAPI(t *testing.T) {
@@ -25,23 +26,23 @@ func TestBoardAPI(t *testing.T) {
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardapi.NewPostHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			nameValidator,
 			teamtbl.NewBoardInserter(db),
-			stateEncoder,
+			test.StateEncoder,
 			log,
 		),
 		http.MethodDelete: boardapi.NewDeleteHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			teamtbl.NewBoardDeleter(db),
-			stateEncoder,
+			test.StateEncoder,
 			log,
 		),
 		http.MethodPatch: boardapi.NewPatchHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			boardapi.NewIDValidator(),
 			nameValidator,
 			teamtbl.NewBoardUpdater(db),
@@ -67,14 +68,14 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name:       "InvalidAuth",
 				boardName:  "",
-				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
+				authFunc:   test.AddAuthCk("asdkfjahsaksdfjhas"),
 				wantStatus: http.StatusUnauthorized,
 				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:       "NotAdmin",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam4Member),
+				authFunc:   test.AddAuthCk(test.T4MemberToken),
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit boards.",
@@ -83,7 +84,7 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name:       "NoState",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam4Admin),
+				authFunc:   test.AddAuthCk(test.T4AdminToken),
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr("State token not found."),
 			},
@@ -91,8 +92,8 @@ func TestBoardAPI(t *testing.T) {
 				name:      "InvalidState",
 				boardName: "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam4Admin)(r)
-					addCookieState("asdkljfhaskldfjhasdklf")(r)
+					test.AddAuthCk(test.T4AdminToken)(r)
+					test.AddStateCk("asdkljfhaskldfjhasdklf")(r)
 				},
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr("Invalid state token."),
@@ -100,8 +101,8 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name: "EmptyBoardName",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam4Admin)(r)
-					addCookieState(tkTeam4State)(r)
+					test.AddAuthCk(test.T4AdminToken)(r)
+					test.AddStateCk(test.T4StateToken)(r)
 				},
 				boardName:  "",
 				wantStatus: http.StatusBadRequest,
@@ -110,8 +111,8 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name: "TooLongBoardName",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam4Admin)(r)
-					addCookieState(tkTeam4State)(r)
+					test.AddAuthCk(test.T4AdminToken)(r)
+					test.AddStateCk(test.T4StateToken)(r)
 				},
 				boardName:  "A Board Whose Name Is Just Too Long!",
 				wantStatus: http.StatusBadRequest,
@@ -122,8 +123,8 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name: "LimitReached",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				boardName:  "bob123's new board",
 				wantStatus: http.StatusBadRequest,
@@ -136,15 +137,15 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name: "OK",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam4Admin)(r)
-					addCookieState(tkTeam4State)(r)
+					test.AddAuthCk(test.T4AdminToken)(r)
+					test.AddStateCk(test.T4StateToken)(r)
 				},
 				boardName:  "Team 4 Board 1",
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(), &dynamodb.GetItemInput{
-							TableName: &teamTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
 									Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223" +
@@ -209,7 +210,7 @@ func TestBoardAPI(t *testing.T) {
 				name:       "InvalidAuth",
 				boardID:    "",
 				boardName:  "",
-				authFunc:   addCookieAuth("asdkfjahsaksdfjhas"),
+				authFunc:   test.AddAuthCk("asdkfjahsaksdfjhas"),
 				wantStatus: http.StatusUnauthorized,
 				assertFunc: assert.OnRespErr("Invalid auth token."),
 			},
@@ -217,7 +218,7 @@ func TestBoardAPI(t *testing.T) {
 				name:       "NotAdmin",
 				boardID:    "",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam1Member),
+				authFunc:   test.AddAuthCk(test.T1MemberToken),
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit boards.",
@@ -227,7 +228,7 @@ func TestBoardAPI(t *testing.T) {
 				name:       "NoState",
 				boardID:    "",
 				boardName:  "",
-				authFunc:   addCookieAuth(tkTeam1Admin),
+				authFunc:   test.AddAuthCk(test.T1AdminToken),
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr("State token not found."),
 			},
@@ -236,8 +237,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "",
 				boardName: "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState("asdkljfhaskldfjhasdklf")(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk("asdkljfhaskldfjhasdklf")(r)
 				},
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr("Invalid state token."),
@@ -247,8 +248,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "",
 				boardName: "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board ID cannot be empty."),
@@ -258,8 +259,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "askdfjhas",
 				boardName: "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board ID must be a UUID."),
@@ -269,8 +270,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board name cannot be empty."),
@@ -280,8 +281,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "A Board Whose Name Is Just Too Long!",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -293,8 +294,8 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "New Board Name",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam3State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T3StateToken)(r)
 				},
 				wantStatus: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
@@ -306,14 +307,14 @@ func TestBoardAPI(t *testing.T) {
 				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
 				boardName: "New Board Name",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(), &dynamodb.GetItemInput{
-							TableName: &teamTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
 									Value: "afeadc4a-68b0-4c33-9e83-4648d20ff" +
@@ -372,14 +373,14 @@ func TestBoardAPI(t *testing.T) {
 			{
 				name:           "NotAdmin",
 				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-				authFunc:       addCookieAuth(tkTeam1Member),
+				authFunc:       test.AddAuthCk(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
 			{
 				name:           "NoState",
 				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-				authFunc:       addCookieAuth(tkTeam3Admin),
+				authFunc:       test.AddAuthCk(test.T3AdminToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
@@ -387,8 +388,8 @@ func TestBoardAPI(t *testing.T) {
 				name: "NoAccess",
 				id:   "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam3Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T3AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
@@ -397,8 +398,8 @@ func TestBoardAPI(t *testing.T) {
 				name: "EmptyID",
 				id:   "",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam3Admin)(r)
-					addCookieState(tkTeam3State)(r)
+					test.AddAuthCk(test.T3AdminToken)(r)
+					test.AddStateCk(test.T3StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
@@ -407,8 +408,8 @@ func TestBoardAPI(t *testing.T) {
 				name: "InvalidID",
 				id:   "qwerty",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam3Admin)(r)
-					addCookieState(tkTeam3State)(r)
+					test.AddAuthCk(test.T3AdminToken)(r)
+					test.AddStateCk(test.T3StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     func(*testing.T) {},
@@ -417,14 +418,14 @@ func TestBoardAPI(t *testing.T) {
 				name: "Success",
 				id:   "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam3Admin)(r)
-					addCookieState(tkTeam3State)(r)
+					test.AddAuthCk(test.T3AdminToken)(r)
+					test.AddStateCk(test.T3StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T) {
 					out, err := db.GetItem(context.Background(),
 						&dynamodb.GetItemInput{
-							TableName: &teamTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
 									Value: "74c80ae5-64f3-4298-a8ff-48f8f920c" +

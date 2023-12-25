@@ -1,6 +1,6 @@
 //go:build itest
 
-package api
+package tasksvc
 
 import (
 	"context"
@@ -21,6 +21,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/test"
 )
 
 func TestTaskAPI(t *testing.T) {
@@ -29,28 +30,28 @@ func TestTaskAPI(t *testing.T) {
 
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskapi.NewPostHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			titleValidator,
 			titleValidator,
 			taskapi.NewColNoValidator(),
 			tasktbl.NewInserter(db),
-			stateEncoder,
+			test.StateEncoder,
 			log,
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			titleValidator,
 			titleValidator,
 			tasktbl.NewUpdater(db),
 			log,
 		),
 		http.MethodDelete: taskapi.NewDeleteHandler(
-			authDecoder,
-			stateDecoder,
+			test.AuthDecoder,
+			test.StateDecoder,
 			tasktbl.NewDeleter(db),
-			stateEncoder,
+			test.StateEncoder,
 			log,
 		),
 	})
@@ -73,14 +74,14 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "InvalidAuth",
 				reqBody:        `{}`,
-				authFunc:       addCookieAuth("asdfkjldfs"),
+				authFunc:       test.AddAuthCk("asdfkjldfs"),
 				wantStatusCode: http.StatusUnauthorized,
 				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				reqBody:        `{}`,
-				authFunc:       addCookieAuth(tkTeam1Member),
+				authFunc:       test.AddAuthCk(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can create tasks.",
@@ -89,7 +90,7 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "NoState",
 				reqBody:        `{}`,
-				authFunc:       addCookieAuth(tkTeam1Admin),
+				authFunc:       test.AddAuthCk(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"State token not found.",
@@ -99,8 +100,8 @@ func TestTaskAPI(t *testing.T) {
 				name:    "InvalidState",
 				reqBody: `{}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState("ksadjfhaskdf")(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk("ksadjfhaskdf")(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid state token."),
@@ -112,8 +113,8 @@ func TestTaskAPI(t *testing.T) {
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4"
                 }`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -124,8 +125,8 @@ func TestTaskAPI(t *testing.T) {
 				name:    "NoAccess",
 				reqBody: `{}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
@@ -140,8 +141,8 @@ func TestTaskAPI(t *testing.T) {
 					"title":  ""
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
@@ -154,8 +155,8 @@ func TestTaskAPI(t *testing.T) {
 					"title":  "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -171,8 +172,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks": [""]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -190,8 +191,8 @@ func TestTaskAPI(t *testing.T) {
                     ]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -208,8 +209,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    ["Some Subtask", "Some Other Subtask"]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
@@ -231,7 +232,7 @@ func TestTaskAPI(t *testing.T) {
 						out, err := db.Query(
 							context.Background(),
 							&dynamodb.QueryInput{
-								TableName: &taskTableName,
+								TableName: &tableName,
 								IndexName: aws.String(
 									"BoardID_index",
 								),
@@ -303,7 +304,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "",
 					"subtasks":    [{"title": "Some Subtask"}]
 				}`,
-				authFunc:       addCookieAuth(tkTeam1Member),
+				authFunc:       test.AddAuthCk(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit tasks.",
@@ -318,8 +319,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid task ID."),
@@ -333,8 +334,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
@@ -348,8 +349,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    []
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -365,8 +366,8 @@ func TestTaskAPI(t *testing.T) {
 					"subtasks":    [{"title": ""}]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -384,8 +385,8 @@ func TestTaskAPI(t *testing.T) {
 					}]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -410,15 +411,15 @@ func TestTaskAPI(t *testing.T) {
                     ]
 				}`,
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
-							TableName: &taskTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"TeamID": &types.AttributeValueMemberS{
 									Value: "afeadc4a-68b0-4c33-9e83-4648d20ff" +
@@ -486,14 +487,14 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name:           "InvalidAuth",
 				id:             "",
-				authFunc:       addCookieAuth("asdfasdf"),
+				authFunc:       test.AddAuthCk("asdfasdf"),
 				wantStatusCode: http.StatusUnauthorized,
 				assertFunc:     assert.OnRespErr("Invalid auth token."),
 			},
 			{
 				name:           "NotAdmin",
 				id:             "",
-				authFunc:       addCookieAuth(tkTeam1Member),
+				authFunc:       test.AddAuthCk(test.T1MemberToken),
 				wantStatusCode: http.StatusForbidden,
 				assertFunc: assert.OnRespErr(
 					"Only team admins can delete tasks.",
@@ -503,8 +504,8 @@ func TestTaskAPI(t *testing.T) {
 				name: "InvalidID",
 				id:   "1001",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Invalid task ID."),
@@ -513,15 +514,15 @@ func TestTaskAPI(t *testing.T) {
 				name: "OK",
 				id:   "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
 				authFunc: func(r *http.Request) {
-					addCookieAuth(tkTeam1Admin)(r)
-					addCookieState(tkTeam1State)(r)
+					test.AddAuthCk(test.T1AdminToken)(r)
+					test.AddStateCk(test.T1StateToken)(r)
 				},
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
-							TableName: &taskTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"TeamID": &types.AttributeValueMemberS{
 									Value: "91536664-9749-4dbb-a470-6e52aa353" +

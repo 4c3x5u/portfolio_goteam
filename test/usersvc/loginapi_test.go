@@ -1,6 +1,6 @@
 //go:build itest
 
-package api
+package test
 
 import (
 	"net/http"
@@ -14,6 +14,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/test"
 )
 
 func TestLoginAPI(t *testing.T) {
@@ -21,7 +22,7 @@ func TestLoginAPI(t *testing.T) {
 		loginAPI.NewValidator(),
 		usertbl.NewRetriever(db),
 		loginAPI.NewPasswordComparator(),
-		authEncoder,
+		test.AuthEncoder,
 		log.New(),
 	)
 
@@ -74,7 +75,7 @@ func TestLoginAPI(t *testing.T) {
 				claims := jwt.MapClaims{}
 				if _, err := jwt.ParseWithClaims(
 					ckAuth.Value, &claims, func(token *jwt.Token) (any, error) {
-						return []byte(jwtKey), nil
+						return test.JWTKey, nil
 					},
 				); err != nil {
 					t.Fatal(err)

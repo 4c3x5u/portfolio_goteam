@@ -1,6 +1,6 @@
 //go:build itest
 
-package api
+package test
 
 import (
 	"context"
@@ -22,6 +22,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/test"
 )
 
 func TestRegisterAPI(t *testing.T) {
@@ -30,10 +31,10 @@ func TestRegisterAPI(t *testing.T) {
 			registerAPI.NewUsernameValidator(),
 			registerAPI.NewPasswordValidator(),
 		),
-		inviteDecoder,
+		test.InviteDecoder,
 		registerAPI.NewPasswordHasher(),
 		usertbl.NewInserter(db),
-		authEncoder,
+		test.AuthEncoder,
 		log.New(),
 	)
 
@@ -165,7 +166,7 @@ func TestRegisterAPI(t *testing.T) {
 				// a second 5 times just in case.
 				out, err := db.GetItem(
 					context.Background(), &dynamodb.GetItemInput{
-						TableName: &userTableName,
+						TableName: &tableName,
 						Key: map[string]types.AttributeValue{
 							"Username": &types.AttributeValueMemberS{
 								Value: "bob321",
@@ -194,7 +195,7 @@ func TestRegisterAPI(t *testing.T) {
 				claims := jwt.MapClaims{}
 				if _, err = jwt.ParseWithClaims(
 					cookie.Value, &claims, func(token *jwt.Token) (any, error) {
-						return []byte(jwtKey), nil
+						return test.JWTKey, nil
 					},
 				); err != nil {
 					t.Fatal(err)

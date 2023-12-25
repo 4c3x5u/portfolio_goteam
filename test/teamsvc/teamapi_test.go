@@ -1,6 +1,6 @@
 //go:build itest
 
-package api
+package test
 
 import (
 	"context"
@@ -17,11 +17,12 @@ import (
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/test"
 )
 
 func TestTeamAPI(t *testing.T) {
 	handler := teamapi.NewGetHandler(
-		authDecoder,
+		test.AuthDecoder,
 		teamtbl.NewRetriever(db),
 		teamtbl.NewInserter(db),
 		log.New(),
@@ -42,13 +43,13 @@ func TestTeamAPI(t *testing.T) {
 			},
 			{
 				name:       "InvalidAuth",
-				authFunc:   addCookieAuth("asdfasdf"),
+				authFunc:   test.AddAuthCk("asdfasdf"),
 				wantStatus: http.StatusUnauthorized,
 				assertFunc: func(*testing.T, *http.Response) {},
 			},
 			{
 				name:       "OK",
-				authFunc:   addCookieAuth(tkTeam1Member),
+				authFunc:   test.AddAuthCk(test.T1MemberToken),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response) {
 					wantResp := teamapi.GetResp{
@@ -92,7 +93,7 @@ func TestTeamAPI(t *testing.T) {
 			// refer to comments in implementation for the below tests
 			{
 				name: "NotAdmin",
-				authFunc: addCookieAuth(
+				authFunc: test.AddAuthCk(
 					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
 						"zZX0.Uz6JmqHbxSrzyKAIktxRW4Y_0ldqi_bEcNkYfvIIM8I",
 				),
@@ -101,7 +102,7 @@ func TestTeamAPI(t *testing.T) {
 			},
 			{
 				name: "Created",
-				authFunc: addCookieAuth(
+				authFunc: test.AddAuthCk(
 					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjp0cn" +
 						"VlLCJ0ZWFtSUQiOiJkNWRjYTliYy1iYzk4LTQ3YjQtYjhiNy05Z" +
 						"jAxODEzZGE1NzEiLCJ1c2VybmFtZSI6Im5ld3VzZXIifQ.lCjQi" +
@@ -127,7 +128,7 @@ func TestTeamAPI(t *testing.T) {
 					out, err := db.GetItem(
 						context.Background(),
 						&dynamodb.GetItemInput{
-							TableName: &teamTableName,
+							TableName: &tableName,
 							Key: map[string]types.AttributeValue{
 								"ID": &types.AttributeValueMemberS{
 									Value: respBody.ID,

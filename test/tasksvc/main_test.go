@@ -1,228 +1,90 @@
 //go:build itest
 
-package api
+package tasksvc
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
+
+	"github.com/kxplxn/goteam/test"
 )
 
-// reqsWriteUser are the requests sent to the user table to initialise it for
-// test use.
-var reqsWriteUser = []types.WriteRequest{
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team1Admin"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: true,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team1Member"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: false,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team2Admin"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: true,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team2Member"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: false,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team3Admin"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: true,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team4Admin"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: true,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"Username": &types.AttributeValueMemberS{Value: "team4Member"},
-		"Password": &types.AttributeValueMemberB{
-			Value: []byte(
-				"$2a$11$kZfdRfTOjhfmel7J4WRG3eltzH9lavxp5qyrpFnzc9MIYLhZNCqTO",
-			),
-		},
-		"IsAdmin": &types.AttributeValueMemberBOOL{
-			Value: false,
-		},
-		"TeamID": &types.AttributeValueMemberS{
-			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-		},
-	}}},
+// used as a prefix to a uuid when creating test table
+const testTablePrefix = "goteam-test-task-"
+
+var (
+	db        *dynamodb.Client
+	tableName string
+)
+
+// TestMain sets up the test tables in DynamoDB and runs the tests.
+func TestMain(m *testing.M) {
+	fmt.Println("setting up task table")
+	tearDown, err := setUpTestTable()
+	defer tearDown()
+	if err != nil {
+		log.Println("set up task failed:", err)
+		return
+	}
+
+	m.Run()
 }
 
-// reqsWriteTeam are the requests sent to the team table to initialise it for
-// test use.
-var reqsWriteTeam = []types.WriteRequest{
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{
-			Value: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+// setUpTestTable sets up the test table in DynamoDB.
+func setUpTestTable() (func() error, error) {
+	// create dynamodb client
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	db = dynamodb.NewFromConfig(cfg)
+
+	// set up team table
+	tableName = testTablePrefix + uuid.New().String()
+	tearDown, err := test.CreateTable(
+		db, &tableName, "TeamID", "ID", "BoardID",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// set environvar for task putter & getter to read the table name from
+	if err := os.Setenv("TASK_TABLE_NAME", tableName); err != nil {
+		if err != nil {
+			return tearDown, err
+		}
+	}
+
+	// ensure all test tables are created
+	if err := test.EnsureTableActive(db, tableName); err != nil {
+		return tearDown, err
+	}
+
+	// populate tables
+	_, err = db.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
+		RequestItems: map[string][]types.WriteRequest{
+			tableName: writeReqs,
 		},
-		"Members": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberS{Value: "team1Admin"},
-				&types.AttributeValueMemberS{Value: "team1Member"},
-			},
-		},
-		"Boards": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberM{
-					Value: map[string]types.AttributeValue{
-						"ID": &types.AttributeValueMemberS{
-							Value: "91536664-9749-4dbb-a470-6e52aa353ae4",
-						},
-						"Name": &types.AttributeValueMemberS{
-							Value: "Team 1 Board 1",
-						},
-					},
-				},
-				&types.AttributeValueMemberM{
-					Value: map[string]types.AttributeValue{
-						"ID": &types.AttributeValueMemberS{
-							Value: "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-						},
-						"Name": &types.AttributeValueMemberS{
-							Value: "Team 1 Board 2",
-						},
-					},
-				},
-				&types.AttributeValueMemberM{
-					Value: map[string]types.AttributeValue{
-						"ID": &types.AttributeValueMemberS{
-							Value: "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
-						},
-						"Name": &types.AttributeValueMemberS{
-							Value: "Team 1 Board 3",
-						},
-					},
-				},
-			},
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{
-			Value: "66ca0ddf-5f62-4713-bcc9-36cb0954eb7b",
-		},
-		"Members": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberS{Value: "team2Admin"},
-				&types.AttributeValueMemberS{Value: "team2Member"},
-			},
-		},
-		"Boards": &types.AttributeValueMemberL{Value: []types.AttributeValue{}},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{
-			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
-		},
-		"Members": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberS{Value: "team3Admin"},
-			},
-		},
-		"Boards": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberM{
-					Value: map[string]types.AttributeValue{
-						"ID": &types.AttributeValueMemberS{
-							Value: "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-						},
-						"Name": &types.AttributeValueMemberS{
-							Value: "Team 3 Board 1",
-						},
-					},
-				},
-			},
-		},
-	}}},
-	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
-		"ID": &types.AttributeValueMemberS{
-			Value: "3c3ec4ea-a850-4fc5-aab0-24e9e7223bbc",
-		},
-		"Members": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberS{Value: "team4Admin"},
-				&types.AttributeValueMemberS{Value: "team4Member"},
-			},
-		},
-		"Boards": &types.AttributeValueMemberL{
-			Value: []types.AttributeValue{
-				&types.AttributeValueMemberM{
-					Value: map[string]types.AttributeValue{
-						"ID": &types.AttributeValueMemberS{
-							Value: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
-						},
-						"Name": &types.AttributeValueMemberS{
-							Value: "Team 4 Board 1",
-						},
-					},
-				},
-			},
-		},
-	}}},
+	})
+	if err != nil {
+		return tearDown, err
+	}
+
+	// return the teardown function for tables created
+	return tearDown, nil
 }
 
 // reqsWriteTask are the requests sent to the task table to initialise it for
 // test use.
-var reqsWriteTask = []types.WriteRequest{
+var writeReqs = []types.WriteRequest{
 	{PutRequest: &types.PutRequest{Item: map[string]types.AttributeValue{
 		"TeamID": &types.AttributeValueMemberS{
 			Value: "74c80ae5-64f3-4298-a8ff-48f8f920c7d4",
