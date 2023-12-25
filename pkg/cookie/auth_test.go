@@ -116,6 +116,5 @@ func TestAuth(t *testing.T) {
 				assert.Equal(t.Error, auth.TeamID, c.wantTeamID)
 			})
 		}
-
 	})
 }

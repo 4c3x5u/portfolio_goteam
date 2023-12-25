@@ -108,8 +108,6 @@ func (d StateDecoder) Decode(ck http.Cookie) (State, error) {
 
 	var boards []Board
 	for _, b := range boardsRaw {
-		board := Board{}
-
 		boardRaw, ok := b.(map[string]any)
 		if !ok {
 			return State{}, ErrInvalid
@@ -119,7 +117,6 @@ func (d StateDecoder) Decode(ck http.Cookie) (State, error) {
 		if !ok {
 			return State{}, ErrInvalid
 		}
-		board.ID = id
 
 		columnsRaw, ok := boardRaw["columns"].([]any)
 		if !ok {
