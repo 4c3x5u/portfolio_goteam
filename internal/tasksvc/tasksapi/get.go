@@ -47,12 +47,22 @@ func NewGetHandler(
 
 // Handle handles GET requests sent to the tasks route.
 func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
+	// get tasks by board ID if present, otherwise get tasks by team ID of the
+	// auth cookie
+	var tasks []tasktbl.Task
 	if boardID := r.URL.Query().Get("boardID"); boardID != "" {
-		// if board ID was present, retrive tasks by board ID
-		h.getByBoardID(w, r, boardID)
+		tasks = h.getByBoardID(w, r, boardID)
 	} else {
-		// if board ID was not present, retrieve tasks by team ID
-		h.getByTeamID(w, r)
+		tasks = h.getByTeamID(w, r)
+	}
+
+	// write tasks to response if not nil
+	if tasks != nil {
+		if err := json.NewEncoder(w).Encode(tasks); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err)
+			return
+		}
 	}
 }
 
@@ -60,24 +70,24 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 // writing them to the response.
 func (h GetHandler) getByBoardID(
 	w http.ResponseWriter, r *http.Request, boardID string,
-) {
+) []tasktbl.Task {
 	if err := h.boardIDValidator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		return
+		return nil
 	}
 
 	// get auth token
 	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		return
+		return nil
 	}
 
 	// decode state token
 	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		return
+		return nil
 	}
 
 	// validate board access
@@ -90,7 +100,7 @@ func (h GetHandler) getByBoardID(
 	}
 	if !hasAccess {
 		w.WriteHeader(http.StatusUnauthorized)
-		return
+		return nil
 	}
 
 	// retrieve tasks
@@ -100,32 +110,30 @@ func (h GetHandler) getByBoardID(
 		tasks = []tasktbl.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return nil
 	}
 
-	// write response
-	if err = json.NewEncoder(w).Encode(tasks); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
+	// return tasks
+	return tasks
 }
 
 // getByTeamID gets the team ID from the auth token, retrieves all tasks for
 // the team, and writes the ones with the first task's board ID to the response.
-func (h GetHandler) getByTeamID(w http.ResponseWriter, r *http.Request) {
+func (h GetHandler) getByTeamID(
+	w http.ResponseWriter, r *http.Request,
+) []tasktbl.Task {
 	// get auth token
 	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		return
+		return nil
 	}
 
 	// decode state token
 	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		return
+		return nil
 	}
 
 	// retrieve tasks
@@ -135,7 +143,7 @@ func (h GetHandler) getByTeamID(w http.ResponseWriter, r *http.Request) {
 		tasks = []tasktbl.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	// if more than one task, only return the ones with the first task's board
@@ -155,10 +163,5 @@ func (h GetHandler) getByTeamID(w http.ResponseWriter, r *http.Request) {
 		tasks = singleBoardTasks
 	}
 
-	// write response
-	if err = json.NewEncoder(w).Encode(tasks); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
+	return tasks
 }
