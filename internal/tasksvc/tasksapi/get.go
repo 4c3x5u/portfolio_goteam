@@ -9,6 +9,7 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // GetResp defines the body of GET tasks responses.
@@ -17,22 +18,36 @@ type GetResp []tasktbl.Task
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // tasks route.
 type GetHandler struct {
-	authDecoder cookie.Decoder[cookie.Auth]
-	retriever   db.Retriever[[]tasktbl.Task]
-	log         log.Errorer
+	boardIDValidator validator.String
+	authDecoder      cookie.Decoder[cookie.Auth]
+	retriever        db.Retriever[[]tasktbl.Task]
+	log              log.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
+	boardIDValidator validator.String,
 	authDecoder cookie.Decoder[cookie.Auth],
 	retriever db.Retriever[[]tasktbl.Task],
 	log log.Errorer,
 ) GetHandler {
-	return GetHandler{authDecoder: authDecoder, retriever: retriever, log: log}
+	return GetHandler{
+		boardIDValidator: boardIDValidator,
+		authDecoder:      authDecoder,
+		retriever:        retriever,
+		log:              log,
+	}
 }
 
 // Handle handles GET requests sent to the tasks route.
 func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
+	// validate board id
+	boardID := r.URL.Query().Get("boardID")
+	if err := h.boardIDValidator.Validate(boardID); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	// get auth token
 	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {

@@ -14,13 +14,15 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/tasktbl"
 	"github.com/kxplxn/goteam/pkg/log"
+	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 func TestGetHandler(t *testing.T) {
+	boardIDValidator := &validator.FakeString{}
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	retriever := &db.FakeRetriever[[]tasktbl.Task]{}
 	log := &log.FakeErrorer{}
-	sut := NewGetHandler(authDecoder, retriever, log)
+	sut := NewGetHandler(boardIDValidator, authDecoder, retriever, log)
 
 	someTasks := []tasktbl.Task{
 		{
@@ -52,48 +54,63 @@ func TestGetHandler(t *testing.T) {
 	}
 
 	for _, c := range []struct {
-		name          string
-		authToken     string
-		errDecodeAuth error
-		errRetrieve   error
-		tasks         []tasktbl.Task
-		wantStatus    int
-		assertFunc    func(*testing.T, *http.Response, []any)
+		name               string
+		errValidateBoardID error
+		authToken          string
+		errDecodeAuth      error
+		errRetrieve        error
+		tasks              []tasktbl.Task
+		wantStatus         int
+		assertFunc         func(*testing.T, *http.Response, []any)
 	}{
 		{
-			name:          "NoAuth",
-			authToken:     "",
-			errDecodeAuth: nil,
-			errRetrieve:   nil,
-			tasks:         []tasktbl.Task{},
-			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
+			name:               "InvalidBoardID",
+			errValidateBoardID: errors.New("validate board ID failed"),
+			authToken:          "",
+			errDecodeAuth:      nil,
+			errRetrieve:        nil,
+			tasks:              []tasktbl.Task{},
+			wantStatus:         http.StatusBadRequest,
+			assertFunc:         func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "InvalidAuth",
-			authToken:     "nonempty",
-			errDecodeAuth: errors.New("decode auth failed"),
-			errRetrieve:   nil,
-			tasks:         []tasktbl.Task{},
-			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
+			name:               "NoAuth",
+			errValidateBoardID: nil,
+			authToken:          "",
+			errDecodeAuth:      nil,
+			errRetrieve:        nil,
+			tasks:              []tasktbl.Task{},
+			wantStatus:         http.StatusUnauthorized,
+			assertFunc:         func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "ErrRetrieve",
-			authToken:     "nonempty",
-			errDecodeAuth: nil,
-			errRetrieve:   errors.New("retrieve failed"),
-			tasks:         []tasktbl.Task{},
-			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
+			name:               "InvalidAuth",
+			errValidateBoardID: nil,
+			authToken:          "nonempty",
+			errDecodeAuth:      errors.New("decode auth failed"),
+			errRetrieve:        nil,
+			tasks:              []tasktbl.Task{},
+			wantStatus:         http.StatusUnauthorized,
+			assertFunc:         func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "OKSome",
-			authToken:     "nonempty",
-			errDecodeAuth: nil,
-			errRetrieve:   nil,
-			tasks:         someTasks,
-			wantStatus:    http.StatusOK,
+			name:               "ErrRetrieve",
+			errValidateBoardID: nil,
+			authToken:          "nonempty",
+			errDecodeAuth:      nil,
+			errRetrieve:        errors.New("retrieve failed"),
+			tasks:              []tasktbl.Task{},
+			wantStatus:         http.StatusInternalServerError,
+			assertFunc:         func(*testing.T, *http.Response, []any) {},
+		},
+		{
+			name:               "OKSome",
+			errValidateBoardID: nil,
+			authToken:          "nonempty",
+			errDecodeAuth:      nil,
+			errRetrieve:        nil,
+			tasks:              someTasks,
+			wantStatus:         http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var tasks []tasktbl.Task
 				err := json.NewDecoder(resp.Body).Decode(&tasks)
@@ -131,11 +148,14 @@ func TestGetHandler(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			boardIDValidator.Err = c.errValidateBoardID
 			authDecoder.Err = c.errDecodeAuth
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.tasks
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodGet, "/", nil)
+			r := httptest.NewRequest(
+				http.MethodGet, "/?boardID=adksjh", nil,
+			)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name: "auth-token", Value: c.authToken,
