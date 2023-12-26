@@ -1,4 +1,4 @@
-// go:build itest
+//go:build itest
 
 package test
 
@@ -68,9 +68,7 @@ func SetUpTestTable(
 
 	// set environvar for putters/getter to read the table name from
 	if err := os.Setenv(envVar, tableName); err != nil {
-		if err != nil {
-			return tearDown, err
-		}
+		return tearDown, err
 	}
 
 	// ensure test table is created and active

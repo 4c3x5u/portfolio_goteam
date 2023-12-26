@@ -25,17 +25,18 @@ import (
 )
 
 func TestTasksAPI(t *testing.T) {
-	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
+	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksapi.NewGetHandler(
-			authDecoder,
+			tasksapi.NewBoardIDValidator(),
+			stateDecoder,
 			tasktbl.NewMultiRetriever(test.DB()),
 			log,
 		),
 		http.MethodPatch: tasksapi.NewPatchHandler(
-			authDecoder,
-			cookie.NewStateDecoder(test.JWTKey),
+			cookie.NewAuthDecoder(test.JWTKey),
+			stateDecoder,
 			tasksapi.NewColNoValidator(),
 			tasktbl.NewMultiUpdater(test.DB()),
 			cookie.NewStateEncoder(test.JWTKey, 1*time.Hour),
@@ -46,27 +47,46 @@ func TestTasksAPI(t *testing.T) {
 	t.Run("GET", func(t *testing.T) {
 		for _, c := range []struct {
 			name       string
+			boardID    string
 			authFunc   func(*http.Request)
 			statusCode int
 			assertFunc func(*testing.T, *http.Response, string)
 		}{
 			{
-				name:       "NoAuth",
+				name:       "BoardIDEmpty",
+				boardID:    "",
+				authFunc:   func(*http.Request) {},
+				statusCode: http.StatusBadRequest,
+			},
+			{
+				name:       "BoardIDInvalid",
+				boardID:    "askdfjhas",
+				authFunc:   func(*http.Request) {},
+				statusCode: http.StatusBadRequest,
+			},
+			{
+				name:       "NoState",
+				boardID:    "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
 				authFunc:   func(*http.Request) {},
 				statusCode: http.StatusUnauthorized,
 			},
 			{
-				name:       "InvalidAuth",
-				authFunc:   test.AddAuthCookie("asdkjlfhass"),
+				name:       "InvalidState",
+				boardID:    "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+				authFunc:   test.AddStateCookie("asdkjlfhass"),
 				statusCode: http.StatusUnauthorized,
 			},
 			{
-				name: "OK",
-				authFunc: test.AddAuthCookie(
-					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc0FkbWluIjpmYWx" +
-						"zZSwidGVhbUlEIjoiM2MzZWM0ZWEtYTg1MC00ZmM1LWFhYjAtMjR" +
-						"lOWU3MjIzYmJjIiwidXNlcm5hbWUiOiJ0ZWFtNG1lbWJlciJ9.SN" +
-						"OvcdaHsziQzAcQA7DP5PB74HyxNV8HpbowA7goZUI",
+				name:    "OK",
+				boardID: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
+				authFunc: test.AddStateCookie(
+					"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt7ImN" +
+						"vbHVtbnMiOlt7InRhc2tzIjpbeyJpZCI6IjVjY2Q3NTBkLTM3ODM" +
+						"tNDgzMi04OTFkLTAyNWYyNGE0OTQ0ZiIsIm9yZGVyIjowfSx7Iml" +
+						"kIjoiNTVlMjc1ZTQtZGU4MC00MjQxLWI3M2ItODhlNzg0ZDU1MjJ" +
+						"iIiwib3JkZXIiOjF9XX1dLCJpZCI6ImNhNDdmYmVjLTI2OWUtNGV" +
+						"mNC1hNzRhLWJjZmJjZDU5OWZkNSJ9XX0.0m01PbRPDDBgC-dnZjq" +
+						"QeFdb5_leJtjARjpWG9Px3vU",
 				),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response, _ string) {
@@ -138,7 +158,9 @@ func TestTasksAPI(t *testing.T) {
 		} {
 			t.Run(c.name, func(t *testing.T) {
 				w := httptest.NewRecorder()
-				r := httptest.NewRequest(http.MethodGet, "/tasks", nil)
+				r := httptest.NewRequest(
+					http.MethodGet, "/tasks?boardID="+c.boardID, nil,
+				)
 				c.authFunc(r)
 
 				sut.ServeHTTP(w, r)

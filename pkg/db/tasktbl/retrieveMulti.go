@@ -25,14 +25,15 @@ func NewMultiRetriever(queryer db.DynamoQueryer) MultiRetriever {
 func (r MultiRetriever) Retrieve(
 	ctx context.Context, boardID string,
 ) ([]Task, error) {
-	keyEx := expression.Key("BoardID").Equal(expression.Value(boardID))
-	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
+	keyCond := expression.Key("BoardID").Equal(expression.Value(boardID))
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
 		return nil, err
 	}
 
 	out, err := r.queryer.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(os.Getenv(tableName)),
+		IndexName:                 aws.String("BoardID_index"),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
