@@ -122,6 +122,25 @@ func TestGetHandler(t *testing.T) {
 			assertFunc:  func(*testing.T, *http.Response, []any) {},
 		},
 		{
+			name:               "OKNone",
+			errValidateBoardID: nil,
+			stateToken:         "nonempty",
+			errDecodeState:     nil,
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				ID: "adksjh",
+			}}},
+			errRetrieve: nil,
+			tasks:       []tasktbl.Task{},
+			wantStatus:  http.StatusOK,
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				var tasks []tasktbl.Task
+				err := json.NewDecoder(resp.Body).Decode(&tasks)
+				assert.Nil(t.Fatal, err)
+
+				assert.Equal(t.Error, len(tasks), 0)
+			},
+		},
+		{
 			name:               "OKSome",
 			errValidateBoardID: nil,
 			stateToken:         "nonempty",
@@ -135,9 +154,7 @@ func TestGetHandler(t *testing.T) {
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var tasks []tasktbl.Task
 				err := json.NewDecoder(resp.Body).Decode(&tasks)
-				if err != nil {
-					t.Fatal(err)
-				}
+				assert.Nil(t.Fatal, err)
 
 				assert.Equal(t.Error, len(tasks), len(someTasks))
 				for i, gotTask := range tasks {

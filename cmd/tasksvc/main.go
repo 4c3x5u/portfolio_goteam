@@ -131,7 +131,8 @@ func main() {
 			log,
 		),
 		http.MethodGet: tasksapi.NewGetHandler(
-			authDecoder,
+			tasksapi.NewBoardIDValidator(),
+			stateDecoder,
 			tasktbl.NewMultiRetriever(db),
 			log,
 		),
