@@ -12,17 +12,17 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-// MultiRetriever can be used to retrieve all tasks for a team from the task
+// RetrieverByBoard can be used to retrieve all tasks for a board from the task
 // table.
-type MultiRetriever struct{ queryer db.DynamoQueryer }
+type RetrieverByBoard struct{ queryer db.DynamoQueryer }
 
-// NewMultiRetriever creates and returns a new MultiRetriever.
-func NewMultiRetriever(queryer db.DynamoQueryer) MultiRetriever {
-	return MultiRetriever{queryer: queryer}
+// NewRetrieverByBoard creates and returns a new NewRetrieverByBoard.
+func NewRetrieverByBoard(queryer db.DynamoQueryer) RetrieverByBoard {
+	return RetrieverByBoard{queryer: queryer}
 }
 
-// Retrieve retrieves all tasks for a team from the task table.
-func (r MultiRetriever) Retrieve(
+// Retrieve retrieves all tasks for a board from the task table.
+func (r RetrieverByBoard) Retrieve(
 	ctx context.Context, boardID string,
 ) ([]Task, error) {
 	keyCond := expression.Key("BoardID").Equal(expression.Value(boardID))

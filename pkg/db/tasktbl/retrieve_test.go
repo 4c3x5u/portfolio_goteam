@@ -29,8 +29,8 @@ func TestRetriever(t *testing.T) {
 			{Title: "Do a thing", IsDone: true},
 			{Title: "Do another thing", IsDone: false},
 		},
-		BoardID:      "19639b75-45ef-49aa-981e-346c15b0ffbf",
-		ColumnNumber: 1,
+		BoardID: "19639b75-45ef-49aa-981e-346c15b0ffbf",
+		ColNo:   1,
 	}
 
 	for _, c := range []struct {
@@ -94,7 +94,7 @@ func TestRetriever(t *testing.T) {
 						Value: taskA.BoardID,
 					},
 					"ColumnNumber": &types.AttributeValueMemberN{
-						Value: strconv.Itoa(taskA.ColumnNumber),
+						Value: strconv.Itoa(taskA.ColNo),
 					},
 				},
 			},
@@ -117,7 +117,7 @@ func TestRetriever(t *testing.T) {
 				assert.Equal(t.Error, task.Order, c.wantTask.Order)
 				assert.Equal(t.Error, task.BoardID, c.wantTask.BoardID)
 				assert.Equal(t.Error,
-					task.ColumnNumber, c.wantTask.ColumnNumber,
+					task.ColNo, c.wantTask.ColNo,
 				)
 
 				for i, wst := range c.wantTask.Subtasks {

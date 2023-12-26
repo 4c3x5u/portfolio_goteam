@@ -7,14 +7,14 @@ const tableName = "TASK_TABLE_NAME"
 
 // Task defines the task entity - the primary entity of task domain.
 type Task struct {
-	TeamID       string //guid
-	BoardID      string //guid
-	ColumnNumber int
-	ID           string //guid
-	Title        string
-	Description  string
-	Order        int
-	Subtasks     []Subtask
+	TeamID      string    `json:"teamID"`  // guid
+	BoardID     string    `json:"boardID"` // guid
+	ColNo       int       `json:"colNo"`
+	ID          string    `json:"id"` // guid
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Order       int       `json:"order"`
+	Subtasks    []Subtask `json:"subtasks"`
 }
 
 // NewTask creates and returns a new Task.
@@ -29,21 +29,21 @@ func NewTask(
 	subtasks []Subtask,
 ) Task {
 	return Task{
-		TeamID:       teamID,
-		BoardID:      boardID,
-		ColumnNumber: colNo,
-		ID:           id,
-		Title:        title,
-		Description:  descr,
-		Order:        order,
-		Subtasks:     subtasks,
+		TeamID:      teamID,
+		BoardID:     boardID,
+		ColNo:       colNo,
+		ID:          id,
+		Title:       title,
+		Description: descr,
+		Order:       order,
+		Subtasks:    subtasks,
 	}
 }
 
 // Subtask defines the subtask entity which a task may own one/many of.
 type Subtask struct {
-	Title  string
-	IsDone bool
+	Title  string `json:"title"`
+	IsDone bool   `json:"done"`
 }
 
 // NewSubtask creates and returns a new Subtask.

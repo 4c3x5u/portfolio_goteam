@@ -15,33 +15,33 @@ import (
 	"github.com/kxplxn/goteam/pkg/db"
 )
 
-func TestMultiRetriever(t *testing.T) {
-	dq := &db.FakeDynamoQueryer{}
-	sut := NewMultiRetriever(dq)
+func TestRetrieverByTeam(t *testing.T) {
+	queryer := &db.FakeDynamoQueryer{}
+	sut := NewRetrieverByTeam(queryer)
 
 	errA := errors.New("failed")
 	someTasks := []Task{
 		{
-			TeamID:       "577965d9-c7ba-4a18-ae7b-47d879b12879",
-			ID:           "8c5088eb-e86f-4371-86d0-da186dab78a7",
-			BoardID:      "19639b75-45ef-49aa-981e-346c15b0ffbf",
-			ColumnNumber: 1,
-			Title:        "Do something!",
-			Description:  "Do it!",
-			Order:        21,
+			TeamID:      "577965d9-c7ba-4a18-ae7b-47d879b12879",
+			ID:          "8c5088eb-e86f-4371-86d0-da186dab78a7",
+			BoardID:     "19639b75-45ef-49aa-981e-346c15b0ffbf",
+			ColNo:       1,
+			Title:       "Do something!",
+			Description: "Do it!",
+			Order:       21,
 			Subtasks: []Subtask{
 				{Title: "Do a thing", IsDone: true},
 				{Title: "Do another thing", IsDone: false},
 			},
 		},
 		{
-			TeamID:       "577965d9-c7ba-4a18-ae7b-47d879b12879",
-			ID:           "0c328813-e1b1-4371-86d2-da184d567877",
-			BoardID:      "19639b75-45ef-49aa-981e-346c15b0ffbf",
-			ColumnNumber: 0,
-			Title:        "Do something again!",
-			Description:  "Dooooooo it!",
-			Order:        52,
+			TeamID:      "577965d9-c7ba-4a18-ae7b-47d879b12879",
+			ID:          "0c328813-e1b1-4371-86d2-da184d567877",
+			BoardID:     "19639b75-45ef-49aa-981e-346c15b0ffbf",
+			ColNo:       0,
+			Title:       "Do something again!",
+			Description: "Dooooooo it!",
+			Order:       52,
 			Subtasks: []Subtask{
 				{Title: "Do a thing again", IsDone: true},
 				{Title: "Do another thing again", IsDone: false},
@@ -68,15 +68,16 @@ func TestMultiRetriever(t *testing.T) {
 			dqOut: func() *dynamodb.QueryOutput {
 				var out dynamodb.QueryOutput
 				for _, t := range someTasks {
-					out.Items = append(out.Items, map[string]types.AttributeValue{
+					out.Items = append(out.Items, map[string]types.
+						AttributeValue{
 						"TeamID": &types.AttributeValueMemberN{
 							Value: t.TeamID,
 						},
 						"BoardID": &types.AttributeValueMemberS{
 							Value: t.BoardID,
 						},
-						"ColumnNumber": &types.AttributeValueMemberN{
-							Value: strconv.Itoa(t.ColumnNumber),
+						"ColNo": &types.AttributeValueMemberN{
+							Value: strconv.Itoa(t.ColNo),
 						},
 						"ID":    &types.AttributeValueMemberS{Value: t.ID},
 						"Title": &types.AttributeValueMemberS{Value: t.Title},
@@ -93,17 +94,20 @@ func TestMultiRetriever(t *testing.T) {
 										"Title": &types.AttributeValueMemberS{
 											Value: t.Subtasks[0].Title,
 										},
-										"IsDone": &types.AttributeValueMemberBOOL{
+										"IsDone": &types.
+											AttributeValueMemberBOOL{
 											Value: t.Subtasks[0].IsDone,
 										},
 									},
 								},
 								&types.AttributeValueMemberM{
 									Value: map[string]types.AttributeValue{
-										"Title": &types.AttributeValueMemberS{
+										"Title": &types.
+											AttributeValueMemberS{
 											Value: t.Subtasks[1].Title,
 										},
-										"IsDone": &types.AttributeValueMemberBOOL{
+										"IsDone": &types.
+											AttributeValueMemberBOOL{
 											Value: t.Subtasks[1].IsDone,
 										},
 									},
@@ -120,8 +124,8 @@ func TestMultiRetriever(t *testing.T) {
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			dq.Out = c.dqOut
-			dq.Err = c.dqErr
+			queryer.Out = c.dqOut
+			queryer.Err = c.dqErr
 
 			tasks, err := sut.Retrieve(context.Background(), "")
 
@@ -137,7 +141,7 @@ func TestMultiRetriever(t *testing.T) {
 				assert.Equal(t.Error, task.Order, wt.Order)
 				assert.Equal(t.Error, task.BoardID, wt.BoardID)
 				assert.Equal(t.Error,
-					task.ColumnNumber, wt.ColumnNumber,
+					task.ColNo, wt.ColNo,
 				)
 
 				for j, wst := range wt.Subtasks {

@@ -7,9 +7,9 @@ const tableName = "TEAM_TABLE_NAME"
 
 // Team defines the team entity - the primary entity of team domain.
 type Team struct {
-	ID      string   //uuid
-	Members []string //usernames
-	Boards  []Board
+	ID      string   `json:"id"`      // admin's username
+	Members []string `json:"members"` // usernames
+	Boards  []Board  `json:"boards"`
 }
 
 // NewTeam creates and returns a new team.
@@ -19,7 +19,7 @@ func NewTeam(id string, members []string, boards []Board) Team {
 
 // Board defines the board entity which a team may own one/many of.
 type Board struct {
-	ID   string `json:"id"` //uuid
+	ID   string `json:"id"` // uuid
 	Name string `json:"name"`
 }
 
