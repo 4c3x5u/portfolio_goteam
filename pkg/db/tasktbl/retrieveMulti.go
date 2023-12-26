@@ -23,9 +23,9 @@ func NewMultiRetriever(queryer db.DynamoQueryer) MultiRetriever {
 
 // Retrieve retrieves all tasks for a team from the task table.
 func (r MultiRetriever) Retrieve(
-	ctx context.Context, teamID string,
+	ctx context.Context, boardID string,
 ) ([]Task, error) {
-	keyEx := expression.Key("TeamID").Equal(expression.Value(teamID))
+	keyEx := expression.Key("BoardID").Equal(expression.Value(boardID))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyEx).Build()
 	if err != nil {
 		return nil, err
