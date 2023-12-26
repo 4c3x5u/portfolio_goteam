@@ -236,9 +236,7 @@ func (h PatchHandler) Handle(
 		var columns []cookie.Column
 		for _, stC := range stB.Columns {
 			var tasks []cookie.Task
-			for _, stT := range stC.Tasks {
-				tasks = append(tasks, stT)
-			}
+			tasks = append(tasks, stC.Tasks...)
 			columns = append(columns, cookie.NewColumn(tasks))
 		}
 		boards = append(boards, cookie.NewBoard(stB.ID, columns))

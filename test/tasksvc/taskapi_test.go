@@ -254,7 +254,7 @@ func TestTaskAPI(t *testing.T) {
 							wantDescr := "Do something. Then, do something " +
 								"else."
 							if task.Description == wantDescr &&
-								task.ColumnNumber == 1 &&
+								task.ColNo == 1 &&
 								task.Title == "Some Task" &&
 								task.Subtasks[0].Title == "Some Subtask" &&
 								task.Subtasks[0].IsDone == false &&

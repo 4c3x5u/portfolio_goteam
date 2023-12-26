@@ -20,29 +20,47 @@ type GetResp []tasktbl.Task
 type GetHandler struct {
 	boardIDValidator validator.String
 	stateDecoder     cookie.Decoder[cookie.State]
-	retriever        db.Retriever[[]tasktbl.Task]
+	retrieverByBoard db.Retriever[[]tasktbl.Task]
+	authDecoder      cookie.Decoder[cookie.Auth]
+	retrieverByTeam  db.Retriever[[]tasktbl.Task]
 	log              log.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
 	boardIDValidator validator.String,
-	authDecoder cookie.Decoder[cookie.State],
-	retriever db.Retriever[[]tasktbl.Task],
+	stateDecoder cookie.Decoder[cookie.State],
+	retrieverByBoard db.Retriever[[]tasktbl.Task],
+	authDecoder cookie.Decoder[cookie.Auth],
+	retrieverByTeam db.Retriever[[]tasktbl.Task],
 	log log.Errorer,
 ) GetHandler {
 	return GetHandler{
 		boardIDValidator: boardIDValidator,
-		stateDecoder:     authDecoder,
-		retriever:        retriever,
+		stateDecoder:     stateDecoder,
+		retrieverByBoard: retrieverByBoard,
+		authDecoder:      authDecoder,
+		retrieverByTeam:  retrieverByTeam,
 		log:              log,
 	}
 }
 
 // Handle handles GET requests sent to the tasks route.
 func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
-	// validate board id
-	boardID := r.URL.Query().Get("boardID")
+	if boardID := r.URL.Query().Get("boardID"); boardID != "" {
+		// if board ID was present, retrive tasks by board ID
+		h.getByBoardID(w, r, boardID)
+	} else {
+		// if board ID was not present, retrieve tasks by team ID
+		h.getByTeamID(w, r)
+	}
+}
+
+// getByBoardID validates the board ID and retrieves all tasks for the board,
+// writing them to the response.
+func (h GetHandler) getByBoardID(
+	w http.ResponseWriter, r *http.Request, boardID string,
+) {
 	if err := h.boardIDValidator.Validate(boardID); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -76,13 +94,65 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// retrieve tasks
-	tasks, err := h.retriever.Retrieve(r.Context(), boardID)
+	tasks, err := h.retrieverByBoard.Retrieve(r.Context(), boardID)
 	if errors.Is(err, db.ErrNoItem) {
 		// if no items, set tasks to empty slice
 		tasks = []tasktbl.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
+	}
+
+	// write response
+	if err = json.NewEncoder(w).Encode(tasks); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err)
+		return
+	}
+}
+
+// getByTeamID gets the team ID from the auth token, retrieves all tasks for
+// the team, and writes the ones with the first task's board ID to the response.
+func (h GetHandler) getByTeamID(w http.ResponseWriter, r *http.Request) {
+	// get auth token
+	ckAuth, err := r.Cookie(cookie.AuthName)
+	if err == http.ErrNoCookie {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// decode state token
+	auth, err := h.authDecoder.Decode(*ckAuth)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	// retrieve tasks
+	tasks, err := h.retrieverByTeam.Retrieve(r.Context(), auth.TeamID)
+	if errors.Is(err, db.ErrNoItem) {
+		// if no items, set tasks to empty slice
+		tasks = []tasktbl.Task{}
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// if more than one task, only return the ones with the first task's board
+	// ID
+	if len(tasks) > 1 {
+		singleBoardTasks := []tasktbl.Task{}
+		var boardID string
+		for _, t := range tasks {
+			switch boardID {
+			case "":
+				boardID = t.BoardID
+				singleBoardTasks = append(singleBoardTasks, t)
+			case t.BoardID:
+				singleBoardTasks = append(singleBoardTasks, t)
+			}
+		}
+		tasks = singleBoardTasks
 	}
 
 	// write response
