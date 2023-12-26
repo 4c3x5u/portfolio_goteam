@@ -23,6 +23,7 @@ type GetHandler struct {
 	retrieverByBoard db.Retriever[[]tasktbl.Task]
 	authDecoder      cookie.Decoder[cookie.Auth]
 	retrieverByTeam  db.Retriever[[]tasktbl.Task]
+	stateEncoder     cookie.Encoder[cookie.State]
 	log              log.Errorer
 }
 
@@ -33,6 +34,7 @@ func NewGetHandler(
 	retrieverByBoard db.Retriever[[]tasktbl.Task],
 	authDecoder cookie.Decoder[cookie.Auth],
 	retrieverByTeam db.Retriever[[]tasktbl.Task],
+	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) GetHandler {
 	return GetHandler{
@@ -41,6 +43,7 @@ func NewGetHandler(
 		retrieverByBoard: retrieverByBoard,
 		authDecoder:      authDecoder,
 		retrieverByTeam:  retrieverByTeam,
+		stateEncoder:     stateEncoder,
 		log:              log,
 	}
 }
@@ -145,6 +148,50 @@ func (h GetHandler) getByTeamID(
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil
 	}
+
+	// generate a state token based on team's tasks
+	// FIXME: again, this is VERY tedious - flatten the state token soon!
+	var state cookie.State
+	for _, t := range tasks {
+		var boardFound bool
+		for _, b := range state.Boards {
+			if b.ID == t.BoardID {
+				boardFound = true
+				var colFound bool
+				for i, c := range b.Columns {
+					if i == t.ColNo {
+						colFound = true
+						c.Tasks = append(c.Tasks, cookie.Task{
+							ID: t.ID, Order: t.Order,
+						})
+						break
+					}
+				}
+				if !colFound {
+					b.Columns = append(b.Columns, cookie.Column{
+						Tasks: []cookie.Task{{ID: t.ID, Order: t.Order}},
+					})
+				}
+				break
+			}
+		}
+		if !boardFound {
+			cols := make([]cookie.Column, 4)
+			cols[t.ColNo].Tasks = []cookie.Task{{ID: t.ID, Order: t.Order}}
+			state.Boards = append(state.Boards, cookie.Board{
+				ID: t.BoardID, Columns: cols,
+			})
+		}
+	}
+
+	// set state cookie
+	ckState, err := h.stateEncoder.Encode(state)
+	if err != nil {
+		h.log.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return nil
+	}
+	http.SetCookie(w, &ckState)
 
 	// if more than one task, only return the ones with the first task's board
 	// ID

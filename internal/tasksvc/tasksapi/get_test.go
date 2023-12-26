@@ -23,6 +23,7 @@ func TestGetHandler(t *testing.T) {
 	retrieverByBoard := &db.FakeRetriever[[]tasktbl.Task]{}
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	retrieverByTeam := &db.FakeRetriever[[]tasktbl.Task]{}
+	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
 	log := &log.FakeErrorer{}
 	sut := NewGetHandler(
 		boardIDValidator,
@@ -30,10 +31,11 @@ func TestGetHandler(t *testing.T) {
 		retrieverByBoard,
 		authDecoder,
 		retrieverByTeam,
+		stateEncoder,
 		log,
 	)
 
-	someTasks := []tasktbl.Task{
+	tasksA := []tasktbl.Task{
 		{
 			TeamID:      "team1",
 			BoardID:     "board1",
@@ -172,42 +174,42 @@ func TestGetHandler(t *testing.T) {
 					ID: "nonempty",
 				}}},
 				errRetrieve: nil,
-				tasks:       someTasks,
+				tasks:       tasksA,
 				wantStatus:  http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 					var tasks []tasktbl.Task
 					err := json.NewDecoder(resp.Body).Decode(&tasks)
 					assert.Nil(t.Fatal, err)
 
-					assert.Equal(t.Error, len(tasks), len(someTasks))
+					assert.Equal(t.Error, len(tasks), len(tasksA))
 					for i, gotTask := range tasks {
 						assert.Equal(t.Error,
-							gotTask.TeamID, someTasks[i].TeamID,
+							gotTask.TeamID, tasksA[i].TeamID,
 						)
 						assert.Equal(t.Error,
-							gotTask.BoardID, someTasks[i].BoardID,
+							gotTask.BoardID, tasksA[i].BoardID,
 						)
 						assert.Equal(t.Error,
-							gotTask.ColNo, someTasks[i].ColNo,
+							gotTask.ColNo, tasksA[i].ColNo,
 						)
-						assert.Equal(t.Error, gotTask.ID, someTasks[i].ID)
-						assert.Equal(t.Error, gotTask.Title, someTasks[i].Title)
+						assert.Equal(t.Error, gotTask.ID, tasksA[i].ID)
+						assert.Equal(t.Error, gotTask.Title, tasksA[i].Title)
 						assert.Equal(t.Error,
-							gotTask.Description, someTasks[i].Description,
+							gotTask.Description, tasksA[i].Description,
 						)
-						assert.Equal(t.Error, gotTask.Order, someTasks[i].Order)
+						assert.Equal(t.Error, gotTask.Order, tasksA[i].Order)
 
 						assert.Equal(t.Error,
-							len(gotTask.Subtasks), len(someTasks[i].Subtasks),
+							len(gotTask.Subtasks), len(tasksA[i].Subtasks),
 						)
 						for j, gotSubtask := range gotTask.Subtasks {
 							assert.Equal(t.Error,
 								gotSubtask.Title,
-								someTasks[i].Subtasks[j].Title,
+								tasksA[i].Subtasks[j].Title,
 							)
 							assert.Equal(t.Error,
 								gotSubtask.IsDone,
-								someTasks[i].Subtasks[j].IsDone,
+								tasksA[i].Subtasks[j].IsDone,
 							)
 						}
 					}
@@ -245,9 +247,11 @@ func TestGetHandler(t *testing.T) {
 			errValidateBoardID error
 			authToken          string
 			errDecodeAuth      error
-			authDecoded        cookie.Auth
+			auth               cookie.Auth
 			errRetrieve        error
 			tasks              []tasktbl.Task
+			errEncodeState     error
+			stateToken         string
 			wantStatus         int
 			assertFunc         func(*testing.T, *http.Response, []any)
 		}{
@@ -256,9 +260,11 @@ func TestGetHandler(t *testing.T) {
 				errValidateBoardID: nil,
 				authToken:          "",
 				errDecodeAuth:      nil,
-				authDecoded:        cookie.Auth{},
+				auth:               cookie.Auth{},
 				errRetrieve:        nil,
 				tasks:              []tasktbl.Task{},
+				errEncodeState:     nil,
+				stateToken:         "",
 				wantStatus:         http.StatusUnauthorized,
 				assertFunc:         func(*testing.T, *http.Response, []any) {},
 			},
@@ -267,9 +273,11 @@ func TestGetHandler(t *testing.T) {
 				errValidateBoardID: nil,
 				authToken:          "nonempty",
 				errDecodeAuth:      errors.New("decode auth failed"),
-				authDecoded:        cookie.Auth{},
+				auth:               cookie.Auth{},
 				errRetrieve:        nil,
 				tasks:              []tasktbl.Task{},
+				errEncodeState:     nil,
+				stateToken:         "",
 				wantStatus:         http.StatusUnauthorized,
 				assertFunc:         func(*testing.T, *http.Response, []any) {},
 			},
@@ -278,9 +286,24 @@ func TestGetHandler(t *testing.T) {
 				errValidateBoardID: nil,
 				authToken:          "nonempty",
 				errDecodeAuth:      nil,
-				authDecoded:        cookie.Auth{TeamID: "team1"},
+				auth:               cookie.Auth{TeamID: "team1"},
 				errRetrieve:        errors.New("retrieve failed"),
 				tasks:              []tasktbl.Task{},
+				errEncodeState:     nil,
+				stateToken:         "",
+				wantStatus:         http.StatusInternalServerError,
+				assertFunc:         func(*testing.T, *http.Response, []any) {},
+			},
+			{
+				name:               "ErrEncodeState",
+				errValidateBoardID: nil,
+				authToken:          "nonempty",
+				errDecodeAuth:      nil,
+				auth:               cookie.Auth{TeamID: "team1"},
+				errRetrieve:        nil,
+				tasks:              []tasktbl.Task{},
+				errEncodeState:     errors.New("encode state failed"),
+				stateToken:         "",
 				wantStatus:         http.StatusInternalServerError,
 				assertFunc:         func(*testing.T, *http.Response, []any) {},
 			},
@@ -289,15 +312,16 @@ func TestGetHandler(t *testing.T) {
 				errValidateBoardID: nil,
 				authToken:          "nonempty",
 				errDecodeAuth:      nil,
-				authDecoded:        cookie.Auth{TeamID: "team1"},
+				auth:               cookie.Auth{TeamID: "team1"},
 				errRetrieve:        nil,
 				tasks:              []tasktbl.Task{},
+				errEncodeState:     nil,
+				stateToken:         "",
 				wantStatus:         http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 					var tasks []tasktbl.Task
 					err := json.NewDecoder(resp.Body).Decode(&tasks)
 					assert.Nil(t.Fatal, err)
-
 					assert.Equal(t.Error, len(tasks), 0)
 				},
 			},
@@ -306,9 +330,11 @@ func TestGetHandler(t *testing.T) {
 				errValidateBoardID: nil,
 				authToken:          "nonempty",
 				errDecodeAuth:      nil,
-				authDecoded:        cookie.Auth{TeamID: "team1"},
+				auth:               cookie.Auth{TeamID: "team1"},
 				errRetrieve:        nil,
-				tasks:              someTasks,
+				tasks:              tasksA,
+				errEncodeState:     nil,
+				stateToken:         "alsdkfjhasafsd",
 				wantStatus:         http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 					var tasks []tasktbl.Task
@@ -317,7 +343,7 @@ func TestGetHandler(t *testing.T) {
 
 					// only the first two tasks share the same board ID,
 					// therefore only the first two tasks should be returned
-					wantTasks := someTasks[:2]
+					wantTasks := tasksA[:2]
 
 					assert.Equal(t.Error, len(tasks), len(wantTasks))
 					for i, gotTask := range tasks {
@@ -351,14 +377,22 @@ func TestGetHandler(t *testing.T) {
 							)
 						}
 					}
+
+					gotState := resp.Cookies()[0]
+					assert.Equal(t.Error, gotState.Name, "state-token")
+					assert.Equal(t.Error, gotState.Value, "alsdkfjhasafsd")
 				},
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				authDecoder.Res = c.authDecoded
+				authDecoder.Res = c.auth
 				authDecoder.Err = c.errDecodeAuth
 				retrieverByTeam.Err = c.errRetrieve
 				retrieverByTeam.Res = c.tasks
+				stateEncoder.Err = c.errEncodeState
+				stateEncoder.Res = http.Cookie{
+					Name: "state-token", Value: c.stateToken,
+				}
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(http.MethodGet, "/", nil)
 				if c.authToken != "" {

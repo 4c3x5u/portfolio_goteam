@@ -93,7 +93,7 @@ func TestRetriever(t *testing.T) {
 					"BoardID": &types.AttributeValueMemberS{
 						Value: taskA.BoardID,
 					},
-					"ColumnNumber": &types.AttributeValueMemberN{
+					"ColNo": &types.AttributeValueMemberN{
 						Value: strconv.Itoa(taskA.ColNo),
 					},
 				},

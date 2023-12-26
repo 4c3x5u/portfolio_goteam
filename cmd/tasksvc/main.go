@@ -136,6 +136,7 @@ func main() {
 			tasktbl.NewRetrieverByBoard(db),
 			authDecoder,
 			tasktbl.NewRetrieverByTeam(db),
+			stateEncoder,
 			log,
 		),
 	}))

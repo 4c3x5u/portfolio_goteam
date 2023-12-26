@@ -27,6 +27,7 @@ import (
 func TestTasksAPI(t *testing.T) {
 	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
 	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
+	stateEncoder := cookie.NewStateEncoder(test.JWTKey, 1*time.Hour)
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksapi.NewGetHandler(
@@ -35,6 +36,7 @@ func TestTasksAPI(t *testing.T) {
 			tasktbl.NewRetrieverByBoard(test.DB()),
 			authDecoder,
 			tasktbl.NewRetrieverByTeam(test.DB()),
+			stateEncoder,
 			log,
 		),
 		http.MethodPatch: tasksapi.NewPatchHandler(
@@ -42,7 +44,7 @@ func TestTasksAPI(t *testing.T) {
 			stateDecoder,
 			tasksapi.NewColNoValidator(),
 			tasktbl.NewMultiUpdater(test.DB()),
-			cookie.NewStateEncoder(test.JWTKey, 1*time.Hour),
+			stateEncoder,
 			log,
 		),
 	})
@@ -236,6 +238,8 @@ func TestTasksAPI(t *testing.T) {
 								len(task.Subtasks), len(wt.Subtasks),
 							)
 						}
+
+						// TODO: assert on state token after flattening it
 					},
 				},
 			} {
