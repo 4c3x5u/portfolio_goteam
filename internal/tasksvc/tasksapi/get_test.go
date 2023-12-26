@@ -19,10 +19,10 @@ import (
 
 func TestGetHandler(t *testing.T) {
 	boardIDValidator := &validator.FakeString{}
-	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
+	stateDecoder := &cookie.FakeDecoder[cookie.State]{}
 	retriever := &db.FakeRetriever[[]tasktbl.Task]{}
 	log := &log.FakeErrorer{}
-	sut := NewGetHandler(boardIDValidator, authDecoder, retriever, log)
+	sut := NewGetHandler(boardIDValidator, stateDecoder, retriever, log)
 
 	someTasks := []tasktbl.Task{
 		{
@@ -56,8 +56,9 @@ func TestGetHandler(t *testing.T) {
 	for _, c := range []struct {
 		name               string
 		errValidateBoardID error
-		authToken          string
-		errDecodeAuth      error
+		stateToken         string
+		errDecodeState     error
+		stateDecoded       cookie.State
 		errRetrieve        error
 		tasks              []tasktbl.Task
 		wantStatus         int
@@ -66,28 +67,42 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:               "InvalidBoardID",
 			errValidateBoardID: errors.New("validate board ID failed"),
-			authToken:          "",
-			errDecodeAuth:      nil,
+			stateToken:         "",
+			errDecodeState:     nil,
+			stateDecoded:       cookie.State{},
 			errRetrieve:        nil,
 			tasks:              []tasktbl.Task{},
 			wantStatus:         http.StatusBadRequest,
 			assertFunc:         func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:               "NoAuth",
+			name:               "NoState",
 			errValidateBoardID: nil,
-			authToken:          "",
-			errDecodeAuth:      nil,
+			stateToken:         "",
+			errDecodeState:     nil,
+			stateDecoded:       cookie.State{},
 			errRetrieve:        nil,
 			tasks:              []tasktbl.Task{},
 			wantStatus:         http.StatusUnauthorized,
 			assertFunc:         func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:               "InvalidAuth",
+			name:               "InvalidState",
 			errValidateBoardID: nil,
-			authToken:          "nonempty",
-			errDecodeAuth:      errors.New("decode auth failed"),
+			stateToken:         "nonempty",
+			errDecodeState:     errors.New("decode auth failed"),
+			stateDecoded:       cookie.State{},
+			errRetrieve:        nil,
+			tasks:              []tasktbl.Task{},
+			wantStatus:         http.StatusUnauthorized,
+			assertFunc:         func(*testing.T, *http.Response, []any) {},
+		},
+		{
+			name:               "NoAccess",
+			errValidateBoardID: nil,
+			stateToken:         "nonempty",
+			errDecodeState:     nil,
+			stateDecoded:       cookie.State{},
 			errRetrieve:        nil,
 			tasks:              []tasktbl.Task{},
 			wantStatus:         http.StatusUnauthorized,
@@ -96,21 +111,27 @@ func TestGetHandler(t *testing.T) {
 		{
 			name:               "ErrRetrieve",
 			errValidateBoardID: nil,
-			authToken:          "nonempty",
-			errDecodeAuth:      nil,
-			errRetrieve:        errors.New("retrieve failed"),
-			tasks:              []tasktbl.Task{},
-			wantStatus:         http.StatusInternalServerError,
-			assertFunc:         func(*testing.T, *http.Response, []any) {},
+			stateToken:         "nonempty",
+			errDecodeState:     nil,
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				ID: "adksjh",
+			}}},
+			errRetrieve: errors.New("retrieve failed"),
+			tasks:       []tasktbl.Task{},
+			wantStatus:  http.StatusInternalServerError,
+			assertFunc:  func(*testing.T, *http.Response, []any) {},
 		},
 		{
 			name:               "OKSome",
 			errValidateBoardID: nil,
-			authToken:          "nonempty",
-			errDecodeAuth:      nil,
-			errRetrieve:        nil,
-			tasks:              someTasks,
-			wantStatus:         http.StatusOK,
+			stateToken:         "nonempty",
+			errDecodeState:     nil,
+			stateDecoded: cookie.State{Boards: []cookie.Board{{
+				ID: "adksjh",
+			}}},
+			errRetrieve: nil,
+			tasks:       someTasks,
+			wantStatus:  http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var tasks []tasktbl.Task
 				err := json.NewDecoder(resp.Body).Decode(&tasks)
@@ -149,16 +170,17 @@ func TestGetHandler(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			boardIDValidator.Err = c.errValidateBoardID
-			authDecoder.Err = c.errDecodeAuth
+			stateDecoder.Res = c.stateDecoded
+			stateDecoder.Err = c.errDecodeState
 			retriever.Err = c.errRetrieve
 			retriever.Res = c.tasks
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(
 				http.MethodGet, "/?boardID=adksjh", nil,
 			)
-			if c.authToken != "" {
+			if c.stateToken != "" {
 				r.AddCookie(&http.Cookie{
-					Name: "auth-token", Value: c.authToken,
+					Name: "state-token", Value: c.stateToken,
 				})
 			}
 

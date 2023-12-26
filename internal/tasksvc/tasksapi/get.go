@@ -19,7 +19,7 @@ type GetResp []tasktbl.Task
 // tasks route.
 type GetHandler struct {
 	boardIDValidator validator.String
-	authDecoder      cookie.Decoder[cookie.Auth]
+	stateDecoder     cookie.Decoder[cookie.State]
 	retriever        db.Retriever[[]tasktbl.Task]
 	log              log.Errorer
 }
@@ -27,13 +27,13 @@ type GetHandler struct {
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
 	boardIDValidator validator.String,
-	authDecoder cookie.Decoder[cookie.Auth],
+	authDecoder cookie.Decoder[cookie.State],
 	retriever db.Retriever[[]tasktbl.Task],
 	log log.Errorer,
 ) GetHandler {
 	return GetHandler{
 		boardIDValidator: boardIDValidator,
-		authDecoder:      authDecoder,
+		stateDecoder:     authDecoder,
 		retriever:        retriever,
 		log:              log,
 	}
@@ -49,21 +49,34 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// get auth token
-	ckAuth, err := r.Cookie(cookie.AuthName)
+	ckState, err := r.Cookie(cookie.StateName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	// decode auth token
-	auth, err := h.authDecoder.Decode(*ckAuth)
+	// decode state token
+	state, err := h.stateDecoder.Decode(*ckState)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
+	// validate board access
+	var hasAccess bool
+	for _, b := range state.Boards {
+		if b.ID == boardID {
+			hasAccess = true
+			break
+		}
+	}
+	if !hasAccess {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	// retrieve tasks
-	tasks, err := h.retriever.Retrieve(r.Context(), auth.TeamID)
+	tasks, err := h.retriever.Retrieve(r.Context(), boardID)
 	if errors.Is(err, db.ErrNoItem) {
 		// if no items, set tasks to empty slice
 		tasks = []tasktbl.Task{}
