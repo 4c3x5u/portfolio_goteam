@@ -113,6 +113,7 @@ func (h GetHandler) getByBoardID(
 		tasks = []tasktbl.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err)
 		return nil
 	}
 
@@ -136,6 +137,7 @@ func (h GetHandler) getByTeamID(
 	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
+		h.log.Error(err)
 		return nil
 	}
 
@@ -146,6 +148,7 @@ func (h GetHandler) getByTeamID(
 		tasks = []tasktbl.Task{}
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err)
 		return nil
 	}
 
