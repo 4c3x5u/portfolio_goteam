@@ -20,14 +20,12 @@ import (
 
 func TestPatchHandler(t *testing.T) {
 	decodeAuth := &cookie.FakeDecoder[cookie.Auth]{}
-	decodeState := &cookie.FakeDecoder[cookie.State]{}
 	idValidator := &api.FakeStringValidator{}
 	nameValidator := &api.FakeStringValidator{}
 	updater := &db.FakeUpdaterDualKey[teamtbl.Board]{}
 	log := &log.FakeErrorer{}
 	sut := NewPatchHandler(
 		decodeAuth,
-		decodeState,
 		idValidator,
 		nameValidator,
 		updater,
@@ -39,9 +37,6 @@ func TestPatchHandler(t *testing.T) {
 		authToken       string
 		errDecodeAuth   error
 		authDecoded     cookie.Auth
-		stateToken      string
-		errDecodeState  error
-		stateDecoded    cookie.State
 		errValidateID   error
 		errValidateName error
 		errUpdateBoard  error
@@ -53,9 +48,6 @@ func TestPatchHandler(t *testing.T) {
 			authToken:       "",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{},
-			stateToken:      "",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -67,9 +59,6 @@ func TestPatchHandler(t *testing.T) {
 			authToken:       "nonempty",
 			errDecodeAuth:   cookie.ErrInvalid,
 			authDecoded:     cookie.Auth{},
-			stateToken:      "",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -81,9 +70,6 @@ func TestPatchHandler(t *testing.T) {
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: false},
-			stateToken:      "",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
 			errValidateID:   nil,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -93,41 +79,10 @@ func TestPatchHandler(t *testing.T) {
 			),
 		},
 		{
-			name:            "NoState",
-			authToken:       "nonempty",
-			errDecodeAuth:   nil,
-			authDecoded:     cookie.Auth{IsAdmin: true},
-			stateToken:      "",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
-			errValidateID:   nil,
-			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
-			assertFunc:      assert.OnRespErr("State token not found."),
-		},
-		{
-			name:            "InvalidState",
-			authToken:       "nonempty",
-			errDecodeAuth:   nil,
-			authDecoded:     cookie.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  cookie.ErrInvalid,
-			stateDecoded:    cookie.State{},
-			errValidateID:   nil,
-			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
-			assertFunc:      assert.OnRespErr("Invalid state token."),
-		},
-		{
 			name:            "IDEmpty",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
 			errValidateID:   validator.ErrEmpty,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -139,9 +94,6 @@ func TestPatchHandler(t *testing.T) {
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
 			errValidateID:   validator.ErrWrongFormat,
 			errValidateName: nil,
 			errUpdateBoard:  nil,
@@ -149,15 +101,10 @@ func TestPatchHandler(t *testing.T) {
 			assertFunc:      assert.OnRespErr("Board ID must be a UUID."),
 		},
 		{
-			name:           "NameEmpty",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
-			}},
+			name:            "NameEmpty",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			errValidateID:   nil,
 			errValidateName: validator.ErrEmpty,
 			errUpdateBoard:  nil,
@@ -165,15 +112,10 @@ func TestPatchHandler(t *testing.T) {
 			assertFunc:      assert.OnRespErr("Board name cannot be empty."),
 		},
 		{
-			name:           "NameTooLong",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
-			}},
+			name:            "NameTooLong",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			errValidateID:   nil,
 			errValidateName: validator.ErrTooLong,
 			errUpdateBoard:  nil,
@@ -183,60 +125,30 @@ func TestPatchHandler(t *testing.T) {
 			),
 		},
 		{
-			name:            "NoAccess",
+			name:            "BoardNotFound",
 			authToken:       "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true},
-			stateToken:      "nonempty",
-			errDecodeState:  nil,
-			stateDecoded:    cookie.State{},
-			errValidateName: nil,
-			errUpdateBoard:  nil,
-			wantStatus:      http.StatusForbidden,
-			assertFunc: assert.OnRespErr(
-				"You do not have access to this board.",
-			),
-		},
-		{
-			name:           "BoardNotFound",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
-			}},
 			errValidateName: nil,
 			errUpdateBoard:  db.ErrNoItem,
 			wantStatus:      http.StatusNotFound,
 			assertFunc:      assert.OnRespErr("Board not found."),
 		},
 		{
-			name:           "BoardUpdaterErr",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
-			}},
+			name:            "BoardUpdaterErr",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			errValidateName: nil,
 			errUpdateBoard:  errors.New("update board failed"),
 			wantStatus:      http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("update board failed"),
 		},
 		{
-			name:           "Success",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "c193d6ba-ebfe-45fe-80d9-00b545690b4b"},
-			}},
+			name:            "Success",
+			authToken:       "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true},
 			errValidateName: nil,
 			errUpdateBoard:  nil,
 			wantStatus:      http.StatusOK,
@@ -246,8 +158,6 @@ func TestPatchHandler(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			decodeAuth.Err = c.errDecodeAuth
 			decodeAuth.Res = c.authDecoded
-			decodeState.Err = c.errDecodeState
-			decodeState.Res = c.stateDecoded
 			idValidator.Err = c.errValidateID
 			nameValidator.Err = c.errValidateName
 			updater.Err = c.errUpdateBoard
@@ -259,12 +169,6 @@ func TestPatchHandler(t *testing.T) {
 				r.AddCookie(&http.Cookie{
 					Name:  cookie.AuthName,
 					Value: c.authToken,
-				})
-			}
-			if c.stateToken != "" {
-				r.AddCookie(&http.Cookie{
-					Name:  cookie.StateName,
-					Value: c.stateToken,
 				})
 			}
 

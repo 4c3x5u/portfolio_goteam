@@ -7,13 +7,13 @@ import (
 
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
-	teamTable "github.com/kxplxn/goteam/pkg/db/teamtbl"
+	"github.com/kxplxn/goteam/pkg/db/teamtbl"
 	"github.com/kxplxn/goteam/pkg/log"
 	"github.com/kxplxn/goteam/pkg/validator"
 )
 
 // PatchReq defines the body of PATCH board requests.
-type PatchReq teamTable.Board
+type PatchReq teamtbl.Board
 
 // PatchResp defines the body of PATCH board responses.
 type PatchResp struct {
@@ -23,10 +23,9 @@ type PatchResp struct {
 // PatchHandler can be used to handle PATCH board requests.
 type PatchHandler struct {
 	authDecoder   cookie.Decoder[cookie.Auth]
-	stateDecoder  cookie.Decoder[cookie.State]
 	idValidator   validator.String
 	nameValidator validator.String
-	boardUpdater  db.UpdaterDualKey[teamTable.Board]
+	boardUpdater  db.UpdaterDualKey[teamtbl.Board]
 	log           log.Errorer
 }
 
@@ -34,15 +33,13 @@ type PatchHandler struct {
 // requests.
 func NewPatchHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	idValidator validator.String,
 	nameValidator validator.String,
-	boardUpdater db.UpdaterDualKey[teamTable.Board],
+	boardUpdater db.UpdaterDualKey[teamtbl.Board],
 	log log.Errorer,
 ) *PatchHandler {
 	return &PatchHandler{
 		authDecoder:   authDecoder,
-		stateDecoder:  stateDecoder,
 		idValidator:   idValidator,
 		nameValidator: nameValidator,
 		boardUpdater:  boardUpdater,
@@ -96,36 +93,6 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "State token not found.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "Invalid state token.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
 	// decode board
 	var req PatchReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -168,28 +135,9 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// validate board access
-	var hasAccess bool
-	for _, b := range state.Boards {
-		if b.ID == req.ID {
-			hasAccess = true
-			break
-		}
-	}
-	if !hasAccess {
-		w.WriteHeader(http.StatusForbidden)
-		if err := json.NewEncoder(w).Encode(
-			PatchResp{Error: "You do not have access to this board."},
-		); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
 	// update the board for the team
 	if err := h.boardUpdater.Update(
-		r.Context(), auth.TeamID, teamTable.Board(req),
+		r.Context(), auth.TeamID, teamtbl.Board(req),
 	); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(

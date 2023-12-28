@@ -45,7 +45,6 @@ func TestBoardAPI(t *testing.T) {
 		),
 		http.MethodPatch: boardapi.NewPatchHandler(
 			authDecoder,
-			stateDecoder,
 			boardapi.NewIDValidator(),
 			nameValidator,
 			teamtbl.NewBoardUpdater(test.DB()),
@@ -228,91 +227,44 @@ func TestBoardAPI(t *testing.T) {
 				),
 			},
 			{
-				name:       "NoState",
+				name:       "IDEmpty",
 				boardID:    "",
 				boardName:  "",
 				authFunc:   test.AddAuthCookie(test.T1AdminToken),
-				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnRespErr("State token not found."),
-			},
-			{
-				name:      "InvalidState",
-				boardID:   "",
-				boardName: "",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie("asdkljfhaskldfjhasdklf")(r)
-				},
-				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnRespErr("Invalid state token."),
-			},
-			{
-				name:      "IDEmpty",
-				boardID:   "",
-				boardName: "",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board ID cannot be empty."),
 			},
 			{
-				name:      "IDNotUUID",
-				boardID:   "askdfjhas",
-				boardName: "",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				name:       "IDNotUUID",
+				boardID:    "askdfjhas",
+				boardName:  "",
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board ID must be a UUID."),
 			},
 			{
-				name:      "BoardNameEmpty",
-				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-				boardName: "",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				name:       "BoardNameEmpty",
+				boardID:    "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardName:  "",
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr("Board name cannot be empty."),
 			},
 			{
-				name:      "BoardNameTooLong",
-				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-				boardName: "A Board Whose Name Is Just Too Long!",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				name:       "BoardNameTooLong",
+				boardID:    "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardName:  "A Board Whose Name Is Just Too Long!",
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				wantStatus: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Board name cannot be longer than 35 characters.",
 				),
 			},
 			{
-				name:      "ErrNoAccess",
-				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-				boardName: "New Board Name",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T3StateToken)(r)
-				},
-				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnRespErr(
-					"You do not have access to this board.",
-				),
-			},
-			{
-				name:      "OK",
-				boardID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-				boardName: "New Board Name",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				name:       "OK",
+				boardID:    "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+				boardName:  "New Board Name",
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := test.DB().GetItem(

@@ -127,7 +127,6 @@ func main() {
 		),
 		http.MethodPatch: boardapi.NewPatchHandler(
 			authDecoder,
-			stateDecoder,
 			boardapi.NewIDValidator(),
 			boardapi.NewNameValidator(),
 			teamtbl.NewBoardUpdater(db),
