@@ -190,9 +190,7 @@ func (h *PostHandler) Handle(
 			req.Description,
 			req.Order,
 			subtasks,
-		)); errors.Is(err, db.ErrDupKey) {
-			continue
-		} else if err != nil {
+		)); !errors.Is(err, db.ErrDupKey) {
 			break
 		}
 	}
