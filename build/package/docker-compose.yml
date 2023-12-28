@@ -1,24 +1,24 @@
 services:
   user:
+    container_name: goteam-usersvc
     build:
       context: usersvc
       dockerfile: Dockerfile
-    ports: 
+    ports:
       - 8080:8080
-    container_name: goteam-usersvc
 
   team:
+    container_name: goteam-teamsvc
     build:
       context: teamsvc
       dockerfile: Dockerfile
-    ports: 
+    ports:
       - 8081:8081
-    container_name: goteam-teamsvc
 
   task:
+    container_name: goteam-tasksvc
     build:
       context: tasksvc
       dockerfile: Dockerfile
-    ports: 
+    ports:
       - 8082:8082
-    container_name: goteam-tasksvc
