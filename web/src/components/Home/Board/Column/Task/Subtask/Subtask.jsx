@@ -4,61 +4,23 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckSquare, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 import AppContext from '../../../../../../AppContext';
-import SubtaskAPI from '../../../../../../api/SubtaskAPI';
 
 import './subtask.sass';
 
 const Subtask = ({
-  id, title, done, assignedUser, taskId, columnId,
+  title, done, assignee, toggleDone,
 }) => {
   const {
-    user, activeBoard, setActiveBoard, notify,
+    user
   } = useContext(AppContext);
-
-  const check = (subtaskId) => {
-    // Keep an initial state to avoid loadBoard() on API error
-    const initialActiveBoard = activeBoard;
-
-    // Update client state to avoid load screen.
-    setActiveBoard({
-      ...activeBoard,
-      columns: activeBoard.columns.map((column) => (
-        column.id === columnId ? {
-          ...column,
-          tasks: column.tasks.map((task) => (
-            task.id === taskId ? {
-              ...task,
-              subtasks: task.subtasks.map((subtask) => (
-                subtask.id === subtaskId ? {
-                  ...subtask,
-                  done: !subtask.done,
-                } : subtask
-              )),
-            } : task
-          )),
-        } : column
-      )),
-    });
-
-    // Update subtask in database
-    SubtaskAPI
-      .patch(subtaskId, { done: !done })
-      .catch((err) => {
-        notify(
-          'Unable to check subtask done.',
-          `${err?.message || 'Server Error'}.`,
-        );
-        setActiveBoard(initialActiveBoard);
-      });
-  };
 
   return (
     <li className="Subtask">
       <button
         className="CheckButton"
-        onClick={() => check(id)}
+        onClick={toggleDone}
         type="button"
-        disabled={!user.isAdmin && user.username !== assignedUser}
+        disabled={!user.isAdmin && assignee && user.username !== assignee}
       >
         {done
           ? <FontAwesomeIcon className="CheckBox" icon={faCheckSquare} />
@@ -66,17 +28,14 @@ const Subtask = ({
 
         {title}
       </button>
-    </li>
+    </li >
   );
 };
 
 Subtask.propTypes = {
-  id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
   done: PropTypes.bool.isRequired,
-  assignedUser: PropTypes.string.isRequired,
-  columnId: PropTypes.number.isRequired,
-  taskId: PropTypes.number.isRequired,
+  assignee: PropTypes.string,
 };
 
 export default Subtask;

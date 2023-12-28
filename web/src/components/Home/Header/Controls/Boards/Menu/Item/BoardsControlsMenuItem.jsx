@@ -74,7 +74,7 @@ const BoardsControlsMenuItem = ({
 };
 
 BoardsControlsMenuItem.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   isActive: PropTypes.bool.isRequired,
   handleDelete: PropTypes.func.isRequired,

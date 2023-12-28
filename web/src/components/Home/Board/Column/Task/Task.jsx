@@ -21,7 +21,7 @@ const Task = ({
   order,
   assignedUser,
   handleActivate,
-  columnId,
+  colNo,
   subtasks,
 }) => {
   const {
@@ -31,36 +31,75 @@ const Task = ({
   const MENU_ID = `edit-task-${id}`;
   const { show } = useContextMenu({ id: MENU_ID });
 
-  const assignMember = (username) => {
+  // TODO: use
+  // const assignMember = (username) => {
+  //   // Keep an initial state to avoid loadBoard() on API error
+  //   const initialActiveBoard = activeBoard;
+  //
+  //   // Update client state to avoid load time
+  //   setActiveBoard({
+  //     ...activeBoard,
+  //     columns: activeBoard.columns.map((column, i) => (
+  //       i === colNo ? {
+  //         ...column,
+  //         tasks: column.tasks.map((task) => (
+  //           task.id === id
+  //             ? { ...task, user: username }
+  //             : task
+  //         )),
+  //       } : column
+  //     )),
+  //   });
+  //
+  //   // Add user to task in database
+  //   TaskAPI
+  //     .patch(id, { title, description, subtasks, asignee: username })
+  //     .catch((err) => {
+  //       notify(
+  //         'Unable to assign user.',
+  //         err?.response?.data?.user || err?.message || 'Server Error.',
+  //       );
+  //       setActiveBoard(initialActiveBoard);
+  //     });
+  // };
+
+  const toggleSubtaskDone = (iSubtask) => () => {
     // Keep an initial state to avoid loadBoard() on API error
     const initialActiveBoard = activeBoard;
 
-    // Update client state to avoid load time
+    let subtasks = subtasks.map((subtask, i) => (
+      i === iSubtask
+        ? { title: subtask.title, done: !subtask.done }
+        : subtask
+    ));
+
+    // Update client state to avoid load screen.
     setActiveBoard({
       ...activeBoard,
-      columns: activeBoard.columns.map((column) => (
-        column.id === columnId ? {
+      columns: activeBoard.columns.map((column, i) => (
+        i === colNo ? {
           ...column,
           tasks: column.tasks.map((task) => (
             task.id === id
-              ? { ...task, user: username }
+              ? { ...task, subtasks: subtasks }
               : task
           )),
         } : column
       )),
     });
 
-    // Add user to task in database
+    // Update subtask in database
     TaskAPI
-      .patch(id, { user: username })
+      .patch(id, { title, description, order, subtasks })
       .catch((err) => {
         notify(
-          'Unable to assign user.',
-          err?.response?.data?.user || err?.message || 'Server Error.',
+          'Unable to check subtask done.',
+          `${err?.message || 'Server Error'}.`,
         );
         setActiveBoard(initialActiveBoard);
       });
   };
+
 
   return (
     <Draggable
@@ -85,20 +124,19 @@ const Task = ({
               {description}
             </p>
 
-            {subtasks.length > 0 && (
+            {subtasks && subtasks.length > 0 && (
               <ul className="Subtasks">
-                {_.sortBy(subtasks, (subtask) => subtask.order)
-                  .map((subtask) => (
-                    <Subtask
-                      id={subtask.id}
-                      key={subtask.id}
-                      title={subtask.title}
-                      done={subtask.done}
-                      assignedUser={assignedUser}
-                      taskId={id}
-                      columnId={columnId}
-                    />
-                  ))}
+                {subtasks.map((subtask, i) => (
+                  <Subtask
+                    key={i}
+                    title={subtask.title}
+                    done={subtask.done}
+                    assignee={assignedUser}
+                    taskId={id}
+                    columnId={colNo}
+                    toggleDone={toggleSubtaskDone(i)}
+                  />
+                ))}
               </ul>
             )}
 
@@ -117,37 +155,38 @@ const Task = ({
           </div>
 
           <Menu className="ContextMenu" id={MENU_ID}>
-            {members.filter((m) => m.isActive && !m.isAdmin).length >= 1 && (
-              <Submenu
-                className="Submenu"
-                label={(
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      display: 'flex',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    ASSIGN
-                  </div>
-                )}
-                arrow={<div style={{ display: 'none' }} />}
-              >
-                {members.map((member) => (
-                  // If member is not admin or assigned, display them in list
-                  !member.isAdmin && member.isActive && (
-                    <Item
-                      key={member.username}
-                      onClick={() => assignMember(member.username)}
-                    >
-                      {member.username.length > 20
-                        ? `${member.username.substring(0, 17)}...`
-                        : member.username}
-                    </Item>
-                  )
-                ))}
-              </Submenu>
-            )}
+            {/* TODO: add back once you created assign endpoint */}
+            {/* {members.filter((m) => m.isActive && !m.isAdmin).length >= 1 && ( */}
+            {/*   <Submenu */}
+            {/*     className="Submenu" */}
+            {/*     label={( */}
+            {/*       <div */}
+            {/*         style={{ */}
+            {/*           textAlign: 'center', */}
+            {/*           display: 'flex', */}
+            {/*           justifyContent: 'center', */}
+            {/*         }} */}
+            {/*       > */}
+            {/*         ASSIGN */}
+            {/*       </div> */}
+            {/*     )} */}
+            {/*     arrow={<div style={{ display: 'none' }} />} */}
+            {/*   > */}
+            {/*     {members.map((member) => ( */}
+            {/*       // If member is not admin or assigned, display them in list */}
+            {/*       !member.isAdmin && member.isActive && ( */}
+            {/*         <Item */}
+            {/*           key={member.username} */}
+            {/*           onClick={() => assignMember(member.username)} */}
+            {/*         > */}
+            {/*           {member.username.length > 20 */}
+            {/*             ? `${member.username.substring(0, 17)}...` */}
+            {/*             : member.username} */}
+            {/*         </Item> */}
+            {/*       ) */}
+            {/*     ))} */}
+            {/*   </Submenu> */}
+            {/* )} */}
 
             <Item
               className="ContextMenuItem"
@@ -156,7 +195,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
-                columnId,
+                columnId: colNo,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
@@ -170,7 +209,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
-                columnId,
+                columnId: colNo,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
@@ -184,20 +223,18 @@ const Task = ({
 };
 
 Task.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   order: PropTypes.number.isRequired,
-  assignedUser: PropTypes.string.isRequired,
-  columnId: PropTypes.number.isRequired,
+  // assignee: PropTypes.string,
+  colNo: PropTypes.number.isRequired,
   subtasks: PropTypes.arrayOf(
     PropTypes.exact({
-      id: PropTypes.number.isRequired,
       title: PropTypes.string.isRequired,
-      order: PropTypes.number.isRequired,
       done: PropTypes.bool.isRequired,
     }),
-  ).isRequired,
+  ),
   handleActivate: PropTypes.func.isRequired,
 };
 

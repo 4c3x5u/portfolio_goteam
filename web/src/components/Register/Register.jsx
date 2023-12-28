@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Form, Button } from 'react-bootstrap';
 
 import AppContext from '../../AppContext';
-import AuthAPI from '../../api/AuthAPI';
+import UserAPI from '../../api/UserAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import ValidateUser from '../../validation/ValidateUser';
 import inputType from '../../misc/inputType';
@@ -43,7 +43,7 @@ const Register = () => {
       setErrors(clientErrors);
     } else {
       setIsLoading(true);
-      AuthAPI
+      UserAPI
         .register(username, password, inviteCode ?? '')
         .then(() => loadBoard())
         .catch((err) => {

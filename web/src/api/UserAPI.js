@@ -1,16 +1,22 @@
 import axios from 'axios';
 
+var apiUrl = process.env.REACT_APP_USER_SERVICE_URL
+
 const UserAPI = {
-  /// Only used for adding/removing a user from a board.
-  patch: (username, boardId, isActive) => axios.patch(
-    `${process.env.SERVER_URL}/user?username=${username}`,
-    { board_id: boardId, is_active: isActive },
-    { withCredentials: true },
+  login: (username, password) => (
+    axios.post(
+      apiUrl + "/login",
+      { username, password },
+      { withCredentials: true },
+    )
   ),
 
-  delete: (username) => axios.delete(
-    `${process.env.SERVER_URL}/user?username=${username}`,
-    { withCredentials: true },
+  register: (username, password, inviteCode) => (
+    axios.post(
+      apiUrl + "/register?inviteCode=" + inviteCode,
+      { username, password },
+      { withCredentials: true },
+    )
   ),
 };
 

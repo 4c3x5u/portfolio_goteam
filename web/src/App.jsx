@@ -8,6 +8,7 @@ import {
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.min.css';
 import cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 
 import AppContext from './AppContext';
 import InitialStates from './misc/InitialStates';
@@ -18,7 +19,9 @@ import Register from './components/Register/Register';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './app.sass';
 import Spinner from './components/Home/Spinner/Spinner';
-import boardAPI from './api/BoardAPI';
+import TeamAPI from './api/TeamAPI';
+import TasksAPI from './api/TasksAPI';
+import { forEach } from 'lodash';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,25 +38,68 @@ const App = () => {
   );
 
   const loadBoard = (boardId) => {
-    if (cookies.get('auth-token')) {
-      boardAPI
+    let authCookie = cookies.get('auth-token');
+
+    if (authCookie) {
+      setUser(jwtDecode(authCookie))
+
+      TeamAPI
+        .get()
+        .then((res) => {
+          // TODO: set invite code
+          setTeam({ id: res.data.id });
+          setBoards(res.data.boards);
+          setMembers(res.data.members.map((username) => (
+            // team ID is the admin's username, so the member is admin if the team
+            // ID matches their username
+            { username, isAdmin: username === team.id }
+          )));
+          if (activeBoard.id === null) {
+            setActiveBoard({
+              id: res.data.boards[0].id,
+              columns: [
+                { id: null, order: 0, tasks: [] },
+                { id: null, order: 1, tasks: [] },
+                { id: null, order: 2, tasks: [] },
+                { id: null, order: 3, tasks: [] },
+              ],
+            })
+          }
+        })
+        .catch()
+
+      TasksAPI
         .get(
           boardId || sessionStorage.getItem('board-id') || activeBoard.id || '',
         )
         .then((res) => {
+          if (res.data.length === 0) {
+            return;
+          }
+
+          let board = {
+            id: res.data[0].boardID,
+            columns: [
+              { id: null, order: 0, tasks: [] },
+              { id: null, order: 1, tasks: [] },
+              { id: null, order: 2, tasks: [] },
+              { id: null, order: 3, tasks: [] },
+            ],
+          }
+
+          forEach(res.data, (task) => {
+            console.log("~~~ COLNO: " + task.colNo)
+            board.columns[task.colNo].tasks.push(task)
+          });
+
           // Update app state one by one
-          setUser(res.data.user);
-          if (res.data?.team) { setTeam(res.data.team); }
-          setBoards(res.data.boards);
-          setActiveBoard(res.data.activeBoard);
-          setMembers(res.data.members);
+          setActiveBoard(board);
         })
         .catch((err) => {
           setUser({ ...user, isAuthenticated: false });
 
           // remove username if unauthorised
           if (err?.response?.status === 401) {
-            cookies.remove('auth-token');
             setIsLoading(false);
             return;
           }
@@ -65,7 +111,6 @@ const App = () => {
               'Inactive Credentials',
               err?.response?.data?.board,
             );
-            cookies.remove('auth-token');
             return;
           }
 

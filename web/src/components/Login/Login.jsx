@@ -3,7 +3,7 @@ import { Form, Button } from 'react-bootstrap';
 // import cookies from 'js-cookie';
 
 import AppContext from '../../AppContext';
-import AuthAPI from '../../api/AuthAPI';
+import UserAPI from '../../api/UserAPI';
 import FormGroup from '../_shared/FormGroup/FormGroup';
 import ValidateUser from '../../validation/ValidateUser';
 import inputType from '../../misc/inputType';
@@ -30,7 +30,7 @@ const Login = () => {
     } else {
       setIsLoading(true);
 
-      AuthAPI
+      UserAPI
         .login(username, password)
         .then(() => loadBoard())
         .catch((err) => {

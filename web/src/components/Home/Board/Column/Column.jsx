@@ -17,12 +17,14 @@ import window from '../../../../misc/window';
 const Column = ({
   id, order, tasks, handleActivate,
 }) => {
+  console.log("~~~ COLUMN CALL")
+
   const { user } = useContext(AppContext);
   const [name, setName] = useState('');
 
-  useEffect(() => (
+  useEffect(() => {
     order !== null && setName(columnOrder.parseInt(order))
-  ), [order]);
+  }, [order]);
 
   return (
     <Col className="ColumnWrapper" xs={3}>
@@ -44,13 +46,15 @@ const Column = ({
             >
               {_.sortBy(tasks, (task) => task.order).map((task) => (
                 <Task
+                  teamID={task.teamID}
+                  boardID={task.boardID}
                   id={task.id}
                   key={task.id}
                   title={task.title}
                   description={task.description}
                   order={task.order}
-                  assignedUser={task.user}
-                  columnId={id}
+                  assignee={task.user}
+                  colNo={order}
                   subtasks={task.subtasks}
                   handleActivate={handleActivate}
                 />
@@ -76,20 +80,20 @@ const Column = ({
 };
 
 Column.propTypes = {
-  id: PropTypes.number.isRequired,
   order: PropTypes.number.isRequired,
   tasks: PropTypes.arrayOf(
     PropTypes.exact({
-      id: PropTypes.number.isRequired,
+      teamID: PropTypes.string.isRequired,
+      boardID: PropTypes.string.isRequired,
+      id: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       description: PropTypes.string.isRequired,
       order: PropTypes.number.isRequired,
-      user: PropTypes.string.isRequired,
+      colNo: PropTypes.number,
+      user: PropTypes.string,
       subtasks: PropTypes.arrayOf(
         PropTypes.exact({
-          id: PropTypes.number.isRequired,
           title: PropTypes.string.isRequired,
-          order: PropTypes.number.isRequired,
           done: PropTypes.bool.isRequired,
         }),
       ),

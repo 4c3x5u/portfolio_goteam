@@ -1,21 +1,18 @@
 import axios from 'axios';
 
+const apiUrl = process.env.REACT_APP_TASK_SERVICE_URL + "/task"
+
 const TaskAPI = {
   post: (task) => axios.post(
-    `${process.env.REACT_APP_SERVER_URL}/task`,
-    task,
-    { withCredentials: true },
+    apiUrl, task, { withCredentials: true },
   ),
 
   patch: (taskId, data) => axios.patch(
-    `${process.env.REACT_APP_SERVER_URL}/task?id=${taskId}`,
-    data,
-    { withCredentials: true },
+    apiUrl + "?id=" + taskId, data, { withCredentials: true },
   ),
 
   delete: (taskId) => axios.delete(
-    `${process.env.REACT_APP_SERVER_URL}/task?id=${taskId}`,
-    { withCredentials: true },
+    apiUrl + "?id=" + taskId, { withCredentials: true },
   ),
 };
 

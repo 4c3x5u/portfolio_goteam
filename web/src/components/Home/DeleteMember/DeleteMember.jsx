@@ -22,7 +22,7 @@ const DeleteMember = ({ username, toggleOff }) => {
     const initialMembers = members;
 
     // Update client state to avoid load time
-    setMembers(members.filter((member) => member.username !== username));
+    setMembers(members.filter((member) => member !== username));
 
     // Delete user in database
     UserAPI

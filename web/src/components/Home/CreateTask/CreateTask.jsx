@@ -46,6 +46,7 @@ const CreateTask = ({ toggleOff }) => {
                 id: -1,
                 title,
                 description,
+                colNo: ci,
                 order: -1,
                 user: '',
                 subtasks: subtasks.list.map((subtask, si) => ({

@@ -36,7 +36,7 @@ const CreateBoard = ({ toggleOff }) => {
 
       // Create board in database
       BoardAPI
-        .post({ name, team_id: user.teamId })
+        .post({ name, team_id: user.teamID })
         .then(() => {
           loadBoard();
           toggleOff();

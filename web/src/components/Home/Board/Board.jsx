@@ -4,7 +4,7 @@ import { Row } from 'react-bootstrap';
 import { DragDropContext } from 'react-beautiful-dnd';
 
 import AppContext from '../../../AppContext';
-import ColumnAPI from '../../../api/ColumnAPI';
+import TasksAPI from '../../../api/TasksAPI';
 import Column from './Column/Column';
 
 import './board.sass';
@@ -17,6 +17,9 @@ const Board = ({ handleActivate }) => {
     notify,
     setActiveBoard,
   } = useContext(AppContext);
+
+  console.log("~~~ BOARD CALL")
+  console.log("ACTIVE BOARD COLUMNS: " + JSON.stringify(activeBoard.columns))
 
   const handleOnDragEnd = async (result) => {
     if (!result?.source?.droppableId || !result?.destination?.droppableId) {
@@ -34,6 +37,7 @@ const Board = ({ handleActivate }) => {
       // Update "source" tasks' orders
       const sourceTasks = source.tasks.map((task, index) => ({
         ...task,
+        column: source.id,
         order: index,
       }));
 
@@ -48,6 +52,7 @@ const Board = ({ handleActivate }) => {
       // Update "destination" tasks' orders
       const destinationTasks = destination.tasks.map((task, index) => ({
         ...task,
+        column: destination.id,
         order: index,
       }));
 
@@ -66,8 +71,8 @@ const Board = ({ handleActivate }) => {
       });
 
       // Update the "source" and the "destination" in the database
-      await ColumnAPI.patch(source.id, sourceTasks);
-      await ColumnAPI.patch(destination.id, destinationTasks);
+      await TasksAPI.patch(sourceTasks);
+      await TasksAPI.patch(destinationTasks);
     } catch (err) {
       notify(
         'Unable to update task.',
@@ -82,16 +87,13 @@ const Board = ({ handleActivate }) => {
     <Row id="Board">
       <DragDropContext onDragEnd={handleOnDragEnd}>
         {activeBoard.columns
-          && activeBoard.columns.map((column) => (
-            column.id && (
-              <Column
-                key={column.id}
-                id={column.id}
-                order={column.order}
-                tasks={column.tasks}
-                handleActivate={handleActivate}
-              />
-            )
+          && activeBoard.columns.map((column, i) => (
+            <Column
+              key={i}
+              order={i + 1}
+              tasks={column.tasks}
+              handleActivate={handleActivate}
+            />
           ))}
       </DragDropContext>
     </Row>
