@@ -1,12 +1,12 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/joho/godotenv"
 
@@ -22,6 +22,14 @@ const (
 	// envSvcPort is the name of the environment variable used for setting the
 	// port to run the user service on.
 	envSvcPort = "USER_SERVICE_PORT"
+
+	// envPort is the name of the environment variable used for providing AWS
+	// access key to the DynamoDB client.
+	envAWSAccessKey = "AWS_ACCESS_KEY"
+
+	// envPort is the name of the environment variable used for providing AWS
+	// secret key to the DynamoDB client.
+	envAWSSecretKey = "AWS_SECRET_KEY"
 
 	// envAWSRegion is the name of the environment variable used for determining
 	// the AWS region to connect to for DynamoDB.
@@ -49,6 +57,8 @@ func main() {
 	// get environment variables
 	var (
 		port         = os.Getenv(envSvcPort)
+		awsAccessKey = os.Getenv(envAWSAccessKey)
+		awsSecretKey = os.Getenv(envAWSSecretKey)
 		awsRegion    = os.Getenv(envAWSRegion)
 		jwtKey       = os.Getenv(envJWTKey)
 		clientOrigin = os.Getenv(envClientOrigin)
@@ -59,22 +69,31 @@ func main() {
 	switch "" {
 	case port:
 		log.Error(envSvcPort, errPostfix)
+		return
+	case awsAccessKey:
+		log.Fatal(envAWSAccessKey, errPostfix)
+		return
+	case awsSecretKey:
+		log.Fatal(envAWSSecretKey, errPostfix)
+		return
 	case awsRegion:
 		log.Error(envAWSRegion, errPostfix)
+		return
 	case jwtKey:
 		log.Error(envJWTKey, errPostfix)
+		return
 	case clientOrigin:
 		log.Error(envClientOrigin, errPostfix)
+		return
 	}
 
 	// create DynamoDB client
-	dbCfg, err := config.LoadDefaultConfig(
-		context.Background(), config.WithRegion(awsRegion),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	db := dynamodb.NewFromConfig(dbCfg)
+	db := dynamodb.NewFromConfig(aws.Config{
+		Region: awsRegion,
+		Credentials: credentials.NewStaticCredentialsProvider(
+			awsAccessKey, awsSecretKey, "",
+		),
+	})
 
 	// create JWT encoders and decoders
 	key := []byte(jwtKey)
