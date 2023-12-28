@@ -1,6 +1,7 @@
 package boardapi
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -14,25 +15,19 @@ import (
 // requests.
 type DeleteHandler struct {
 	authDecoder  cookie.Decoder[cookie.Auth]
-	stateDecoder cookie.Decoder[cookie.State]
 	boardDeleter db.DeleterDualKey
-	stateEncoder cookie.Encoder[cookie.State]
 	log          log.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DeleteHandler.
 func NewDeleteHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	boardDeleter db.DeleterDualKey,
-	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
 		authDecoder:  authDecoder,
-		stateDecoder: stateDecoder,
 		boardDeleter: boardDeleter,
-		stateEncoder: stateEncoder,
 		log:          log,
 	}
 }
@@ -65,60 +60,22 @@ func (h DeleteHandler) Handle(
 		return
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-
-	// get id and check it's a valid GUID
+	// validate ID
 	id := r.URL.Query().Get("id")
 	if _, err := uuid.Parse(id); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// check if the user has access to the board
-	var hasAccess bool
-	var newBoards []cookie.Board
-	for _, b := range state.Boards {
-		if b.ID == id {
-			hasAccess = true
-			continue
-		}
-		newBoards = append(newBoards, b)
-	}
-	if !hasAccess {
-		w.WriteHeader(http.StatusForbidden)
-		return
-	}
-	state.Boards = newBoards
-
 	// delete the board
-	if err = h.boardDeleter.Delete(r.Context(), auth.TeamID, id); err != nil {
+	if err = h.boardDeleter.Delete(
+		r.Context(), auth.TeamID, id,
+	); errors.Is(err, db.ErrNoItem) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	} else if err != nil {
 		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	// encode the new state
-	outCkState, err := h.stateEncoder.Encode(state)
-	if err != nil {
-		h.log.Error(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	http.SetCookie(w, &outCkState)
 }

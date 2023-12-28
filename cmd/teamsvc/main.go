@@ -135,9 +135,7 @@ func main() {
 		),
 		http.MethodDelete: boardapi.NewDeleteHandler(
 			authDecoder,
-			stateDecoder,
 			teamtbl.NewBoardDeleter(db),
-			stateEncoder,
 			log,
 		),
 	}))

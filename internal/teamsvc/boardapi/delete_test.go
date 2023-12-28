@@ -14,17 +14,13 @@ import (
 	"github.com/kxplxn/goteam/pkg/log"
 )
 
-// TestDELETEHandler tests the Handle method of DELETEHandler to assert that it
+// TestDeleteHandler tests the Handle method of DELETEHandler to assert that it
 // behaves correctly in all possible scenarios.
-func TestDELETEHandler(t *testing.T) {
+func TestDeleteHandler(t *testing.T) {
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
-	stateDecoder := &cookie.FakeDecoder[cookie.State]{}
 	deleter := &db.FakeDeleterDualKey{}
-	stateEncoder := &cookie.FakeEncoder[cookie.State]{}
 	log := &log.FakeErrorer{}
-	sut := NewDeleteHandler(
-		authDecoder, stateDecoder, deleter, stateEncoder, log,
-	)
+	sut := NewDeleteHandler(authDecoder, deleter, log)
 
 	for _, c := range []struct {
 		name           string
@@ -32,12 +28,7 @@ func TestDELETEHandler(t *testing.T) {
 		authToken      string
 		errDecodeAuth  error
 		authDecoded    cookie.Auth
-		stateToken     string
-		errDecodeState error
-		stateDecoded   cookie.State
 		deleteBoardErr error
-		errEncodeState error
-		outState       http.Cookie
 		wantStatusCode int
 		assertFunc     func(*testing.T, *http.Response, []any)
 	}{
@@ -47,12 +38,7 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{},
-			stateToken:     "",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusUnauthorized,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
@@ -62,12 +48,7 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  cookie.ErrInvalid,
 			authDecoded:    cookie.Auth{},
-			stateToken:     "",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusUnauthorized,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
@@ -77,42 +58,7 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{IsAdmin: false},
-			stateToken:     "",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
-			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, []any) {},
-		},
-		{
-			name:           "NoState",
-			boardID:        "",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
-			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
-			wantStatusCode: http.StatusForbidden,
-			assertFunc:     func(*testing.T, *http.Response, []any) {},
-		},
-		{
-			name:           "InvalidState",
-			boardID:        "",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: cookie.ErrInvalid,
-			stateDecoded:   cookie.State{},
-			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusForbidden,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
@@ -122,12 +68,7 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusBadRequest,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
@@ -137,28 +78,18 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusBadRequest,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:           "NoAccess",
+			name:           "ErrNoItem",
 			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded:   cookie.State{Boards: []cookie.Board{{ID: "adsjkhf"}}},
-			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{},
-			wantStatusCode: http.StatusForbidden,
+			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
+			deleteBoardErr: db.ErrNoItem,
+			wantStatusCode: http.StatusNotFound,
 			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 		{
@@ -167,33 +98,9 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "66c16e54-c14f-4481-ada6-404bca897fb0"},
-			}},
 			deleteBoardErr: errors.New("delete board failed"),
-			errEncodeState: nil,
-			outState:       http.Cookie{},
 			wantStatusCode: http.StatusInternalServerError,
 			assertFunc:     assert.OnLoggedErr("delete board failed"),
-		},
-		{
-			name:           "ErrEncodeState",
-			boardID:        "66c16e54-c14f-4481-ada6-404bca897fb0",
-			authToken:      "nonempty",
-			errDecodeAuth:  nil,
-			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "66c16e54-c14f-4481-ada6-404bca897fb0"},
-			}},
-			deleteBoardErr: nil,
-			errEncodeState: errors.New("encode state failed"),
-			outState:       http.Cookie{},
-			wantStatusCode: http.StatusInternalServerError,
-			assertFunc:     assert.OnLoggedErr("encode state failed"),
 		},
 		{
 			name:           "Success",
@@ -201,41 +108,20 @@ func TestDELETEHandler(t *testing.T) {
 			authToken:      "nonempty",
 			errDecodeAuth:  nil,
 			authDecoded:    cookie.Auth{IsAdmin: true, TeamID: "1"},
-			stateToken:     "nonempty",
-			errDecodeState: nil,
-			stateDecoded: cookie.State{Boards: []cookie.Board{
-				{ID: "66c16e54-c14f-4481-ada6-404bca897fb0"},
-			}},
 			deleteBoardErr: nil,
-			errEncodeState: nil,
-			outState:       http.Cookie{Name: "foo", Value: "bar"},
 			wantStatusCode: http.StatusOK,
-			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
-				ckState := resp.Cookies()[0]
-				assert.Equal(t.Error, ckState.Name, "foo")
-				assert.Equal(t.Error, ckState.Value, "bar")
-			},
+			assertFunc:     func(*testing.T, *http.Response, []any) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			authDecoder.Err = c.errDecodeAuth
 			authDecoder.Res = c.authDecoded
-			stateDecoder.Err = c.errDecodeState
-			stateDecoder.Res = c.stateDecoded
 			deleter.Err = c.deleteBoardErr
-			stateEncoder.Err = c.errEncodeState
-			stateEncoder.Res = c.outState
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPost, "/?id="+c.boardID, nil)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name:  "auth-token",
-					Value: c.authToken,
-				})
-			}
-			if c.stateToken != "" {
-				r.AddCookie(&http.Cookie{
-					Name:  "state-token",
 					Value: c.authToken,
 				})
 			}

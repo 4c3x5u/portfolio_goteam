@@ -40,9 +40,7 @@ func TestBoardAPI(t *testing.T) {
 		),
 		http.MethodDelete: boardapi.NewDeleteHandler(
 			authDecoder,
-			stateDecoder,
 			teamtbl.NewBoardDeleter(test.DB()),
-			stateEncoder,
 			log,
 		),
 		http.MethodPatch: boardapi.NewPatchHandler(
@@ -379,23 +377,6 @@ func TestBoardAPI(t *testing.T) {
 				name:           "NotAdmin",
 				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
 				authFunc:       test.AddAuthCookie(test.T1MemberToken),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc:     func(*testing.T) {},
-			},
-			{
-				name:           "NoState",
-				id:             "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-				authFunc:       test.AddAuthCookie(test.T3AdminToken),
-				wantStatusCode: http.StatusForbidden,
-				assertFunc:     func(*testing.T) {},
-			},
-			{
-				name: "NoAccess",
-				id:   "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T3AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
 				wantStatusCode: http.StatusForbidden,
 				assertFunc:     func(*testing.T) {},
 			},
