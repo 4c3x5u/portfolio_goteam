@@ -28,28 +28,22 @@ type PostResp struct {
 // requests.
 type PostHandler struct {
 	authDecoder   cookie.Decoder[cookie.Auth]
-	stateDecoder  cookie.Decoder[cookie.State]
 	nameValidator validator.String
 	inserter      db.InserterDualKey[teamtbl.Board]
-	stateEncoder  cookie.Encoder[cookie.State]
 	log           log.Errorer
 }
 
 // NewPostHandler creates and returns a new PostHandler.
 func NewPostHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	nameValidator validator.String,
 	inserter db.InserterDualKey[teamtbl.Board],
-	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) *PostHandler {
 	return &PostHandler{
 		authDecoder:   authDecoder,
-		stateDecoder:  stateDecoder,
 		nameValidator: nameValidator,
 		inserter:      inserter,
-		stateEncoder:  stateEncoder,
 		log:           log,
 	}
 }
@@ -100,48 +94,6 @@ func (h PostHandler) Handle(
 		return
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "State token not found.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "Invalid state token.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
-	// check if the user's team already has 3 boards
-	if len(state.Boards) > 2 {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(
-			PostResp{Error: msgLimitReached},
-		); err != nil {
-			h.log.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		return
-	}
-
 	// get and validate board name
 	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -178,7 +130,11 @@ func (h PostHandler) Handle(
 		} else if errors.Is(err, db.ErrLimitReached) {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(
-				PostResp{Error: msgLimitReached},
+				PostResp{
+					Error: "You have already created the maximum amount of " +
+						"boards allowed per team. Please delete one of your " +
+						"boards to create a new one.",
+				},
 			); err != nil {
 				h.log.Error(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -190,28 +146,4 @@ func (h PostHandler) Handle(
 			return
 		}
 	}
-
-	// update, encode, and set state token
-	state.Boards = append(state.Boards, cookie.Board{
-		ID: id, Columns: []cookie.Column{
-			{Tasks: []cookie.Task{}},
-			{Tasks: []cookie.Task{}},
-			{Tasks: []cookie.Task{}},
-			{Tasks: []cookie.Task{}},
-		},
-	})
-	outCkState, err := h.stateEncoder.Encode(state)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-	http.SetCookie(w, &outCkState)
-
 }
-
-// msgLimitReached is the error message written into PostResp when the user's
-// team already has 3 boards.
-const msgLimitReached = "You have already created the maximum amount of " +
-	"boards allowed per team. Please delete one of your boards to create a " +
-	"new one."

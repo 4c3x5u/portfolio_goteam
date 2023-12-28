@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -25,17 +24,13 @@ import (
 
 func TestBoardAPI(t *testing.T) {
 	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
-	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
 	nameValidator := boardapi.NewNameValidator()
-	stateEncoder := cookie.NewStateEncoder(test.JWTKey, 1*time.Hour)
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardapi.NewPostHandler(
 			authDecoder,
-			stateDecoder,
 			nameValidator,
 			teamtbl.NewBoardInserter(test.DB()),
-			stateEncoder,
 			log,
 		),
 		http.MethodDelete: boardapi.NewDeleteHandler(
@@ -82,23 +77,6 @@ func TestBoardAPI(t *testing.T) {
 				assertFunc: assert.OnRespErr(
 					"Only team admins can edit boards.",
 				),
-			},
-			{
-				name:       "NoState",
-				boardName:  "",
-				authFunc:   test.AddAuthCookie(test.T4AdminToken),
-				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnRespErr("State token not found."),
-			},
-			{
-				name:      "InvalidState",
-				boardName: "",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T4AdminToken)(r)
-					test.AddStateCookie("asdkljfhaskldfjhasdklf")(r)
-				},
-				wantStatus: http.StatusForbidden,
-				assertFunc: assert.OnRespErr("Invalid state token."),
 			},
 			{
 				name: "EmptyBoardName",

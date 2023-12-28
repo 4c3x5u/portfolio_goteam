@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -96,13 +95,7 @@ func main() {
 	})
 
 	// create JWT encoders and decoders
-	key := []byte(jwtKey)
-	dur := 1 * time.Hour
-	var (
-		authDecoder  = cookie.NewAuthDecoder(key)
-		stateEncoder = cookie.NewStateEncoder(key, dur)
-		stateDecoder = cookie.NewStateDecoder(key)
-	)
+	authDecoder := cookie.NewAuthDecoder([]byte(jwtKey))
 
 	// register handlers for HTTP routes
 	mux := http.NewServeMux()
@@ -119,10 +112,8 @@ func main() {
 	mux.Handle("/board", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: boardapi.NewPostHandler(
 			authDecoder,
-			stateDecoder,
 			boardapi.NewNameValidator(),
 			teamtbl.NewBoardInserter(db),
-			stateEncoder,
 			log,
 		),
 		http.MethodPatch: boardapi.NewPatchHandler(
