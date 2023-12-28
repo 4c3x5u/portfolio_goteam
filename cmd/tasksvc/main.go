@@ -121,7 +121,6 @@ func main() {
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(
 			authDecoder,
-			stateDecoder,
 			taskTitleValidator,
 			taskTitleValidator,
 			tasktbl.NewUpdater(db),
@@ -129,9 +128,7 @@ func main() {
 		),
 		http.MethodDelete: taskapi.NewDeleteHandler(
 			authDecoder,
-			stateDecoder,
 			tasktbl.NewDeleter(db),
-			stateEncoder,
 			log,
 		),
 	}))

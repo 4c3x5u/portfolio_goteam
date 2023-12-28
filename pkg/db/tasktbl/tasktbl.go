@@ -7,14 +7,14 @@ const tableName = "TASK_TABLE_NAME"
 
 // Task defines the task entity - the primary entity of task domain.
 type Task struct {
-	TeamID      string    `json:"teamID"`  // guid
-	BoardID     string    `json:"boardID"` // guid
-	ColNo       int       `json:"colNo"`
+	TeamID      string    `json:"teamID"`                          // guid
+	BoardID     string    `json:"boardID" dynamodbav:",omitempty"` // guid
+	ColNo       int       `json:"colNo" dynamodbav:",omitempty"`
 	ID          string    `json:"id"` // guid
 	Title       string    `json:"title"`
-	Description string    `json:"description"`
+	Description string    `json:"description" dynamodbav:",omitempty"`
 	Order       int       `json:"order"`
-	Subtasks    []Subtask `json:"subtasks"`
+	Subtasks    []Subtask `json:"subtasks" dynamodbav:",omitempty"`
 }
 
 // NewTask creates and returns a new Task.

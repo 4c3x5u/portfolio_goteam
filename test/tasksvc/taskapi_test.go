@@ -44,7 +44,6 @@ func TestTaskAPI(t *testing.T) {
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(
 			authDecoder,
-			stateDecoder,
 			titleValidator,
 			titleValidator,
 			tasktbl.NewUpdater(test.DB()),
@@ -312,21 +311,6 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:   "InvalidTaskID",
-				taskID: "",
-				reqBody: `{
-					"title":       "",
-					"description": "",
-					"subtasks":    []
-				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnRespErr("Invalid task ID."),
-			},
-			{
 				name:   "TaskTitleEmpty",
 				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
 				reqBody: `{
@@ -334,10 +318,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "",
 					"subtasks":    []
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
@@ -349,10 +330,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "",
 					"subtasks":    []
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Task title cannot be longer than 50 characters.",
@@ -366,10 +344,7 @@ func TestTaskAPI(t *testing.T) {
 					"description": "",
 					"subtasks":    [{"title": ""}]
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be empty.",
@@ -385,10 +360,7 @@ func TestTaskAPI(t *testing.T) {
 						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
 					}]
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -411,10 +383,7 @@ func TestTaskAPI(t *testing.T) {
 						}
                     ]
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := test.DB().GetItem(

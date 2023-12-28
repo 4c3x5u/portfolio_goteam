@@ -31,7 +31,6 @@ type PatchResp struct {
 // the task route.
 type PatchHandler struct {
 	authDecoder        cookie.Decoder[cookie.Auth]
-	stateDecoder       cookie.Decoder[cookie.State]
 	titleValidator     validator.String
 	subtTitleValidator validator.String
 	taskUpdater        db.Updater[tasktbl.Task]
@@ -41,7 +40,6 @@ type PatchHandler struct {
 // NewPatchHandler returns a new PatchHandler.
 func NewPatchHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	taskTitleValidator validator.String,
 	subtaskTitleValidator validator.String,
 	taskUpdater db.Updater[tasktbl.Task],
@@ -49,7 +47,6 @@ func NewPatchHandler(
 ) *PatchHandler {
 	return &PatchHandler{
 		authDecoder:        authDecoder,
-		stateDecoder:       stateDecoder,
 		titleValidator:     taskTitleValidator,
 		subtTitleValidator: subtaskTitleValidator,
 		taskUpdater:        taskUpdater,
@@ -103,73 +100,8 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "State token not found.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "Invalid state token.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
 	// validate id exists in state and determine location
 	id := r.URL.Query().Get("id")
-	var (
-		idFound bool
-		boardID string
-		colNo   int
-		order   int
-	)
-	for _, b := range state.Boards {
-		for i, c := range b.Columns {
-			for j, t := range c.Tasks {
-				if t.ID == id {
-					idFound = true
-					boardID = b.ID
-					colNo = i
-					order = j
-					break
-				}
-			}
-			if idFound {
-				break
-			}
-		}
-		if idFound {
-			break
-		}
-	}
-	if !idFound {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(PatchResp{
-			Error: "Invalid task ID.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
 
 	// read request body
 	var reqBody PatchReq
@@ -233,16 +165,13 @@ func (h *PatchHandler) Handle(
 	}
 
 	// update task in task table
-	if err = h.taskUpdater.Update(r.Context(), tasktbl.NewTask(
-		auth.TeamID,
-		boardID,
-		colNo,
-		id,
-		reqBody.Title,
-		reqBody.Description,
-		order,
-		subtasks,
-	)); errors.Is(err, db.ErrNoItem) {
+	if err = h.taskUpdater.Update(r.Context(), tasktbl.Task{
+		TeamID:      auth.TeamID,
+		ID:          id,
+		Title:       reqBody.Title,
+		Description: reqBody.Description,
+		Subtasks:    subtasks,
+	}); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Task not found.",
