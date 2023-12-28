@@ -20,11 +20,9 @@ type GetResp []tasktbl.Task
 // tasks route.
 type GetHandler struct {
 	boardIDValidator validator.String
-	stateDecoder     cookie.Decoder[cookie.State]
 	retrieverByBoard db.Retriever[[]tasktbl.Task]
 	authDecoder      cookie.Decoder[cookie.Auth]
 	retrieverByTeam  db.Retriever[[]tasktbl.Task]
-	stateEncoder     cookie.Encoder[cookie.State]
 	log              log.Errorer
 }
 
@@ -54,7 +52,7 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		return
 	}
 
-	// decode state token
+	// decode auth token
 	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
