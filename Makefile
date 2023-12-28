@@ -1,5 +1,3 @@
-.PHONY: default run test test-v test-u test-uv test-i test-iv
-
 default: 
 	@echo "ERROR: target not specified"
 
@@ -15,15 +13,20 @@ build-task:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/package/tasksvc/ ./cmd/tasksvc/main.go
 	cp .env ./build/package/tasksvc/
 
-build-all:
+build-backend:
 	make build-user
 	make build-team
 	make build-task
-	docker compose build -f ./build/package/docker-compose.yml
 
-run-all:
-	make build-all
-	docker compose -f ./build/package/docker-compose.yml up
+run-backend:
+	make build-backend
+	docker compose -f ./build/package/docker-compose.yml up --build --force-recreate --no-deps
+
+stop-backend:
+	docker compose -f ./build/package/docker-compose.yml down
+
+run-frontend:
+	cd web && NODE_OPTIONS=--openssl-legacy-provider yarn run start
 
 test:
 	make test-u
