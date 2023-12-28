@@ -27,19 +27,15 @@ import (
 
 func TestTaskAPI(t *testing.T) {
 	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
-	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
-	stateEncoder := cookie.NewStateEncoder(test.JWTKey, 1*time.Hour)
 	titleValidator := taskapi.NewTitleValidator()
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskapi.NewPostHandler(
 			authDecoder,
-			stateDecoder,
 			titleValidator,
 			titleValidator,
 			taskapi.NewColNoValidator(),
 			tasktbl.NewInserter(test.DB()),
-			stateEncoder,
 			log,
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(
@@ -88,49 +84,15 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:           "NoState",
-				reqBody:        `{}`,
-				authFunc:       test.AddAuthCookie(test.T1AdminToken),
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc: assert.OnRespErr(
-					"State token not found.",
-				),
-			},
-			{
-				name:    "InvalidState",
-				reqBody: `{}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie("ksadjfhaskdf")(r)
-				},
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnRespErr("Invalid state token."),
-			},
-			{
 				name: "ColNoOutOfBounds",
 				reqBody: `{
                     "column": 5,
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4"
                 }`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Column number out of bounds.",
-				),
-			},
-			{
-				name:    "NoAccess",
-				reqBody: `{}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
-				wantStatusCode: http.StatusForbidden,
-				assertFunc: assert.OnRespErr(
-					"You do not have access to this board.",
 				),
 			},
 			{
@@ -140,10 +102,7 @@ func TestTaskAPI(t *testing.T) {
                     "column": 1,
 					"title":  ""
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
@@ -154,10 +113,7 @@ func TestTaskAPI(t *testing.T) {
                     "column": 1,
 					"title":  "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Task title cannot be longer than 50 characters.",
@@ -171,10 +127,7 @@ func TestTaskAPI(t *testing.T) {
 					"title":    "Some Task",
 					"subtasks": [""]
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be empty.",
@@ -190,10 +143,7 @@ func TestTaskAPI(t *testing.T) {
 						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
                     ]
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
 					"Subtask title cannot be longer than 50 characters.",
@@ -206,12 +156,10 @@ func TestTaskAPI(t *testing.T) {
 					"description": "Do something. Then, do something else.",
                     "column":      1,
 					"title":       "Some Task",
-					"subtasks":    ["Some Subtask", "Some Other Subtask"]
+					"subtasks":    ["Some Subtask", "Some Other Subtask"],
+                    "order":       2
 				}`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					keyEx := expression.Key("BoardID").Equal(expression.Value(
@@ -257,7 +205,8 @@ func TestTaskAPI(t *testing.T) {
 								task.Subtasks[0].IsDone == false &&
 								task.Subtasks[1].Title == "Some Other Subtas"+
 									"k" &&
-								task.Subtasks[1].IsDone == false {
+								task.Subtasks[1].IsDone == false &&
+								task.Order == 2 {
 
 								taskFound = true
 								break

@@ -16,6 +16,7 @@ import (
 type PatchReq struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Order       int    `json:"order"`
 	Subtasks    []struct {
 		Title  string `json:"title"`
 		IsDone bool   `json:"done"`
@@ -170,6 +171,7 @@ func (h *PatchHandler) Handle(
 		ID:          id,
 		Title:       reqBody.Title,
 		Description: reqBody.Description,
+		Order:       reqBody.Order,
 		Subtasks:    subtasks,
 	}); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)

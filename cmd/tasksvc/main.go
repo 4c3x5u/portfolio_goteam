@@ -111,12 +111,10 @@ func main() {
 	mux.Handle("/task", api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskapi.NewPostHandler(
 			authDecoder,
-			stateDecoder,
 			taskTitleValidator,
 			taskTitleValidator,
 			taskapi.NewColNoValidator(),
 			tasktbl.NewInserter(db),
-			stateEncoder,
 			log,
 		),
 		http.MethodPatch: taskapi.NewPatchHandler(

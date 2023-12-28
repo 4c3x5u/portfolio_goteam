@@ -21,6 +21,7 @@ type PostReq struct {
 	Subtasks     []string `json:"subtasks"`
 	BoardID      string   `json:"board"`
 	ColumnNumber int      `json:"column"`
+	Order        int      `json:"order"`
 }
 
 // PostResp defines the body of POST task responses.
@@ -32,34 +33,28 @@ type PostResp struct {
 // sent to the task route.
 type PostHandler struct {
 	authDecoder        cookie.Decoder[cookie.Auth]
-	stateDecoder       cookie.Decoder[cookie.State]
 	titleValidator     validator.String
 	subtTitleValidator validator.String
 	colNoValidator     validator.Int
 	taskInserter       db.Inserter[tasktbl.Task]
-	stateEncoder       cookie.Encoder[cookie.State]
 	log                log.Errorer
 }
 
 // NewPostHandler creates and returns a new POSTHandler.
 func NewPostHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	titleValidator validator.String,
 	subtTitleValidator validator.String,
 	colNoValidator validator.Int,
 	taskInserter db.Inserter[tasktbl.Task],
-	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) *PostHandler {
 	return &PostHandler{
 		authDecoder:        authDecoder,
-		stateDecoder:       stateDecoder,
 		titleValidator:     titleValidator,
 		subtTitleValidator: subtTitleValidator,
 		colNoValidator:     colNoValidator,
 		taskInserter:       taskInserter,
-		stateEncoder:       stateEncoder,
 		log:                log,
 	}
 }
@@ -110,32 +105,6 @@ func (h *PostHandler) Handle(
 		return
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
-			Error: "State token not found.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
-			Error: "Invalid state token.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
 	// decode request
 	var req PostReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -155,31 +124,6 @@ func (h *PostHandler) Handle(
 		}
 		return
 	}
-
-	// validate board access and determine order for the task
-	var hasBoardAccess bool
-	var highestOrder int
-	for _, b := range state.Boards {
-		if req.BoardID == b.ID {
-			hasBoardAccess = true
-			for _, t := range b.Columns[req.ColumnNumber].Tasks {
-				if t.Order > highestOrder {
-					highestOrder = t.Order
-				}
-			}
-		}
-	}
-	if !hasBoardAccess {
-		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
-			Error: "You do not have access to this board.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-	order := highestOrder + 1
 
 	// validate task
 	if err := h.titleValidator.Validate(req.Title); err != nil {
@@ -235,8 +179,8 @@ func (h *PostHandler) Handle(
 
 	// insert a new task into the task table - retry up to 3 times for the
 	// unlikely event that the generated UUID is a duplicate
-	id := uuid.NewString()
 	for tries := 0; tries < 3; tries++ {
+		id := uuid.NewString()
 		if err = h.taskInserter.Insert(r.Context(), tasktbl.NewTask(
 			auth.TeamID,
 			req.BoardID,
@@ -244,10 +188,10 @@ func (h *PostHandler) Handle(
 			id,
 			req.Title,
 			req.Description,
-			order,
+			req.Order,
 			subtasks,
 		)); errors.Is(err, db.ErrDupKey) {
-			id = uuid.NewString()
+			continue
 		} else if err != nil {
 			break
 		}
@@ -257,21 +201,4 @@ func (h *PostHandler) Handle(
 		h.log.Error(err)
 		return
 	}
-
-	// update, encode, and set state token
-	for _, b := range state.Boards {
-		if b.ID == req.BoardID {
-			b.Columns[req.ColumnNumber].Tasks = append(
-				b.Columns[req.ColumnNumber].Tasks,
-				cookie.NewTask(id, order),
-			)
-		}
-	}
-	outCkState, err := h.stateEncoder.Encode(state)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-	http.SetCookie(w, &outCkState)
 }
