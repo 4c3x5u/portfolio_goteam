@@ -18,27 +18,21 @@ type DeleteResp struct {
 // DeleteHandler is an api.MethodHandler that can be used to handle DELETE
 // requests made to the task route.
 type DeleteHandler struct {
-	authDecoder  cookie.Decoder[cookie.Auth]
-	stateDecoder cookie.Decoder[cookie.State]
-	taskDeleter  db.DeleterDualKey
-	stateEncoder cookie.Encoder[cookie.State]
-	log          log.Errorer
+	authDecoder cookie.Decoder[cookie.Auth]
+	taskDeleter db.DeleterDualKey
+	log         log.Errorer
 }
 
 // NewDeleteHandler creates and returns a new DELETEHandler.
 func NewDeleteHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	taskDeleter db.DeleterDualKey,
-	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) DeleteHandler {
 	return DeleteHandler{
-		authDecoder:  authDecoder,
-		stateDecoder: stateDecoder,
-		taskDeleter:  taskDeleter,
-		stateEncoder: stateEncoder,
-		log:          log,
+		authDecoder: authDecoder,
+		taskDeleter: taskDeleter,
+		log:         log,
 	}
 }
 
@@ -88,69 +82,9 @@ func (h DeleteHandler) Handle(
 		}
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(DeleteResp{
-			Error: "State token not found.",
-		}); encodeErr != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Invalid state token.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-			return
-		}
-	}
-
-	// validate task ID exists in state
-	id := r.URL.Query().Get("id")
-	var idValid bool
-	for _, b := range state.Boards {
-		for _, c := range b.Columns {
-			for _, t := range c.Tasks {
-				if t.ID == id {
-					idValid = true
-					break
-				}
-			}
-			if idValid {
-				break
-			}
-		}
-		if idValid {
-			break
-		}
-	}
-	if !idValid {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(DeleteResp{
-			Error: "Invalid task ID.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-			return
-		}
-	}
-
 	// delete task from the task table
 	if err = h.taskDeleter.Delete(
-		r.Context(), auth.TeamID, id,
+		r.Context(), auth.TeamID, r.URL.Query().Get("id"),
 	); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(DeleteResp{
@@ -165,28 +99,4 @@ func (h DeleteHandler) Handle(
 		h.log.Error(err)
 		return
 	}
-
-	// update state
-	for _, b := range state.Boards {
-		for _, c := range b.Columns {
-			var tasks []cookie.Task
-			for _, t := range c.Tasks {
-				if t.ID != id {
-					tasks = append(tasks, t)
-				}
-			}
-			c.Tasks = tasks
-		}
-	}
-
-	// encode state into cookie
-	outCkState, err := h.stateEncoder.Encode(state)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// set state cookie
-	http.SetCookie(w, &outCkState)
 }

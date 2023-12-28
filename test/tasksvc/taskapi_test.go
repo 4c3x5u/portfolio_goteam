@@ -52,9 +52,7 @@ func TestTaskAPI(t *testing.T) {
 		),
 		http.MethodDelete: taskapi.NewDeleteHandler(
 			authDecoder,
-			stateDecoder,
 			tasktbl.NewDeleter(test.DB()),
-			stateEncoder,
 			log,
 		),
 	})
@@ -504,22 +502,9 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name: "InvalidID",
-				id:   "1001",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
-				wantStatusCode: http.StatusBadRequest,
-				assertFunc:     assert.OnRespErr("Invalid task ID."),
-			},
-			{
-				name: "OK",
-				id:   "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				name:           "OK",
+				id:             "9dd9c982-8d1c-49ac-a412-3b01ba74b634",
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := test.DB().GetItem(
