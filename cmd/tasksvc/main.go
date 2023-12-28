@@ -142,11 +142,9 @@ func main() {
 		),
 		http.MethodGet: tasksapi.NewGetHandler(
 			tasksapi.NewBoardIDValidator(),
-			stateDecoder,
 			tasktbl.NewRetrieverByBoard(db),
 			authDecoder,
 			tasktbl.NewRetrieverByTeam(db),
-			stateEncoder,
 			log,
 		),
 	}))

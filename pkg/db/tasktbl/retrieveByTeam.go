@@ -23,9 +23,9 @@ func NewRetrieverByTeam(queryer db.DynamoQueryer) RetrieverByTeam {
 
 // Retrieve retrieves all tasks for a team from the task table.
 func (r RetrieverByTeam) Retrieve(
-	ctx context.Context, boardID string,
+	ctx context.Context, teamID string,
 ) ([]Task, error) {
-	keyCond := expression.Key("TeamID").Equal(expression.Value(boardID))
+	keyCond := expression.Key("TeamID").Equal(expression.Value(teamID))
 	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
 	if err != nil {
 		return nil, err

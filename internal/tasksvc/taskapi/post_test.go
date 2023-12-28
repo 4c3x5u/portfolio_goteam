@@ -87,32 +87,6 @@ func TestPostHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "NoState",
-			rBody:                "",
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
-			assertFunc:           assert.OnRespErr("State token not found."),
-		},
-		{
-			name:                 "InvalidState",
-			rBody:                "",
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
-			assertFunc:           assert.OnRespErr("Invalid state token."),
-		},
-		{
 			name:                 "ColNoOutOfBounds",
 			rBody:                `{"board": "boardid"}`,
 			authToken:            "nonempty",
@@ -125,21 +99,6 @@ func TestPostHandler(t *testing.T) {
 			wantStatus:           http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
 				"Column number out of bounds.",
-			),
-		},
-		{
-			name:                 "NoBoardAccess",
-			rBody:                `{"board": "boardid"}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusForbidden,
-			assertFunc: assert.OnRespErr(
-				"You do not have access to this board.",
 			),
 		},
 		{
@@ -254,19 +213,6 @@ func TestPostHandler(t *testing.T) {
 			),
 		},
 		{
-			name:                 "ErrEncodeState",
-			rBody:                `{"board": "boardid", "column": 0}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc:           assert.OnLoggedErr("encode state failed"),
-		},
-		{
 			name:                 "OK",
 			rBody:                `{"board": "boardid"}`,
 			authToken:            "nonempty",
@@ -277,11 +223,7 @@ func TestPostHandler(t *testing.T) {
 			errValidateSubtTitle: nil,
 			errInsertTask:        nil,
 			wantStatus:           http.StatusOK,
-			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
-				ckState := resp.Cookies()[0]
-				assert.Equal(t.Error, ckState.Name, "foo")
-				assert.Equal(t.Error, ckState.Value, "bar")
-			},
+			assertFunc:           func(*testing.T, *http.Response, []any) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {

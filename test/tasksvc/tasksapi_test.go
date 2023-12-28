@@ -32,11 +32,9 @@ func TestTasksAPI(t *testing.T) {
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksapi.NewGetHandler(
 			tasksapi.NewBoardIDValidator(),
-			stateDecoder,
 			tasktbl.NewRetrieverByBoard(test.DB()),
 			authDecoder,
 			tasktbl.NewRetrieverByTeam(test.DB()),
-			stateEncoder,
 			log,
 		),
 		http.MethodPatch: tasksapi.NewPatchHandler(
@@ -59,35 +57,33 @@ func TestTasksAPI(t *testing.T) {
 				assertFunc func(*testing.T, *http.Response, string)
 			}{
 				{
+					name:       "NoAuth",
+					boardID:    "",
+					authFunc:   func(*http.Request) {},
+					statusCode: http.StatusUnauthorized,
+				},
+				{
+					name:       "InvalidAuth",
+					boardID:    "",
+					authFunc:   test.AddAuthCookie("asdkjlfhass"),
+					statusCode: http.StatusUnauthorized,
+				},
+				{
 					name:       "BoardIDInvalid",
 					boardID:    "askdfjhas",
-					authFunc:   func(*http.Request) {},
+					authFunc:   test.AddAuthCookie(test.T4MemberToken),
 					statusCode: http.StatusBadRequest,
 				},
 				{
-					name:       "NoState",
+					name:       "TaskWrongTeam",
 					boardID:    "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
-					authFunc:   func(*http.Request) {},
-					statusCode: http.StatusUnauthorized,
+					authFunc:   test.AddAuthCookie(test.T1MemberToken),
+					statusCode: http.StatusForbidden,
 				},
 				{
-					name:       "InvalidState",
+					name:       "OK",
 					boardID:    "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
-					authFunc:   test.AddStateCookie("asdkjlfhass"),
-					statusCode: http.StatusUnauthorized,
-				},
-				{
-					name:    "OK",
-					boardID: "ca47fbec-269e-4ef4-a74a-bcfbcd599fd5",
-					authFunc: test.AddStateCookie(
-						"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJib2FyZHMiOlt" +
-							"7ImNvbHVtbnMiOlt7InRhc2tzIjpbeyJpZCI6IjVjY2Q3NTB" +
-							"kLTM3ODMtNDgzMi04OTFkLTAyNWYyNGE0OTQ0ZiIsIm9yZGV" +
-							"yIjowfSx7ImlkIjoiNTVlMjc1ZTQtZGU4MC00MjQxLWI3M2I" +
-							"tODhlNzg0ZDU1MjJiIiwib3JkZXIiOjF9XX1dLCJpZCI6ImN" +
-							"hNDdmYmVjLTI2OWUtNGVmNC1hNzRhLWJjZmJjZDU5OWZkNSJ" +
-							"9XX0.0m01PbRPDDBgC-dnZjqQeFdb5_leJtjARjpWG9Px3vU",
-					),
+					authFunc:   test.AddAuthCookie(test.T4MemberToken),
 					statusCode: http.StatusOK,
 					assertFunc: func(
 						t *testing.T, resp *http.Response, _ string,
