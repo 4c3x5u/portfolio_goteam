@@ -112,7 +112,7 @@ func createTable(
 		})
 
 		secIs = append(secIs, types.GlobalSecondaryIndex{
-			IndexName: aws.String(iname + "_index"),
+			IndexName: aws.String(iname + "-index"),
 			KeySchema: []types.KeySchemaElement{
 				{AttributeName: &iname, KeyType: types.KeyTypeHash},
 				{AttributeName: &partKey, KeyType: types.KeyTypeRange},

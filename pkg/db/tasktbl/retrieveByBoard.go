@@ -33,7 +33,7 @@ func (r RetrieverByBoard) Retrieve(
 
 	out, err := r.queryer.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(os.Getenv(tableName)),
-		IndexName:                 aws.String("BoardID_index"),
+		IndexName:                 aws.String("BoardID-index"),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),

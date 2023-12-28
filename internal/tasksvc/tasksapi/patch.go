@@ -69,9 +69,9 @@ func (h PatchHandler) Handle(
 	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(PatchResp{
+		if err = json.NewEncoder(w).Encode(PatchResp{
 			Error: "Auth token not found.",
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}

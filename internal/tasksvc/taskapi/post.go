@@ -67,9 +67,9 @@ func (h *PostHandler) Handle(
 	ckAuth, err := r.Cookie(cookie.AuthName)
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if err = json.NewEncoder(w).Encode(PostResp{
 			Error: "Auth token not found.",
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}
@@ -84,9 +84,9 @@ func (h *PostHandler) Handle(
 	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if err = json.NewEncoder(w).Encode(PostResp{
 			Error: "Invalid auth token.",
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}
@@ -96,9 +96,9 @@ func (h *PostHandler) Handle(
 	// validate user is admin
 	if !auth.IsAdmin {
 		w.WriteHeader(http.StatusForbidden)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if err := json.NewEncoder(w).Encode(PostResp{
 			Error: "Only team admins can create tasks.",
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}
@@ -116,9 +116,9 @@ func (h *PostHandler) Handle(
 	// validate column ID
 	if err := h.colNoValidator.Validate(req.ColumnNumber); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		if encodeErr := json.NewEncoder(w).Encode(PostResp{
+		if err := json.NewEncoder(w).Encode(PostResp{
 			Error: "Column number out of bounds.",
-		}); encodeErr != nil {
+		}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}

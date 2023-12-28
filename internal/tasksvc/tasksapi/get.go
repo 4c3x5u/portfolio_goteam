@@ -50,13 +50,16 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	if err == http.ErrNoCookie {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		h.log.Error(err)
+		return
 	}
 
 	// decode auth token
 	auth, err := h.authDecoder.Decode(*ckAuth)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		h.log.Error(err)
 		return
 	}
 
