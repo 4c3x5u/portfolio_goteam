@@ -41,28 +41,22 @@ type PatchResp struct {
 // requests sent to the tasks route.
 type PatchHandler struct {
 	authDecoder    cookie.Decoder[cookie.Auth]
-	stateDecoder   cookie.Decoder[cookie.State]
 	colNoValidator validator.Int
 	tasksUpdater   db.Updater[[]tasktbl.Task]
-	stateEncoder   cookie.Encoder[cookie.State]
 	log            log.Errorer
 }
 
 // NewPatchHandler creates and returns a new PATCHHandler.
 func NewPatchHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	stateDecoder cookie.Decoder[cookie.State],
 	colNoValidator validator.Int,
 	tasksUpdater db.Updater[[]tasktbl.Task],
-	stateEncoder cookie.Encoder[cookie.State],
 	log log.Errorer,
 ) PatchHandler {
 	return PatchHandler{
 		authDecoder:    authDecoder,
-		stateDecoder:   stateDecoder,
 		colNoValidator: colNoValidator,
 		tasksUpdater:   tasksUpdater,
-		stateEncoder:   stateEncoder,
 		log:            log,
 	}
 }
@@ -113,37 +107,7 @@ func (h PatchHandler) Handle(
 		}
 	}
 
-	// get state token
-	ckState, err := r.Cookie(cookie.StateName)
-	if err == http.ErrNoCookie {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "State token not found.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-
-	// decode state token
-	state, err := h.stateDecoder.Decode(*ckState)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(PatchResp{
-			Error: "Invalid state token.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
-	// Decode request body and map it into tasks.
+	// decode request body
 	var req PatchReq
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -151,63 +115,38 @@ func (h PatchHandler) Handle(
 		return
 	}
 
-	// validate task access and column numbers
+	// map request body into tasks, validating them as we go
 	var tasks []tasktbl.Task
 	for _, t := range req {
-		var hasAccess bool
-		for _, sb := range state.Boards {
-			for _, sc := range sb.Columns {
-				for _, st := range sc.Tasks {
-					if st.ID == t.ID {
-						hasAccess = true
-						break
-					}
-				}
-				if hasAccess {
-					break
-				}
-			}
-			if hasAccess {
-				break
-			}
-		}
-
-		if !hasAccess {
-			w.WriteHeader(http.StatusBadRequest)
-			if err = json.NewEncoder(w).Encode(
-				PatchResp{Error: "Invalid task ID."},
-			); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err)
-			}
-			return
-		}
-
 		if err := h.colNoValidator.Validate(t.ColNo); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			if err = json.NewEncoder(w).Encode(
-				PatchResp{Error: "Invalid column number."},
-			); err != nil {
+			if err = json.NewEncoder(w).Encode(PatchResp{
+				Error: "Invalid column number.",
+			}); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				h.log.Error(err)
 			}
 			return
 		}
 
-		var subtasks []tasktbl.Subtask
-		for _, st := range t.Subt {
-			subtasks = append(subtasks, tasktbl.NewSubtask(st.Title, st.IsDone))
+		task := tasktbl.Task{
+			TeamID:      auth.TeamID,
+			BoardID:     t.BoardID,
+			ColNo:       t.ColNo,
+			ID:          t.ID,
+			Title:       t.Title,
+			Description: t.Descr,
+			Order:       t.Order,
+			Subtasks:    make([]tasktbl.Subtask, len(t.Subt)),
 		}
-		tasks = append(tasks, tasktbl.NewTask(
-			auth.TeamID,
-			t.BoardID,
-			t.ColNo,
-			t.ID,
-			t.Title,
-			t.Descr,
-			t.Order,
-			subtasks,
-		))
+
+		for i, st := range t.Subt {
+			task.Subtasks[i] = tasktbl.Subtask{
+				Title: st.Title, IsDone: st.IsDone,
+			}
+		}
+
+		tasks = append(tasks, task)
 	}
 
 	// update tasks in the task table
@@ -227,28 +166,4 @@ func (h PatchHandler) Handle(
 		h.log.Error(err)
 		return
 	}
-
-	// generate new state
-	// FIXME: this is wrong but don't fix it for now because I'm going to
-	//        replace state tokens with signed-IDs soon
-	var boards []cookie.Board
-	for _, stB := range state.Boards {
-		var columns []cookie.Column
-		for _, stC := range stB.Columns {
-			var tasks []cookie.Task
-			tasks = append(tasks, stC.Tasks...)
-			columns = append(columns, cookie.NewColumn(tasks))
-		}
-		boards = append(boards, cookie.NewBoard(stB.ID, columns))
-	}
-	newState := cookie.NewState(boards)
-
-	// encode state into cookie
-	outCkState, err := h.stateEncoder.Encode(newState)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		h.log.Error(err)
-		return
-	}
-	http.SetCookie(w, &outCkState)
 }

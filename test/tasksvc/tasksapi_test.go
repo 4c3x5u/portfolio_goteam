@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -26,8 +25,6 @@ import (
 
 func TestTasksAPI(t *testing.T) {
 	authDecoder := cookie.NewAuthDecoder(test.JWTKey)
-	stateDecoder := cookie.NewStateDecoder(test.JWTKey)
-	stateEncoder := cookie.NewStateEncoder(test.JWTKey, 1*time.Hour)
 	log := log.New()
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodGet: tasksapi.NewGetHandler(
@@ -39,10 +36,8 @@ func TestTasksAPI(t *testing.T) {
 		),
 		http.MethodPatch: tasksapi.NewPatchHandler(
 			authDecoder,
-			stateDecoder,
 			tasksapi.NewColNoValidator(),
 			tasktbl.NewMultiUpdater(test.DB()),
-			stateEncoder,
 			log,
 		),
 	})
@@ -234,8 +229,6 @@ func TestTasksAPI(t *testing.T) {
 								len(task.Subtasks), len(wt.Subtasks),
 							)
 						}
-
-						// TODO: assert on state token after flattening it
 					},
 				},
 			} {
@@ -287,33 +280,6 @@ func TestTasksAPI(t *testing.T) {
 				),
 			},
 			{
-				name:       "NoState",
-				reqBody:    `[]`,
-				authFunc:   test.AddAuthCookie(test.T1AdminToken),
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnRespErr("State token not found."),
-			},
-			{
-				name:    "InvalidState",
-				reqBody: `[]`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie("askdjfhasdlfk")(r)
-				},
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnRespErr("Invalid state token."),
-			},
-			{
-				name:    "InvalidTaskID",
-				reqBody: `[{"id": "0"}]`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
-				statusCode: http.StatusBadRequest,
-				assertFunc: assert.OnRespErr("Invalid task ID."),
-			},
-			{
 				name: "Success",
 				reqBody: `[{
                     "id": "c684a6a0-404d-46fa-9fa5-1497f9874567", 
@@ -323,10 +289,7 @@ func TestTasksAPI(t *testing.T) {
                     "board": "f0c5d521-ccb5-47cc-ba40-313ddb901165",
                     "column": 2
                 }]`,
-				authFunc: func(r *http.Request) {
-					test.AddAuthCookie(test.T1AdminToken)(r)
-					test.AddStateCookie(test.T1StateToken)(r)
-				},
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				statusCode: http.StatusOK,
 				assertFunc: func(t *testing.T, _ *http.Response, _ []any) {
 					out, err := test.DB().GetItem(
