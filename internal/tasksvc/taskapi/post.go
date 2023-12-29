@@ -16,12 +16,12 @@ import (
 
 // PostReq defines the body of POST task requests.
 type PostReq struct {
-	Title        string   `json:"title"`
-	Description  string   `json:"description"`
-	Subtasks     []string `json:"subtasks"`
-	BoardID      string   `json:"board"`
-	ColumnNumber int      `json:"column"`
-	Order        int      `json:"order"`
+	BoardID     string `json:"board"`
+	ColNo       int    `json:"column"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Subtasks    []tasktbl.Subtask
+	Order       int `json:"order"`
 }
 
 // PostResp defines the body of POST task responses.
@@ -32,30 +32,24 @@ type PostResp struct {
 // PostHandler is an api.MethodHandler that can be used to handle POST requests
 // sent to the task route.
 type PostHandler struct {
-	authDecoder        cookie.Decoder[cookie.Auth]
-	titleValidator     validator.String
-	subtTitleValidator validator.String
-	colNoValidator     validator.Int
-	taskInserter       db.Inserter[tasktbl.Task]
-	log                log.Errorer
+	authDecoder  cookie.Decoder[cookie.Auth]
+	validateReq  validator.Func[PostReq]
+	taskInserter db.Inserter[tasktbl.Task]
+	log          log.Errorer
 }
 
 // NewPostHandler creates and returns a new POSTHandler.
 func NewPostHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
-	titleValidator validator.String,
-	subtTitleValidator validator.String,
-	colNoValidator validator.Int,
+	validateReq validator.Func[PostReq],
 	taskInserter db.Inserter[tasktbl.Task],
 	log log.Errorer,
 ) *PostHandler {
 	return &PostHandler{
-		authDecoder:        authDecoder,
-		titleValidator:     titleValidator,
-		subtTitleValidator: subtTitleValidator,
-		colNoValidator:     colNoValidator,
-		taskInserter:       taskInserter,
-		log:                log,
+		authDecoder:  authDecoder,
+		validateReq:  validateReq,
+		taskInserter: taskInserter,
+		log:          log,
 	}
 }
 
@@ -113,68 +107,40 @@ func (h *PostHandler) Handle(
 		return
 	}
 
-	// validate column ID
-	if err := h.colNoValidator.Validate(req.ColumnNumber); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		if err := json.NewEncoder(w).Encode(PostResp{
-			Error: "Column number out of bounds.",
-		}); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.log.Error(err)
-		}
-		return
-	}
-
-	// validate task
-	if err := h.titleValidator.Validate(req.Title); err != nil {
-		var errMsg string
-		if errors.Is(err, validator.ErrEmpty) {
-			errMsg = "Task title cannot be empty."
-		} else if errors.Is(err, validator.ErrTooLong) {
-			errMsg = "Task title cannot be longer than 50 characters."
-		} else {
+	// validate request
+	if err := h.validateReq(req); err != nil {
+		var msg string
+		switch {
+		case errors.Is(err, errBoardIDEmpty):
+			msg = "Board ID cannot be empty."
+		case errors.Is(err, errParseBoardID):
+			msg = "Board ID is must be a valid UUID."
+		case errors.Is(err, errColNoOutOfBounds):
+			msg = "Column number must be between 1 and 4."
+		case errors.Is(err, errTitleEmpty):
+			msg = "Task title cannot be empty."
+		case errors.Is(err, errTitleTooLong):
+			msg = "Task title cannot be longer than 50 characters."
+		case errors.Is(err, errDescTooLong):
+			msg = "Task description cannot be longer than 500 characters."
+		case errors.Is(err, errSubtaskTitleEmpty):
+			msg = "Subtask title cannot be empty."
+		case errors.Is(err, errSubtaskTitleTooLong):
+			msg = "Subtask title cannot be longer than 50 characters."
+		case errors.Is(err, errOrderNegative):
+			msg = "Order cannot be negative."
+		default:
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 			return
 		}
 
 		w.WriteHeader(http.StatusBadRequest)
-		if err = json.NewEncoder(w).Encode(PostResp{
-			Error: errMsg,
-		}); err != nil {
+		if err = json.NewEncoder(w).Encode(PostResp{Error: msg}); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			h.log.Error(err)
 		}
 		return
-	}
-
-	// validate subtasks
-	var subtasks []tasktbl.Subtask
-	for _, title := range req.Subtasks {
-		if err := h.subtTitleValidator.Validate(title); err != nil {
-			var errMsg string
-			if errors.Is(err, validator.ErrEmpty) {
-				errMsg = "Subtask title cannot be empty."
-			} else if errors.Is(err, validator.ErrTooLong) {
-				errMsg = "Subtask title cannot be longer than 50 characters."
-			} else {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err)
-				return
-			}
-
-			w.WriteHeader(http.StatusBadRequest)
-			if err = json.NewEncoder(w).Encode(PostResp{
-				Error: errMsg,
-			}); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err)
-			}
-			return
-		}
-		subtasks = append(subtasks, tasktbl.Subtask{
-			Title: title, IsDone: false,
-		})
 	}
 
 	// insert a new task into the task table - retry up to 3 times for the
@@ -184,12 +150,12 @@ func (h *PostHandler) Handle(
 		if err = h.taskInserter.Insert(r.Context(), tasktbl.NewTask(
 			auth.TeamID,
 			req.BoardID,
-			req.ColumnNumber,
+			req.ColNo,
 			id,
 			req.Title,
 			req.Description,
 			req.Order,
-			subtasks,
+			req.Subtasks,
 		)); !errors.Is(err, db.ErrDupKey) {
 			break
 		}

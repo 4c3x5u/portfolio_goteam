@@ -31,8 +31,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// add allowed methods header
 	allowedMethods := make([]string, len(h.methodHandlers)+1)
 	allowedMethods[0] = http.MethodOptions
-	for i := 0; i < len(h.methodHandlers); i++ {
-		allowedMethods[i+1] = http.MethodPost
+    for method := range h.methodHandlers {
+		allowedMethods = append(allowedMethods, method)
 	}
 	w.Header().Add(allowedMethodsHeader(allowedMethods))
 

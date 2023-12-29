@@ -26,3 +26,6 @@ type String interface{ Validate(string) error }
 
 // Int describes a type that can be used to validate an integer.
 type Int interface{ Validate(int) error }
+
+// Func describes a function that can be used to validate a value.
+type Func[T any] func(T) error

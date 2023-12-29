@@ -32,9 +32,7 @@ func TestTaskAPI(t *testing.T) {
 	sut := api.NewHandler(map[string]api.MethodHandler{
 		http.MethodPost: taskapi.NewPostHandler(
 			authDecoder,
-			titleValidator,
-			titleValidator,
-			taskapi.NewColNoValidator(),
+			taskapi.ValidatePostReq,
 			tasktbl.NewInserter(test.DB()),
 			log,
 		),
@@ -84,19 +82,47 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name: "ColNoOutOfBounds",
+				name:           "EmptyBoardID",
+				reqBody:        `{"board": ""}`,
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnRespErr("Board ID cannot be empty."),
+			},
+			{
+				name:           "InvalidBoardID",
+				reqBody:        `{"board": "askdfjhads"}`,
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc: assert.OnRespErr(
+					"Board ID is must be a valid UUID.",
+				),
+			},
+			{
+				name: "ColNoTooBig",
 				reqBody: `{
-                    "column": 5,
-                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4"
+                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column": 5
                 }`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
-					"Column number out of bounds.",
+					"Column number must be between 1 and 4.",
 				),
 			},
 			{
-				name: "TaskTitleEmpty",
+				name: "ColNoTooSmall",
+				reqBody: `{
+                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column": 0
+                }`,
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc: assert.OnRespErr(
+					"Column number must be between 1 and 4.",
+				),
+			},
+			{
+				name: "TitleEmpty",
 				reqBody: `{
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
                     "column": 1,
@@ -107,7 +133,7 @@ func TestTaskAPI(t *testing.T) {
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
 			{
-				name: "TaskTitleTooLong",
+				name: "TitleTooLong",
 				reqBody: `{
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
                     "column": 1,
@@ -120,12 +146,26 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
+				name: "DescTooLong",
+				reqBody: `{
+                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "column":      1,
+					"title":       "Some Task",
+                    "description": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqwe"
+				}`,
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc: assert.OnRespErr(
+					"Task description cannot be longer than 500 characters.",
+				),
+			},
+			{
 				name: "SubtaskTitleEmpty",
 				reqBody: `{
                     "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
                     "column":   1,
 					"title":    "Some Task",
-					"subtasks": [""]
+                    "subtasks": [{"title": ""}]
 				}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
@@ -139,9 +179,9 @@ func TestTaskAPI(t *testing.T) {
                     "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
                     "column":   1,
 					"title":    "Some Task",
-					"subtasks": [
-						"asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
-                    ]
+                    "subtasks": [{
+                        "title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
+                    }]
 				}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
@@ -150,13 +190,33 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
+				name: "OrderNegative",
+				reqBody: `{
+                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
+					"description": "Do something. Then, do something else.",
+                    "column":      1,
+					"title":       "Some Task",
+					"subtasks":    [
+                        {"title": "Some Subtask"}, 
+                        {"title": "Some Other Subtask"}
+                    ],
+                    "order":       -1
+				}`,
+				authFunc:       test.AddAuthCookie(test.T1AdminToken),
+				wantStatusCode: http.StatusBadRequest,
+				assertFunc:     assert.OnRespErr("Order cannot be negative."),
+			},
+			{
 				name: "OK",
 				reqBody: `{
                     "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
 					"description": "Do something. Then, do something else.",
                     "column":      1,
 					"title":       "Some Task",
-					"subtasks":    ["Some Subtask", "Some Other Subtask"],
+					"subtasks":    [
+                        {"title": "Some Subtask"}, 
+                        {"title": "Some Other Subtask"}
+                    ],
                     "order":       2
 				}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
@@ -168,7 +228,6 @@ func TestTaskAPI(t *testing.T) {
 					expr, err := expression.NewBuilder().
 						WithKeyCondition(keyEx).Build()
 					assert.Nil(t.Fatal, err)
-					time.Sleep(1 * time.Second)
 
 					// try a few times as it takes a while for the task to
 					// appear in the database for some reason
@@ -182,7 +241,7 @@ func TestTaskAPI(t *testing.T) {
 							&dynamodb.QueryInput{
 								TableName: &tableName,
 								IndexName: aws.String(
-									"BoardID_index",
+									"BoardID-index",
 								),
 								ExpressionAttributeNames:  expr.Names(),
 								ExpressionAttributeValues: expr.Values(),

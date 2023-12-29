@@ -34,7 +34,7 @@ func TestValidatePostReq(t *testing.T) {
 			name: "ColNoTooSmall",
 			req: PostReq{
 				BoardID: "00000000-0000-0000-0000-000000000000",
-				ColNo:   -1,
+				ColNo:   0,
 			},
 			wantErr: errColNoOutOfBounds,
 		},
@@ -42,7 +42,7 @@ func TestValidatePostReq(t *testing.T) {
 			name: "ColNoTooBig",
 			req: PostReq{
 				BoardID: "00000000-0000-0000-0000-000000000000",
-				ColNo:   4,
+				ColNo:   5,
 			},
 			wantErr: errColNoOutOfBounds,
 		},
@@ -81,7 +81,7 @@ func TestValidatePostReq(t *testing.T) {
 					"sdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqwe" +
 					"asdqwe",
 			},
-			wantErr: errDescriptionTooLong,
+			wantErr: errDescTooLong,
 		},
 		{
 			name: "SubtaskTitleEmpty",
@@ -169,38 +169,6 @@ func TestTitleValidator(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			err := sut.Validate(c.title)
-			assert.ErrIs(t.Error, err, c.wantErr)
-		})
-	}
-}
-
-// TestColNoValidator tests the ColNoValidator.Validate method.
-func TestColNoValidator(t *testing.T) {
-	sut := NewColNoValidator()
-
-	for _, c := range []struct {
-		name    string
-		colNo   int
-		wantErr error
-	}{
-		{
-			name:    "ColNoTooSmall",
-			colNo:   -1,
-			wantErr: validator.ErrOutOfBounds,
-		},
-		{
-			name:    "ColNoTooBig",
-			colNo:   4,
-			wantErr: validator.ErrOutOfBounds,
-		},
-		{
-			name:    "Success",
-			colNo:   2,
-			wantErr: nil,
-		},
-	} {
-		t.Run(c.name, func(t *testing.T) {
-			err := sut.Validate(c.colNo)
 			assert.ErrIs(t.Error, err, c.wantErr)
 		})
 	}

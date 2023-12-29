@@ -28,17 +28,6 @@ func (v TitleValidator) Validate(title string) error {
 // ColNoValidator can be used to validate a task's column number.
 type ColNoValidator struct{}
 
-// NewColNoValidator creates and returns a new ColNoValidator.
-func NewColNoValidator() ColNoValidator { return ColNoValidator{} }
-
-// Validate validates a task's column number.
-func (v ColNoValidator) Validate(number int) error {
-	if number < 0 || number > 3 {
-		return validator.ErrOutOfBounds
-	}
-	return nil
-}
-
 // ValidatePostReq validates a given PostReq.
 func ValidatePostReq(req PostReq) error {
 	if req.BoardID == "" {
@@ -47,7 +36,7 @@ func ValidatePostReq(req PostReq) error {
 	if _, err := uuid.Parse(req.BoardID); err != nil {
 		return errParseBoardID
 	}
-	if req.ColNo < 0 || req.ColNo > 3 {
+	if req.ColNo < 1 || req.ColNo > 4 {
 		return errColNoOutOfBounds
 	}
 	if req.Title == "" {
@@ -57,7 +46,7 @@ func ValidatePostReq(req PostReq) error {
 		return errTitleTooLong
 	}
 	if len(req.Description) > 500 {
-		return errDescriptionTooLong
+		return errDescTooLong
 	}
 	for _, st := range req.Subtasks {
 		if st.Title == "" {
@@ -90,7 +79,7 @@ var (
 	errTitleTooLong = errors.New("title is too long")
 
 	// errTitleEmpty is returned when a task description is too long.
-	errDescriptionTooLong = errors.New("description is too long")
+	errDescTooLong = errors.New("description is too long")
 
 	// errSubtaskTitleEmpty is returned when a subtask is empty.
 	errSubtaskTitleEmpty = errors.New("subtask is empty")

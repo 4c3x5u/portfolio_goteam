@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kxplxn/goteam/pkg/api"
 	"github.com/kxplxn/goteam/pkg/assert"
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
@@ -22,220 +21,195 @@ import (
 // behaves correctly in all possible scenarios.
 func TestPostHandler(t *testing.T) {
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
-	titleValidator := &api.FakeStringValidator{}
-	subtTitleValidator := &api.FakeStringValidator{}
-	colNoValidator := &api.FakeIntValidator{}
+	validate := &validator.FakeFunc[PostReq]{}
 	taskInserter := &db.FakeInserter[tasktbl.Task]{}
 	log := &log.FakeErrorer{}
 	sut := NewPostHandler(
 		authDecoder,
-		titleValidator,
-		subtTitleValidator,
-		colNoValidator,
+		validate.Func,
 		taskInserter,
 		log,
 	)
 
 	for _, c := range []struct {
-		name                 string
-		rBody                string
-		authToken            string
-		authDecoded          cookie.Auth
-		errDecodeAuth        error
-		errValidateColNo     error
-		errValidateTaskTitle error
-		errValidateSubtTitle error
-		errInsertTask        error
-		wantStatus           int
-		assertFunc           func(*testing.T, *http.Response, []any)
+		name          string
+		authToken     string
+		authDecoded   cookie.Auth
+		errDecodeAuth error
+		errValidate   error
+		errInsertTask error
+		wantStatus    int
+		assertFunc    func(*testing.T, *http.Response, []any)
 	}{
 		{
-			name:                 "NoAuth",
-			authToken:            "",
-			errDecodeAuth:        cookie.ErrInvalid,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusUnauthorized,
-			assertFunc:           assert.OnRespErr("Auth token not found."),
+			name:          "NoAuth",
+			authToken:     "",
+			errDecodeAuth: cookie.ErrInvalid,
+			errValidate:   nil,
+			errInsertTask: nil,
+			wantStatus:    http.StatusUnauthorized,
+			assertFunc:    assert.OnRespErr("Auth token not found."),
 		},
 		{
-			name:                 "InvalidAuth",
-			authToken:            "nonempty",
-			errDecodeAuth:        cookie.ErrInvalid,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusUnauthorized,
-			assertFunc:           assert.OnRespErr("Invalid auth token."),
+			name:          "InvalidAuth",
+			authToken:     "nonempty",
+			errDecodeAuth: cookie.ErrInvalid,
+			errValidate:   nil,
+			errInsertTask: nil,
+			wantStatus:    http.StatusUnauthorized,
+			assertFunc:    assert.OnRespErr("Invalid auth token."),
 		},
 		{
-			name:                 "NotAdmin",
-			rBody:                "",
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusForbidden,
+			name:          "NotAdmin",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{},
+			errDecodeAuth: nil,
+			errValidate:   nil,
+			errInsertTask: nil,
+			wantStatus:    http.StatusForbidden,
 			assertFunc: assert.OnRespErr(
 				"Only team admins can create tasks.",
 			),
 		},
 		{
-			name:                 "ColNoOutOfBounds",
-			rBody:                `{"board": "boardid"}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     validator.ErrOutOfBounds,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
+			name:          "ErrBoardIDEmpty",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errBoardIDEmpty,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
+			assertFunc:    assert.OnRespErr("Board ID cannot be empty."),
+		},
+		{
+			name:          "ErrParseBoardID",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errParseBoardID,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
-				"Column number out of bounds.",
+				"Board ID is must be a valid UUID.",
 			),
 		},
 		{
-			name:                 "TaskTitleEmpty",
-			rBody:                `{"board": "boardid", "column": 0}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: validator.ErrEmpty,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
+			name:          "ErrColNoOutOfBounds",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errColNoOutOfBounds,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
-				"Task title cannot be empty.",
+				"Column number must be between 1 and 4.",
 			),
 		},
 		{
-			name:                 "TaskTitleTooLong",
-			rBody:                `{"board": "boardid", "column": 0}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: validator.ErrTooLong,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
+			name:          "ErrTitleEmpty",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errTitleEmpty,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
+			assertFunc:    assert.OnRespErr("Task title cannot be empty."),
+		},
+		{
+			name:          "ErrTitleTooLong",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errTitleTooLong,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
 				"Task title cannot be longer than 50 characters.",
 			),
 		},
 		{
-			name:                 "TaskTitleUnexpectedErr",
-			rBody:                `{"board": "boardid", "column": 0}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: validator.ErrWrongFormat,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				validator.ErrWrongFormat.Error(),
-			),
-		},
-		{
-			name: "SubtTitleEmpty",
-			rBody: `{
-                "board": "boardid", "column": 0, "subtasks": ["foo"]
-            }`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: validator.ErrEmpty,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
+			name:          "ErrDescTooLong",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errDescTooLong,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
-				"Subtask title cannot be empty.",
+				"Task description cannot be longer than 500 characters.",
 			),
 		},
 		{
-			name: "SubtTitleTooLong",
-			rBody: `{
-                "board": "boardid", "column": 0, "subtasks": ["foo"]
-            }`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: validator.ErrTooLong,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusBadRequest,
+			name:          "ErrSubtaskTitleEmpty",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errSubtaskTitleEmpty,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
+			assertFunc:    assert.OnRespErr("Subtask title cannot be empty."),
+		},
+		{
+			name:          "ErrSubtaskTitleTooLong",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errSubtaskTitleTooLong,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
 				"Subtask title cannot be longer than 50 characters.",
 			),
 		},
 		{
-			name: "ValidateSubtTitleErr",
-			rBody: `{
-                "board": "boardid", "column": 0, "subtasks": ["foo"]
-            }`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: validator.ErrWrongFormat,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				validator.ErrWrongFormat.Error(),
-			),
+			name:          "ErrOrderNegative",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errOrderNegative,
+			errInsertTask: nil,
+			wantStatus:    http.StatusBadRequest,
+			assertFunc:    assert.OnRespErr("Order cannot be negative."),
 		},
 		{
-			name:                 "ErrPutTask",
-			rBody:                `{"board": "boardid", "column": 0}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        errors.New("failed to put task"),
-			wantStatus:           http.StatusInternalServerError,
-			assertFunc: assert.OnLoggedErr(
-				"failed to put task",
-			),
+			name:          "ErrValidate",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   errors.New("validate failed"),
+			errInsertTask: nil,
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("validate failed"),
 		},
 		{
-			name:                 "OK",
-			rBody:                `{"board": "boardid"}`,
-			authToken:            "nonempty",
-			authDecoded:          cookie.Auth{IsAdmin: true},
-			errDecodeAuth:        nil,
-			errValidateColNo:     nil,
-			errValidateTaskTitle: nil,
-			errValidateSubtTitle: nil,
-			errInsertTask:        nil,
-			wantStatus:           http.StatusOK,
-			assertFunc:           func(*testing.T, *http.Response, []any) {},
+			name:          "ErrPutTask",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   nil,
+			errInsertTask: errors.New("put task failed"),
+			wantStatus:    http.StatusInternalServerError,
+			assertFunc:    assert.OnLoggedErr("put task failed"),
+		},
+		{
+			name:          "OK",
+			authToken:     "nonempty",
+			authDecoded:   cookie.Auth{IsAdmin: true},
+			errDecodeAuth: nil,
+			errValidate:   nil,
+			errInsertTask: nil,
+			wantStatus:    http.StatusOK,
+			assertFunc:    func(*testing.T, *http.Response, []any) {},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			authDecoder.Res = c.authDecoded
 			authDecoder.Err = c.errDecodeAuth
-			colNoValidator.Err = c.errValidateColNo
-			titleValidator.Err = c.errValidateTaskTitle
-			subtTitleValidator.Err = c.errValidateSubtTitle
+			validate.Err = c.errValidate
 			taskInserter.Err = c.errInsertTask
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(
-				http.MethodPost, "/", strings.NewReader(c.rBody),
+				http.MethodPost, "/", strings.NewReader("{}"),
 			)
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
