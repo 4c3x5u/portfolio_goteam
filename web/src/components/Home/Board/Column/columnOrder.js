@@ -5,16 +5,16 @@ const columnOrder = {
   DONE: 'done',
   parseInt: (order) => {
     switch (order) {
-      case 1:
+      case 0:
         return columnOrder.INBOX;
-      case 2:
+      case 1:
         return columnOrder.READY;
-      case 3:
+      case 2:
         return columnOrder.GO;
-      case 4:
+      case 3:
         return columnOrder.DONE;
       default:
-        return Error('Number must be between 1 and 4');
+        return Error('column order must be between 0 and 3');
     }
   },
 };

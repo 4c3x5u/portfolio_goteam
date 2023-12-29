@@ -54,23 +54,44 @@ const App = () => {
             // ID matches their username
             { username, isAdmin: username === team.id }
           )));
-          if (activeBoard.id === null) {
-            setActiveBoard({
-              id: res.data.boards[0].id,
-              columns: [
-                { id: null, order: 0, tasks: [] },
-                { id: null, order: 1, tasks: [] },
-                { id: null, order: 2, tasks: [] },
-                { id: null, order: 3, tasks: [] },
-              ],
-            })
-          }
+          // TODO: a concurrency safe solution?
+          setActiveBoard((prev) => prev.id === null && {
+            id: res.data.boards[0].id,
+            columns: [
+              { order: 1, tasks: [] },
+              { order: 2, tasks: [] },
+              { order: 3, tasks: [] },
+              { order: 4, tasks: [] },
+            ],
+          })
         })
-        .catch()
+        .catch((err) => {
+          // remove username if unauthorised
+          if (err?.response?.status === 401) {
+            setIsLoading(false);
+            return;
+          }
+
+          let errMsg;
+
+          if (err?.response?.data?.board) {
+            notify(
+              'Inactive Credentials',
+              err?.response?.data?.board,
+            );
+            return;
+          }
+
+          notify(
+            'Unable to load board.',
+            `${errMsg || err?.message || 'Server Error'}.`,
+          );
+        })
+        .finally(() => setIsLoading(false));
 
       TasksAPI
         .get(
-          boardId || sessionStorage.getItem('board-id') || activeBoard.id || '',
+          boardId || activeBoard.id || '',
         )
         .then((res) => {
           if (res.data.length === 0) {
@@ -80,10 +101,10 @@ const App = () => {
           let board = {
             id: res.data[0].boardID,
             columns: [
-              { id: null, order: 0, tasks: [] },
-              { id: null, order: 1, tasks: [] },
-              { id: null, order: 2, tasks: [] },
-              { id: null, order: 3, tasks: [] },
+              { order: 1, tasks: [] },
+              { order: 2, tasks: [] },
+              { order: 3, tasks: [] },
+              { order: 4, tasks: [] },
             ],
           }
 
@@ -96,8 +117,6 @@ const App = () => {
           setActiveBoard(board);
         })
         .catch((err) => {
-          setUser({ ...user, isAuthenticated: false });
-
           // remove username if unauthorised
           if (err?.response?.status === 401) {
             setIsLoading(false);

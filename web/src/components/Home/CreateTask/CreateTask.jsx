@@ -37,22 +37,22 @@ const CreateTask = ({ toggleOff }) => {
       // Update client state to avoid load screen
       setActiveBoard({
         ...activeBoard,
-        columns: activeBoard.columns.map((column, ci) => (
-          ci === 0 ? {
+        columns: activeBoard.columns.map((column) => (
+          column.order === 1 ? {
             ...column,
             tasks: [
               ...column.tasks,
               {
-                id: -1,
+                teamID: "",
+                boardID: "",
+                id: "",
                 title,
                 description,
-                colNo: ci,
+                colNo: column.order,
                 order: -1,
                 user: '',
-                subtasks: subtasks.list.map((subtask, si) => ({
-                  id: -100 + si,
+                subtasks: subtasks.list.map((subtask) => ({
                   title: subtask,
-                  order: -100 + si,
                   done: false,
                 })),
               },
@@ -64,9 +64,10 @@ const CreateTask = ({ toggleOff }) => {
       // Create task in the database
       TaskAPI
         .post({
+          boardID: activeBoard.id,
           title,
           description,
-          column: activeBoard.columns[0].id,
+          colNo: 0,
           subtasks: subtasks.list,
         })
         .then(() => {

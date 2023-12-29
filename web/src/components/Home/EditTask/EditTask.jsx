@@ -15,7 +15,7 @@ import logo from './edittask.svg';
 import './edittask.sass';
 
 const EditTask = ({
-  id, title, description, subtasks, columnId, toggleOff,
+  id, title, description, subtasks, column, toggleOff,
 }) => {
   const {
     activeBoard, setActiveBoard, loadBoard, notify,
@@ -42,8 +42,8 @@ const EditTask = ({
       // Update client state to avoid load time
       setActiveBoard({
         ...activeBoard,
-        columns: activeBoard.columns.map((column) => (
-          column.id === columnId ? {
+        columns: activeBoard.columns.map((column, i) => (
+          i === column ? {
             ...column,
             tasks: column.tasks.map((task) => (
               task.id === id ? {
@@ -66,7 +66,7 @@ const EditTask = ({
         .patch(id, {
           title: newTitle,
           description: newDescription,
-          column: columnId,
+          column: column,
           subtasks: newSubtasks.list,
         })
         .then(() => {
@@ -159,7 +159,7 @@ EditTask.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
-  columnId: PropTypes.number.isRequired,
+  column: PropTypes.number.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 

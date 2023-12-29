@@ -39,7 +39,7 @@ const Task = ({
   //   // Update client state to avoid load time
   //   setActiveBoard({
   //     ...activeBoard,
-  //     columns: activeBoard.columns.map((column, i) => (
+  //     column: activeBoard.columns.map((column, i) => (
   //       i === colNo ? {
   //         ...column,
   //         tasks: column.tasks.map((task) => (
@@ -132,8 +132,6 @@ const Task = ({
                     title={subtask.title}
                     done={subtask.done}
                     assignee={assignedUser}
-                    taskId={id}
-                    columnId={colNo}
                     toggleDone={toggleSubtaskDone(i)}
                   />
                 ))}
@@ -195,7 +193,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
-                columnId: colNo,
+                colNo: colNo,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
@@ -209,7 +207,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
-                columnId: colNo,
+                colNo: colNo,
                 toggleOff: handleActivate(window.NONE),
               })}
             >

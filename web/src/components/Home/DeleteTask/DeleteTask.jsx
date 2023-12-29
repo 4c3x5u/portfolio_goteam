@@ -27,8 +27,8 @@ const DeleteTask = ({
     // Update client state to avoid load time
     setActiveBoard({
       ...activeBoard,
-      columns: activeBoard.columns.map((column) => (
-        column.id === columnId ? {
+      columns: activeBoard.columns.map((column, i) => (
+        column.order === i + 1 ? {
           ...column,
           tasks: column.tasks.filter((task) => (task.id !== id)),
         } : column

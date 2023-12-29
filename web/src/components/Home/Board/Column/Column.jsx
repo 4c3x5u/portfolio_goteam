@@ -54,7 +54,7 @@ const Column = ({
                   description={task.description}
                   order={task.order}
                   assignee={task.user}
-                  colNo={order}
+                  colNo={task.colNo}
                   subtasks={task.subtasks}
                   handleActivate={handleActivate}
                 />

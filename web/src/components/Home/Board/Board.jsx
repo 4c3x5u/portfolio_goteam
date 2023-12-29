@@ -1,6 +1,6 @@
-import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Row } from 'react-bootstrap';
+import React, { useContext } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 
 import AppContext from '../../../AppContext';
@@ -28,8 +28,12 @@ const Board = ({ handleActivate }) => {
     try {
       // Find the "source" column – the one that the task is initially in
       const source = activeBoard.columns.find((column) => (
-        column.id.toString() === result.source.droppableId
+        column.order.toString() === result.source.droppableId
       ));
+
+      console.log("SOURCE: " + JSON.stringify(source))
+
+      console.log("SOURCE TASKS: " + JSON.stringify(source.tasks))
 
       // Pop the tasks that's being moved out of the "source"
       const [item] = source.tasks.splice(result.source.index, 1);
@@ -37,14 +41,18 @@ const Board = ({ handleActivate }) => {
       // Update "source" tasks' orders
       const sourceTasks = source.tasks.map((task, index) => ({
         ...task,
-        column: source.id,
+        column: parseInt(result.source.droppableId),
         order: index,
       }));
 
       // Find the "destination" column – the that the task is being moved into
       const destination = activeBoard.columns.find((column) => (
-        column.id.toString() === result.destination.droppableId
+        column.order.toString() === result.destination.droppableId
       ));
+
+      console.log("DESTINATION: " + JSON.stringify(destination))
+
+      console.log("DESTINATION TASKS: " + JSON.stringify(destination.tasks))
 
       // Insert the task that's being moved into the "destination"
       destination.tasks.splice(result.destination.index, 0, item);
@@ -52,18 +60,18 @@ const Board = ({ handleActivate }) => {
       // Update "destination" tasks' orders
       const destinationTasks = destination.tasks.map((task, index) => ({
         ...task,
-        column: destination.id,
+        column: parseInt(result.destination.droppableId),
         order: index,
       }));
 
       // Update client state (to avoid server-response wait time)
       setActiveBoard({
         ...activeBoard,
-        columns: activeBoard.columns.map((column) => {
-          if (column.id === destination.id) {
+        columns: activeBoard.columns.map((column, i) => {
+          if (i === destination.id) {
             return { ...column, tasks: destinationTasks };
           }
-          if (column.id === source.id) {
+          if (i === source.id) {
             return { ...column, tasks: sourceTasks };
           }
           return column;
@@ -71,8 +79,8 @@ const Board = ({ handleActivate }) => {
       });
 
       // Update the "source" and the "destination" in the database
-      await TasksAPI.patch(sourceTasks);
-      await TasksAPI.patch(destinationTasks);
+      sourceTasks.length > 0 && await TasksAPI.patch(sourceTasks)
+      destinationTasks.length > 0 && await TasksAPI.patch(destinationTasks)
     } catch (err) {
       notify(
         'Unable to update task.',
@@ -89,8 +97,9 @@ const Board = ({ handleActivate }) => {
         {activeBoard.columns
           && activeBoard.columns.map((column, i) => (
             <Column
+              id={i}
               key={i}
-              order={i + 1}
+              order={i}
               tasks={column.tasks}
               handleActivate={handleActivate}
             />
