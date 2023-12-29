@@ -13,18 +13,7 @@ import (
 )
 
 // PatchReq defines body of PATCH tasks requests.
-type PatchReq []Task
-
-// Task represents an element in PatchReq.
-type Task struct {
-	ID      string    `json:"id"`
-	Title   string    `json:"title"`
-	Descr   string    `json:"description"`
-	Order   int       `json:"order"`
-	Subt    []Subtask `json:"subtasks"`
-	BoardID string    `json:"board"`
-	ColNo   int       `json:"column"`
-}
+type PatchReq []tasktbl.Task
 
 // Subtask represents a subtask element in Task.
 type Subtask struct {
@@ -115,9 +104,21 @@ func (h PatchHandler) Handle(
 		return
 	}
 
+	if len(req) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		if err = json.NewEncoder(w).Encode(PatchResp{
+			Error: "No tasks provided.",
+		}); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err)
+		}
+		return
+	}
+
 	// map request body into tasks, validating them as we go
 	var tasks []tasktbl.Task
 	for _, t := range req {
+		// TODO: validate other fields, too
 		if err := h.colNoValidator.Validate(t.ColNo); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			if err = json.NewEncoder(w).Encode(PatchResp{
@@ -135,15 +136,9 @@ func (h PatchHandler) Handle(
 			ColNo:       t.ColNo,
 			ID:          t.ID,
 			Title:       t.Title,
-			Description: t.Descr,
+			Description: t.Description,
 			Order:       t.Order,
-			Subtasks:    make([]tasktbl.Subtask, len(t.Subt)),
-		}
-
-		for i, st := range t.Subt {
-			task.Subtasks[i] = tasktbl.Subtask{
-				Title: st.Title, IsDone: st.IsDone,
-			}
+			Subtasks:    t.Subtasks,
 		}
 
 		tasks = append(tasks, task)

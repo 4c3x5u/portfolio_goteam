@@ -31,6 +31,7 @@ func TestPatchHandler(t *testing.T) {
 
 	for _, c := range []struct {
 		name             string
+		rBody            string
 		authToken        string
 		errDecodeAuth    error
 		authDecoded      cookie.Auth
@@ -43,6 +44,7 @@ func TestPatchHandler(t *testing.T) {
 	}{
 		{
 			name:             "NoAuth",
+			rBody:            "[]",
 			authToken:        "",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{},
@@ -55,6 +57,7 @@ func TestPatchHandler(t *testing.T) {
 		},
 		{
 			name:             "ErrDecodeAuth",
+			rBody:            "[]",
 			authToken:        "nonempty",
 			errDecodeAuth:    errors.New("decode auth failed"),
 			authDecoded:      cookie.Auth{},
@@ -67,6 +70,7 @@ func TestPatchHandler(t *testing.T) {
 		},
 		{
 			name:             "NotAdmin",
+			rBody:            "[]",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{IsAdmin: false},
@@ -80,7 +84,21 @@ func TestPatchHandler(t *testing.T) {
 			),
 		},
 		{
+			name:             "NoTasks",
+			rBody:            "[]",
+			authToken:        "nonempty",
+			errDecodeAuth:    nil,
+			authDecoded:      cookie.Auth{IsAdmin: true, TeamID: "1"},
+			errValidateColNo: nil,
+			errUpdateTasks:   nil,
+			errEncodeState:   nil,
+			outState:         http.Cookie{},
+			wantStatus:       http.StatusBadRequest,
+			assertFunc:       assert.OnRespErr("No tasks provided."),
+		},
+		{
 			name:             "ColNoInvalid",
+			rBody:            "[{}]",
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{IsAdmin: true},
@@ -93,6 +111,7 @@ func TestPatchHandler(t *testing.T) {
 		},
 		{
 			name:             "TaskNotFound",
+			rBody:            `[{"id": "taskid", "order": 3, "column": 0}]`,
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{IsAdmin: true, TeamID: "1"},
@@ -105,6 +124,7 @@ func TestPatchHandler(t *testing.T) {
 		},
 		{
 			name:             "ErrUpdateTasks",
+			rBody:            `[{"id": "taskid", "order": 3, "column": 0}]`,
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{IsAdmin: true, TeamID: "1"},
@@ -117,6 +137,7 @@ func TestPatchHandler(t *testing.T) {
 		},
 		{
 			name:             "OK",
+			rBody:            `[{"id": "taskid", "order": 3, "column": 0}]`,
 			authToken:        "nonempty",
 			errDecodeAuth:    nil,
 			authDecoded:      cookie.Auth{IsAdmin: true, TeamID: "1"},
@@ -134,11 +155,7 @@ func TestPatchHandler(t *testing.T) {
 			colNoVdtor.Err = c.errValidateColNo
 			tasksUpdater.Err = c.errUpdateTasks
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest("", "/", strings.NewReader(`[{
-                "id": "taskid",
-                "order": 3,
-                "column": 0
-            }]`))
+			r := httptest.NewRequest("", "/", strings.NewReader(c.rBody))
 			if c.authToken != "" {
 				r.AddCookie(&http.Cookie{
 					Name: "auth-token", Value: c.authToken,
