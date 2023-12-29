@@ -103,14 +103,12 @@ const DeleteTask = ({
 };
 
 DeleteTask.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   description: PropTypes.string,
   subtasks: PropTypes.arrayOf(
     PropTypes.exact({
-      id: PropTypes.number.isRequired,
       title: PropTypes.string.isRequired,
-      order: PropTypes.number.isRequired,
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,

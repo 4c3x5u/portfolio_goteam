@@ -103,7 +103,7 @@ const EditBoard = ({ id, name, toggleOff }) => {
 };
 
 EditBoard.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };

@@ -90,7 +90,7 @@ const DeleteBoard = ({ id, name, toggleOff }) => {
 };
 
 DeleteBoard.propTypes = {
-  id: PropTypes.number.isRequired,
+  id: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
