@@ -280,14 +280,21 @@ func TestTasksAPI(t *testing.T) {
 				),
 			},
 			{
-				name: "Success",
+				name:       "NoTasks",
+				reqBody:    `[]`,
+				authFunc:   test.AddAuthCookie(test.T1AdminToken),
+				statusCode: http.StatusBadRequest,
+				assertFunc: assert.OnRespErr("No tasks provided."),
+			},
+			{
+				name: "OK",
 				reqBody: `[{
                     "id": "c684a6a0-404d-46fa-9fa5-1497f9874567", 
                     "title": "task 5",
                     "order": 2,
                     "subtasks": [],
-                    "board": "f0c5d521-ccb5-47cc-ba40-313ddb901165",
-                    "column": 2
+                    "boardID": "f0c5d521-ccb5-47cc-ba40-313ddb901165",
+                    "colNo": 2
                 }]`,
 				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				statusCode: http.StatusOK,

@@ -83,14 +83,14 @@ func TestTaskAPI(t *testing.T) {
 			},
 			{
 				name:           "EmptyBoardID",
-				reqBody:        `{"board": ""}`,
+				reqBody:        `{"boardID": ""}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc:     assert.OnRespErr("Board ID cannot be empty."),
 			},
 			{
 				name:           "InvalidBoardID",
-				reqBody:        `{"board": "askdfjhads"}`,
+				reqBody:        `{"boardID": "askdfjhads"}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
@@ -100,8 +100,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "ColNoTooLarge",
 				reqBody: `{
-                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column": 4
+                    "boardID": "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo":   4
                 }`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
@@ -112,8 +112,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "ColNoTooSmall",
 				reqBody: `{
-                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column": 0
+                    "boardID": "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo":   -1
                 }`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
@@ -124,8 +124,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "TitleEmpty",
 				reqBody: `{
-                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column": 1,
+                    "boardID":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo": 1,
 					"title":  ""
 				}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
@@ -135,8 +135,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "TitleTooLong",
 				reqBody: `{
-                    "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column": 1,
+                    "boardID":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo": 1,
 					"title":  "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
 				}`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
@@ -148,8 +148,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "DescTooLong",
 				reqBody: `{
-                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column":      1,
+                    "boardID":       "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo":      1,
 					"title":       "Some Task",
                     "description": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasdasdqweasdqweasdqweasdqweasdqweasdqweasdqwe"
 				}`,
@@ -162,8 +162,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "SubtaskTitleEmpty",
 				reqBody: `{
-                    "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column":   1,
+                    "boardID":    "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo":   1,
 					"title":    "Some Task",
                     "subtasks": [{"title": ""}]
 				}`,
@@ -176,8 +176,8 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "SubtaskTitleTooLong",
 				reqBody: `{
-                    "board":    "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column":   1,
+                    "boardID":  "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "colNo":    1,
 					"title":    "Some Task",
                     "subtasks": [{
                         "title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
@@ -192,9 +192,9 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "OrderNegative",
 				reqBody: `{
-                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "boardID":     "91536664-9749-4dbb-a470-6e52aa353ae4",
 					"description": "Do something. Then, do something else.",
-                    "column":      1,
+                    "colNo":       1,
 					"title":       "Some Task",
 					"subtasks":    [
                         {"title": "Some Subtask"}, 
@@ -209,9 +209,9 @@ func TestTaskAPI(t *testing.T) {
 			{
 				name: "OK",
 				reqBody: `{
-                    "board":       "91536664-9749-4dbb-a470-6e52aa353ae4",
+                    "boardID":     "91536664-9749-4dbb-a470-6e52aa353ae4",
 					"description": "Do something. Then, do something else.",
-                    "column":      1,
+                    "colNo":       1,
 					"title":       "Some Task",
 					"subtasks":    [
                         {"title": "Some Subtask"}, 
@@ -362,7 +362,7 @@ func TestTaskAPI(t *testing.T) {
 				name:   "SubtaskTitleTooLong",
 				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
 				reqBody: `{
-					"title":       "Some Task",
+					"title": "Some Task",
 					"description": "",
 					"subtasks": [{
 						"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd"
@@ -378,7 +378,8 @@ func TestTaskAPI(t *testing.T) {
 				name:   "OK",
 				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
 				reqBody: `{
-					"title":       "Some Task",
+					"title": "Some Task",
+                    "boardID": "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 					"description": "Some Description",
 					"subtasks": [
 						{

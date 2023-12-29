@@ -13,15 +13,7 @@ import (
 )
 
 // PatchReq defines the body of PATCH task requests.
-type PatchReq struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Order       int    `json:"order"`
-	Subtasks    []struct {
-		Title  string `json:"title"`
-		IsDone bool   `json:"done"`
-	} `json:"subtasks"`
-}
+type PatchReq tasktbl.Task
 
 // PatchResp defines the body of PATCH task responses.
 type PatchResp struct {
@@ -136,7 +128,6 @@ func (h *PatchHandler) Handle(
 	}
 
 	// validate subtask titles
-	var subtasks []tasktbl.Subtask
 	for _, subtask := range reqBody.Subtasks {
 		if err := h.subtTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
@@ -159,20 +150,18 @@ func (h *PatchHandler) Handle(
 			}
 			return
 		}
-		subtasks = append(
-			subtasks,
-			tasktbl.NewSubtask(subtask.Title, subtask.IsDone),
-		)
 	}
 
 	// update task in task table
 	if err = h.taskUpdater.Update(r.Context(), tasktbl.Task{
 		TeamID:      auth.TeamID,
+		BoardID:     reqBody.BoardID,
 		ID:          id,
 		Title:       reqBody.Title,
 		Description: reqBody.Description,
 		Order:       reqBody.Order,
-		Subtasks:    subtasks,
+		Subtasks:    reqBody.Subtasks,
+		ColNo:       reqBody.ColNo,
 	}); errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(PatchResp{
