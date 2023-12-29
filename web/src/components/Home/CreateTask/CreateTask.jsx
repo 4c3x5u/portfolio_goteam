@@ -39,8 +39,8 @@ const CreateTask = ({ toggleOff }) => {
       // Update client state to avoid load screen
       setActiveBoard({
         ...activeBoard,
-        columns: activeBoard.columns.map((column) => (
-          column.order === 1 ? {
+        columns: activeBoard.columns.map((column, i) => (
+          i === 0 ? {
             ...column,
             tasks: [
               ...column.tasks,
@@ -64,10 +64,11 @@ const CreateTask = ({ toggleOff }) => {
       TaskAPI
         .post({
           boardID: activeBoard.id,
+          colNo: 0,
           title,
           description,
-          colNo: 0,
           subtasks: subts,
+          order: activeBoard.columns[0].tasks.length,
         })
         .then(() => {
           // Load board to retrieve the "actual" ID of the created task

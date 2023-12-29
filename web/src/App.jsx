@@ -62,10 +62,7 @@ const App = () => {
           board = {
             id: tasksRes.data[0].boardID,
             columns: [
-              { tasks: [] },
-              { tasks: [] },
-              { tasks: [] },
-              { tasks: [] },
+              { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
             ],
           }
 
@@ -73,17 +70,16 @@ const App = () => {
             console.log("~~~ COLNO: " + task.colNo)
             board.columns[task.colNo].tasks.push(task)
           });
+        } else {
+          board = {
+            id: teamRes.data.boards[0].id,
+            columns: [
+              { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
+            ],
+          }
         }
 
-        setActiveBoard(board || {
-          id: teamRes.data.boards[0].id,
-          columns: [
-            { tasks: [] },
-            { tasks: [] },
-            { tasks: [] },
-            { tasks: [] },
-          ],
-        })
+        setActiveBoard(board)
       }
       catch (err) {
         // remove username if unauthorised
