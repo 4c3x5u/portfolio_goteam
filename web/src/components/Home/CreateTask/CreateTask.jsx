@@ -34,6 +34,8 @@ const CreateTask = ({ toggleOff }) => {
       // Keep an initial state to avoid loadBoard() on API error
       const initialActiveBoard = activeBoard;
 
+      const subts = subtasks.list.map((subtask) => ({ title: subtask }))
+
       // Update client state to avoid load screen
       setActiveBoard({
         ...activeBoard,
@@ -51,10 +53,7 @@ const CreateTask = ({ toggleOff }) => {
                 colNo: column.order,
                 order: -1,
                 user: '',
-                subtasks: subtasks.list.map((subtask) => ({
-                  title: subtask,
-                  done: false,
-                })),
+                subtasks: subts,
               },
             ],
           } : column
@@ -68,7 +67,7 @@ const CreateTask = ({ toggleOff }) => {
           title,
           description,
           colNo: 0,
-          subtasks: subtasks.list,
+          subtasks: subts,
         })
         .then(() => {
           // Load board to retrieve the "actual" ID of the created task
