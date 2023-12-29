@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/uuid"
-
 	"github.com/kxplxn/goteam/pkg/cookie"
 	"github.com/kxplxn/goteam/pkg/db"
 	"github.com/kxplxn/goteam/pkg/db/usertbl"
@@ -93,7 +91,7 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	var teamID string
 	var isAdmin bool
 	if err == http.ErrNoCookie {
-		teamID = uuid.NewString()
+		teamID = req.Username
 		isAdmin = true
 	} else if err != nil {
 		h.log.Error(err)

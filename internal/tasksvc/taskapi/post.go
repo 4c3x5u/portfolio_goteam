@@ -145,7 +145,7 @@ func (h *PostHandler) Handle(
 
 	// insert a new task into the task table - retry up to 3 times for the
 	// unlikely event that the generated UUID is a duplicate
-	for tries := 0; tries < 3; tries++ {
+	for i := 0; i < 3; i++ {
 		id := uuid.NewString()
 		if err = h.taskInserter.Insert(r.Context(), tasktbl.NewTask(
 			auth.TeamID,

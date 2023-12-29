@@ -96,12 +96,12 @@ func (h PostHandler) Handle(
 
 	// get and validate board name
 	var req PostReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.log.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := h.nameValidator.Validate(req.Name); err != nil {
+	if err = h.nameValidator.Validate(req.Name); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		var msg string
 		if errors.Is(err, validator.ErrEmpty) {
@@ -122,8 +122,7 @@ func (h PostHandler) Handle(
 	for i := 0; i < 3; i++ {
 		id := uuid.NewString()
 		if err = h.inserter.Insert(r.Context(), auth.TeamID, teamtbl.Board{
-			ID:   id,
-			Name: req.Name,
+			ID: id, Name: req.Name,
 		}); !errors.Is(err, db.ErrDupKey) {
 			break
 		}
