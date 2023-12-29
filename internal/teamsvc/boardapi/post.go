@@ -119,31 +119,31 @@ func (h PostHandler) Handle(
 
 	// insert the board into the team's boards in the team table - retry up to 3
 	// times for the unlikely event that the generated UUID is a duplicate
-	id := uuid.NewString()
 	for i := 0; i < 3; i++ {
+		id := uuid.NewString()
 		if err = h.inserter.Insert(r.Context(), auth.TeamID, teamtbl.Board{
 			ID:   id,
 			Name: req.Name,
-		}); errors.Is(err, db.ErrDupKey) {
-			id = uuid.NewString()
-			continue
-		} else if errors.Is(err, db.ErrLimitReached) {
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(
-				PostResp{
-					Error: "You have already created the maximum amount of " +
-						"boards allowed per team. Please delete one of your " +
-						"boards to create a new one.",
-				},
-			); err != nil {
-				h.log.Error(err)
-				w.WriteHeader(http.StatusInternalServerError)
-			}
-			return
-		} else if err != nil {
+		}); !errors.Is(err, db.ErrDupKey) {
+			break
+		}
+	}
+	if errors.Is(err, db.ErrLimitReached) {
+		w.WriteHeader(http.StatusBadRequest)
+		if err := json.NewEncoder(w).Encode(
+			PostResp{
+				Error: "You have already created the maximum amount of " +
+					"boards allowed per team. Please delete one of your " +
+					"boards to create a new one.",
+			},
+		); err != nil {
 			h.log.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
-			return
 		}
+		return
+	} else if err != nil {
+		h.log.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
