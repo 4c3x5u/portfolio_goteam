@@ -17,8 +17,6 @@ import window from '../../misc/window';
 import './home.sass';
 
 const Home = () => {
-  console.log("~~~ HOME CALL")
-
   const [activeWindow, setActiveWindow] = useState(window.NONE);
   const [windowState, setWindowState] = useState(null);
 

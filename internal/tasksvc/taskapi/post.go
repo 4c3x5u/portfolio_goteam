@@ -16,12 +16,12 @@ import (
 
 // PostReq defines the body of POST task requests.
 type PostReq struct {
-	BoardID     string `json:"boardID"`
-	ColNo       int    `json:"colNo"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Subtasks    []tasktbl.Subtask
-	Order       int `json:"order"`
+	BoardID     string            `json:"boardID"`
+	ColNo       int               `json:"colNo"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Order       int               `json:"order"`
+	Subtasks    []tasktbl.Subtask `json:"subtasks"`
 }
 
 // PostResp defines the body of POST task responses.

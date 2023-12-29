@@ -17,8 +17,6 @@ import window from '../../../../misc/window';
 const Column = ({
   id, order, tasks, handleActivate,
 }) => {
-  console.log("~~~ COLUMN CALL")
-
   const { user } = useContext(AppContext);
   const [name, setName] = useState('');
 

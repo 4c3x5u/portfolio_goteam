@@ -66,8 +66,6 @@ const App = () => {
             ],
           }
 
-          console.log("~~~taskresdata:", JSON.stringify(tasksRes.data))
-
           forEach(orderBy(tasksRes.data, ['order']), (task) => {
             board.columns[task.colNo].tasks.push(task)
           });
