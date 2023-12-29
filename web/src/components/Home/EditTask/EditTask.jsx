@@ -15,7 +15,7 @@ import logo from './edittask.svg';
 import './edittask.sass';
 
 const EditTask = ({
-  id, title, description, subtasks, column, toggleOff,
+  id, title, description, subtasks, colNo, toggleOff,
 }) => {
   const {
     activeBoard, setActiveBoard, loadBoard, notify,
@@ -50,9 +50,8 @@ const EditTask = ({
                 ...task,
                 title: newTitle,
                 description: newDescription,
-                subtasks: newSubtasks.list.map((subtask, i) => ({
+                subtasks: newSubtasks.list.map((subtask) => ({
                   title: subtask.title,
-                  order: subtask.order || -100 + i,
                   done: !!subtask.done,
                 })),
               } : task
@@ -64,9 +63,10 @@ const EditTask = ({
       // Update task in database
       TaskAPI
         .patch(id, {
+          boardID: activeBoard.id,
+          colNo: colNo,
           title: newTitle,
           description: newDescription,
-          column: column,
           subtasks: newSubtasks.list,
         })
         .then(() => {
@@ -157,7 +157,7 @@ EditTask.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
-  column: PropTypes.number.isRequired,
+  colNo: PropTypes.number.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 

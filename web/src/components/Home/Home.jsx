@@ -62,7 +62,7 @@ const Home = () => {
             title={windowState.title}
             description={windowState.description}
             subtasks={windowState.subtasks}
-            column={windowState.column}
+            colNo={windowState.colNo}
             toggleOff={handleActivate(window.NONE)}
           />
         );

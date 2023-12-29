@@ -31,12 +31,14 @@ const CreateTask = ({ toggleOff }) => {
     if (clientTitleError) {
       setTitleError(clientTitleError);
     } else {
-      // Keep an initial state to avoid loadBoard() on API error
+      // keep an initial state to avoid loadBoard() on API error
       const initialActiveBoard = activeBoard;
 
-      const subts = subtasks.list.map((subtask) => ({ title: subtask }))
+      const subts = subtasks.list.map((subtask) => (
+        { title: subtask, done: false }
+      ))
 
-      // Update client state to avoid load screen
+      // update client state to avoid load screen
       setActiveBoard({
         ...activeBoard,
         columns: activeBoard.columns.map((column, i) => (
@@ -50,7 +52,7 @@ const CreateTask = ({ toggleOff }) => {
                 id: "",
                 title,
                 description,
-                colNo: column.order,
+                colNo: i,
                 order: column.tasks.length + 1,
                 user: "",
                 subtasks: subts,

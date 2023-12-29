@@ -20,9 +20,7 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
       setSubtasks({
         value: '',
         list: [...subtasks.list, {
-          id: null,
           title: subtasks.value,
-          order: subtasks.list.length,
           done: false,
         }],
       });
@@ -30,10 +28,10 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
     }
   };
 
-  const removeSubtask = (subtaskId) => {
+  const removeSubtask = (iSubtask) => {
     setSubtasks({
       value: '',
-      list: subtasks.list.filter((st) => st.id !== subtaskId),
+      list: subtasks.list.filter((_, i) => i !== iSubtask),
     });
   };
 
@@ -43,10 +41,9 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
         SUBTASKS
       </Form.Label>
 
-      {subtasks.list.map((subtask) => (
-        <div className="ControlWrapper">
+      {subtasks.list.map((subtask, i) => (
+        <div key={i} className="ControlWrapper">
           <Form.Control
-            key={subtask.id}
             className="Input"
             type="text"
             value={subtask.title}
@@ -56,7 +53,7 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
           {setSubtasks && (
             <Button
               className="Remove"
-              onClick={() => removeSubtask(subtask.id)}
+              onClick={() => removeSubtask(i)}
               type="button"
             >
               <FontAwesomeIcon className="Icon" icon={faTimes} />
@@ -99,7 +96,10 @@ EditSubtasks.propTypes = {
   subtasks: PropTypes.exact({
     value: PropTypes.string.isRequired,
     list: PropTypes.arrayOf(
-      PropTypes.string.isRequired,
+      PropTypes.exact({
+        title: PropTypes.string.isRequired,
+        done: PropTypes.bool.isRequired,
+      }),
     ).isRequired,
   }).isRequired,
   setSubtasks: PropTypes.func,
