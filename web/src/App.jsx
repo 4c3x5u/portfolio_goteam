@@ -37,69 +37,20 @@ const App = () => {
     </>,
   );
 
-  const loadBoard = (boardId) => {
+  const loadBoard = async (boardId) => {
     let authCookie = cookies.get('auth-token');
 
     if (authCookie) {
       setUser(jwtDecode(authCookie))
 
-      TeamAPI
-        .get()
-        .then((res) => {
-          // TODO: set invite code
-          setTeam({ id: res.data.id });
-          setBoards(res.data.boards);
-          setMembers(res.data.members.map((username) => (
-            // team ID is the admin's username, so the member is admin if the team
-            // ID matches their username
-            { username, isAdmin: username === team.id }
-          )));
-          // TODO: a concurrency safe solution?
-          setActiveBoard((prev) => prev.id === null && {
-            id: res.data.boards[0].id,
-            columns: [
-              { order: 1, tasks: [] },
-              { order: 2, tasks: [] },
-              { order: 3, tasks: [] },
-              { order: 4, tasks: [] },
-            ],
-          })
-        })
-        .catch((err) => {
-          // remove username if unauthorised
-          if (err?.response?.status === 401) {
-            setIsLoading(false);
-            return;
-          }
+      try {
+        let tasksRes = await TasksAPI.get(boardId || activeBoard.id || '')
 
-          let errMsg;
+        let board = undefined
 
-          if (err?.response?.data?.board) {
-            notify(
-              'Inactive Credentials',
-              err?.response?.data?.board,
-            );
-            return;
-          }
-
-          notify(
-            'Unable to load board.',
-            `${errMsg || err?.message || 'Server Error'}.`,
-          );
-        })
-        .finally(() => setIsLoading(false));
-
-      TasksAPI
-        .get(
-          boardId || activeBoard.id || '',
-        )
-        .then((res) => {
-          if (res.data.length === 0) {
-            return;
-          }
-
-          let board = {
-            id: res.data[0].boardID,
+        if (tasksRes.data.length > 0) {
+          board = {
+            id: tasksRes.data[0].boardID,
             columns: [
               { order: 1, tasks: [] },
               { order: 2, tasks: [] },
@@ -108,37 +59,58 @@ const App = () => {
             ],
           }
 
-          forEach(res.data, (task) => {
+          forEach(tasksRes.data, (task) => {
             console.log("~~~ COLNO: " + task.colNo)
             board.columns[task.colNo].tasks.push(task)
           });
+        }
 
-          // Update app state one by one
-          setActiveBoard(board);
+
+        var teamRes = await TeamAPI.get()
+        // TODO: set invite code
+        setTeam({ id: teamRes.data.id });
+        setBoards(teamRes.data.boards);
+        setMembers(teamRes.data.members.map((username) => (
+          // team ID is the admin's username, so the member is admin if the team
+          // ID matches their username
+          { username, isAdmin: username === team.id }
+        )));
+
+        setActiveBoard(board || {
+          id: teamRes.data.boards[0].id,
+          columns: [
+            { order: 1, tasks: [] },
+            { order: 2, tasks: [] },
+            { order: 3, tasks: [] },
+            { order: 4, tasks: [] },
+          ],
         })
-        .catch((err) => {
-          // remove username if unauthorised
-          if (err?.response?.status === 401) {
-            setIsLoading(false);
-            return;
-          }
+      }
+      catch (err) {
+        // remove username if unauthorised
+        if (err?.response?.status === 401) {
+          setIsLoading(false);
+          return;
+        }
 
-          let errMsg;
+        let errMsg;
 
-          if (err?.response?.data?.board) {
-            notify(
-              'Inactive Credentials',
-              err?.response?.data?.board,
-            );
-            return;
-          }
-
+        if (err?.response?.data?.board) {
           notify(
-            'Unable to load board.',
-            `${errMsg || err?.message || 'Server Error'}.`,
+            'Inactive Credentials',
+            err?.response?.data?.board,
           );
-        })
-        .finally(() => setIsLoading(false));
+          return;
+        }
+
+        notify(
+          'Unable to load board.',
+          `${errMsg || err?.message || 'Server Error'}.`,
+        );
+
+      }
+      finally { setIsLoading(false); }
+
     }
   };
 
