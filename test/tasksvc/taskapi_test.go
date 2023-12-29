@@ -98,15 +98,15 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name: "ColNoTooBig",
+				name: "ColNoTooLarge",
 				reqBody: `{
                     "board":  "91536664-9749-4dbb-a470-6e52aa353ae4",
-                    "column": 5
+                    "column": 4
                 }`,
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
-					"Column number must be between 1 and 4.",
+					"Column number must be between 0 and 3.",
 				),
 			},
 			{
@@ -118,7 +118,7 @@ func TestTaskAPI(t *testing.T) {
 				authFunc:       test.AddAuthCookie(test.T1AdminToken),
 				wantStatusCode: http.StatusBadRequest,
 				assertFunc: assert.OnRespErr(
-					"Column number must be between 1 and 4.",
+					"Column number must be between 0 and 3.",
 				),
 			},
 			{

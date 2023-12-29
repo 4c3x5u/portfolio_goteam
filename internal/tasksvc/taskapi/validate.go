@@ -36,7 +36,7 @@ func ValidatePostReq(req PostReq) error {
 	if _, err := uuid.Parse(req.BoardID); err != nil {
 		return errParseBoardID
 	}
-	if req.ColNo < 1 || req.ColNo > 4 {
+	if req.ColNo < 0 || req.ColNo > 3 {
 		return errColNoOutOfBounds
 	}
 	if req.Title == "" {

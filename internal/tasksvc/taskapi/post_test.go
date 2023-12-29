@@ -102,7 +102,7 @@ func TestPostHandler(t *testing.T) {
 			errInsertTask: nil,
 			wantStatus:    http.StatusBadRequest,
 			assertFunc: assert.OnRespErr(
-				"Column number must be between 1 and 4.",
+				"Column number must be between 0 and 3.",
 			),
 		},
 		{

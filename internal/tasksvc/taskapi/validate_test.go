@@ -34,7 +34,7 @@ func TestValidatePostReq(t *testing.T) {
 			name: "ColNoTooSmall",
 			req: PostReq{
 				BoardID: "00000000-0000-0000-0000-000000000000",
-				ColNo:   0,
+				ColNo:   -1,
 			},
 			wantErr: errColNoOutOfBounds,
 		},
@@ -42,7 +42,7 @@ func TestValidatePostReq(t *testing.T) {
 			name: "ColNoTooBig",
 			req: PostReq{
 				BoardID: "00000000-0000-0000-0000-000000000000",
-				ColNo:   5,
+				ColNo:   4,
 			},
 			wantErr: errColNoOutOfBounds,
 		},

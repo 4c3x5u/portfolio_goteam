@@ -16,8 +16,8 @@ import (
 
 // PostReq defines the body of POST task requests.
 type PostReq struct {
-	BoardID     string `json:"board"`
-	ColNo       int    `json:"column"`
+	BoardID     string `json:"boardID"`
+	ColNo       int    `json:"colNo"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Subtasks    []tasktbl.Subtask
@@ -116,7 +116,7 @@ func (h *PostHandler) Handle(
 		case errors.Is(err, errParseBoardID):
 			msg = "Board ID is must be a valid UUID."
 		case errors.Is(err, errColNoOutOfBounds):
-			msg = "Column number must be between 1 and 4."
+			msg = "Column number must be between 0 and 3."
 		case errors.Is(err, errTitleEmpty):
 			msg = "Task title cannot be empty."
 		case errors.Is(err, errTitleTooLong):
