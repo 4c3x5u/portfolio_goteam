@@ -21,7 +21,7 @@ import './app.sass';
 import Spinner from './components/Home/Spinner/Spinner';
 import TeamAPI from './api/TeamAPI';
 import TasksAPI from './api/TasksAPI';
-import { forEach } from 'lodash';
+import { forEach, orderBy } from 'lodash';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,8 +66,9 @@ const App = () => {
             ],
           }
 
-          forEach(tasksRes.data, (task) => {
-            console.log("~~~ COLNO: " + task.colNo)
+          console.log("~~~taskresdata:", JSON.stringify(tasksRes.data))
+
+          forEach(orderBy(tasksRes.data, ['order']), (task) => {
             board.columns[task.colNo].tasks.push(task)
           });
         } else {

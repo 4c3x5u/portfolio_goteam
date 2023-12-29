@@ -30,16 +30,8 @@ const Board = ({ handleActivate }) => {
       const iSource = parseInt(result.source.droppableId)
       const iDest = parseInt(result.destination.droppableId)
 
-      console.log("---columns:", JSON.stringify(activeBoard.columns))
-      console.log("---sourceDroppableId:", result.source.droppableId)
-      console.log("---destinationDroppableId:", result.destination.droppableId)
-
       // Find the "source" column – the one that the task is initially in
       const source = activeBoard.columns[iSource]
-
-      console.log("--- source: " + JSON.stringify(source))
-
-      console.log("--- source tasks: " + JSON.stringify(source.tasks))
 
       // Pop the tasks that's being moved out of the "source"
       const [item] = source.tasks.splice(result.source.index, 1);
@@ -52,44 +44,45 @@ const Board = ({ handleActivate }) => {
       // Find the "destination" column – the that the task is being moved into
       const destination = activeBoard.columns[iDest]
 
-      console.log("---destination: " + JSON.stringify(destination))
-
-      console.log("---destinationTasks: " + JSON.stringify(destination.tasks))
-
       // Insert the task that's being moved into the "destination"
       destination.tasks.splice(result.destination.index, 0, item);
 
       // Update "destination" tasks' orders
       const destinationTasks = destination.tasks.map((task, index) => ({
-        ...task,
-        colNo: iDest,
-        order: index,
+        ...task, colNo: iDest, order: index,
       }));
 
       // Update client state (to avoid server-response wait time)
       setActiveBoard({
         ...activeBoard,
         columns: activeBoard.columns.map((column, i) => {
-          if (i === destination.id) {
-            return { ...column, tasks: destinationTasks };
+          switch (i) {
+            case iDest:
+              return { tasks: destinationTasks };
+            case iSource:
+              return { tasks: sourceTasks };
+            default:
+              return column
           }
-          if (i === source.id) {
-            return { ...column, tasks: sourceTasks };
-          }
-          return column;
         }),
       });
 
       // Update the "source" and the "destination" in the database
-      sourceTasks.length > 0 && await TasksAPI.patch(sourceTasks)
-      destinationTasks.length > 0 && await TasksAPI.patch(destinationTasks)
+      let sourceProm = sourceTasks.length > 0 && iSource !== iDest
+        ? TasksAPI.patch(sourceTasks)
+        : Promise.resolve()
+      let destProm = destinationTasks.length > 0
+        ? await TasksAPI.patch(destinationTasks)
+        : Promise.resolve()
+      await Promise.all([sourceProm, destProm])
     } catch (err) {
       notify(
         'Unable to update task.',
         `${err?.message || 'Server Error'}.`,
       );
       setIsLoading(true);
-      loadBoard();
+    } finally {
+      loadBoard(activeBoard.id);
     }
   };
 
