@@ -25,13 +25,17 @@ const Board = ({ handleActivate }) => {
     if (!result?.source?.droppableId || !result?.destination?.droppableId) {
       return;
     }
+
     try {
+      const iSource = parseInt(result.source.droppableId)
+      const iDest = parseInt(result.destination.droppableId)
+
       console.log("---columns:", JSON.stringify(activeBoard.columns))
       console.log("---sourceDroppableId:", result.source.droppableId)
       console.log("---destinationDroppableId:", result.destination.droppableId)
 
       // Find the "source" column – the one that the task is initially in
-      const source = activeBoard.columns[parseInt(result.source.droppableId)]
+      const source = activeBoard.columns[iSource]
 
       console.log("--- source: " + JSON.stringify(source))
 
@@ -42,13 +46,11 @@ const Board = ({ handleActivate }) => {
 
       // Update "source" tasks' orders
       const sourceTasks = source.tasks.map((task, index) => ({
-        ...task,
-        column: parseInt(result.source.droppableId),
-        order: index,
+        ...task, colNo: iSource, order: index,
       }));
 
       // Find the "destination" column – the that the task is being moved into
-      const destination = activeBoard.columns[parseInt(result.destination.droppableId)]
+      const destination = activeBoard.columns[iDest]
 
       console.log("---destination: " + JSON.stringify(destination))
 
@@ -60,7 +62,7 @@ const Board = ({ handleActivate }) => {
       // Update "destination" tasks' orders
       const destinationTasks = destination.tasks.map((task, index) => ({
         ...task,
-        column: parseInt(result.destination.droppableId),
+        colNo: iDest,
         order: index,
       }));
 
