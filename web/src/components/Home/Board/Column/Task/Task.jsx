@@ -207,7 +207,7 @@ const Task = ({
                 title,
                 description,
                 subtasks,
-                colNo: colNo,
+                colNo,
                 toggleOff: handleActivate(window.NONE),
               })}
             >
