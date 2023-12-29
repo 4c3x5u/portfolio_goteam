@@ -44,10 +44,20 @@ const App = () => {
       setUser(jwtDecode(authCookie))
 
       try {
-        let tasksRes = await TasksAPI.get(boardId || activeBoard.id || '')
+        let tasksProm = TasksAPI.get(boardId || activeBoard.id || '')
 
+        var teamRes = await TeamAPI.get()
+        // TODO: set invite code
+        setTeam({ id: teamRes.data.id });
+        setBoards(teamRes.data.boards);
+        setMembers(teamRes.data.members.map((username) => (
+          // team ID is the admin's username, so the member is admin if the team
+          // ID matches their username
+          { username, isAdmin: username === team.id }
+        )));
+
+        var tasksRes = await tasksProm
         let board = undefined
-
         if (tasksRes.data.length > 0) {
           board = {
             id: tasksRes.data[0].boardID,
@@ -64,17 +74,6 @@ const App = () => {
             board.columns[task.colNo].tasks.push(task)
           });
         }
-
-
-        var teamRes = await TeamAPI.get()
-        // TODO: set invite code
-        setTeam({ id: teamRes.data.id });
-        setBoards(teamRes.data.boards);
-        setMembers(teamRes.data.members.map((username) => (
-          // team ID is the admin's username, so the member is admin if the team
-          // ID matches their username
-          { username, isAdmin: username === team.id }
-        )));
 
         setActiveBoard(board || {
           id: teamRes.data.boards[0].id,
