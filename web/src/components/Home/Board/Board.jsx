@@ -26,14 +26,16 @@ const Board = ({ handleActivate }) => {
       return;
     }
     try {
+      console.log("---columns:", JSON.stringify(activeBoard.columns))
+      console.log("---sourceDroppableId:", result.source.droppableId)
+      console.log("---destinationDroppableId:", result.destination.droppableId)
+
       // Find the "source" column – the one that the task is initially in
-      const source = activeBoard.columns.find((column) => (
-        column.order.toString() === result.source.droppableId
-      ));
+      const source = activeBoard.columns[parseInt(result.source.droppableId)]
 
-      console.log("SOURCE: " + JSON.stringify(source))
+      console.log("--- source: " + JSON.stringify(source))
 
-      console.log("SOURCE TASKS: " + JSON.stringify(source.tasks))
+      console.log("--- source tasks: " + JSON.stringify(source.tasks))
 
       // Pop the tasks that's being moved out of the "source"
       const [item] = source.tasks.splice(result.source.index, 1);
@@ -46,13 +48,11 @@ const Board = ({ handleActivate }) => {
       }));
 
       // Find the "destination" column – the that the task is being moved into
-      const destination = activeBoard.columns.find((column) => (
-        column.order.toString() === result.destination.droppableId
-      ));
+      const destination = activeBoard.columns[parseInt(result.destination.droppableId)]
 
-      console.log("DESTINATION: " + JSON.stringify(destination))
+      console.log("---destination: " + JSON.stringify(destination))
 
-      console.log("DESTINATION TASKS: " + JSON.stringify(destination.tasks))
+      console.log("---destinationTasks: " + JSON.stringify(destination.tasks))
 
       // Insert the task that's being moved into the "destination"
       destination.tasks.splice(result.destination.index, 0, item);

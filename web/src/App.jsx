@@ -62,10 +62,10 @@ const App = () => {
           board = {
             id: tasksRes.data[0].boardID,
             columns: [
-              { order: 1, tasks: [] },
-              { order: 2, tasks: [] },
-              { order: 3, tasks: [] },
-              { order: 4, tasks: [] },
+              { tasks: [] },
+              { tasks: [] },
+              { tasks: [] },
+              { tasks: [] },
             ],
           }
 
@@ -78,10 +78,10 @@ const App = () => {
         setActiveBoard(board || {
           id: teamRes.data.boards[0].id,
           columns: [
-            { order: 1, tasks: [] },
-            { order: 2, tasks: [] },
-            { order: 3, tasks: [] },
-            { order: 4, tasks: [] },
+            { tasks: [] },
+            { tasks: [] },
+            { tasks: [] },
+            { tasks: [] },
           ],
         })
       }

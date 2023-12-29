@@ -14,7 +14,7 @@ import logo from './deletetask.svg';
 import './deletetask.sass';
 
 const DeleteTask = ({
-  id, title, description, subtasks, columnId, toggleOff,
+  id, title, description, subtasks, colNo, toggleOff,
 }) => {
   const { activeBoard, setActiveBoard, notify } = useContext(AppContext);
 
@@ -28,7 +28,7 @@ const DeleteTask = ({
     setActiveBoard({
       ...activeBoard,
       columns: activeBoard.columns.map((column, i) => (
-        column.order === i + 1 ? {
+        i === colNo ? {
           ...column,
           tasks: column.tasks.filter((task) => (task.id !== id)),
         } : column
@@ -114,7 +114,7 @@ DeleteTask.propTypes = {
       done: PropTypes.bool.isRequired,
     }),
   ).isRequired,
-  columnId: PropTypes.number.isRequired,
+  colNo: PropTypes.number.isRequired,
   toggleOff: PropTypes.func.isRequired,
 };
 
