@@ -1,31 +1,50 @@
 default: 
 	@echo "ERROR: target not specified"
 
-build-user:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/package/usersvc/ ./cmd/usersvc/main.go
+build-usersvc:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+		-o ./build/package/usersvc/ ./cmd/usersvc/main.go
 	cp .env ./build/package/usersvc/
 
-build-team: 
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/package/teamsvc/ ./cmd/teamsvc/main.go
+run-usersvc:
+	make build-usersvc
+	docker build -t goteam-usersvc ./build/package/usersvc
+	docker run -p 8080:8080 -it goteam-usersvc
+
+build-teamsvc: 
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o \
+		./build/package/teamsvc/ ./cmd/teamsvc/main.go
 	cp .env ./build/package/teamsvc/
 
-build-task:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/package/tasksvc/ ./cmd/tasksvc/main.go
+run-teamsvc:
+	make build-teamsvc
+	docker build -t goteam-teamsvc ./build/package/teamsvc
+	docker run -p 8081:8081 -it goteam-teamsvc
+
+build-tasksvc:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+		-o ./build/package/tasksvc/ ./cmd/tasksvc/main.go
 	cp .env ./build/package/tasksvc/
 
-build-backend:
-	make build-user
-	make build-team
-	make build-task
+run-tasksvc:
+	make build-tasksvc
+	docker build -t goteam-tasksvc ./build/package/tasksvc
+	docker run -p 8082:8082 -it goteam-tasksvc
 
-run-backend:
-	make build-backend
-	docker compose -f ./build/package/docker-compose.yml up --build --force-recreate --no-deps
+build-be:
+	make build-usersvc
+	make build-teamsvc
+	make build-tasksvc
 
-stop-backend:
+run-be:
+	make build-be
+	docker compose -f ./build/package/docker-compose.yml up \
+		--build --force-recreate --no-deps
+
+stop-be:
 	docker compose -f ./build/package/docker-compose.yml down
 
-run-frontend:
+run-fe:
 	cd web && NODE_OPTIONS=--openssl-legacy-provider yarn run start
 
 test:
