@@ -45,7 +45,7 @@ const App = () => {
 
       try {
         let tasksProm = TasksAPI.get(
-          boardId || sessionStorage.getItem('board-id') || activeBoard.id || '',
+          boardId || activeBoard.id || sessionStorage.getItem('board-id') || '',
         )
 
         var teamRes = await TeamAPI.get()
