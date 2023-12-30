@@ -44,7 +44,9 @@ const App = () => {
       setUser(jwtDecode(authCookie))
 
       try {
-        let tasksProm = TasksAPI.get(boardId || activeBoard.id || '')
+        let tasksProm = TasksAPI.get(
+          boardId || sessionStorage.getItem('board-id') || activeBoard.id || '',
+        )
 
         var teamRes = await TeamAPI.get()
         // TODO: set invite code
@@ -59,7 +61,7 @@ const App = () => {
         let board = undefined
         if (tasksRes.data.length > 0) {
           board = {
-            id: tasksRes.data[0].boardID,
+            id: boardId || tasksRes.data[0].boardID,
             columns: [
               { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
             ],
@@ -70,7 +72,7 @@ const App = () => {
           });
         } else {
           board = {
-            id: teamRes.data.boards[0].id,
+            id: boardId || teamRes.data.boards[0].id,
             columns: [
               { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
             ],

@@ -18,9 +18,9 @@ const BoardsControlsMenuItem = ({
   const { show } = useContextMenu({ id: MENU_ID });
 
   const toggleActive = () => {
-    sessionStorage.setItem('board-id', id);
+    sessionStorage.setItem('board-id', id); // for persistence
     setIsLoading(true);
-    loadBoard();
+    loadBoard(id);
   };
 
   const viewTooltip = (children) => (
