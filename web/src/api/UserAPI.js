@@ -11,9 +11,9 @@ const UserAPI = {
     )
   ),
 
-  register: (username, password, inviteCode) => (
+  register: (username, password, inviteToken) => (
     axios.post(
-      apiUrl + "/register?inviteCode=" + inviteCode,
+      apiUrl + "/register?inviteToken=" + inviteToken,
       { username, password },
       { withCredentials: true },
     )

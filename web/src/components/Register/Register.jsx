@@ -21,7 +21,7 @@ const Register = () => {
     password: '',
     passwordConfirmation: '',
   });
-  const { inviteCode } = useParams();
+  const { inviteToken } = useParams();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ const Register = () => {
     } else {
       setIsLoading(true);
       UserAPI
-        .register(username, password, inviteCode ?? '')
+        .register(username, password, inviteToken ?? '')
         .then(() => loadBoard())
         .catch((err) => {
           const validationErrors = err?.response?.data?.validationErrors;

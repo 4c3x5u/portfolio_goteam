@@ -12,7 +12,6 @@ type ReqValidator interface{ Validate(PostReq) ValidationErrs }
 type UserValidator struct {
 	UsernameValidator StrValidator
 	PasswordValidator StrValidator
-	TeamIDValidator   StrValidator
 }
 
 // NewUserValidator creates and returns a new UserValidator.

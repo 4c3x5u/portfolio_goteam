@@ -21,7 +21,7 @@ func TestHandler(t *testing.T) {
 	var (
 		userValidator = &fakeReqValidator{}
 		hasher        = &fakeHasher{}
-		inviteDecoder = &cookie.FakeDecoder[cookie.Invite]{}
+		inviteDecoder = &cookie.FakeStringDecoder[cookie.Invite]{}
 		userInserter  = &db.FakeInserter[usertbl.User]{}
 		authEncoder   = &cookie.FakeEncoder[cookie.Auth]{}
 		log           = &log.FakeErrorer{}
@@ -55,7 +55,7 @@ func TestHandler(t *testing.T) {
 		name            string
 		req             string
 		errValidate     ValidationErrs
-		inviteToken     string
+		tkInvite        string
 		inviteDecoded   cookie.Invite
 		errDecodeInvite error
 		pwdHash         []byte
@@ -72,7 +72,7 @@ func TestHandler(t *testing.T) {
 			errValidate: ValidationErrs{
 				Username: []string{idTooLong}, Password: []string{pwdNoDigit},
 			},
-			inviteToken:     "",
+			tkInvite:        "",
 			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: nil,
 			pwdHash:         nil,
@@ -92,7 +92,7 @@ func TestHandler(t *testing.T) {
 			name:            "ErrDecodeInvite",
 			req:             "{}",
 			errValidate:     ValidationErrs{},
-			inviteToken:     "someinvitetoken",
+			tkInvite:        "someinvitetoken",
 			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: errors.New("an error"),
 			pwdHash:         nil,
@@ -107,7 +107,7 @@ func TestHandler(t *testing.T) {
 			name:            "ErrUsnTaken",
 			req:             "{}",
 			errValidate:     ValidationErrs{},
-			inviteToken:     "",
+			tkInvite:        "",
 			inviteDecoded:   cookie.Invite{},
 			errDecodeInvite: nil,
 			pwdHash:         nil,
@@ -126,7 +126,7 @@ func TestHandler(t *testing.T) {
 			name:          "ErrHash",
 			req:           validRBody,
 			errValidate:   ValidationErrs{},
-			inviteToken:   "{}",
+			tkInvite:      "{}",
 			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       errors.New("hasher error"),
@@ -140,7 +140,7 @@ func TestHandler(t *testing.T) {
 			name:          "ErrUsnTaken",
 			req:           "{}",
 			errValidate:   ValidationErrs{},
-			inviteToken:   "",
+			tkInvite:      "",
 			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
@@ -158,7 +158,7 @@ func TestHandler(t *testing.T) {
 			name:          "ErrPutUser",
 			req:           validRBody,
 			errValidate:   ValidationErrs{},
-			inviteToken:   "",
+			tkInvite:      "",
 			inviteDecoded: cookie.Invite{},
 			errInsertUser: errors.New("failed to put user"),
 			pwdHash:       nil,
@@ -172,7 +172,7 @@ func TestHandler(t *testing.T) {
 			name:          "ErrEncodeAuth",
 			req:           validRBody,
 			errValidate:   ValidationErrs{},
-			inviteToken:   "",
+			tkInvite:      "",
 			inviteDecoded: cookie.Invite{},
 			pwdHash:       nil,
 			errHash:       nil,
@@ -189,7 +189,7 @@ func TestHandler(t *testing.T) {
 		{
 			name: "Success",
 			req:  validRBody,
-			inviteToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOi" +
+			tkInvite: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0ZWFtSUQiOi" +
 				"J0ZWFtaWQifQ.1h_fmLJ1ip-Z6kJq9JXYDgGuWDPOcOf8abwCgKtHHcY",
 			errValidate:   ValidationErrs{},
 			errInsertUser: nil,
@@ -216,16 +216,10 @@ func TestHandler(t *testing.T) {
 			authEncoder.Err = c.errEncodeAuth
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(
-				http.MethodPost, "/", strings.NewReader(c.req),
+				http.MethodPost,
+				"/?inviteToken="+c.tkInvite,
+				strings.NewReader(c.req),
 			)
-			if c.inviteToken != "" {
-				r.AddCookie(&http.Cookie{
-					Name:     cookie.InviteName,
-					Value:    c.inviteToken,
-					SameSite: http.SameSiteNoneMode,
-					Secure:   true,
-				})
-			}
 
 			sut.Handle(w, r, "")
 

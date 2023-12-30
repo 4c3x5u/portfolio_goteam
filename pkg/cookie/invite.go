@@ -40,7 +40,7 @@ func (e InviteEncoder) Encode(inv Invite) (http.Cookie, error) {
 	}
 
 	return http.Cookie{
-		Name:     AuthName,
+		Name:     InviteName,
 		Value:    tk,
 		Expires:  exp.UTC(),
 		SameSite: http.SameSiteNoneMode,
@@ -57,14 +57,10 @@ func NewInviteDecoder(key []byte) InviteDecoder {
 }
 
 // Decode validates and decodes a raw JWT string into an Invite.
-func (d InviteDecoder) Decode(ck http.Cookie) (Invite, error) {
-	if ck.Value == "" {
-		return Invite{}, ErrInvalid
-	}
-
+func (d InviteDecoder) Decode(token string) (Invite, error) {
 	claims := jwt.MapClaims{}
 	if _, err := jwt.ParseWithClaims(
-		ck.Value, &claims, func(token *jwt.Token) (any, error) {
+		token, &claims, func(token *jwt.Token) (any, error) {
 			return d.key, nil
 		},
 	); err != nil {

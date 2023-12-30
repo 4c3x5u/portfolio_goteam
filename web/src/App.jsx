@@ -50,7 +50,10 @@ const App = () => {
 
         var teamRes = await TeamAPI.get()
         // TODO: set invite code
-        setTeam({ id: teamRes.data.id });
+        setTeam({
+          id: teamRes.data.id,
+          inviteToken: cookies.get("invite-token"),
+        });
         setBoards(teamRes.data.boards);
         setMembers(teamRes.data.members.map((username) => (
           // team ID is always the admin's username
@@ -111,6 +114,10 @@ const App = () => {
 
   useEffect(() => loadBoard(), []);
 
+  useEffect(() => (
+    !cookies.get('auth-token') && sessionStorage.removeItem("board-id")
+  ), [])
+
   return (
     <div className="App">
       <AppContext.Provider
@@ -146,7 +153,7 @@ const App = () => {
                 : <Redirect to="/" />}
             </Route>
 
-            <Route path="/register/:inviteCode?">
+            <Route path="/register/:inviteToken?">
               {!cookies.get('auth-token')
                 ? <Register />
                 : <Redirect to="/" />}

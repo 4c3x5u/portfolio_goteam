@@ -25,7 +25,7 @@ func TestInvite(t *testing.T) {
 		}
 
 		assert.Nil(t.Fatal, ck.Valid())
-		assert.Equal(t.Error, ck.Name, AuthName)
+		assert.Equal(t.Error, ck.Name, InviteName)
 		assert.Equal(t.Error, ck.SameSite, http.SameSiteNoneMode)
 		assert.True(t.Error, ck.Secure)
 		assert.True(t.Error,
@@ -94,12 +94,11 @@ func TestInvite(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				inv, err := sut.Decode(http.Cookie{Value: c.token})
+				inv, err := sut.Decode(c.token)
 
 				assert.ErrIs(t.Error, err, c.wantErr)
 				assert.Equal(t.Error, inv.TeamID, c.wantTeamID)
 			})
 		}
-
 	})
 }

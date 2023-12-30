@@ -8,7 +8,7 @@ const InitialStates = {
 
   team: {
     id: null,
-    inviteCode: '',
+    inviteToken: '',
   },
 
   members: [{

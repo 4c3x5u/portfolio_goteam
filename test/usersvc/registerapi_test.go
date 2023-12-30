@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/kxplxn/goteam/internal/usersvc/registerapi"
@@ -155,7 +154,7 @@ func TestRegisterAPI(t *testing.T) {
 			assertFunc:     assertOnResErr("Invalid invite token."),
 		},
 		{
-			name:           "Success",
+			name:           "OK",
 			username:       "bob321",
 			password:       "Myp4ssw0rd!",
 			inviteToken:    "",
@@ -204,8 +203,7 @@ func TestRegisterAPI(t *testing.T) {
 				// no invite token was sent - therefore user must be put as
 				// admin and given a random guid as team ID
 				assert.Equal(t.Error, claims["isAdmin"].(bool), true)
-				_, err = uuid.Parse(claims["teamID"].(string))
-				assert.Nil(t.Error, err)
+				assert.Equal(t.Error, claims["teamID"].(string), "bob321")
 
 				exp := claims["exp"].(float64)
 				if exp > float64(time.Now().Add(1*time.Hour).Unix()) {
@@ -219,16 +217,14 @@ func TestRegisterAPI(t *testing.T) {
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{
-                "username": "`+c.username+`",
-                "password": "`+c.password+`"
-            }`))
-			if c.inviteToken != "" {
-				r.AddCookie(&http.Cookie{
-					Name:  "invite-token",
-					Value: c.inviteToken,
-				})
-			}
+			r := httptest.NewRequest(
+				http.MethodPost,
+				"/?inviteToken="+c.inviteToken,
+				strings.NewReader(`{
+                    "username": "`+c.username+`",
+                    "password": "`+c.password+`"
+                }`),
+			)
 
 			sut.Handle(w, r, "")
 

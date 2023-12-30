@@ -19,24 +19,27 @@ type GetResp teamtbl.Team
 // GetHandler is an api.MethodHandler that can handle GET requests sent to the
 // team route.
 type GetHandler struct {
-	authDecoder cookie.Decoder[cookie.Auth]
-	retriever   db.Retriever[teamtbl.Team]
-	inserter    db.Inserter[teamtbl.Team]
-	log         log.Errorer
+	authDecoder   cookie.Decoder[cookie.Auth]
+	teamRetriever db.Retriever[teamtbl.Team]
+	teamInserter  db.Inserter[teamtbl.Team]
+	inviteEncoder cookie.Encoder[cookie.Invite]
+	log           log.Errorer
 }
 
 // NewGetHandler creates and returns a new GetHandler.
 func NewGetHandler(
-	decodeAuth cookie.Decoder[cookie.Auth],
-	retriever db.Retriever[teamtbl.Team],
-	inserter db.Inserter[teamtbl.Team],
+	authDecoder cookie.Decoder[cookie.Auth],
+	teamRetriever db.Retriever[teamtbl.Team],
+	teamInserter db.Inserter[teamtbl.Team],
+	inviteEncoder cookie.Encoder[cookie.Invite],
 	log log.Errorer,
 ) GetHandler {
 	return GetHandler{
-		authDecoder: decodeAuth,
-		retriever:   retriever,
-		inserter:    inserter,
-		log:         log,
+		authDecoder:   authDecoder,
+		teamRetriever: teamRetriever,
+		teamInserter:  teamInserter,
+		inviteEncoder: inviteEncoder,
+		log:           log,
 	}
 }
 
@@ -57,7 +60,8 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// retrieve team
-	team, err := h.retriever.Retrieve(r.Context(), auth.TeamID)
+	team, err := h.teamRetriever.Retrieve(r.Context(), auth.TeamID)
+	var status int
 	if errors.Is(err, db.ErrNoItem) {
 		// if team was not found and since we trust the JWT, this is our sign
 		// from the register endpoint that this is a new user and we should
@@ -82,7 +86,7 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		// retry a couple of times in the unlitekly event of GUID collision
 		for i := 0; i < 3; i++ {
 			// insert team into the team table
-			if err = h.inserter.Insert(
+			if err = h.teamInserter.Insert(
 				r.Context(), team,
 			); errors.Is(err, db.ErrDupKey) {
 				team.Boards[0].ID = uuid.NewString()
@@ -96,14 +100,28 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		}
 
 		// write 201 to indicate creation of the new team
-		w.WriteHeader(http.StatusCreated)
+		status = http.StatusCreated
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err)
 		return
+	} else {
+		status = http.StatusOK
+	}
+
+	// encode invite token if the user is admin
+	if auth.IsAdmin {
+		ckInv, err := h.inviteEncoder.Encode(cookie.NewInvite(team.ID))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			h.log.Error(err)
+			return
+		}
+		http.SetCookie(w, &ckInv)
 	}
 
 	// encode team
+	w.WriteHeader(status)
 	if err = json.NewEncoder(w).Encode(GetResp(team)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err)

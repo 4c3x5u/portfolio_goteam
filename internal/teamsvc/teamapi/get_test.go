@@ -18,10 +18,13 @@ import (
 
 func TestGetHandler(t *testing.T) {
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
-	retriever := &db.FakeRetriever[teamtbl.Team]{}
-	inserter := &db.FakeInserter[teamtbl.Team]{}
+	teamRetriever := &db.FakeRetriever[teamtbl.Team]{}
+	teamInserter := &db.FakeInserter[teamtbl.Team]{}
+	inviteEncoder := &cookie.FakeEncoder[cookie.Invite]{}
 	log := &log.FakeErrorer{}
-	sut := NewGetHandler(authDecoder, retriever, inserter, log)
+	sut := NewGetHandler(
+		authDecoder, teamRetriever, teamInserter, inviteEncoder, log,
+	)
 
 	wantTeam := teamtbl.Team{
 		ID:      "teamid",
@@ -33,58 +36,135 @@ func TestGetHandler(t *testing.T) {
 	}
 
 	for _, c := range []struct {
-		name          string
-		auth          string
-		errDecodeAuth error
-		authDecoded   cookie.Auth
-		errRetrieve   error
-		team          teamtbl.Team
-		errInsert     error
-		wantStatus    int
-		assertFunc    func(*testing.T, *http.Response, []any)
+		name            string
+		auth            string
+		errDecodeAuth   error
+		authDecoded     cookie.Auth
+		errRetrieve     error
+		team            teamtbl.Team
+		errInsert       error
+		errEncodeInvite error
+		inviteEncoded   http.Cookie
+		wantStatus      int
+		assertFunc      func(*testing.T, *http.Response, []any)
 	}{
 		{
-			name:          "NoAuth",
-			auth:          "",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{},
-			errRetrieve:   nil,
-			team:          teamtbl.Team{},
-			errInsert:     nil,
-			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
+			name:            "NoAuth",
+			auth:            "",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{},
+			errRetrieve:     nil,
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusUnauthorized,
+			assertFunc:      func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "InvalidAuth",
-			auth:          "nonempty",
-			errDecodeAuth: errors.New("decode auth failed"),
-			authDecoded:   cookie.Auth{},
-			errRetrieve:   nil,
-			team:          teamtbl.Team{},
-			errInsert:     nil,
-			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
+			name:            "InvalidAuth",
+			auth:            "nonempty",
+			errDecodeAuth:   errors.New("decode auth failed"),
+			authDecoded:     cookie.Auth{},
+			errRetrieve:     nil,
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusUnauthorized,
+			assertFunc:      func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "ErrRetrieve",
-			auth:          "nonempty",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{},
-			errRetrieve:   errors.New("retrieve failed"),
-			team:          teamtbl.Team{},
-			errInsert:     nil,
-			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    assert.OnLoggedErr("retrieve failed"),
+			name:            "ErrRetrieve",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{},
+			errRetrieve:     errors.New("retrieve failed"),
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("retrieve failed"),
+		},
+		// check comments in implementation for explanation
+		{
+			name:            "NotAdmin",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: false},
+			errRetrieve:     db.ErrNoItem,
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusUnauthorized,
+			assertFunc:      func(*testing.T, *http.Response, []any) {},
 		},
 		{
-			name:          "OK",
-			auth:          "nonempty",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{},
-			errRetrieve:   nil,
-			team:          wantTeam,
-			errInsert:     nil,
-			wantStatus:    http.StatusOK,
+			name:            "ErrInsert",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true},
+			errRetrieve:     db.ErrNoItem,
+			team:            teamtbl.Team{},
+			errInsert:       errors.New("insert failed"),
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("insert failed"),
+		},
+		{
+			name:            "ErrEncodeInvite",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true, Username: "newuser"},
+			errRetrieve:     nil,
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: errors.New("encode invite failed"),
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("encode invite failed"),
+		},
+		{
+			name:            "Created",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true, Username: "newuser"},
+			errRetrieve:     db.ErrNoItem,
+			team:            teamtbl.Team{},
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
+			wantStatus:      http.StatusCreated,
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				var team teamtbl.Team
+
+				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
+					t.Fatal(err)
+				}
+
+				assert.AllEqual(t.Error, team.Members, []string{"newuser"})
+				assert.Equal(t.Error, len(team.Boards), 1)
+				assert.Equal(t.Error, team.Boards[0].Name, "New Board")
+
+				ckInv := resp.Cookies()[0]
+				assert.Equal(t.Error, ckInv.Name, "invite-token")
+				assert.Equal(t.Error, ckInv.Value, "aksdfj")
+			},
+		},
+		{
+			name:            "OK",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: false},
+			errRetrieve:     nil,
+			team:            wantTeam,
+			errInsert:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
+			wantStatus:      http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var team teamtbl.Team
 				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
@@ -97,59 +177,19 @@ func TestGetHandler(t *testing.T) {
 					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
 					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
 				}
-			},
-		},
-		// check comments in implementation for explanation
-		{
-			name:          "NotAdmin",
-			auth:          "nonempty",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{IsAdmin: false},
-			errRetrieve:   db.ErrNoItem,
-			team:          teamtbl.Team{},
-			errInsert:     nil,
-			wantStatus:    http.StatusUnauthorized,
-			assertFunc:    func(*testing.T, *http.Response, []any) {},
-		},
-		{
-			name:          "ErrInsert",
-			auth:          "nonempty",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{IsAdmin: true},
-			errRetrieve:   db.ErrNoItem,
-			team:          teamtbl.Team{},
-			errInsert:     errors.New("insert failed"),
-			wantStatus:    http.StatusInternalServerError,
-			assertFunc:    assert.OnLoggedErr("insert failed"),
-		},
-		{
-			name:          "Created",
-			auth:          "nonempty",
-			errDecodeAuth: nil,
-			authDecoded:   cookie.Auth{IsAdmin: true, Username: "newuser"},
-			errRetrieve:   db.ErrNoItem,
-			team:          teamtbl.Team{},
-			errInsert:     nil,
-			wantStatus:    http.StatusCreated,
-			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
-				var team teamtbl.Team
 
-				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
-					t.Fatal(err)
-				}
-
-				assert.AllEqual(t.Error, team.Members, []string{"newuser"})
-				assert.Equal(t.Error, len(team.Boards), 1)
-				assert.Equal(t.Error, team.Boards[0].Name, "New Board")
+				assert.Equal(t.Error, len(resp.Cookies()), 0)
 			},
 		},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			authDecoder.Err = c.errDecodeAuth
 			authDecoder.Res = c.authDecoded
-			retriever.Err = c.errRetrieve
-			retriever.Res = c.team
-			inserter.Err = c.errInsert
+			teamRetriever.Err = c.errRetrieve
+			teamRetriever.Res = c.team
+			teamInserter.Err = c.errInsert
+			inviteEncoder.Err = c.errEncodeInvite
+			inviteEncoder.Res = c.inviteEncoded
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			if c.auth != "" {

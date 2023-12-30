@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -94,7 +95,7 @@ func main() {
 		),
 	})
 
-	// create JWT encoders and decoders
+	// create auth encoder to be used for authenticating user on all routes
 	authDecoder := cookie.NewAuthDecoder([]byte(jwtKey))
 
 	// register handlers for HTTP routes
@@ -105,6 +106,7 @@ func main() {
 			authDecoder,
 			teamtbl.NewRetriever(db),
 			teamtbl.NewInserter(db),
+			cookie.NewInviteEncoder([]byte(jwtKey), 1*time.Hour),
 			log,
 		),
 	}))

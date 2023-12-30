@@ -298,17 +298,16 @@ func TestTaskAPI(t *testing.T) {
 	t.Run("PATCH", func(t *testing.T) {
 		for _, c := range []struct {
 			name           string
-			taskID         string
 			reqBody        string
 			authFunc       func(*http.Request)
 			wantStatusCode int
 			assertFunc     func(*testing.T, *http.Response, []any)
 		}{
 			{
-				name:   "NotAdmin",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "NotAdmin",
 				reqBody: `{
-					"title":       "Some Task",
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
+                    "title":       "Some Task",
 					"description": "",
 					"subtasks":    [{"title": "Some Subtask"}]
 				}`,
@@ -319,9 +318,9 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:   "TaskTitleEmpty",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "TaskTitleEmpty",
 				reqBody: `{
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
 					"title":       "",
 					"description": "",
 					"subtasks":    []
@@ -331,9 +330,9 @@ func TestTaskAPI(t *testing.T) {
 				assertFunc:     assert.OnRespErr("Task title cannot be empty."),
 			},
 			{
-				name:   "TaskTitleTooLong",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "TaskTitleTooLong",
 				reqBody: `{
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
 					"title": "asdqweasdqweasdqweasdqweasdqweasdqweasdqweasdqweasd",
 					"description": "",
 					"subtasks":    []
@@ -345,9 +344,9 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:   "SubtaskTitleEmpty",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "SubtaskTitleEmpty",
 				reqBody: `{
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
 					"title":       "Some Task",
 					"description": "",
 					"subtasks":    [{"title": ""}]
@@ -359,9 +358,9 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:   "SubtaskTitleTooLong",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "SubtaskTitleTooLong",
 				reqBody: `{
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
 					"title": "Some Task",
 					"description": "",
 					"subtasks": [{
@@ -375,9 +374,9 @@ func TestTaskAPI(t *testing.T) {
 				),
 			},
 			{
-				name:   "OK",
-				taskID: "e0021a56-6a1e-4007-b773-395d3991fb7e",
+				name: "OK",
 				reqBody: `{
+                    "id": "e0021a56-6a1e-4007-b773-395d3991fb7e",
 					"title": "Some Task",
                     "boardID": "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
 					"description": "Some Description",
@@ -434,7 +433,7 @@ func TestTaskAPI(t *testing.T) {
 				w := httptest.NewRecorder()
 				r := httptest.NewRequest(
 					http.MethodPatch,
-					"/tasks/task?id="+c.taskID,
+					"/tasks/task",
 					strings.NewReader(c.reqBody),
 				)
 				c.authFunc(r)

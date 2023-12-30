@@ -38,7 +38,7 @@ func (e ValidationErrs) Any() bool {
 type PostHandler struct {
 	reqValidator  ReqValidator
 	hasher        Hasher
-	inviteDecoder cookie.Decoder[cookie.Invite]
+	inviteDecoder cookie.StringDecoder[cookie.Invite]
 	userInserter  db.Inserter[usertbl.User]
 	authEncoder   cookie.Encoder[cookie.Auth]
 	log           log.Errorer
@@ -47,7 +47,7 @@ type PostHandler struct {
 // NewPostHandler creates and returns a new HandlerPost.
 func NewPostHandler(
 	userValidator ReqValidator,
-	inviteDecoder cookie.Decoder[cookie.Invite],
+	inviteDecoder cookie.StringDecoder[cookie.Invite],
 	hasher Hasher,
 	userInserter db.Inserter[usertbl.User],
 	authEncoder cookie.Encoder[cookie.Auth],
@@ -87,18 +87,14 @@ func (h PostHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	}
 
 	// determine teamID and isAdmin based on invite token.
-	ckInvite, err := r.Cookie(cookie.InviteName)
+	invCode := r.URL.Query().Get("inviteToken")
 	var teamID string
 	var isAdmin bool
-	if err == http.ErrNoCookie {
+	if invCode == "" {
 		teamID = req.Username
 		isAdmin = true
-	} else if err != nil {
-		h.log.Error(err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
 	} else {
-		invite, err := h.inviteDecoder.Decode(*ckInvite)
+		invite, err := h.inviteDecoder.Decode(invCode)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(

@@ -16,11 +16,16 @@ const Invite = ({ toggleOff }) => {
   const { team } = useContext(AppContext);
 
   const inviteLink = (
-    `${process.env.REACT_APP_FRONTEND_URL}/register/${team.inviteCode}`
+    process.env.REACT_APP_FRONTEND_URL +
+    "/register?inviteToken=" +
+    team.inviteToken
   );
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // FIXME: figure out what on earth you were thinking a couple of years ago
+    //        and do it better
 
     const el = document.createElement('textarea');
     el.value = inviteLink;
