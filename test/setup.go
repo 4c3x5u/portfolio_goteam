@@ -99,7 +99,7 @@ func createTable(
 	sortKey string,
 	secINames ...string,
 ) (func() error, error) {
-	fmt.Println("creating", name, "table")
+	fmt.Println("creating", *name, "table")
 
 	attrDefs := []types.AttributeDefinition{
 		{AttributeName: &partKey, AttributeType: types.ScalarAttributeTypeS},

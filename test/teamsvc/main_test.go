@@ -53,6 +53,13 @@ var writeReqs = []types.WriteRequest{
 						"Name": &types.AttributeValueMemberS{
 							Value: "Team 1 Board 1",
 						},
+						"Members": &types.AttributeValueMemberL{
+							Value: []types.AttributeValue{
+								&types.AttributeValueMemberS{
+									Value: "team1Member",
+								},
+							},
+						},
 					},
 				},
 				&types.AttributeValueMemberM{
@@ -63,6 +70,9 @@ var writeReqs = []types.WriteRequest{
 						"Name": &types.AttributeValueMemberS{
 							Value: "Team 1 Board 2",
 						},
+						"Members": &types.AttributeValueMemberL{
+							Value: []types.AttributeValue{},
+						},
 					},
 				},
 				&types.AttributeValueMemberM{
@@ -72,6 +82,13 @@ var writeReqs = []types.WriteRequest{
 						},
 						"Name": &types.AttributeValueMemberS{
 							Value: "Team 1 Board 3",
+						},
+						"Members": &types.AttributeValueMemberL{
+							Value: []types.AttributeValue{
+								&types.AttributeValueMemberS{
+									Value: "team1Member",
+								},
+							},
 						},
 					},
 				},

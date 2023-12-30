@@ -19,8 +19,9 @@ func NewTeam(id string, members []string, boards []Board) Team {
 
 // Board defines the board entity which a team may own one/many of.
 type Board struct {
-	ID   string `json:"id"` // uuid
-	Name string `json:"name"`
+	ID      string   `json:"id"` // uuid
+	Name    string   `json:"name"`
+	Members []string `json:"members"`
 }
 
 // NewBoard creates and returns a new board.

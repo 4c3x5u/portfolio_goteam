@@ -36,8 +36,8 @@ func TestGetHandler(t *testing.T) {
 		ID:      "teamid",
 		Members: []string{"memberone", "membertwo"},
 		Boards: []teamtbl.Board{
-			{ID: "board1", Name: "boardone"},
-			{ID: "board2", Name: "boardtwo"},
+			{ID: "board1", Name: "boardone", Members: []string{"memberone"}},
+			{ID: "board2", Name: "boardtwo", Members: []string{"membertwo"}},
 		},
 	}
 
@@ -155,7 +155,7 @@ func TestGetHandler(t *testing.T) {
 			assertFunc:      assert.OnLoggedErr("encode invite failed"),
 		},
 		{
-			name:            "OK",
+			name:            "OKAdmin",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true, Username: "memberone"},
@@ -172,18 +172,24 @@ func TestGetHandler(t *testing.T) {
 					t.Fatal(err)
 				}
 
+				// since the user is admin, the team should be returned as is
 				assert.Equal(t.Error, team.ID, wantTeam.ID)
 				assert.AllEqual(t.Error, team.Members, wantTeam.Members)
-				for i, b := range wantTeam.Boards {
-					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
-					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
+				for i, wantB := range wantTeam.Boards {
+					b := team.Boards[i]
+					assert.Equal(t.Error, b.ID, wantB.ID)
+					assert.Equal(t.Error, b.Name, wantB.Name)
+					assert.AllEqual(t.Error, b.Members, wantB.Members)
 				}
 
-				assert.Equal(t.Error, len(resp.Cookies()), 0)
+				// invite cookie should be set for admin
+				ckInv := resp.Cookies()[0]
+				assert.Equal(t.Error, ckInv.Name, "invite-token")
+				assert.Equal(t.Error, ckInv.Value, "aksdfj")
 			},
 		},
 		{
-			name:            "OKNewTeam",
+			name:            "OKAdminNewTeam",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true, Username: "newuser"},
@@ -196,22 +202,58 @@ func TestGetHandler(t *testing.T) {
 			wantStatus:      http.StatusCreated,
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var team teamtbl.Team
-
 				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
 					t.Fatal(err)
 				}
 
+				// since the admin has no team, one should be created with a new
+				// board
 				assert.AllEqual(t.Error, team.Members, []string{"newuser"})
 				assert.Equal(t.Error, len(team.Boards), 1)
 				assert.Equal(t.Error, team.Boards[0].Name, "New Board")
 
+				// invite cookie should be set for admin
 				ckInv := resp.Cookies()[0]
 				assert.Equal(t.Error, ckInv.Name, "invite-token")
 				assert.Equal(t.Error, ckInv.Value, "aksdfj")
 			},
 		},
 		{
-			name:            "OKNewMember",
+			name:            "OKMember",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: false, Username: "memberone"},
+			errRetrieve:     nil,
+			team:            wantTeam,
+			errInsert:       nil,
+			errUpdate:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
+			wantStatus:      http.StatusOK,
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				var team teamtbl.Team
+				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t.Error, team.ID, wantTeam.ID)
+				assert.AllEqual(t.Error, team.Members, wantTeam.Members)
+
+				// since not an admin, only the boards the user is a member of
+				// should be returned
+				assert.Equal(t.Error, len(team.Boards), 1)
+				b := team.Boards[0]
+				wantB := wantTeam.Boards[0]
+				assert.Equal(t.Error, b.ID, wantB.ID)
+				assert.Equal(t.Error, b.Name, wantB.Name)
+				assert.AllEqual(t.Error, b.Members, wantB.Members)
+
+				// no invite cookie should be set for non-admin
+				assert.Equal(t.Error, len(resp.Cookies()), 0)
+			},
+		},
+		{
+			name:            "OKInvitee",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: false, Username: "newuser"},
@@ -232,11 +274,11 @@ func TestGetHandler(t *testing.T) {
 				assert.AllEqual(t.Error,
 					team.Members, append(wantTeam.Members, "newuser"),
 				)
-				for i, b := range wantTeam.Boards {
-					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
-					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
-				}
 
+				// since the user is not yet a member of any boards, no boards
+				assert.Equal(t.Error, len(team.Boards), 0)
+
+				// no invite cookie should be set for non-admin
 				assert.Equal(t.Error, len(resp.Cookies()), 0)
 			},
 		},

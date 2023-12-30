@@ -110,8 +110,9 @@ func TestTeamAPI(t *testing.T) {
 					assert.Equal(t.Error, team.Boards[0].Name, wantBoardName)
 				},
 			},
+			// TODOO: test OKAdminNewTeam
 			{
-				name:       "OK",
+				name:       "OKAdmin",
 				authFunc:   test.AddAuthCookie(test.T1AdminToken),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response) {
@@ -120,16 +121,19 @@ func TestTeamAPI(t *testing.T) {
 						Members: []string{"team1Admin", "team1Member"},
 						Boards: []teamtbl.Board{
 							{
-								ID:   "91536664-9749-4dbb-a470-6e52aa353ae4",
-								Name: "Team 1 Board 1",
+								ID:      "91536664-9749-4dbb-a470-6e52aa353ae4",
+								Name:    "Team 1 Board 1",
+								Members: []string{"team1Member"},
 							},
 							{
-								ID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-								Name: "New Board Name",
+								ID:      "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
+								Name:    "New Board Name",
+								Members: []string{},
 							},
 							{
-								ID:   "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
-								Name: "Team 1 Board 3",
+								ID:      "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
+								Name:    "Team 1 Board 3",
+								Members: []string{"team1Member"},
 							},
 						},
 					}
@@ -147,9 +151,11 @@ func TestTeamAPI(t *testing.T) {
 					assert.Equal(t.Error,
 						len(respBody.Boards), len(wantResp.Boards),
 					)
-					for i, b := range wantResp.Boards {
-						assert.Equal(t.Error, respBody.Boards[i].ID, b.ID)
-						assert.Equal(t.Error, respBody.Boards[i].Name, b.Name)
+					for i, wantB := range wantResp.Boards {
+						b := respBody.Boards[i]
+						assert.Equal(t.Error, b.ID, wantB.ID)
+						assert.Equal(t.Error, b.Name, wantB.Name)
+						assert.AllEqual(t.Error, b.Members, wantB.Members)
 					}
 
 					ckInv := resp.Cookies()[0]
@@ -183,30 +189,24 @@ func TestTeamAPI(t *testing.T) {
 					)
 				},
 			},
-			// test that when a user is not an admin and is not a member of the
-			// team, they are added to the team as a member
 			{
-				name:       "OKInvitee",
-				authFunc:   test.AddAuthCookie(test.T1InviteeToken),
+				name:       "OKMember",
+				authFunc:   test.AddAuthCookie(test.T1MemberToken),
 				wantStatus: http.StatusOK,
 				assertFunc: func(t *testing.T, resp *http.Response) {
 					wantResp := teamapi.GetResp{
-						ID: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
-						Members: []string{
-							"team1Admin", "team1Member", "team1Invitee",
-						},
+						ID:      "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+						Members: []string{"team1Admin", "team1Member"},
 						Boards: []teamtbl.Board{
 							{
-								ID:   "91536664-9749-4dbb-a470-6e52aa353ae4",
-								Name: "Team 1 Board 1",
+								ID:      "91536664-9749-4dbb-a470-6e52aa353ae4",
+								Name:    "Team 1 Board 1",
+								Members: []string{"team1Member"},
 							},
 							{
-								ID:   "fdb82637-f6a5-4d55-9dc3-9f60061e632f",
-								Name: "New Board Name",
-							},
-							{
-								ID:   "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
-								Name: "Team 1 Board 3",
+								ID:      "1559a33c-54c5-42c8-8e5f-fe096f7760fa",
+								Name:    "Team 1 Board 3",
+								Members: []string{"team1Member"},
 							},
 						},
 					}
@@ -224,10 +224,37 @@ func TestTeamAPI(t *testing.T) {
 					assert.Equal(t.Error,
 						len(respBody.Boards), len(wantResp.Boards),
 					)
-					for i, b := range wantResp.Boards {
-						assert.Equal(t.Error, respBody.Boards[i].ID, b.ID)
-						assert.Equal(t.Error, respBody.Boards[i].Name, b.Name)
+					for i, wantB := range wantResp.Boards {
+						b := respBody.Boards[i]
+						assert.Equal(t.Error, b.ID, wantB.ID)
+						assert.Equal(t.Error, b.Name, wantB.Name)
+						assert.AllEqual(t.Error, b.Members, wantB.Members)
 					}
+				},
+			},
+			{
+				name:       "OKInvitee",
+				authFunc:   test.AddAuthCookie(test.T1InviteeToken),
+				wantStatus: http.StatusOK,
+				assertFunc: func(t *testing.T, resp *http.Response) {
+					wantResp := teamapi.GetResp{
+						ID: "afeadc4a-68b0-4c33-9e83-4648d20ff26a",
+						Members: []string{
+							"team1Admin", "team1Member", "team1Invitee",
+						},
+					}
+
+					var respBody teamapi.GetResp
+					err := json.NewDecoder(resp.Body).Decode(&respBody)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					assert.Equal(t.Error, respBody.ID, wantResp.ID)
+					assert.AllEqual(t.Error,
+						respBody.Members, wantResp.Members,
+					)
+					assert.Equal(t.Error, len(respBody.Boards), 0)
 				},
 			},
 		} {

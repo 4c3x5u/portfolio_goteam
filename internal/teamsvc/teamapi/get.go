@@ -111,21 +111,37 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 	} else {
 		status = http.StatusOK
 
-		// if the user is not a member of the team, add them to the team
-		var isMember bool
-		for _, member := range team.Members {
-			if member == auth.Username {
-				isMember = true
-				break
+		if !auth.IsAdmin {
+			var isTeamMember bool
+			for _, member := range team.Members {
+				if member == auth.Username {
+					isTeamMember = true
+					break
+				}
 			}
-		}
-		if !isMember {
-			team.Members = append(team.Members, auth.Username)
-			if err = h.teamUpdater.Update(r.Context(), team); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				h.log.Error(err)
-				return
+			// if the user is not admin an not a member of the team, add them
+			// to the team - this is a synchronisation step and is safe since we
+			// validated the JWT and got the username and the team ID from it
+			if !isTeamMember {
+				team.Members = append(team.Members, auth.Username)
+				if err = h.teamUpdater.Update(r.Context(), team); err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					h.log.Error(err)
+					return
+				}
 			}
+
+			// return only the boards the user is a member of
+			var boards []teamtbl.Board
+			for _, b := range team.Boards {
+				for _, m := range b.Members {
+					if m == auth.Username {
+						boards = append(boards, b)
+						break
+					}
+				}
+			}
+			team.Boards = boards
 		}
 	}
 
