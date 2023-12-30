@@ -115,7 +115,9 @@ const App = () => {
   useEffect(() => loadBoard(), []);
 
   useEffect(() => (
-    !cookies.get('auth-token') && sessionStorage.removeItem("board-id")
+    !cookies.get('auth-token')
+    && sessionStorage.removeItem("board-id")
+    && cookies.remove("invite-token")
   ), [])
 
   return (
