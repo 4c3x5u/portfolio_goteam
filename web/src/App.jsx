@@ -49,15 +49,16 @@ const App = () => {
         )
 
         var teamRes = await TeamAPI.get()
-        // TODO: set invite code
+
         setTeam({
           id: teamRes.data.id,
           inviteToken: cookies.get("invite-token"),
         });
         setBoards(teamRes.data.boards);
+
         setMembers(teamRes.data.members.map((username) => (
           // team ID is always the admin's username
-          { username, isAdmin: username === team.id }
+          { username, isAdmin: username === teamRes.data.id }
         )));
 
         var tasksRes = await tasksProm
