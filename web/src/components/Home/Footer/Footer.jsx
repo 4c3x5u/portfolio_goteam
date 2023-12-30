@@ -11,7 +11,7 @@ const Footer = () => (
       <Row className="Row">
         <Col className="Col" xs={6}>
           <a
-            href="https://github.com/alicandev/portfolio_goteam"
+            href="https://github.com/kxplxn/goteam"
             target="_blank"
             rel="noreferrer"
           >
@@ -22,7 +22,7 @@ const Footer = () => (
         </Col>
         <Col className="Col" xs={6}>
           <a
-            href="https://www.linkedin.com/in/4c3x5u/"
+            href="https://www.linkedin.com/in/kxplxn"
             target="_blank"
             rel="noreferrer"
           >
