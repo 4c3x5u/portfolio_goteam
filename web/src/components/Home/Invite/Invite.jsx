@@ -16,9 +16,7 @@ const Invite = ({ toggleOff }) => {
   const { team } = useContext(AppContext);
 
   const inviteLink = (
-    process.env.REACT_APP_FRONTEND_URL +
-    "/register?inviteToken=" +
-    team.inviteToken
+    `${process.env.REACT_APP_FRONTEND_URL}/register/${team.inviteToken}`
   );
 
   const handleSubmit = (e) => {
