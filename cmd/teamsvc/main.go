@@ -106,6 +106,7 @@ func main() {
 			authDecoder,
 			teamtbl.NewRetriever(db),
 			teamtbl.NewInserter(db),
+			teamtbl.NewUpdater(db),
 			cookie.NewInviteEncoder([]byte(jwtKey), 1*time.Hour),
 			log,
 		),

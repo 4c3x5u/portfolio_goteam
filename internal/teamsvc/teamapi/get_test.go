@@ -20,10 +20,16 @@ func TestGetHandler(t *testing.T) {
 	authDecoder := &cookie.FakeDecoder[cookie.Auth]{}
 	teamRetriever := &db.FakeRetriever[teamtbl.Team]{}
 	teamInserter := &db.FakeInserter[teamtbl.Team]{}
+	teamUpdater := &db.FakeUpdater[teamtbl.Team]{}
 	inviteEncoder := &cookie.FakeEncoder[cookie.Invite]{}
 	log := &log.FakeErrorer{}
 	sut := NewGetHandler(
-		authDecoder, teamRetriever, teamInserter, inviteEncoder, log,
+		authDecoder,
+		teamRetriever,
+		teamInserter,
+		teamUpdater,
+		inviteEncoder,
+		log,
 	)
 
 	wantTeam := teamtbl.Team{
@@ -43,6 +49,7 @@ func TestGetHandler(t *testing.T) {
 		errRetrieve     error
 		team            teamtbl.Team
 		errInsert       error
+		errUpdate       error
 		errEncodeInvite error
 		inviteEncoded   http.Cookie
 		wantStatus      int
@@ -56,6 +63,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:     nil,
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusUnauthorized,
@@ -69,6 +77,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:     nil,
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusUnauthorized,
@@ -82,6 +91,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:     errors.New("retrieve failed"),
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusInternalServerError,
@@ -96,6 +106,7 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:     db.ErrNoItem,
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusUnauthorized,
@@ -109,32 +120,77 @@ func TestGetHandler(t *testing.T) {
 			errRetrieve:     db.ErrNoItem,
 			team:            teamtbl.Team{},
 			errInsert:       errors.New("insert failed"),
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("insert failed"),
 		},
 		{
-			name:            "ErrEncodeInvite",
+			name:            "ErrUpdate",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     cookie.Auth{IsAdmin: true, Username: "newuser"},
+			authDecoded:     cookie.Auth{IsAdmin: false},
 			errRetrieve:     nil,
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       errors.New("update failed"),
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{},
+			wantStatus:      http.StatusInternalServerError,
+			assertFunc:      assert.OnLoggedErr("update failed"),
+		},
+		{
+			name:            "ErrEncodeInvite",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true, Username: "memberone"},
+			errRetrieve:     nil,
+			team:            teamtbl.Team{Members: []string{"memberone"}},
+			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: errors.New("encode invite failed"),
 			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusInternalServerError,
 			assertFunc:      assert.OnLoggedErr("encode invite failed"),
 		},
 		{
-			name:            "Created",
+			name:            "OK",
+			auth:            "nonempty",
+			errDecodeAuth:   nil,
+			authDecoded:     cookie.Auth{IsAdmin: true, Username: "memberone"},
+			errRetrieve:     nil,
+			team:            wantTeam,
+			errInsert:       nil,
+			errUpdate:       nil,
+			errEncodeInvite: nil,
+			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
+			wantStatus:      http.StatusOK,
+			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
+				var team teamtbl.Team
+				if err := json.NewDecoder(resp.Body).Decode(&team); err != nil {
+					t.Fatal(err)
+				}
+
+				assert.Equal(t.Error, team.ID, wantTeam.ID)
+				assert.AllEqual(t.Error, team.Members, wantTeam.Members)
+				for i, b := range wantTeam.Boards {
+					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
+					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
+				}
+
+				assert.Equal(t.Error, len(resp.Cookies()), 0)
+			},
+		},
+		{
+			name:            "OKNewTeam",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
 			authDecoded:     cookie.Auth{IsAdmin: true, Username: "newuser"},
 			errRetrieve:     db.ErrNoItem,
 			team:            teamtbl.Team{},
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
 			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
 			wantStatus:      http.StatusCreated,
@@ -155,15 +211,16 @@ func TestGetHandler(t *testing.T) {
 			},
 		},
 		{
-			name:            "OK",
+			name:            "OKNewMember",
 			auth:            "nonempty",
 			errDecodeAuth:   nil,
-			authDecoded:     cookie.Auth{IsAdmin: false},
+			authDecoded:     cookie.Auth{IsAdmin: false, Username: "newuser"},
 			errRetrieve:     nil,
 			team:            wantTeam,
 			errInsert:       nil,
+			errUpdate:       nil,
 			errEncodeInvite: nil,
-			inviteEncoded:   http.Cookie{Name: "invite-token", Value: "aksdfj"},
+			inviteEncoded:   http.Cookie{},
 			wantStatus:      http.StatusOK,
 			assertFunc: func(t *testing.T, resp *http.Response, _ []any) {
 				var team teamtbl.Team
@@ -172,7 +229,9 @@ func TestGetHandler(t *testing.T) {
 				}
 
 				assert.Equal(t.Error, team.ID, wantTeam.ID)
-				assert.AllEqual(t.Error, team.Members, wantTeam.Members)
+				assert.AllEqual(t.Error,
+					team.Members, append(wantTeam.Members, "newuser"),
+				)
 				for i, b := range wantTeam.Boards {
 					assert.Equal(t.Error, team.Boards[i].ID, b.ID)
 					assert.Equal(t.Error, team.Boards[i].Name, b.Name)
@@ -188,6 +247,7 @@ func TestGetHandler(t *testing.T) {
 			teamRetriever.Err = c.errRetrieve
 			teamRetriever.Res = c.team
 			teamInserter.Err = c.errInsert
+			teamUpdater.Err = c.errUpdate
 			inviteEncoder.Err = c.errEncodeInvite
 			inviteEncoder.Res = c.inviteEncoded
 			w := httptest.NewRecorder()

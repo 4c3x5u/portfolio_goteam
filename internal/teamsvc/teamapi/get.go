@@ -22,6 +22,7 @@ type GetHandler struct {
 	authDecoder   cookie.Decoder[cookie.Auth]
 	teamRetriever db.Retriever[teamtbl.Team]
 	teamInserter  db.Inserter[teamtbl.Team]
+	teamUpdater   db.Updater[teamtbl.Team]
 	inviteEncoder cookie.Encoder[cookie.Invite]
 	log           log.Errorer
 }
@@ -31,6 +32,7 @@ func NewGetHandler(
 	authDecoder cookie.Decoder[cookie.Auth],
 	teamRetriever db.Retriever[teamtbl.Team],
 	teamInserter db.Inserter[teamtbl.Team],
+	teamUpdater db.Updater[teamtbl.Team],
 	inviteEncoder cookie.Encoder[cookie.Invite],
 	log log.Errorer,
 ) GetHandler {
@@ -38,6 +40,7 @@ func NewGetHandler(
 		authDecoder:   authDecoder,
 		teamRetriever: teamRetriever,
 		teamInserter:  teamInserter,
+		teamUpdater:   teamUpdater,
 		inviteEncoder: inviteEncoder,
 		log:           log,
 	}
@@ -107,6 +110,23 @@ func (h GetHandler) Handle(w http.ResponseWriter, r *http.Request, _ string) {
 		return
 	} else {
 		status = http.StatusOK
+
+		// if the user is not a member of the team, add them to the team
+		var isMember bool
+		for _, member := range team.Members {
+			if member == auth.Username {
+				isMember = true
+				break
+			}
+		}
+		if !isMember {
+			team.Members = append(team.Members, auth.Username)
+			if err = h.teamUpdater.Update(r.Context(), team); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				h.log.Error(err)
+				return
+			}
+		}
 	}
 
 	// encode invite token if the user is admin
