@@ -51,8 +51,7 @@ const App = () => {
         setTeam({ id: teamRes.data.id });
         setBoards(teamRes.data.boards);
         setMembers(teamRes.data.members.map((username) => (
-          // team ID is the admin's username, so the member is admin if the team
-          // ID matches their username
+          // team ID is always the admin's username
           { username, isAdmin: username === team.id }
         )));
 

@@ -94,7 +94,7 @@ const EditSubtasks = ({ subtasks, setSubtasks }) => {
 
 EditSubtasks.propTypes = {
   subtasks: PropTypes.exact({
-    value: PropTypes.string.isRequired,
+    value: PropTypes.string,
     list: PropTypes.arrayOf(
       PropTypes.exact({
         title: PropTypes.string.isRequired,
