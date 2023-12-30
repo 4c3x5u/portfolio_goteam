@@ -93,19 +93,16 @@ func (h *PatchHandler) Handle(
 		return
 	}
 
-	// validate id exists in state and determine location
-	id := r.URL.Query().Get("id")
-
 	// read request body
-	var reqBody PatchReq
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+	var req PatchReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err)
 		return
 	}
 
 	// validate task title
-	if err := h.titleValidator.Validate(reqBody.Title); err != nil {
+	if err := h.titleValidator.Validate(req.Title); err != nil {
 		var errMsg string
 		if errors.Is(err, validator.ErrEmpty) {
 			errMsg = "Task title cannot be empty."
@@ -128,7 +125,7 @@ func (h *PatchHandler) Handle(
 	}
 
 	// validate subtask titles
-	for _, subtask := range reqBody.Subtasks {
+	for _, subtask := range req.Subtasks {
 		if err := h.subtTitleValidator.Validate(subtask.Title); err != nil {
 			var errMsg string
 			if errors.Is(err, validator.ErrEmpty) {
@@ -153,16 +150,10 @@ func (h *PatchHandler) Handle(
 	}
 
 	// update task in task table
-	if err = h.taskUpdater.Update(r.Context(), tasktbl.Task{
-		TeamID:      auth.TeamID,
-		BoardID:     reqBody.BoardID,
-		ID:          id,
-		Title:       reqBody.Title,
-		Description: reqBody.Description,
-		Order:       reqBody.Order,
-		Subtasks:    reqBody.Subtasks,
-		ColNo:       reqBody.ColNo,
-	}); errors.Is(err, db.ErrNoItem) {
+	task := tasktbl.Task(req)
+	task.TeamID = auth.TeamID
+	err = h.taskUpdater.Update(r.Context(), task)
+	if errors.Is(err, db.ErrNoItem) {
 		w.WriteHeader(http.StatusNotFound)
 		if err := json.NewEncoder(w).Encode(PatchResp{
 			Error: "Task not found.",
@@ -171,7 +162,6 @@ func (h *PatchHandler) Handle(
 			h.log.Error(err)
 		}
 		return
-
 	} else if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		h.log.Error(err)
