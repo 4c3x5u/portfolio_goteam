@@ -154,7 +154,7 @@ const Task = ({
 
           <Menu className="ContextMenu" id={MENU_ID}>
             {/* TODO: add back once you created assign endpoint */}
-            {/* {members.filter((m) => m.isActive && !m.isAdmin).length >= 1 && ( */}
+            {/* {members.filter((m) => m.isActive && !m.isAdmin).length > 0 && ( */}
             {/*   <Submenu */}
             {/*     className="Submenu" */}
             {/*     label={( */}

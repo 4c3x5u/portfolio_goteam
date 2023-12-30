@@ -21,14 +21,14 @@ const BoardsControls = ({
         onClick={handleActivate}
         aria-label="boards controls toggler"
         type="button"
-        disabled={boards.length < 1}
+        disabled={boards && boards.length < 1}
       >
         <FontAwesomeIcon icon={faChalkboard} />
 
         BOARDS
       </button>
 
-      {isActive && (
+      {boards && isActive && (
         <BoardsControlsMenu
           handleCreate={handleCreate}
           handleDelete={handleDelete}

@@ -20,6 +20,7 @@ const InitialStates = {
   boards: [{
     id: null,
     name: '',
+    members: [],
   }],
 
   activeBoard: {
