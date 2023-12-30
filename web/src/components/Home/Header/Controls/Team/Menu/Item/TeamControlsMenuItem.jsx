@@ -18,22 +18,23 @@ const TeamControlsMenuItem = ({
 }) => {
   const {
     user,
-    activeBoard,
-    loadBoard,
-    notify,
+    // activeBoard,
+    // loadBoard,
+    // notify,
   } = useContext(AppContext);
 
-  const toggleActive = () => (
-    UserAPI
-      .patch(username, activeBoard.id, !isActive)
-      .then(() => loadBoard())
-      .catch((err) => {
-        notify(
-          'Unable to add member to the board.',
-          `${err?.message || 'Server Error'}.`,
-        );
-      })
-  );
+  // TODO: add back
+  // const toggleActive = () => (
+  //   UserAPI
+  //     .patch(username, activeBoard.id, !isActive)
+  //     .then(() => loadBoard())
+  //     .catch((err) => {
+  //       notify(
+  //         'Unable to add member to the board.',
+  //         `${err?.message || 'Server Error'}.`,
+  //       );
+  //     })
+  // );
 
   const MENU_ID = `item-${username}`;
   const { show } = useContextMenu({ id: MENU_ID });
@@ -62,7 +63,7 @@ const TeamControlsMenuItem = ({
       className="ControlButton"
       key={username}
       type="button"
-      onClick={toggleActive}
+      // onClick={toggleActive}
       onContextMenu={(e) => (isAdmin ? e.preventDefault() : show(e))}
       disabled={!user.isAdmin}
     >
