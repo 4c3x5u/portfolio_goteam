@@ -1,6 +1,13 @@
 default: 
 	@echo "ERROR: target not specified"
 
+run-db:
+	docker build -t goteam-db ./build/package/db
+	docker run \
+		--mount source=data,target=/home/dynamodblocal/data \
+		-p 8000:8000 \
+		-it goteam-db
+
 build-usersvc:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 		-o ./build/package/usersvc/ ./cmd/usersvc/main.go

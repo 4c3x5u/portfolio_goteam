@@ -1,4 +1,14 @@
 services:
+  db:
+    container_name: goteam-db
+    build:
+      context: db
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - "./data:/home/dynamodblocal/data"
+
   user:
     container_name: goteam-usersvc
     build:
