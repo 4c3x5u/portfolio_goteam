@@ -19,9 +19,14 @@ import (
 )
 
 const (
-	// envSvcPort is the name of the environment variable used for setting the
-	// port to run the user service on.
-	envSvcPort = "USER_SERVICE_PORT"
+	// envPort is the name of the environment variable used for setting the port
+	// to run the user service on.
+	envPort = "USER_SERVICE_PORT"
+
+	// envAWSEndpoint is the name of the environment variable used for setting
+	// the AWS endpoint to connect to for DynamoDB. It should only be non-empty
+	// on local pointing to the local DynamoDB instance.
+	envAWSEndpoint = "AWS_ENDPOINT"
 
 	// envPort is the name of the environment variable used for providing AWS
 	// access key to the DynamoDB client.
@@ -56,7 +61,8 @@ func main() {
 
 	// get environment variables
 	var (
-		port         = os.Getenv(envSvcPort)
+		port         = os.Getenv(envPort)
+		awsEndpoint  = os.Getenv(envAWSEndpoint)
 		awsAccessKey = os.Getenv(envAWSAccessKey)
 		awsSecretKey = os.Getenv(envAWSSecretKey)
 		awsRegion    = os.Getenv(envAWSRegion)
@@ -65,10 +71,11 @@ func main() {
 	)
 
 	// check all environment variables were set
+	// - except aws endpoint, which is only set on local
 	errPostfix := "was empty"
 	switch "" {
 	case port:
-		log.Error(envSvcPort, errPostfix)
+		log.Error(envPort, errPostfix)
 		return
 	case awsAccessKey:
 		log.Fatal(envAWSAccessKey, errPostfix)
@@ -87,13 +94,19 @@ func main() {
 		return
 	}
 
-	// create DynamoDB client
-	db := dynamodb.NewFromConfig(aws.Config{
+	// define aws config
+	cfg := aws.Config{
 		Region: awsRegion,
 		Credentials: credentials.NewStaticCredentialsProvider(
 			awsAccessKey, awsSecretKey, "",
 		),
-	})
+	}
+	if awsEndpoint != "" {
+		cfg.BaseEndpoint = aws.String(awsEndpoint)
+	}
+
+	// create DynamoDB client from config
+	db := dynamodb.NewFromConfig(cfg)
 
 	// create JWT encoders and decoders
 	key := []byte(jwtKey)
