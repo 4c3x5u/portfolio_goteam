@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -39,12 +38,10 @@ func AddStateCookie(token string) func(*http.Request) {
 // not yet been created, it is created and returned.
 func DB() *dynamodb.Client {
 	if db == nil {
-		cfg, err := config.LoadDefaultConfig(context.Background())
-		if err != nil {
-			fmt.Println("error loading default config")
-			return nil
-		}
-		db = dynamodb.NewFromConfig(cfg)
+		db = dynamodb.NewFromConfig(aws.Config{
+			Region:       "local",
+			BaseEndpoint: aws.String("http://localhost:8000"),
+		})
 	}
 	return db
 }
@@ -92,6 +89,7 @@ func SetUpTestTable(
 
 // createTable creates a DynamoDB table with the given name, and given sort and
 // partition keys, and secondary index names.
+// TODO: replace context.TODO with context from caller
 func createTable(
 	svc *dynamodb.Client,
 	name *string,
@@ -156,24 +154,22 @@ func createTable(
 
 	// create user table teardown function
 	return func() error {
-		svc.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
-			TableName: name,
-		})
+		svc.DeleteTable(
+			context.TODO(), &dynamodb.DeleteTableInput{TableName: name},
+		)
 		return nil
 	}, nil
 }
 
 // ensureTableActive checks whether the test table is created and its status is
 // "ACTIVE" every 500 milliseconds until it is true.
-func ensureTableActive(svc *dynamodb.Client, tableName string) error {
+func ensureTableActive(svc *dynamodb.Client, name string) error {
 	fmt.Println("ensuring all test tables are active")
 	var teamTableActive bool
 	for {
 		if !teamTableActive {
 			resp, err := svc.DescribeTable(
-				context.TODO(), &dynamodb.DescribeTableInput{
-					TableName: &tableName,
-				},
+				context.TODO(), &dynamodb.DescribeTableInput{TableName: &name},
 			)
 			if err != nil {
 				return err
