@@ -8,13 +8,12 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/google/uuid"
 
 	"github.com/kxplxn/goteam/test"
 )
 
 // tableName is the name of the task table used in the integration tests.
-var tableName = "goteam-test-task-" + uuid.New().String()
+var tableName = "goteam-test-task"
 
 // TestMain sets up the test tables in DynamoDB and runs the tests.
 func TestMain(m *testing.M) {
