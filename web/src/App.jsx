@@ -48,6 +48,7 @@ const App = () => {
       setUser(jwtDecode(authCookie))
 
       try {
+        // if boardId is truthy, start a tasks request with it
         let tasksProm = boardId && TasksAPI.get(boardId)
 
         // get team - set its ID, invite token, and boards
@@ -59,13 +60,16 @@ const App = () => {
         // a member who isn't assigned to any board will not have any boards
         setBoards(setBoards(teamRes.data.boards ?? []))
 
-        // fetch tasks for boardId if set, or first board of team response
-        var tasksRes = await (tasksProm ?? TasksAPI.get(teamRes.data.boards[0].id))
+        // it tasks request was started, await it - if not, start and await a 
+        // tasks request for the first board of the team
+        var tasksRes = await (
+          tasksProm ?? TasksAPI.get(teamRes.data.boards[0].id)
+        )
 
-        // if tasks request returned any results, set the active board 
-        // accordingly
         let board
         if (tasksRes && tasksRes.data.length > 0) {
+          // if tasks request returned any results, set the active board
+          // accordingly
           board = {
             id: tasksRes.data[0].boardID,
             columns: [
@@ -77,6 +81,7 @@ const App = () => {
             board.columns[task.colNo].tasks.push(task)
           })
         } else {
+          // if not, set the active board's board ID to the first board of team
           board = {
             id: teamRes.data.boards[0].id,
             columns: [
@@ -84,7 +89,6 @@ const App = () => {
             ],
           }
         }
-        console.log("@@@ board: " + JSON.stringify(board))
         setActiveBoard(board)
 
         setMembers(teamRes.data.members.map((username) => {
