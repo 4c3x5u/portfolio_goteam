@@ -7,7 +7,7 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - "./data:/home/dynamodblocal/data"
+      - "./db/data:/home/dynamodblocal/data"
 
   user:
     container_name: goteam-usersvc

@@ -8,6 +8,9 @@ run-db:
 		-p 8000:8000 \
 		-it goteam-db
 
+init-db:
+	./build/package/db/init.sh
+
 build-usersvc:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 		-o ./build/package/usersvc/ ./cmd/usersvc/main.go
@@ -38,38 +41,38 @@ run-tasksvc:
 	docker build -t goteam-tasksvc ./build/package/tasksvc
 	docker run -p 8082:8082 -it goteam-tasksvc
 
-build-be:
+build-b:
 	make build-usersvc
 	make build-teamsvc
 	make build-tasksvc
 
-run-be:
+run-b:
 	make build-be
 	docker compose -f ./build/package/docker-compose.yml up \
 		--build --force-recreate --no-deps
 
-stop-be:
+stop-b:
 	docker compose -f ./build/package/docker-compose.yml down
 
-run-fe:
+run-f:
 	cd web && NODE_OPTIONS=--openssl-legacy-provider yarn run start
 
-test:
+test-b:
 	make test-u
 	make test-i
 
-test-v:
+test-bv:
 	make test-uv
 	make test-iv
 
-test-u:
+test-bu:
 	go test -tags=utest ./...
 
-test-uv:
+test-buv:
 	go test -v -tags=utest ./...
 
-test-i:
+test-bi:
 	go test -tags=itest ./test/...
 
-test-iv:
+test-biv:
 	go test -v -tags=itest ./test/...

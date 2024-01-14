@@ -167,4 +167,7 @@ dist
 # go-build-generated files
 main
 
+# dynamodb-on-docker data file
+*.db
+
 # End of https://www.toptal.com/developers/gitignore/api/go,node
