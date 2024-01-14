@@ -17,7 +17,7 @@ usersvc-build:
 	cp .env ./build/package/usersvc/
 
 usersvc-run:
-	make build-usersvc
+	make usersvc-build
 	docker build -t goteam-usersvc ./build/package/usersvc
 	docker run -p 8080:8080 -it goteam-usersvc
 
@@ -27,7 +27,7 @@ teamsvc-build:
 	cp .env ./build/package/teamsvc/
 
 teamsvc-run:
-	make build-teamsvc
+	make teamsvc-build
 	docker build -t goteam-teamsvc ./build/package/teamsvc
 	docker run -p 8081:8081 -it goteam-teamsvc
 
@@ -37,17 +37,17 @@ tasksvc-build:
 	cp .env ./build/package/tasksvc/
 
 tasksvc-run:
-	make build-tasksvc
+	make tasksvc-build
 	docker build -t goteam-tasksvc ./build/package/tasksvc
 	docker run -p 8082:8082 -it goteam-tasksvc
 
 backend-build:
-	make build-usersvc
-	make build-teamsvc
-	make build-tasksvc
+	make usersvc-build
+	make teamsvc-build
+	make tasksvc-build
 
 backend-run:
-	make build-be
+	make backend-build
 	docker compose -f ./build/package/docker-compose.yml up \
 		--build --force-recreate --no-deps
 
@@ -56,14 +56,6 @@ backend-stop:
 
 frontend-run:
 	cd web && NODE_OPTIONS=--openssl-legacy-provider yarn run start
-
-backend-test:
-	make test-u
-	make test-i
-
-backend-test-v:
-	make test-uv
-	make test-iv
 
 backend-test-u:
 	go test -tags=utest ./...
@@ -76,3 +68,12 @@ backend-test-i:
 
 backend-test-iv:
 	go test -v -tags=itest ./test/...
+
+backend-test:
+	make backend-test-u
+	make backend-test-i
+
+backend-test-v:
+	make backend-test-uv
+	make backend-test-iv
+
