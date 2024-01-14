@@ -83,7 +83,7 @@ const App = () => {
         } else {
           // if not, set the active board's board ID to the first board of team
           board = {
-            id: teamRes.data.boards[0].id,
+            id: boardId || teamRes.data.boards[0].id,
             columns: [
               { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
             ],
