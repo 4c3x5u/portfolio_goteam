@@ -58,7 +58,7 @@ const App = () => {
           inviteToken: cookies.get("invite-token"),
         })
         // a member who isn't assigned to any board will not have any boards
-        setBoards(setBoards(teamRes.data.boards ?? []))
+        setBoards(teamRes.data.boards ?? [])
 
         // it tasks request was started, await it - if not, start and await a 
         // tasks request for the first board of the team
