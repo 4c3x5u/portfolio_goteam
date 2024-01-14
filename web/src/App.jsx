@@ -63,7 +63,7 @@ const App = () => {
         // it tasks request was started, await it - if not, start and await a 
         // tasks request for the first board of the team
         var tasksRes = await (
-          tasksProm ?? TasksAPI.get(teamRes.data.boards[0].id)
+          tasksProm || TasksAPI.get(teamRes.data.boards[0].id)
         )
 
         let board
