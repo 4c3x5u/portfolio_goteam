@@ -67,7 +67,7 @@ const Task = ({
     // Keep an initial state to avoid loadBoard() on API error
     const initialActiveBoard = activeBoard;
 
-    let subtasks = subtasks.map((subtask, i) => (
+    let newSubtasks = subtasks.map((subtask, i) => (
       i === iSubtask
         ? { title: subtask.title, done: !subtask.done }
         : subtask
@@ -81,7 +81,7 @@ const Task = ({
           ...column,
           tasks: column.tasks.map((task) => (
             task.id === id
-              ? { ...task, subtasks: subtasks }
+              ? { ...task, subtasks: newSubtasks }
               : task
           )),
         } : column
@@ -90,7 +90,14 @@ const Task = ({
 
     // Update subtask in database
     TaskAPI
-      .patch(id, { title, description, order, subtasks })
+      .patch({
+        id,
+        boardID: activeBoard.id,
+        title,
+        description,
+        order,
+        subtasks: newSubtasks,
+      })
       .catch((err) => {
         notify(
           'Unable to check subtask done.',

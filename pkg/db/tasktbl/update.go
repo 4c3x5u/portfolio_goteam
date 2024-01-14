@@ -17,7 +17,9 @@ import (
 type Updater struct{ ItemPutter db.DynamoItemPutter }
 
 // NewUpdater creates and returns a new Updater.
-func NewUpdater(ip db.DynamoItemPutter) Updater { return Updater{ItemPutter: ip} }
+func NewUpdater(ip db.DynamoItemPutter) Updater {
+	return Updater{ItemPutter: ip}
+}
 
 // Update updates a task in the task table.
 func (p Updater) Update(ctx context.Context, task Task) error {

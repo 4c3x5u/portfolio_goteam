@@ -62,7 +62,8 @@ const EditTask = ({
 
       // Update task in database
       TaskAPI
-        .patch(id, {
+        .patch({
+          id,
           boardID: activeBoard.id,
           colNo: colNo,
           title: newTitle,

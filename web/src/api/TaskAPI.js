@@ -7,8 +7,8 @@ const TaskAPI = {
     apiUrl, task, { withCredentials: true },
   ),
 
-  patch: (taskId, data) => axios.patch(
-    apiUrl + "?id=" + taskId, data, { withCredentials: true },
+  patch: (task) => axios.patch(
+    apiUrl, task, { withCredentials: true },
   ),
 
   delete: (taskId) => axios.delete(
