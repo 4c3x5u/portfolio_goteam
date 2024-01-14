@@ -48,7 +48,6 @@ const App = () => {
       setUser(jwtDecode(authCookie))
 
       try {
-        // if board ID was truthy, start getting tasks
         let tasksProm = boardId && TasksAPI.get(boardId)
 
         // get team - set its ID, invite token, and boards
@@ -60,29 +59,33 @@ const App = () => {
         // a member who isn't assigned to any board will not have any boards
         setBoards(setBoards(teamRes.data.boards ?? []))
 
+        // fetch tasks for boardId if set, or first board of team response
+        var tasksRes = await (tasksProm ?? TasksAPI.get(teamRes.data.boards[0].id))
 
+        // if tasks request returned any results, set the active board 
+        // accordingly
         let board
-        if (tasksProm || teamRes.data.boards && teamRes.data.boards.length > 0) {
-          // if task prom was empty, get tasks with the first board ID of teamRes
-          var tasksRes = await (tasksProm ?? TasksAPI.get(teamRes.data.boards[0].id))
+        if (tasksRes && tasksRes.data.length > 0) {
+          board = {
+            id: tasksRes.data[0].boardID,
+            columns: [
+              { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
+            ],
+          }
 
-          // if tasks request returned any results, set the active board 
-          // accordingly
-          if (tasksRes && tasksRes.data.length > 0) {
-            board = {
-              id: tasksRes.data[0].boardID,
-              columns: [
-                { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
-              ],
-            }
-
-            forEach(orderBy(tasksRes.data, ['order']), (task) => {
-              board.columns[task.colNo].tasks.push(task)
-            })
-
-            setActiveBoard(board)
+          forEach(orderBy(tasksRes.data, ['order']), (task) => {
+            board.columns[task.colNo].tasks.push(task)
+          })
+        } else {
+          board = {
+            id: teamRes.data.boards[0].id,
+            columns: [
+              { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
+            ],
           }
         }
+        console.log("@@@ board: " + JSON.stringify(board))
+        setActiveBoard(board)
 
         setMembers(teamRes.data.members.map((username) => {
           let isAdmin = username === teamRes.data.id
