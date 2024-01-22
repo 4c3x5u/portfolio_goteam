@@ -53,6 +53,9 @@ const App = () => {
 
         // get team - set its ID, invite token, and boards
         var teamRes = await TeamAPI.get()
+
+        console.log("teamres: " + JSON.stringify(teamRes))
+
         setTeam({
           id: teamRes.data.id,
           inviteToken: cookies.get("invite-token"),
@@ -63,7 +66,9 @@ const App = () => {
         // it tasks request was started, await it - if not, start and await a 
         // tasks request for the first board of the team
         var tasksRes = await (
-          tasksProm || TasksAPI.get(teamRes.data.boards[0].id)
+          tasksProm
+          || teamRes.data.boards
+          && TasksAPI.get(teamRes.data.boards[0].id)
         )
 
         let board
@@ -81,9 +86,20 @@ const App = () => {
             board.columns[task.colNo].tasks.push(task)
           })
         } else {
+          if (!boardId) {
+            // if taskRes.data.length was not greater than 0 and the board ID 
+            // was not set, it means that this user is not assigned to any 
+            // boards
+            notify(
+              'Unable to load board.',
+              'You do not have access to any boards. Please ask your team '
+              + 'admin to assign you to a board to gain access.',
+            )
+          }
+
           // if not, set the active board's board ID to the first board of team
           board = {
-            id: boardId || teamRes.data.boards[0].id,
+            id: boardId,
             columns: [
               { tasks: [] }, { tasks: [] }, { tasks: [] }, { tasks: [] },
             ],
@@ -100,30 +116,21 @@ const App = () => {
 
       }
       catch (err) {
+        console.log("---err: " + JSON.stringify(err))
+
         // remove username if unauthorised
         if (err?.response?.status === 401) {
           setIsLoading(false)
           return
         }
 
-        let errMsg
-
-        if (err?.response?.data?.board) {
-          notify(
-            'Inactive Credentials',
-            err?.response?.data?.board,
-          )
-          return
-        }
-
         notify(
           'Unable to load board.',
-          `${errMsg || err?.message || 'Server Error'}.`,
+          `${err?.response?.data?.message || err?.message || 'Server Error'}.`,
         )
 
       }
       finally { setIsLoading(false) }
-
     }
   }
 
